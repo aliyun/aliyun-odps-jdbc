@@ -1,7 +1,6 @@
 package com.aliyun.odps.jdbc.impl;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,21 +11,46 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Instance.TaskStatus;
 import com.aliyun.odps.Instance.TaskSummary;
 import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.Task;
-import com.aliyun.odps.cli.commands.StatusCommand;
 import com.csvreader.CsvReader;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
+
+    private TaskSummary    taskSummary;
+    private int            updateCount  = -1;
 
     private OdpsConnection conn;
     private Instance       instance;
     private String         result;
 
+    private int            resultSetHoldability;
+    private int            resultSetConcurrency;
+    private int            resultSetType;
+
+    private boolean        closeOnCompletion;
+    private boolean        closed       = false;
+    private int            maxFieldSize;
+    private int            maxRows;
+    private int            fetchSize;
+    private int            queryTimeout = -1;
+    private int            fetchDirection;
+    private boolean        poolable     = false;
+
     OdpsStatement(OdpsConnection conn){
+        this.conn = conn;
+    }
+    
+    OdpsStatement(OdpsConnection conn, int resultSetType, int resultSetConcurrency){
+        this.conn = conn;
+    }
+    
+    OdpsStatement(OdpsConnection conn, int resultSetType, int resultSetConcurrency, int resultSetHoldability){
         this.conn = conn;
     }
 
@@ -50,10 +74,128 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
-        String taskName = conn.generateTaskName();
-        instance = conn.run(sql, taskName);
+        boolean firstResultSet = execute(sql);
+        if (!firstResultSet) {
+            return null;
+        }
 
-        String result = readRunSqlResult();
+        return getResultSet();
+    }
+
+    @Override
+    public int executeUpdate(String sql) throws SQLException {
+        execute(sql);
+
+        return updateCount;
+    }
+
+    @Override
+    public void close() throws SQLException {
+        closed = true;
+    }
+
+    @Override
+    public int getMaxFieldSize() throws SQLException {
+        return maxFieldSize;
+    }
+
+    @Override
+    public void setMaxFieldSize(int max) throws SQLException {
+        maxFieldSize = max;
+    }
+
+    @Override
+    public int getMaxRows() throws SQLException {
+        return maxRows;
+    }
+
+    @Override
+    public void setMaxRows(int max) throws SQLException {
+        this.maxRows = max;
+    }
+
+    @Override
+    public void setEscapeProcessing(boolean enable) throws SQLException {
+
+    }
+
+    @Override
+    public int getQueryTimeout() throws SQLException {
+        return queryTimeout;
+    }
+
+    @Override
+    public void setQueryTimeout(int seconds) throws SQLException {
+        this.queryTimeout = seconds;
+    }
+
+    @Override
+    public void cancel() throws SQLException {
+        if (instance == null) {
+            return;
+        }
+
+        try {
+            instance.stop();
+        } catch (OdpsException e) {
+            throw new SQLException("cancel error", e);
+        }
+    }
+
+    @Override
+    public SQLWarning getWarnings() throws SQLException {
+
+        return null;
+    }
+
+    @Override
+    public void clearWarnings() throws SQLException {
+
+    }
+
+    @Override
+    public void setCursorName(String name) throws SQLException {
+
+    }
+
+    @Override
+    public boolean execute(String sql) throws SQLException {
+        beforeExecute();
+
+        instance = conn.run(sql);
+
+        try {
+            taskSummary = instance.getTaskSummary("SQL");
+        } catch (Exception e) {
+            throw new SQLException("get task summary error", e);
+        }
+
+        JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
+        JSONObject outputs = jsonSummary.getJSONObject("Outputs");
+
+        if (outputs.size() > 0) {
+            updateCount = 0;
+            for (Object item : outputs.values()) {
+                JSONArray array = (JSONArray) item;
+                updateCount += array.getInteger(0);
+            }
+        }
+
+        result = readRunSqlResult();
+
+        if (result != null && !result.isEmpty()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public ResultSet getResultSet() throws SQLException {
+        if (result == null || result.isEmpty()) {
+            return null;
+        }
+
         try {
             CsvReader resultReader = new CsvReader(new StringReader(result), ',');
             resultReader.setSafetySwitch(false);
@@ -77,152 +219,44 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     @Override
-    public int executeUpdate(String sql) throws SQLException {
-        String taskName = conn.generateTaskName();
-        instance = conn.run(sql, taskName);
-
-        String result = readRunSqlResult();
-
-        PrintWriter stdout = new PrintWriter(System.out);
-       
-        try {
-            StatusCommand.printResults(instance, stdout);
-            StatusCommand.printSummary(instance, stdout);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        return 0;
-    }
-
-    @Override
-    public void close() throws SQLException {
-    }
-
-    @Override
-    public int getMaxFieldSize() throws SQLException {
-
-        return 0;
-    }
-
-    @Override
-    public void setMaxFieldSize(int max) throws SQLException {
-
-    }
-
-    @Override
-    public int getMaxRows() throws SQLException {
-
-        return 0;
-    }
-
-    @Override
-    public void setMaxRows(int max) throws SQLException {
-
-    }
-
-    @Override
-    public void setEscapeProcessing(boolean enable) throws SQLException {
-
-    }
-
-    @Override
-    public int getQueryTimeout() throws SQLException {
-
-        return 0;
-    }
-
-    @Override
-    public void setQueryTimeout(int seconds) throws SQLException {
-
-    }
-
-    @Override
-    public void cancel() throws SQLException {
-
-    }
-
-    @Override
-    public SQLWarning getWarnings() throws SQLException {
-
-        return null;
-    }
-
-    @Override
-    public void clearWarnings() throws SQLException {
-
-    }
-
-    @Override
-    public void setCursorName(String name) throws SQLException {
-
-    }
-
-    @Override
-    public boolean execute(String sql) throws SQLException {
-        String taskName = conn.generateTaskName();
-        Instance instance = conn.run(sql, taskName);
-        TaskSummary summary = null;
-        try {
-            summary = conn.getTaskSummaryV1(instance, taskName);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    @Override
-    public ResultSet getResultSet() throws SQLException {
-
-        return null;
-    }
-
-    @Override
     public int getUpdateCount() throws SQLException {
-
-        return 0;
+        return updateCount;
     }
 
     @Override
     public boolean getMoreResults() throws SQLException {
-
         return false;
     }
 
     @Override
     public void setFetchDirection(int direction) throws SQLException {
-
+        this.fetchDirection = direction;
     }
 
     @Override
     public int getFetchDirection() throws SQLException {
-
-        return 0;
+        return fetchDirection;
     }
 
     @Override
     public void setFetchSize(int rows) throws SQLException {
-
+        this.fetchSize = rows;
     }
 
     @Override
     public int getFetchSize() throws SQLException {
-
-        return 0;
+        return fetchSize;
     }
 
     @Override
     public int getResultSetConcurrency() throws SQLException {
 
-        return 0;
+        return resultSetConcurrency;
     }
 
     @Override
     public int getResultSetType() throws SQLException {
-
-        return 0;
+        return resultSetType;
     }
 
     @Override
@@ -260,79 +294,68 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     @Override
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
-
-        return 0;
+        execute(sql, autoGeneratedKeys);
+        return getUpdateCount();
     }
 
     @Override
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
-
-        return 0;
+        execute(sql, columnIndexes);
+        return getUpdateCount();
     }
 
     @Override
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
-
-        return 0;
+        execute(sql, columnNames);
+        return getUpdateCount();
     }
 
     @Override
     public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
-
-        return false;
+        return execute(sql);
     }
 
     @Override
     public boolean execute(String sql, int[] columnIndexes) throws SQLException {
-
-        return false;
+        return execute(sql);
     }
 
     @Override
     public boolean execute(String sql, String[] columnNames) throws SQLException {
-
-        return false;
+        return execute(sql);
     }
 
     @Override
     public int getResultSetHoldability() throws SQLException {
-
-        return 0;
+        return resultSetHoldability;
     }
 
     @Override
     public boolean isClosed() throws SQLException {
-
-        return false;
+        return closed;
     }
 
     public void setPoolable(boolean poolable) throws SQLException {
-
+        this.poolable = poolable;
     }
 
     public boolean isPoolable() throws SQLException {
-
-        return false;
+        return poolable;
     }
 
     public void closeOnCompletion() throws SQLException {
-
+        closeOnCompletion = true;
     }
 
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
-
-        return false;
+        return closeOnCompletion;
     }
 
-    TaskStatus getTaskStatus(final Task task) throws OdpsException {
-
-        TaskStatus taskStatus = instance.getTaskStatus().get(task.getName());
-        if (taskStatus == null) {
-            // 如果task还没有进行，被kill掉了会出异常
-            throw new OdpsException("can not get task status.");
-        }
-
-        return taskStatus;
+    void beforeExecute() {
+        instance = null;
+        updateCount = -1;
+        result = null;
+        taskSummary = null;
     }
 }

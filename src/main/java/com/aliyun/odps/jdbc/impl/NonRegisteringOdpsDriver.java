@@ -59,7 +59,7 @@ public class NonRegisteringOdpsDriver implements Driver {
         odps.setDefaultProject(project);
         odps.setEndpoint(endpoint);
 
-        OdpsConnection conn = new OdpsConnection(odps, url);
+        OdpsConnection conn = new OdpsConnection(odps, url, info);
 
         return conn;
     }
