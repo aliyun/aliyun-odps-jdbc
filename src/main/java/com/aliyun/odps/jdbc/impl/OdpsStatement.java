@@ -45,11 +45,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     OdpsStatement(OdpsConnection conn){
         this.conn = conn;
     }
-    
+
     OdpsStatement(OdpsConnection conn, int resultSetType, int resultSetConcurrency){
         this.conn = conn;
     }
-    
+
     OdpsStatement(OdpsConnection conn, int resultSetType, int resultSetConcurrency, int resultSetHoldability){
         this.conn = conn;
     }
@@ -170,14 +170,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             throw new SQLException("get task summary error", e);
         }
 
-        JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
-        JSONObject outputs = jsonSummary.getJSONObject("Outputs");
+        if (taskSummary != null) {
+            JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
+            JSONObject outputs = jsonSummary.getJSONObject("Outputs");
 
-        if (outputs.size() > 0) {
-            updateCount = 0;
-            for (Object item : outputs.values()) {
-                JSONArray array = (JSONArray) item;
-                updateCount += array.getInteger(0);
+            if (outputs.size() > 0) {
+                updateCount = 0;
+                for (Object item : outputs.values()) {
+                    JSONArray array = (JSONArray) item;
+                    updateCount += array.getInteger(0);
+                }
             }
         }
 
@@ -189,6 +191,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
         return false;
     }
+
+   
 
     @Override
     public ResultSet getResultSet() throws SQLException {

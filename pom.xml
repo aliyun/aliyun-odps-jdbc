@@ -97,7 +97,12 @@
 			<artifactId>odps-sdk-mapred</artifactId>
 			<version>0.17.7</version>
 		</dependency>
-
+		<dependency>
+			<groupId>com.aliyun.odps</groupId>
+			<artifactId>odps-sdk-core-internal</artifactId>
+			<version>0.17.7</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
