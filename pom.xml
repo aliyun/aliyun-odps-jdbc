@@ -78,28 +78,9 @@
 			<scope>provided</scope>
 		</dependency>
 		
-
 		<dependency>
 			<groupId>com.aliyun.odps</groupId>
-			<artifactId>odps-sdk-udf</artifactId>
-			<version>0.13.0</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.aliyun.odps</groupId>
-			<artifactId>odps-sdk-udf</artifactId>
-			<version>0.17.7</version>
-		</dependency>
-		<dependency>
-			<groupId>com.aliyun.odps</groupId>
-			<artifactId>odps-sdk-mapred</artifactId>
-			<version>0.17.7</version>
-		</dependency>
-		<dependency>
-			<groupId>com.aliyun.odps</groupId>
-			<artifactId>odps-sdk-core-internal</artifactId>
+			<artifactId>odps-sdk-core</artifactId>
 			<version>0.17.7</version>
 		</dependency>
 		
@@ -113,6 +94,7 @@
 			<groupId>com.alibaba</groupId>
 			<artifactId>druid</artifactId>
 			<version>1.0.14</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>
