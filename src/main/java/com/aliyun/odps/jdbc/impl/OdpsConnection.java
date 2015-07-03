@@ -33,443 +33,449 @@ import com.aliyun.odps.task.SQLTask;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
 
-    private PrintWriter          stdout     = new PrintWriter(System.out);
+  private PrintWriter stdout = new PrintWriter(System.out);
 
-    private Odps                 odps;
+  private Odps odps;
 
-    private boolean              closed     = false;
+  private boolean closed = false;
 
-    private OdpsDatabaseMetaData meta;
+  private OdpsDatabaseMetaData meta;
 
-    private String               schema;
-    private String               catalog;
+  private String schema;
+  private String catalog;
 
-    private String               url;
+  private String url;
 
-    private int                  taskIdSeed = 1000000;
+  private int taskIdSeed = 1000000;
 
-    private Properties           info;
+  private Properties info;
 
-    OdpsConnection(Odps odps, String url, Properties info){
-        this.odps = odps;
-        this.url = url;
-        this.info = info;
+  OdpsConnection(Odps odps, String url, Properties info) {
+    this.odps = odps;
+    this.url = url;
+    this.info = info;
+  }
+
+  public Odps getOdps() {
+    return this.odps;
+  }
+
+  String getUrl() {
+    return this.url;
+  }
+
+  String generateTaskName() {
+    return "jdbc_" + (taskIdSeed++);
+  }
+
+  @Override
+  public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
+    return new OdpsPreparedStatement(this, sql);
+  }
+
+  @Override
+  public CallableStatement prepareCall(String sql) throws SQLException {
+    return new OdpsCallableStatement(this, sql);
+  }
+
+  @Override
+  public String nativeSQL(String sql) throws SQLException {
+    return sql;
+  }
+
+  @Override
+  public void setAutoCommit(boolean autoCommit) throws SQLException {
+    if (autoCommit) {
+      return;
     }
 
-    public Odps getOdps() {
-        return this.odps;
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean getAutoCommit() throws SQLException {
+    return true;
+  }
+
+  @Override
+  public void commit() throws SQLException {
+
+  }
+
+  @Override
+  public void rollback() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public void close() throws SQLException {
+    closed = true;
+  }
+
+  @Override
+  public boolean isClosed() throws SQLException {
+    return closed;
+  }
+
+  @Override
+  public DatabaseMetaData getMetaData() throws SQLException {
+    if (meta == null) {
+      meta = new OdpsDatabaseMetaData(this);
     }
 
-    String getUrl() {
-        return this.url;
+    return meta;
+  }
+
+  @Override
+  public void setReadOnly(boolean readOnly) throws SQLException {
+
+  }
+
+  @Override
+  public boolean isReadOnly() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public void setCatalog(String catalog) throws SQLException {
+    this.odps.setDefaultProject(catalog);
+  }
+
+  @Override
+  public String getCatalog() throws SQLException {
+    if (catalog != null) {
+      return catalog;
     }
 
-    String generateTaskName() {
-        return "jdbc_" + (taskIdSeed++);
+    return odps.getDefaultProject();
+  }
+
+  @Override
+  public void setTransactionIsolation(int level) throws SQLException {
+
+  }
+
+  @Override
+  public int getTransactionIsolation() throws SQLException {
+    return Connection.TRANSACTION_NONE;
+  }
+
+  @Override
+  public SQLWarning getWarnings() throws SQLException {
+
+    return null;
+  }
+
+  @Override
+  public void clearWarnings() throws SQLException {
+
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency)
+      throws SQLException {
+
+    return new OdpsPreparedStatement(this, sql, resultSetType, resultSetConcurrency);
+  }
+
+  @Override
+  public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency)
+      throws SQLException {
+
+    return new OdpsCallableStatement(this, sql, resultSetType, resultSetConcurrency);
+  }
+
+  @Override
+  public Map<String, Class<?>> getTypeMap() throws SQLException {
+
+    return null;
+  }
+
+  @Override
+  public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+
+  }
+
+  @Override
+  public void setHoldability(int holdability) throws SQLException {
+
+  }
+
+  @Override
+  public int getHoldability() throws SQLException {
+
+    return 0;
+  }
+
+  @Override
+  public Savepoint setSavepoint() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public Savepoint setSavepoint(String name) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public void rollback(Savepoint savepoint) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public OdpsStatement createStatement() throws SQLException {
+    return new OdpsStatement(this);
+  }
+
+  @Override
+  public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency)
+      throws SQLException {
+    return new OdpsStatement(this, resultSetType, resultSetConcurrency);
+  }
+
+  @Override
+  public Statement createStatement(int resultSetType, int resultSetConcurrency,
+      int resultSetHoldability) throws SQLException {
+    return new OdpsStatement(this, resultSetType, resultSetConcurrency, resultSetHoldability);
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
+      int resultSetHoldability) throws SQLException {
+
+    return new OdpsPreparedStatement(this, sql, resultSetType, resultSetConcurrency,
+        resultSetHoldability);
+  }
+
+  @Override
+  public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
+      int resultSetHoldability) throws SQLException {
+
+    return new OdpsCallableStatement(this, sql, resultSetType, resultSetConcurrency,
+        resultSetHoldability);
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+
+    return new OdpsPreparedStatement(this, sql, autoGeneratedKeys);
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+
+    return new OdpsPreparedStatement(this, sql, columnIndexes);
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+
+    return new OdpsPreparedStatement(this, sql, columnNames);
+  }
+
+  @Override
+  public Clob createClob() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public Blob createBlob() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public NClob createNClob() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public SQLXML createSQLXML() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean isValid(int timeout) throws SQLException {
+    return false;
+  }
+
+  @Override
+  public void setClientInfo(String name, String value) throws SQLClientInfoException {
+    this.info.put(name, value);
+  }
+
+  @Override
+  public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    this.info.putAll(properties);
+  }
+
+  @Override
+  public String getClientInfo(String name) throws SQLException {
+    return info.getProperty(name);
+  }
+
+  @Override
+  public Properties getClientInfo() throws SQLException {
+    return info;
+  }
+
+  @Override
+  public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public void setSchema(String schema) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public String getSchema() throws SQLException {
+    if (this.schema != null) {
+      return this.schema;
     }
 
-    @Override
-    public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
-        return new OdpsPreparedStatement(this, sql);
+    return odps.getDefaultProject();
+  }
+
+  public void abort(Executor executor) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public int getNetworkTimeout() throws SQLException {
+    return odps.getRestClient().getConnectTimeout();
+  }
+
+  protected Instance run(String sql) throws SQLException {
+    Instance instance;
+    try {
+      Map<String, String> hints = new HashMap<String, String>();
+      Map<String, String> aliases = new HashMap<String, String>();
+
+      instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
+
+      PrintWriter out = this.getStdout();
+      out.println("ID = " + instance.getId());
+
+      LogView logView = new LogView(odps);
+      String logViewUrl = logView.generateLogView(instance, 7 * 24);
+      out.println("Log View :");
+      out.println(logViewUrl);
+
+      waiting(instance);
+    } catch (OdpsException e) {
+      throw new SQLException("run sql error", e);
     }
 
-    @Override
-    public CallableStatement prepareCall(String sql) throws SQLException {
-        return new OdpsCallableStatement(this, sql);
-    }
+    return instance;
+  }
 
-    @Override
-    public String nativeSQL(String sql) throws SQLException {
-        return sql;
-    }
+  public void waiting(Instance instance) throws OdpsException {
+    boolean newLine = true;
 
-    @Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-        if (autoCommit) {
-            return;
-        }
+    PrintWriter out = this.getStdout();
 
-        throw new SQLFeatureNotSupportedException();
-    }
+    boolean terminated = false;
 
-    @Override
-    public boolean getAutoCommit() throws SQLException {
-        return true;
-    }
+    String blankLine = buildString(' ', FIXED_WIDTH);
 
-    @Override
-    public void commit() throws SQLException {
+    int round = 0;
 
-    }
+    while (!terminated) {
 
-    @Override
-    public void rollback() throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
+      terminated = instance.isTerminated();
 
-    @Override
-    public void close() throws SQLException {
-        closed = true;
-    }
+      if (terminated) {
+        return;
+      }
 
-    @Override
-    public boolean isClosed() throws SQLException {
-        return closed;
-    }
+      if (!newLine) {
+        out.print(blankLine);
+        out.print('\r');
+      }
 
-    @Override
-    public DatabaseMetaData getMetaData() throws SQLException {
-        if (meta == null) {
-            meta = new OdpsDatabaseMetaData(this);
-        }
+      out.print(getStageProgress(instance, round));
+      round++;
 
-        return meta;
-    }
-
-    @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-
-    }
-
-    @Override
-    public boolean isReadOnly() throws SQLException {
-        return false;
-    }
-
-    @Override
-    public void setCatalog(String catalog) throws SQLException {
-        this.odps.setDefaultProject(catalog);
-    }
-
-    @Override
-    public String getCatalog() throws SQLException {
-        if (catalog != null) {
-            return catalog;
-        }
-
-        return odps.getDefaultProject();
-    }
-
-    @Override
-    public void setTransactionIsolation(int level) throws SQLException {
-
-    }
-
-    @Override
-    public int getTransactionIsolation() throws SQLException {
-        return Connection.TRANSACTION_NONE;
-    }
-
-    @Override
-    public SQLWarning getWarnings() throws SQLException {
-
-        return null;
-    }
-
-    @Override
-    public void clearWarnings() throws SQLException {
-
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency)
-                                                                                                      throws SQLException {
-
-        return new OdpsPreparedStatement(this, sql, resultSetType, resultSetConcurrency);
-    }
-
-    @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-
-        return new OdpsCallableStatement(this, sql, resultSetType, resultSetConcurrency);
-    }
-
-    @Override
-    public Map<String, Class<?>> getTypeMap() throws SQLException {
-
-        return null;
-    }
-
-    @Override
-    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-
-    }
-
-    @Override
-    public void setHoldability(int holdability) throws SQLException {
-
-    }
-
-    @Override
-    public int getHoldability() throws SQLException {
-
-        return 0;
-    }
-
-    @Override
-    public Savepoint setSavepoint() throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public Savepoint setSavepoint(String name) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public void rollback(Savepoint savepoint) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public OdpsStatement createStatement() throws SQLException {
-        return new OdpsStatement(this);
-    }
-
-    @Override
-    public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        return new OdpsStatement(this, resultSetType, resultSetConcurrency);
-    }
-
-    @Override
-    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)
-                                                                                                           throws SQLException {
-        return new OdpsStatement(this, resultSetType, resultSetConcurrency, resultSetHoldability);
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
-                                              int resultSetHoldability) throws SQLException {
-
-        return new OdpsPreparedStatement(this, sql, resultSetType, resultSetConcurrency, resultSetHoldability);
-    }
-
-    @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
-                                         int resultSetHoldability) throws SQLException {
-
-        return new OdpsCallableStatement(this, sql, resultSetType, resultSetConcurrency, resultSetHoldability);
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
-
-        return new OdpsPreparedStatement(this, sql, autoGeneratedKeys);
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-
-        return new OdpsPreparedStatement(this, sql, columnIndexes);
-    }
-
-    @Override
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-
-        return new OdpsPreparedStatement(this, sql, columnNames);
-    }
-
-    @Override
-    public Clob createClob() throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public Blob createBlob() throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public NClob createNClob() throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public SQLXML createSQLXML() throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public boolean isValid(int timeout) throws SQLException {
-        return false;
-    }
-
-    @Override
-    public void setClientInfo(String name, String value) throws SQLClientInfoException {
-        this.info.put(name, value);
-    }
-
-    @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        this.info.putAll(properties);
-    }
-
-    @Override
-    public String getClientInfo(String name) throws SQLException {
-        return info.getProperty(name);
-    }
-
-    @Override
-    public Properties getClientInfo() throws SQLException {
-        return info;
-    }
-
-    @Override
-    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public void setSchema(String schema) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public String getSchema() throws SQLException {
-        if (this.schema != null) {
-            return this.schema;
-        }
-
-        return odps.getDefaultProject();
-    }
-
-    public void abort(Executor executor) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    public int getNetworkTimeout() throws SQLException {
-        return odps.getRestClient().getConnectTimeout();
-    }
-
-    protected Instance run(String sql) throws SQLException {
-        Instance instance;
-        try {
-            Map<String, String> hints = new HashMap<String, String>();
-            Map<String, String> aliases = new HashMap<String, String>();
-
-            instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
-
-            PrintWriter out = this.getStdout();
-            out.println("ID = " + instance.getId());
-            
-            LogView logView = new LogView(odps);
-            String logViewUrl = logView.generateLogView(instance, 7 * 24);
-            out.println("Log View :");
-            out.println(logViewUrl);
-
-            waiting(instance);
-        } catch (OdpsException e) {
-            throw new SQLException("run sql error", e);
-        }
-
-        return instance;
-    }
-
-    public void waiting(Instance instance) throws OdpsException {
-        boolean newLine = true;
-
-        PrintWriter out = this.getStdout();
-
-        boolean terminated = false;
-
-        String blankLine = buildString(' ', FIXED_WIDTH);
-
-        int round = 0;
-
-        while (!terminated) {
-
-            terminated = instance.isTerminated();
-
-            if (terminated) {
-                return;
-            }
-
-            if (!newLine) {
-                out.print(blankLine);
-                out.print('\r');
-            }
-
-            out.print(getStageProgress(instance, round));
-            round++;
-
-            if (!newLine) {
-                out.print('\r');
-            } else {
-                out.println();
-            }
-
-            out.flush();
-
-        }
-
+      if (!newLine) {
+        out.print('\r');
+      } else {
         out.println();
+      }
+
+      out.flush();
+
     }
 
-    private static final int FIXED_WIDTH = 100;
+    out.println();
+  }
 
-    public static String getStageProgress(Instance instance, int round) throws OdpsException {
-        StringBuilder sb = new StringBuilder();
+  private static final int FIXED_WIDTH = 100;
 
-        Set<String> taskNames = instance.getTaskNames();
+  public static String getStageProgress(Instance instance, int round) throws OdpsException {
+    StringBuilder sb = new StringBuilder();
 
-        StringWriter strWriter = new StringWriter();
-        PrintWriter writer = new PrintWriter(strWriter);
-        int i = 0;
-        for (String taskName : taskNames) {
-            List<StageProgress> stages = instance.getTaskProgress(taskName);
+    Set<String> taskNames = instance.getTaskNames();
 
-            if (stages.size() == 0) {
-                writer.print(taskName + ": " + buildString('.', round % 3 + 1));
-            } else {
-                writer.print(taskName + ":");
-                for (StageProgress stage : stages) {
-                    writer.printf(" %s:%s/%s/%s", stage.getName(), stage.getRunningWorkers(),
-                                  stage.getTerminatedWorkers(), stage.getTotalWorkers());
-                }
-            }
-            if (++i < taskNames.size()) {
-                writer.print(", ");
-            }
+    StringWriter strWriter = new StringWriter();
+    PrintWriter writer = new PrintWriter(strWriter);
+    int i = 0;
+    for (String taskName : taskNames) {
+      List<StageProgress> stages = instance.getTaskProgress(taskName);
+
+      if (stages.size() == 0) {
+        writer.print(taskName + ": " + buildString('.', round % 3 + 1));
+      } else {
+        writer.print(taskName + ":");
+        for (StageProgress stage : stages) {
+          writer.printf(" %s:%s/%s/%s", stage.getName(), stage.getRunningWorkers(),
+              stage.getTerminatedWorkers(), stage.getTotalWorkers());
         }
-
-        String str = strWriter.toString();
-        String padding = str.length() >= FIXED_WIDTH ? "" : buildString(' ', FIXED_WIDTH - str.length());
-        sb.append(str);
-        sb.append(padding);
-        return sb.toString();
+      }
+      if (++i < taskNames.size()) {
+        writer.print(", ");
+      }
     }
 
-    private static String buildString(char c, int n) {
-        if (n < 0) throw new IllegalArgumentException();
+    String str = strWriter.toString();
+    String padding =
+        str.length() >= FIXED_WIDTH ? "" : buildString(' ', FIXED_WIDTH - str.length());
+    sb.append(str);
+    sb.append(padding);
+    return sb.toString();
+  }
 
-        StringBuilder sb = new StringBuilder(n);
-        for (int i = 0; i < n; i++) {
-            sb.append(c);
-        }
-        return sb.toString();
+  private static String buildString(char c, int n) {
+    if (n < 0)
+      throw new IllegalArgumentException();
+
+    StringBuilder sb = new StringBuilder(n);
+    for (int i = 0; i < n; i++) {
+      sb.append(c);
     }
+    return sb.toString();
+  }
 
-    public PrintWriter getStdout() {
-        return stdout;
-    }
+  public PrintWriter getStdout() {
+    return stdout;
+  }
 
-    public void setStdout(PrintWriter stdout) {
-        this.stdout = stdout;
-    }
+  public void setStdout(PrintWriter stdout) {
+    this.stdout = stdout;
+  }
 
-   
+
 }

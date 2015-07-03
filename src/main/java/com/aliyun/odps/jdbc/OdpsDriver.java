@@ -10,26 +10,26 @@ import com.aliyun.odps.jdbc.impl.NonRegisteringOdpsDriver;
 
 public class OdpsDriver extends NonRegisteringOdpsDriver implements Driver {
 
-    public final static OdpsDriver instance = new OdpsDriver();
+  public final static OdpsDriver instance = new OdpsDriver();
 
-    static {
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
+  static {
+    AccessController.doPrivileged(new PrivilegedAction<Object>() {
 
-            @Override
-            public Object run() {
-                registerDriver(instance);
-                return null;
-            }
-        });
+      @Override
+      public Object run() {
+        registerDriver(instance);
+        return null;
+      }
+    });
+  }
+
+  public static boolean registerDriver(Driver driver) {
+    try {
+      DriverManager.registerDriver(driver);
+    } catch (SQLException e) {
+      e.printStackTrace();
     }
-
-    public static boolean registerDriver(Driver driver) {
-        try {
-            DriverManager.registerDriver(driver);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
+    return true;
+  }
 
 }

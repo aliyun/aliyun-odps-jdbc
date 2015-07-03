@@ -5,41 +5,42 @@ import java.util.Properties;
 
 public class BVTConf {
 
-    private static boolean inited    = false;
-    private static String  accessId  = null;
-    private static String  accessKey = null;
+  private static boolean inited = false;
+  private static String accessId = null;
+  private static String accessKey = null;
 
-    private static void init() {
-        if (inited) {
-            return;
-        }
-
-        try {
-            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("bvt_conf.properties");
-
-            Properties property = new Properties();
-
-            property.load(is);
-            
-            accessId = property.getProperty("access_id");
-            accessKey = property.getProperty("access_key");
-
-            is.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        inited = true;
+  private static void init() {
+    if (inited) {
+      return;
     }
 
-    public static String getAccessId() {
-        init();
+    try {
+      InputStream is =
+          Thread.currentThread().getContextClassLoader().getResourceAsStream("bvt_conf.properties");
 
-        return accessId;
+      Properties property = new Properties();
+
+      property.load(is);
+
+      accessId = property.getProperty("access_id");
+      accessKey = property.getProperty("access_key");
+
+      is.close();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
+    inited = true;
+  }
 
-    public static String getAccessKey() {
-        init();
+  public static String getAccessId() {
+    init();
 
-        return accessKey;
-    }
+    return accessId;
+  }
+
+  public static String getAccessKey() {
+    init();
+
+    return accessKey;
+  }
 }
