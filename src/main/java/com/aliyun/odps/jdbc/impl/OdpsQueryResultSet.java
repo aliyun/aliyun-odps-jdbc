@@ -38,17 +38,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public void close() throws SQLException {
-
-  }
-
-  @Override
-  public boolean wasNull() throws SQLException {
-
-    return false;
-  }
-
-  @Override
   public OdpsResultSetMetaData getMetaData() throws SQLException {
     return meta;
   }
