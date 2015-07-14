@@ -29,6 +29,8 @@ import com.aliyun.odps.Instance;
 import com.aliyun.odps.Instance.StageProgress;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.account.Account;
+import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.task.SQLTask;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -43,17 +45,24 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String schema;
   private String catalog;
-
   private String url;
 
   private int taskIdSeed = 1000000;
 
   private Properties info;
 
-  OdpsConnection(Odps odps, String url, Properties info) {
-    this.odps = odps;
+  OdpsConnection(String url, Properties info) {
+    String accessId = info.getProperty("access_id");
+    String accessKey = info.getProperty("access_key");
+    String project = info.getProperty("project_name");
+
+    Account account = new AliyunAccount(accessId, accessKey);
+    this.odps = new Odps(account);
     this.url = url;
     this.info = info;
+
+    odps.setDefaultProject(project);
+    odps.setEndpoint(url);
   }
 
   public Odps getOdps() {
