@@ -44,6 +44,9 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public Object getObject(int columnIndex) throws SQLException {
+    if (values == null) {
+      return null;
+    }
     checkIndex(columnIndex);
     return values[columnIndex - 1];
   }
