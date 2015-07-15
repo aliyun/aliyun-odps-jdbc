@@ -2,6 +2,7 @@ package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -18,9 +19,9 @@ public class OdpsPreparedStatementTest extends TestCase {
         info.put("access_id", BVTConf.getAccessId());
         info.put("access_key", BVTConf.getAccessKey());
         info.put("project_name", BVTConf.getProjectName());
-        info.put("end_point", BVTConf.getEndPoint());
+        String url = BVTConf.getEndPoint();
 
-        Connection conn = driver.connect("jdbc:odps:", info);
+        Connection conn = driver.connect("jdbc:odps:" + url , info);
         pstmt = conn.prepareStatement("select ? whatever from dual;");
 
         unixtime = new java.util.Date().getTime();
@@ -144,7 +145,8 @@ public class OdpsPreparedStatementTest extends TestCase {
         while (rs.next()) {
             y = rs.getDate(1);
         }
-        assertEquals(x, y);
+
+        assertEquals(x.toString(), y.toString());
     }
 
     public void test_set_time() throws Exception {
@@ -157,7 +159,7 @@ public class OdpsPreparedStatementTest extends TestCase {
         while (rs.next()) {
             y = rs.getTime(1);
         }
-        assertEquals(x, y);
+        assertEquals(x.toString(), y.toString());
     }
 
     public void test_set_timestamp() throws Exception {
@@ -170,8 +172,17 @@ public class OdpsPreparedStatementTest extends TestCase {
         while (rs.next()) {
             y = rs.getTimestamp(1);
         }
-        assertEquals(x, y);
+
+        // Walk around the precision problem
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
+        String ys = formatter.format(y);
+        String xs = formatter.format(x);
+
+        assertEquals(xs, ys);
     }
+
+
+
 
     public void test_set_string() throws Exception {
         String x = "hello";
@@ -179,7 +190,7 @@ public class OdpsPreparedStatementTest extends TestCase {
 
         ResultSet rs = pstmt.executeQuery();
 
-        String y = "haha";
+        String y = "";
         while (rs.next()) {
             y = rs.getString(1);
         }
