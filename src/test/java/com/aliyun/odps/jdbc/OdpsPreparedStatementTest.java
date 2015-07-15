@@ -13,8 +13,8 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 public class OdpsPreparedStatementTest extends TestCase {
-
     protected PreparedStatement pstmt;
+    protected Connection conn;
     protected long unixtime;
 
     protected void setUp() throws Exception {
@@ -26,7 +26,7 @@ public class OdpsPreparedStatementTest extends TestCase {
         info.put("project_name", BVTConf.getProjectName());
         String url = BVTConf.getEndPoint();
 
-        Connection conn = driver.connect("jdbc:odps:" + url , info);
+        conn = driver.connect("jdbc:odps:" + url, info);
         pstmt = conn.prepareStatement("select ? whatever from dual;");
 
         unixtime = new java.util.Date().getTime();
@@ -34,61 +34,10 @@ public class OdpsPreparedStatementTest extends TestCase {
 
     protected void tearDown() throws Exception {
         pstmt.close();
+        conn.close();
     }
 
-    public void test_set_int() throws Exception {
-        int x = Integer.MAX_VALUE;
-        pstmt.setInt(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        int y = 0;
-        while (rs.next()) {
-            y = rs.getInt(1);
-        }
-        assertEquals(x, y);
-    }
-
-    public void test_set_short() throws Exception {
-        short x = Short.MAX_VALUE;
-        pstmt.setShort(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        short y = 0;
-        while (rs.next()) {
-            y = rs.getShort(1);
-        }
-        assertEquals(x, y);
-    }
-
-    public void test_set_long() throws Exception {
-        long x = Long.MAX_VALUE;
-        pstmt.setLong(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        long y = 0;
-        while (rs.next()) {
-            y = rs.getLong(1);
-        }
-        assertEquals(x, y);
-    }
-
-    public void test_set_boolean() throws Exception {
-        Boolean x = Boolean.TRUE;
-        pstmt.setBoolean(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        Boolean y = Boolean.FALSE;
-        while (rs.next()) {
-            y = rs.getBoolean(1);
-        }
-        assertEquals(x, y);
-    }
-
-    public void test_set_big_decimal() throws Exception {
+    public void testSetBigDecimal() throws Exception {
         BigDecimal x = BigDecimal.TEN;
         pstmt.setBigDecimal(1, x);
 
@@ -101,7 +50,20 @@ public class OdpsPreparedStatementTest extends TestCase {
         assertEquals(x, y);
     }
 
-    public void test_set_byte() throws Exception {
+    public void testSetBoolean() throws Exception {
+        Boolean x = Boolean.TRUE;
+        pstmt.setBoolean(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        Boolean y = Boolean.FALSE;
+        while (rs.next()) {
+            y = rs.getBoolean(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetByte() throws Exception {
         byte x = Byte.MAX_VALUE;
         pstmt.setByte(1, x);
 
@@ -114,33 +76,7 @@ public class OdpsPreparedStatementTest extends TestCase {
         assertEquals(x, y);
     }
 
-    public void test_set_float() throws Exception {
-        float x = Float.MAX_VALUE;
-        pstmt.setFloat(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        float y = 0;
-        while (rs.next()) {
-            y = rs.getFloat(1);
-        }
-        assertEquals(x, y);
-    }
-
-    public void test_set_double() throws Exception {
-        double x = Double.MAX_VALUE;
-        pstmt.setDouble(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        double y = 0.0E00;
-        while (rs.next()) {
-            y = rs.getDouble(1);
-        }
-        assertEquals(x, y);
-    }
-
-    public void test_set_date() throws Exception {
+    public void testSetDate() throws Exception {
         Date x = new Date(unixtime);
         pstmt.setDate(1, x);
 
@@ -154,7 +90,85 @@ public class OdpsPreparedStatementTest extends TestCase {
         assertEquals(x.toString(), y.toString());
     }
 
-    public void test_set_time() throws Exception {
+    public void testSetDouble() throws Exception {
+        double x = Double.MAX_VALUE;
+        pstmt.setDouble(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        double y = 0.0E00;
+        while (rs.next()) {
+            y = rs.getDouble(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetFloat() throws Exception {
+        float x = Float.MAX_VALUE;
+        pstmt.setFloat(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        float y = 0;
+        while (rs.next()) {
+            y = rs.getFloat(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetInt() throws Exception {
+        int x = Integer.MAX_VALUE;
+        pstmt.setInt(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        int y = 0;
+        while (rs.next()) {
+            y = rs.getInt(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetLong() throws Exception {
+        long x = Long.MAX_VALUE;
+        pstmt.setLong(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        long y = 0;
+        while (rs.next()) {
+            y = rs.getLong(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetShort() throws Exception {
+        short x = Short.MAX_VALUE;
+        pstmt.setShort(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        short y = 0;
+        while (rs.next()) {
+            y = rs.getShort(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetString() throws Exception {
+        String x = "hello";
+        pstmt.setString(1, x);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        String y = "";
+        while (rs.next()) {
+            y = rs.getString(1);
+        }
+        assertEquals(x, y);
+    }
+
+    public void testSetTime() throws Exception {
         Time x = new Time(unixtime);
         pstmt.setTime(1, x);
 
@@ -167,7 +181,7 @@ public class OdpsPreparedStatementTest extends TestCase {
         assertEquals(x.toString(), y.toString());
     }
 
-    public void test_set_timestamp() throws Exception {
+    public void testSetTimestamp() throws Exception {
         Timestamp x = new Timestamp(unixtime);
         pstmt.setTimestamp(1, x);
 
@@ -184,22 +198,6 @@ public class OdpsPreparedStatementTest extends TestCase {
         String xs = formatter.format(x);
 
         assertEquals(xs, ys);
-    }
-
-
-
-
-    public void test_set_string() throws Exception {
-        String x = "hello";
-        pstmt.setString(1, x);
-
-        ResultSet rs = pstmt.executeQuery();
-
-        String y = "";
-        while (rs.next()) {
-            y = rs.getString(1);
-        }
-        assertEquals(x, y);
     }
 }
 
