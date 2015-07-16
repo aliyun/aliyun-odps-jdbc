@@ -40,22 +40,22 @@ public class OdpsResultSetMetaDataTest extends TestCase {
     }
 
     public void testGetColumnCount() throws Exception {
-        assertEquals(rsmd.getColumnCount(), 5);
+        assertEquals(5, rsmd.getColumnCount());
     }
 
     public void testGetColumnName() throws Exception {
-        assertEquals(rsmd.getColumnName(1), "name");
-        assertEquals(rsmd.getColumnName(2), "male");
-        assertEquals(rsmd.getColumnName(3), "age");
-        assertEquals(rsmd.getColumnName(4), "height");
-        assertEquals(rsmd.getColumnName(5), "day");
+        assertEquals("name", rsmd.getColumnName(1));
+        assertEquals("male", rsmd.getColumnName(2));
+        assertEquals("age", rsmd.getColumnName(3));
+        assertEquals("height", rsmd.getColumnName(4));
+        assertEquals("day", rsmd.getColumnName(5));
     }
 
     public void testGetColumnType() throws Exception {
-        assertEquals(rsmd.getColumnType(1), Types.VARCHAR);
-        assertEquals(rsmd.getColumnType(2), Types.BOOLEAN);
-        assertEquals(rsmd.getColumnType(3), Types.BIGINT);
-        assertEquals(rsmd.getColumnType(4), Types.DOUBLE);
-        assertEquals(rsmd.getColumnType(5), Types.DATE);
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
+        assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
+        assertEquals(Types.BIGINT, rsmd.getColumnType(3));
+        assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
+        assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
     }
 }
