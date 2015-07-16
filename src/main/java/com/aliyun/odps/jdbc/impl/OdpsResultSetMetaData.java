@@ -1,5 +1,7 @@
 package com.aliyun.odps.jdbc.impl;
 
+import com.aliyun.odps.OdpsType;
+
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -9,10 +11,10 @@ import java.util.Map;
 
 public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMetaData {
     private final List<String> columnNames;
-    private final List<Integer> columnTypes;
-    private Map<String, Integer> columnMap;
+    private final List<OdpsType> columnTypes;
+    private Map<String, Integer> NameIndexMap;
 
-    OdpsResultSetMetaData(List<String> columnNames, List<Integer> columnTypes) {
+    OdpsResultSetMetaData(List<String> columnNames, List<OdpsType> columnTypes) {
         this.columnNames = columnNames;
         this.columnTypes = columnTypes;
     }
@@ -40,22 +42,22 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
      * @return column index
      */
     public int getColumnIndex(String name) {
-        if (columnMap == null) {
-            columnMap = new HashMap<String, Integer>();
+        if (NameIndexMap == null) {
+            NameIndexMap = new HashMap<String, Integer>();
             for (int i = 0; i < columnNames.size(); ++i) {
-                columnMap.put(columnNames.get(i), i + 1);
-                columnMap.put(columnNames.get(i).toLowerCase(), i + 1);
+                NameIndexMap.put(columnNames.get(i), i + 1);
+                NameIndexMap.put(columnNames.get(i).toLowerCase(), i + 1);
             }
         }
 
-        Integer index = columnMap.get(name);
+        Integer index = NameIndexMap.get(name);
         if (index == null) {
             String lowerName = name.toLowerCase();
             if (lowerName == name) {
                 return -1;
             }
 
-            index = columnMap.get(name);
+            index = NameIndexMap.get(name);
         }
 
         if (index == null) {
@@ -73,8 +75,12 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
         return columnNames.get(toZeroIndex(column));
     }
 
-    @Override public int getColumnType(int column) throws SQLException {
+    public OdpsType getColumnOdpsType(int column) throws  SQLException {
         return columnTypes.get(toZeroIndex(column));
+    }
+
+    @Override public int getColumnType(int column) throws SQLException {
+        return TypeUtils.castOdpsTypeToSqlType(columnTypes.get(toZeroIndex(column)));
     }
 
     @Override public String getColumnTypeName(int column) throws SQLException {
