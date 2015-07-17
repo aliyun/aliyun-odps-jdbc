@@ -56,6 +56,6 @@ public class OdpsResultSetMetaDataTest extends TestCase {
         assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
         assertEquals(Types.BIGINT, rsmd.getColumnType(3));
         assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
-        assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
+        assertEquals(Types.DATE, rsmd.getColumnType(5));
     }
 }

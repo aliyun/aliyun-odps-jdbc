@@ -23,7 +23,7 @@ public class TypeUtils {
         } else if (type == OdpsType.STRING) {
             return Types.VARCHAR;
         } else if (type == OdpsType.DATETIME) {
-            return Types.TIMESTAMP;
+            return Types.DATE;
         } else {
             throw new SQLException("unrecognized OdpsType to sql type conversion");
         }

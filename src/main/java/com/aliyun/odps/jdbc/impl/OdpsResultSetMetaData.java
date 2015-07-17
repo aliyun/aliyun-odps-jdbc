@@ -12,7 +12,7 @@ import java.util.Map;
 public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMetaData {
     private final List<String> columnNames;
     private final List<OdpsType> columnTypes;
-    private Map<String, Integer> NameIndexMap;
+    private Map<String, Integer> nameIndexMap;
 
     OdpsResultSetMetaData(List<String> columnNames, List<OdpsType> columnTypes) {
         this.columnNames = columnNames;
@@ -42,22 +42,22 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
      * @return column index
      */
     public int getColumnIndex(String name) {
-        if (NameIndexMap == null) {
-            NameIndexMap = new HashMap<String, Integer>();
+        if (nameIndexMap == null) {
+            nameIndexMap = new HashMap<String, Integer>();
             for (int i = 0; i < columnNames.size(); ++i) {
-                NameIndexMap.put(columnNames.get(i), i + 1);
-                NameIndexMap.put(columnNames.get(i).toLowerCase(), i + 1);
+                nameIndexMap.put(columnNames.get(i), i + 1);
+                nameIndexMap.put(columnNames.get(i).toLowerCase(), i + 1);
             }
         }
 
-        Integer index = NameIndexMap.get(name);
+        Integer index = nameIndexMap.get(name);
         if (index == null) {
             String lowerName = name.toLowerCase();
             if (lowerName == name) {
                 return -1;
             }
 
-            index = NameIndexMap.get(name);
+            index = nameIndexMap.get(name);
         }
 
         if (index == null) {
