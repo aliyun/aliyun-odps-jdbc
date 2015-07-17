@@ -1,10 +1,10 @@
 package com.aliyun.odps.jdbc.impl;
 
 import com.aliyun.odps.OdpsType;
-import jdk.internal.org.objectweb.asm.Type;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.ParseException;
@@ -296,6 +296,10 @@ public class TypeUtils {
 
         if (value instanceof Calendar) {
             return new java.sql.Date(((Calendar) value).getTimeInMillis());
+        }
+
+        if (value instanceof java.util.Date) {
+            return new java.sql.Date(((java.util.Date) value).getTime());
         }
 
         if (value instanceof java.sql.Date) {
