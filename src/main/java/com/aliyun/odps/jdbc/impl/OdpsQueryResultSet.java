@@ -3,63 +3,83 @@ package com.aliyun.odps.jdbc.impl;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
-import com.csvreader.CsvReader;
+import com.aliyun.odps.OdpsType;
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordReader;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
-  private CsvReader resultReader;
-  private OdpsResultSetMetaData meta;
+    private OdpsResultSetMetaData meta;
 
-  private String[] values;
+    private RecordReader recordReader;
+    private Record record;
+    private Object[] columnValues;
 
-  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, CsvReader resultReader)
-      throws SQLException {
-    super(stmt);
-    this.meta = meta;
-    this.resultReader = resultReader;
-  }
 
-  @Override
-  public boolean next() throws SQLException {
-    try {
-      boolean result = resultReader.readRecord();
-
-      if (result) {
-        values = resultReader.getValues();
-      } else {
-        values = null;
-      }
-
-      return result;
-    } catch (IOException e) {
-      throw new SQLException(e);
+    OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, RecordReader reader)
+        throws SQLException {
+        super(stmt);
+        this.meta = meta;
+        this.recordReader = reader;
     }
-  }
 
-  @Override
-  public OdpsResultSetMetaData getMetaData() throws SQLException {
-    return meta;
-  }
-
-  @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    if (values == null) {
-      return null;
+    @Override public boolean next() throws SQLException {
+        try {
+            record = recordReader.read();
+            if (record == null) {
+                return false;
+            }
+            columnValues = record.toArray();
+            return true;
+        } catch (IOException e) {
+            throw new SQLException(e);
+        }
     }
-    checkIndex(columnIndex);
-    return values[columnIndex - 1];
-  }
 
-  @Override
-  public Object getObject(String columnLabel) throws SQLException {
-    int columnIndex = meta.getColumnIndex(columnLabel);
-    return getObject(columnIndex);
-  }
-
-  protected void checkIndex(int column) {
-    if (column <= 0 || column > values.length) {
-      throw new IllegalArgumentException();
+    @Override public OdpsResultSetMetaData getMetaData() throws SQLException {
+        return meta;
     }
-  }
+
+    @Override public Object getObject(int columnIndex) throws SQLException {
+        return columnValues != null ? columnValues[toZeroIndex(columnIndex)] : null;
+    }
+
+    @Override public Object getObject(String columnName) throws SQLException {
+        int columnIndex = meta.getColumnIndex(columnName);
+        return getObject(columnIndex);
+    }
+
+    protected int toZeroIndex(int column) {
+        if (column <= 0 || column > columnValues.length) {
+            throw new IllegalArgumentException();
+        }
+        return column - 1;
+    }
+
+    /**
+     * Convert a string literal to a Java object with a specified type
+     * @param literal the sting literal, e.g. "6.214"
+     * @param type OdpsType
+     * @return a java object
+     */
+    protected Object evaluate(String literal, OdpsType type) {
+        if (literal == null) {
+            return null;
+        }
+        if (type == OdpsType.BIGINT) {
+            return Long.valueOf(literal);
+        } else if (type == OdpsType.BOOLEAN) {
+            return Boolean.valueOf(literal);
+        } else if (type == OdpsType.DOUBLE) {
+            return Double.valueOf(literal);
+        } else if (type == OdpsType.STRING) {
+            return literal;
+        } else if (type == OdpsType.DATETIME) {
+            return Timestamp.valueOf(literal);
+        } else {
+            return null;
+        }
+    }
 }
