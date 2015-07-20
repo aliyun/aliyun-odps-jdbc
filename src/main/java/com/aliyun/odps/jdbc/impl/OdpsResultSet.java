@@ -40,12 +40,20 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         return fetchDirection;
     }
 
+    @Override public void setFetchDirection(int direction) throws SQLException {
+        fetchDirection = direction;
+    }
+
     @Override public int getFetchSize() throws SQLException {
         if (fetchSize == null) {
             return stmt.getFetchSize();
         }
 
         return fetchSize;
+    }
+
+    @Override public void setFetchSize(int rows) throws SQLException {
+        fetchSize = rows;
     }
 
     @Override public boolean absolute(int row) throws SQLException {
@@ -100,9 +108,26 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         return TypeUtils.castToBigDecimal(obj);
     }
 
+    @Override public Object getObject(int columnIndex) throws SQLException {
+        Object obj = getObject0(columnIndex);
+
+        wasNull = (obj == null);
+
+        return obj;
+    }
+
+    Object getObject0(int columnIndex) throws SQLException {
+        return null;
+    }
+
     @Override public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
         int columnIndex = findColumn(columnLabel);
         return getBigDecimal(columnIndex);
+    }
+
+    @Override public int findColumn(String columnLabel) throws SQLException {
+        int columnIndex = getMetaData().getColumnIndex(columnLabel);
+        return columnIndex;
     }
 
     @Override public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
@@ -113,6 +138,29 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     @Override public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
         int columnIndex = findColumn(columnLabel);
         return getBigDecimal(columnIndex);
+    }
+
+    @Override public Object getObject(String columnLabel) throws SQLException {
+        int columnIndex = findColumn(columnLabel);
+        return getObject(columnIndex);
+    }
+
+    @Override public Object getObject(int columnIndex, Map<String, Class<?>> map)
+        throws SQLException {
+        return getObject(columnIndex);
+    }
+
+    @Override public Object getObject(String columnLabel, Map<String, Class<?>> map)
+        throws SQLException {
+        return getObject(columnLabel);
+    }
+
+    @Override public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+        throw new SQLFeatureNotSupportedException();
+    }
+
+    @Override public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public InputStream getBinaryStream(int columnIndex) throws SQLException {
@@ -273,18 +321,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         return (String) getObject(columnIndex);
     }
 
-    @Override public Object getObject(int columnIndex) throws SQLException {
-        Object obj = getObject0(columnIndex);
-
-        wasNull = (obj == null);
-
-        return obj;
-    }
-
-    Object getObject0(int columnIndex) throws SQLException {
-        return null;
-    }
-
     @Override public String getNString(String columnLabel) throws SQLException {
         return getString(columnLabel);
     }
@@ -292,34 +328,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     @Override public String getString(String columnLabel) throws SQLException {
         int columnIndex = findColumn(columnLabel);
         return getString(columnIndex);
-    }
-
-    @Override public int findColumn(String columnLabel) throws SQLException {
-        int columnIndex = getMetaData().getColumnIndex(columnLabel);
-        return columnIndex;
-    }
-
-    @Override public Object getObject(String columnLabel) throws SQLException {
-        int columnIndex = findColumn(columnLabel);
-        return getObject(columnIndex);
-    }
-
-    @Override public Object getObject(int columnIndex, Map<String, Class<?>> map)
-        throws SQLException {
-        return getObject(columnIndex);
-    }
-
-    @Override public Object getObject(String columnLabel, Map<String, Class<?>> map)
-        throws SQLException {
-        return getObject(columnLabel);
-    }
-
-    @Override public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public Ref getRef(int columnIndex) throws SQLException {
@@ -484,14 +492,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
     @Override public boolean rowUpdated() throws SQLException {
         return false;
-    }
-
-    @Override public void setFetchDirection(int direction) throws SQLException {
-
-    }
-
-    @Override public void setFetchSize(int rows) throws SQLException {
-
     }
 
     @Override public void updateArray(int columnIndex, Array x) throws SQLException {

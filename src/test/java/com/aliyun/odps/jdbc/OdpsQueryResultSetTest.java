@@ -61,6 +61,13 @@ public class OdpsQueryResultSetTest extends TestCase {
         assertEquals(1, x);
     }
 
+    public void testGetShort() throws Exception {
+        ResultSet rs = stmt.executeQuery("select 1 id from dual;");
+        rs.next();
+        int x = rs.getShort(1);
+        assertEquals(1, x);
+    }
+
     public void testGetLong() throws Exception {
         ResultSet rs = stmt.executeQuery("select 1 id from dual;");
         rs.next();
@@ -91,9 +98,6 @@ public class OdpsQueryResultSetTest extends TestCase {
     }
 
     public void testGetDate() throws Exception {
-
-
-
         ResultSet rs = stmt.executeQuery(
             "select cast('2015-07-09 11:11:11' as datetime) day  from dual;");
 
@@ -103,6 +107,16 @@ public class OdpsQueryResultSetTest extends TestCase {
         Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date y = (Date) formatter.parseObject("2015-07-09 11:11:11");
 
+
         assertEquals(y, x);
+    }
+
+    public void testGetString() throws Exception {
+        ResultSet rs = stmt.executeQuery(
+            "select 'alibaba' name  from dual;");
+
+        rs.next();
+        String x = rs.getString(1);
+        assertEquals("alibaba", x);
     }
 }

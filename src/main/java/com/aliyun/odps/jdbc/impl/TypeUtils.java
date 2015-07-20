@@ -4,7 +4,6 @@ import com.aliyun.odps.OdpsType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.ParseException;
