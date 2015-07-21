@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -21,10 +22,10 @@ import com.aliyun.odps.data.RecordReader;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-    private static final String TEMP_TABLE_NAME = "temp_tbl_for_query_result";
+    private static String TEMP_TABLE_NAME;
 
     private OdpsConnection conn;
-    private Instance instance;
+    private Instance instance = null;
     private ResultSet resultSet = null;
     private int updateCount = -1;
     private int maxRows;
@@ -35,6 +36,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     OdpsStatement(OdpsConnection conn) {
         this.conn = conn;
+
+        // The table name must be unique since there could be two ODPS connection
+        // querying its results.
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "_");
+        TEMP_TABLE_NAME = "temp_tbl_for_query_result_" + uuid;
     }
 
     @Override public void addBatch(String sql) throws SQLException {
