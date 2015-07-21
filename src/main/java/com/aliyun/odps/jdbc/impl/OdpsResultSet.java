@@ -23,37 +23,26 @@ import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
     protected OdpsStatement stmt;
-
-    private boolean wasNull = false;
-    private Integer fetchDirection;
-    private Integer fetchSize;
+    protected boolean wasNull = false;
 
     OdpsResultSet(OdpsStatement stmt) throws SQLException {
         this.stmt = stmt;
     }
 
     @Override public int getFetchDirection() throws SQLException {
-        if (fetchDirection == null) {
-            return stmt.getFetchDirection();
-        }
-
-        return fetchDirection;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public void setFetchDirection(int direction) throws SQLException {
-        fetchDirection = direction;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public int getFetchSize() throws SQLException {
-        if (fetchSize == null) {
-            return stmt.getFetchSize();
-        }
-
-        return fetchSize;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public void setFetchSize(int rows) throws SQLException {
-        fetchSize = rows;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public boolean absolute(int row) throws SQLException {
@@ -77,6 +66,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public void close() throws SQLException {
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public void deleteRow() throws SQLException {
@@ -109,15 +99,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public Object getObject(int columnIndex) throws SQLException {
-        Object obj = getObject0(columnIndex);
+        throw new SQLFeatureNotSupportedException();
 
-        wasNull = (obj == null);
-
-        return obj;
-    }
-
-    Object getObject0(int columnIndex) throws SQLException {
-        return null;
     }
 
     @Override public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
@@ -125,6 +108,13 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         return getBigDecimal(columnIndex);
     }
 
+    /**
+     * The column index can be acquired from the MetaData (implemented by the child class)
+     *
+     * @param columnLabel the name of the column
+     * @return the column index
+     * @throws SQLException
+     */
     @Override public int findColumn(String columnLabel) throws SQLException {
         int columnIndex = getMetaData().getColumnIndex(columnLabel);
         return columnIndex;
@@ -147,12 +137,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
     @Override public Object getObject(int columnIndex, Map<String, Class<?>> map)
         throws SQLException {
-        return getObject(columnIndex);
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public Object getObject(String columnLabel, Map<String, Class<?>> map)
         throws SQLException {
-        return getObject(columnLabel);
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
@@ -226,7 +216,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public int getConcurrency() throws SQLException {
-        return 0;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public String getCursorName() throws SQLException {
@@ -295,6 +285,11 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         return getLong(columnIndex);
     }
 
+    /**
+     * Let the child class keep the schema of the result set.
+     * @return
+     * @throws SQLException
+     */
     @Override public abstract OdpsResultSetMetaData getMetaData() throws SQLException;
 
     @Override public Reader getNCharacterStream(int columnIndex) throws SQLException {
@@ -409,7 +404,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public int getType() throws SQLException {
-        return 0;
+        return ResultSet.TYPE_FORWARD_ONLY;
     }
 
     @Override public URL getURL(int columnIndex) throws SQLException {
@@ -429,7 +424,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public SQLWarning getWarnings() throws SQLException {
-        return null;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public void insertRow() throws SQLException {
@@ -445,7 +440,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public boolean isClosed() throws SQLException {
-        return false;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public boolean isFirst() throws SQLException {
@@ -483,15 +478,15 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     @Override public boolean rowDeleted() throws SQLException {
-        return false;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public boolean rowInserted() throws SQLException {
-        return false;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public boolean rowUpdated() throws SQLException {
-        return false;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public void updateArray(int columnIndex, Array x) throws SQLException {

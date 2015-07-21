@@ -59,6 +59,14 @@ public class OdpsQueryResultSetTest extends TestCase {
         rs.next();
         int x = rs.getInt(1);
         assertEquals(1, x);
+
+        // overflow
+        rs.close();
+        long l = (long) Integer.MAX_VALUE + 1;
+        rs = stmt.executeQuery("select " + l + " id from dual;");
+        rs.next();
+        x = rs.getInt(1);
+        assertEquals(Integer.MIN_VALUE, x);
     }
 
     public void testGetShort() throws Exception {
@@ -73,6 +81,12 @@ public class OdpsQueryResultSetTest extends TestCase {
         rs.next();
         long x = rs.getLong(1);
         assertEquals(1, x);
+
+        // upper value
+        rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+        rs.next();
+        x = rs.getLong(1);
+        assertEquals(Long.MAX_VALUE, x);
     }
 
     public void testGetDouble() throws Exception {
@@ -106,7 +120,6 @@ public class OdpsQueryResultSetTest extends TestCase {
 
         Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date y = (Date) formatter.parseObject("2015-07-09 11:11:11");
-
 
         assertEquals(y, x);
     }

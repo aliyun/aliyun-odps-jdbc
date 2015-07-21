@@ -386,7 +386,7 @@ public class TypeUtils {
 
                 SimpleDateFormat dateFormat = new SimpleDateFormat(format);
                 try {
-                    return new java.sql.Time(((java.util.Date) dateFormat.parse(strVal)).getTime());
+                    return new java.sql.Time((dateFormat.parse(strVal)).getTime());
                 } catch (ParseException e) {
                     throw new SQLException("can not cast to Date, value : " + strVal);
                 }
@@ -443,8 +443,7 @@ public class TypeUtils {
 
                 SimpleDateFormat dateFormat = new SimpleDateFormat(format);
                 try {
-                    return new java.sql.Timestamp(
-                        ((java.util.Date) dateFormat.parse(strVal)).getTime());
+                    return new java.sql.Timestamp((dateFormat.parse(strVal)).getTime());
                 } catch (ParseException e) {
                     throw new SQLException("can not cast to Date, value : " + strVal);
                 }
