@@ -38,21 +38,23 @@ public class LogView {
     String policy = generatePolicy(instance, hours);
     String token = sm.generateAuthorizationToken(policy, POLICY_TYPE);
     String logview = logViewHost + "/logview/?h=" + odps.getEndpoint() + "&p="
-        + instance.getProject() + "&i=" + instance.getId() + "&token=" + token;
+                     + instance.getProject() + "&i=" + instance.getId() + "&token=" + token;
     return logview;
   }
 
   private String generatePolicy(Instance instance, long hours) {
     String policy = "{\n" //
-        + "    \"expires_in_hours\": " + String.valueOf(hours) + ",\n" //
-        + "    \"policy\": {\n" + "        \"Statement\": [{\n"
-        + "            \"Action\": [\"odps:Read\"],\n" + "            \"Effect\": \"Allow\",\n" //
-        + "            \"Resource\": \"acs:odps:*:projects/" + instance.getProject() + "/instances/"
-        + instance.getId() + "\"\n" //
-        + "        }],\n"//
-        + "        \"Version\": \"1\"\n" //
-        + "    }\n" //
-        + "}";
+                    + "    \"expires_in_hours\": " + String.valueOf(hours) + ",\n" //
+                    + "    \"policy\": {\n" + "        \"Statement\": [{\n"
+                    + "            \"Action\": [\"odps:Read\"],\n"
+                    + "            \"Effect\": \"Allow\",\n" //
+                    + "            \"Resource\": \"acs:odps:*:projects/" + instance.getProject()
+                    + "/instances/"
+                    + instance.getId() + "\"\n" //
+                    + "        }],\n"//
+                    + "        \"Version\": \"1\"\n" //
+                    + "    }\n" //
+                    + "}";
     return policy;
   }
 }
