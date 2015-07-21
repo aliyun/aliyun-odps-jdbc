@@ -7,6 +7,7 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -19,6 +20,9 @@ import com.aliyun.odps.Table;
 import com.aliyun.odps.data.RecordReader;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
+
+    private static final String TEMP_TABLE_NAME = "temp_tbl_for_query_result";
+
     private OdpsConnection conn;
     private Instance instance;
     private ResultSet resultSet = null;
@@ -59,13 +63,32 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         throw new SQLFeatureNotSupportedException();
     }
 
+
+    /**
+     * Each resultSet is associated with a statement. If the same statement to execute
+     * another query, the original resultSet must be released. The temp table used to
+     * generate the result must be dropped as well.
+     *
+     * @throws SQLException
+     */
     @Override public void close() throws SQLException {
         if (isClosed) {
             return;
         }
 
-        // Drop the temp table when closing and can
-        conn.run("drop table if exists yichao_temp_table;");
+        // Drop the temp table for querying result set and ensure it has been dropped
+        Instance dropTableInstance = conn.run(String.format("drop table %s;", TEMP_TABLE_NAME));
+        Instance.TaskStatus dropTableStatus;
+        try {
+            Map<String, Instance.TaskStatus> statuses = dropTableInstance.getTaskStatus();
+            dropTableStatus = statuses.get("SQL");
+        } catch (OdpsException e) {
+            throw new SQLException("can not read instance status", e);
+        }
+        if (dropTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
+            throw new SQLException("can not drop the temp table for querying result");
+        }
+
         isClosed = true;
         resultSet = null;
     }
@@ -79,22 +102,40 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     @Override public ResultSet executeQuery(String sql) throws SQLException {
-        if (!isClosed()) {
-            close();
-        }
 
         beforeExecute();
 
-        // Generate the resultSet by creating a temperate table
-//        String uuid = UUID.randomUUID().toString().replaceAll("-", "_");
-//        String tempTableName = "tmp_table_for_select_jdbc_" + uuid;
-//        String createTableSql = String.format("create table %s as %s", tempTableName, sql);
+        // Drop the temp table for querying result set
+        // in case that the table has been created in the former session.
+        Instance dropTableInstance = conn.run(String.format("drop table if exists %s;", TEMP_TABLE_NAME));
+        Instance.TaskStatus dropTableStatus;
+        try {
+            Map<String, Instance.TaskStatus> statuses = dropTableInstance.getTaskStatus();
+            dropTableStatus = statuses.get("SQL");
+        } catch (OdpsException e) {
+            throw new SQLException("can not read instance status", e);
+        }
+        if (dropTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
+            throw new SQLException("can not drop the temp table for querying result");
+        }
 
-        String createTableSql = "create table yichao_temp_table as " + sql;
-        conn.run(createTableSql);
 
-        // Read the table schema
-        Table table = conn.getOdps().tables().get("yichao_temp_table");
+        // Create a temp table for querying result set and ensure its creation
+        Instance createTableInstance =
+            conn.run(String.format("create table %s as %s", TEMP_TABLE_NAME, sql));
+
+        Instance.TaskStatus createTableStatus;
+        try {
+            Map<String, Instance.TaskStatus> statuses = createTableInstance.getTaskStatus();
+            createTableStatus = statuses.get("SQL");
+        } catch (OdpsException e) {
+            throw new SQLException("can not read instance status", e);
+        }
+        if (createTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
+            throw new SQLException("can not create temp table for querying result");
+        }
+
+        Table table = conn.getOdps().tables().get(TEMP_TABLE_NAME);
         List<String> columnNames = new ArrayList<String>();
         List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
         try {
@@ -108,7 +149,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
         OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
-        // Read the table records
         RecordReader recordReader;
         try {
             recordReader = table.read(10000);
