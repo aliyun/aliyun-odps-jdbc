@@ -7,50 +7,29 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
-import com.aliyun.odps.Instance.TaskSummary;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.data.RecordReader;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
-    private TaskSummary taskSummary;
-    private int updateCount = -1;
-
     private OdpsConnection conn;
     private Instance instance;
-
     private ResultSet resultSet = null;
-
-    private int resultSetHoldability;
-    private int resultSetConcurrency;
-    private int resultSetType;
-
-    private int maxFieldSize;
+    private int updateCount = -1;
     private int maxRows;
     private int fetchSize;
     private int queryTimeout = -1;
-    private int fetchDirection;
     private boolean isClosed = false;
     private boolean isCancelled = false;
 
     OdpsStatement(OdpsConnection conn) {
-        this.conn = conn;
-    }
-
-    OdpsStatement(OdpsConnection conn, int resultSetType, int resultSetConcurrency) {
-        this.conn = conn;
-    }
-
-    OdpsStatement(OdpsConnection conn, int resultSetType, int resultSetConcurrency,
-        int resultSetHoldability) {
         this.conn = conn;
     }
 
@@ -84,6 +63,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         if (isClosed) {
             return;
         }
+
+        // Drop the temp table when closing and can
+        conn.run("drop table if exists yichao_temp_table;");
         isClosed = true;
         resultSet = null;
     }
@@ -92,36 +74,27 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         throw new SQLFeatureNotSupportedException();
     }
 
-    @Override public boolean execute(String sql, int[] columnIndexes) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
-    @Override public boolean execute(String sql, String[] columnNames) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
-    }
-
     @Override public int[] executeBatch() throws SQLException {
         throw new SQLFeatureNotSupportedException();
     }
 
     @Override public ResultSet executeQuery(String sql) throws SQLException {
+        if (!isClosed()) {
+            close();
+        }
+
         beforeExecute();
 
         // Generate the resultSet by creating a temperate table
-        String uuid = UUID.randomUUID().toString().replaceAll("-", "_");
-        String tempTableName = "tmp_table_for_select_jdbc_" + uuid;
+//        String uuid = UUID.randomUUID().toString().replaceAll("-", "_");
+//        String tempTableName = "tmp_table_for_select_jdbc_" + uuid;
+//        String createTableSql = String.format("create table %s as %s", tempTableName, sql);
 
-        // TODO
-        String subsql = sql.substring(0, sql.length() - 1);
-        String createTempTableSql =
-            "create table " + tempTableName + " as select * from (" + subsql + ")" + tempTableName
-                + " limit 10000;";
-        String dropTempTableSql = "drop table " + tempTableName + ";";
-
-        instance = conn.run(createTempTableSql);
+        String createTableSql = "create table yichao_temp_table as " + sql;
+        conn.run(createTableSql);
 
         // Read the table schema
-        Table table = conn.getOdps().tables().get(tempTableName);
+        Table table = conn.getOdps().tables().get("yichao_temp_table");
         List<String> columnNames = new ArrayList<String>();
         List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
         try {
@@ -131,7 +104,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 columnSqlTypes.add(col.getType());
             }
         } catch (OdpsException e) {
-            throw new SQLException("cannot read table schema", e);
+            throw new SQLException("can not read table schema", e);
         }
         OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
@@ -144,14 +117,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
 
         resultSet = new OdpsQueryResultSet(this, meta, recordReader);
-
-        // TODO: when?
-        instance = conn.run(dropTempTableSql);
         return resultSet;
-    }
-
-    @Override public boolean execute(String sql) throws SQLException {
-        return false;
     }
 
     @Override public int executeUpdate(String sql) throws SQLException {
@@ -160,7 +126,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         instance = conn.run(sql);
 
         try {
-            taskSummary = instance.getTaskSummary("SQL");
+            Instance.TaskSummary taskSummary = instance.getTaskSummary("SQL");
             if (taskSummary != null) {
                 JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
                 JSONObject outputs = jsonSummary.getJSONObject("Outputs");
@@ -197,16 +163,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         throw new SQLFeatureNotSupportedException();
     }
 
+    @Override public boolean execute(String sql) throws SQLException {
+        return false;
+    }
+
+    @Override public boolean execute(String sql, int[] columnIndexes) throws SQLException {
+        throw new SQLFeatureNotSupportedException();
+    }
+
+    @Override public boolean execute(String sql, String[] columnNames) throws SQLException {
+        throw new SQLFeatureNotSupportedException();
+    }
+
     @Override public OdpsConnection getConnection() throws SQLException {
         return conn;
     }
 
     @Override public int getFetchDirection() throws SQLException {
-        return fetchDirection;
-    }
-
-    @Override public void setFetchDirection(int direction) throws SQLException {
-        this.fetchDirection = direction;
+        return ResultSet.FETCH_FORWARD;
     }
 
     @Override public int getFetchSize() throws SQLException {
@@ -214,7 +188,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     @Override public void setFetchSize(int rows) throws SQLException {
-        this.fetchSize = rows;
+        fetchSize = rows;
     }
 
     @Override public ResultSet getGeneratedKeys() throws SQLException {
@@ -222,11 +196,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     @Override public int getMaxFieldSize() throws SQLException {
-        return maxFieldSize;
-    }
-
-    @Override public void setMaxFieldSize(int max) throws SQLException {
-        maxFieldSize = max;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public int getMaxRows() throws SQLException {
@@ -261,15 +231,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     @Override public int getResultSetConcurrency() throws SQLException {
-        return resultSetConcurrency;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public int getResultSetHoldability() throws SQLException {
-        return resultSetHoldability;
+        throw new SQLFeatureNotSupportedException();
     }
 
     @Override public int getResultSetType() throws SQLException {
-        return resultSetType;
+        return ResultSet.TYPE_FORWARD_ONLY;
     }
 
     @Override public int getUpdateCount() throws SQLException {
@@ -304,6 +274,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         throw new SQLFeatureNotSupportedException();
     }
 
+    @Override public void setFetchDirection(int direction) throws SQLException {
+        if (direction != ResultSet.FETCH_FORWARD) {
+            throw new SQLException("Not supported direction: " + direction);
+        }
+    }
+
+    @Override public void setMaxFieldSize(int max) throws SQLException {
+        throw new SQLFeatureNotSupportedException();
+    }
+
     public void setPoolable(boolean poolable) throws SQLException {
         throw new SQLFeatureNotSupportedException();
     }
@@ -312,7 +292,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         instance = null;
         updateCount = -1;
         resultSet = null;
-        taskSummary = null;
         isCancelled = false;
     }
 }
