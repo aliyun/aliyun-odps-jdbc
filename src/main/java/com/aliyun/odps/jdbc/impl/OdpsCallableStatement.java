@@ -502,7 +502,7 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void set NString(String parameterName, String value) throws SQLException {
+  public void setNString(String parameterName, String value) throws SQLException {
 
   }
 
