@@ -80,7 +80,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    */
   @Override
   public void close() throws SQLException {
-    if (isClosed) {
+    if (isClosed || resultSet == null) {
       return;
     }
 
@@ -322,10 +322,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public int getUpdateCount() throws SQLException {
     return updateCount;
   }
-
-  //    Instance getOdpsTaskIntance() {
-  //        return this.instance;
-  //    }
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
