@@ -23,11 +23,13 @@ import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
+  private OdpsResultSetMetaData meta;
   protected OdpsStatement stmt;
   protected boolean wasNull = false;
 
-  OdpsResultSet(OdpsStatement stmt) throws SQLException {
+  OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
+    this.meta = meta;
   }
 
   @Override
@@ -343,14 +345,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     return getLong(columnIndex);
   }
 
-  /**
-   * Let the child class keep the schema of the result set.
-   *
-   * @return
-   * @throws SQLException
-   */
   @Override
-  public abstract OdpsResultSetMetaData getMetaData() throws SQLException;
+  public OdpsResultSetMetaData getMetaData() throws SQLException {
+    return meta;
+  }
 
   @Override
   public Reader getNCharacterStream(int columnIndex) throws SQLException {

@@ -11,52 +11,31 @@ import com.aliyun.odps.Function;
 public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
 
   private Iterator<Function> iterator;
-
-  private OdpsResultSetMetaData meta;
-
   private Function function;
 
-  OdpsFunctionsResultSet(Iterator<Function> iterator) throws SQLException {
-    super(null);
+  OdpsFunctionsResultSet(Iterator<Function> iterator, OdpsResultSetMetaData meta)
+      throws SQLException {
+    super(null, meta);
     this.iterator = iterator;
   }
 
   @Override
   public boolean next() throws SQLException {
-    boolean hasNext = iterator.hasNext();
-
-    if (hasNext) {
+    if (iterator.hasNext()) {
       function = iterator.next();
+      return true;
     } else {
       function = null;
+      return false;
     }
-
-    return hasNext;
   }
 
   @Override
   public void close() throws SQLException {
-
   }
 
   @Override
-  public OdpsResultSetMetaData getMetaData() throws SQLException {
-    if (meta != null) {
-      return meta;
-    }
-
-    String[] columns = new String[] {"FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME", "REMARKS",
-        "FUNCTION_TYPE", "SPECIFIC_NAME"};
-    int[] types = new int[columns.length];
-    Arrays.fill(types, Types.VARCHAR);
-
-    meta = new OdpsResultSetMetaData(columns, types);
-
-    return meta;
-  }
-
-  @Override
-  Object getObject0(int columnIndex) throws SQLException {
+  public Object getObject(int columnIndex) throws SQLException {
     switch (columnIndex) {
       case 1: // FUNCTION_CAT
         return null;
@@ -67,12 +46,11 @@ public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
       case 4: // REMARKS
         return null;
       case 5: // FUNCTION_TYPE
-        return null;
+        return 0;   // TODO: set a more reasonable value
       case 6: // SPECIFIC_NAME
         return null;
       default:
         return null;
     }
   }
-
 }

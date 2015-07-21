@@ -9,7 +9,6 @@ import com.aliyun.odps.data.RecordReader;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
-  private OdpsResultSetMetaData meta;
   private RecordReader recordReader;
   private Object[] rowValues;
 
@@ -20,8 +19,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, RecordReader reader)
       throws SQLException {
-    super(stmt);
-    this.meta = meta;
+    super(stmt, meta);
     this.recordReader = reader;
   }
 
@@ -84,18 +82,13 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public OdpsResultSetMetaData getMetaData() throws SQLException {
-    return meta;
-  }
-
-  @Override
   public Object getObject(int columnIndex) throws SQLException {
     return rowValues != null ? rowValues[toZeroIndex(columnIndex)] : null;
   }
 
   @Override
   public Object getObject(String columnName) throws SQLException {
-    int columnIndex = meta.getColumnIndex(columnName);
+    int columnIndex = getMetaData().getColumnIndex(columnName);
     return getObject(columnIndex);
   }
 
