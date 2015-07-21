@@ -25,16 +25,6 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
     super(conn, sql);
   }
 
-  OdpsCallableStatement(OdpsConnection conn, String sql, int resultSetType,
-      int resultSetConcurrency) {
-    super(conn, sql, resultSetType, resultSetConcurrency);
-  }
-
-  OdpsCallableStatement(OdpsConnection conn, String sql, int resultSetType,
-      int resultSetConcurrency, int resultSetHoldability) {
-    super(conn, sql, resultSetType, resultSetConcurrency, resultSetHoldability);
-  }
-
   @Override
   public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
 
