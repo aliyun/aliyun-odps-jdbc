@@ -105,6 +105,8 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
       return Types.VARCHAR;
     } else if (type == OdpsType.DATETIME) {
       return Types.DATE;
+    } else if (type == OdpsType.DECIMAL) {
+      return Types.DECIMAL;
     } else {
       throw new SQLException("unknown OdpsType to sql type conversion");
     }
