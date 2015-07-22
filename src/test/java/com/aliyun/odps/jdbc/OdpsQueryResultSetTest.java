@@ -48,16 +48,12 @@ public class OdpsQueryResultSetTest extends TestCase {
     ResultSet rs = stmt.executeQuery(sql);
 
     rs.next();
-    Object o1 = rs.getObject(1);
-    Object o2 = rs.getObject(2);
-    assertEquals(1, ((Long) o1).longValue());
-    assertEquals(1.5, ((Double) o2).doubleValue());
+    assertEquals(1, ((Long) rs.getObject(1)).longValue());
+    assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue());
 
     rs.next();
-    o1 = rs.getObject(1);
-    o2 = rs.getObject(2);
-    assertEquals(2, ((Long) o1).longValue());
-    assertEquals(2.9, ((Double) o2).doubleValue());
+    assertEquals(2, ((Long) rs.getObject(1)).longValue());
+    assertEquals(2.9, ((Double) rs.getObject(2)).doubleValue());
 
     rs.close();
   }
@@ -65,58 +61,67 @@ public class OdpsQueryResultSetTest extends TestCase {
   public void testGetInt() throws Exception {
     ResultSet rs = stmt.executeQuery("select 1 id from dual;");
     rs.next();
-    int x = rs.getInt(1);
-    assertEquals(1, x);
+    assertEquals(1, rs.getInt(1));
+    assertEquals("1", rs.getString(1));  // cast to string
+    assertEquals(1, rs.getLong(1));       // cast to long
 
-    // overflow
+    // cast from LONG
     rs.close();
-    long l = (long) Integer.MAX_VALUE + 1;
-    rs = stmt.executeQuery("select " + l + " id from dual;");
+    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
     rs.next();
-    x = rs.getInt(1);
-    assertEquals(Integer.MIN_VALUE, x);
+    assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
   }
 
   public void testGetShort() throws Exception {
     ResultSet rs = stmt.executeQuery("select 1 id from dual;");
     rs.next();
-    int x = rs.getShort(1);
-    assertEquals(1, x);
+    assertEquals(1, rs.getShort(1));
+
+    // cast from LONG
+    rs.close();
+    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+    rs.next();
+    assertEquals((short) Long.MAX_VALUE, rs.getShort(1));
   }
 
   public void testGetLong() throws Exception {
-    ResultSet rs = stmt.executeQuery("select 1 id from dual;");
+    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
     rs.next();
-    long x = rs.getLong(1);
-    assertEquals(1, x);
-
-    // upper value
-    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    x = rs.getLong(1);
-    assertEquals(Long.MAX_VALUE, x);
+    assertEquals(Long.MAX_VALUE, rs.getLong(1));
   }
 
   public void testGetDouble() throws Exception {
     ResultSet rs = stmt.executeQuery("select 0.5 weight from dual;");
     rs.next();
-    double x = rs.getDouble(1);
-    assertEquals(0.5, x);
+    assertEquals(0.5, rs.getDouble(1));
   }
 
   public void testGetFloat() throws Exception {
     ResultSet rs = stmt.executeQuery("select 0.5 weight from dual;");
     rs.next();
-    double x = rs.getFloat(1);
-    assertEquals(0.5, x);
+    assertEquals((float) 0.5, rs.getFloat(1));
+
+    // cast from DOUBLE
+    rs.close();
+    rs = stmt.executeQuery("select " + Double.MAX_VALUE + " weight from dual;");
+    rs.next();
+    assertEquals((float) Double.MAX_VALUE, rs.getFloat(1));
   }
 
   public void testGetBigDecimal() throws Exception {
-    ResultSet rs = stmt.executeQuery("select 5555 weight from dual;");
+    String decimalStr = "55.123456789012345";
+    ResultSet rs =
+        stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
     rs.next();
-    BigDecimal x = rs.getBigDecimal(1);
-    BigDecimal y = new BigDecimal(5555);
-    assertEquals(y, x);
+    BigDecimal real = rs.getBigDecimal(1);
+    BigDecimal expect = new BigDecimal(decimalStr);
+    assertEquals(expect, real);
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + decimalStr + "' name from dual;");
+    rs.next();
+    assertEquals(expect, rs.getBigDecimal(1));
   }
 
   public void testGetDate() throws Exception {
@@ -124,9 +129,15 @@ public class OdpsQueryResultSetTest extends TestCase {
         "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
 
     rs.next();
-    Date x = rs.getDate(1);
-    Date y = new Date(unixTimeNow);
-    assertEquals(y.toString(), x.toString());
+    Date real = rs.getDate(1);
+    Date expect = new Date(unixTimeNow);
+    assertEquals(expect.toString(), real.toString());
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + odpsDatetimeNow + "' name from dual;");
+    rs.next();
+    assertEquals(expect.toString(), rs.getDate(1).toString());
   }
 
   public void testGetTime() throws Exception {
@@ -134,33 +145,39 @@ public class OdpsQueryResultSetTest extends TestCase {
         "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
 
     rs.next();
-    Time x = rs.getTime(1);
-    Time y = new Time(unixTimeNow);
-    assertEquals(y.toString(), x.toString());
+    Time real = rs.getTime(1);
+    Time expect = new Time(unixTimeNow);
+    assertEquals(expect.toString(), real.toString());
   }
 
   public void testGetTimeStamp() throws Exception {
     ResultSet rs = stmt.executeQuery(
-        "select cast('"+ odpsDatetimeNow +"' as datetime) day from dual;");
+        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
 
     rs.next();
-    Timestamp x = rs.getTimestamp(1);
-    Timestamp y = new Timestamp(unixTimeNow);
+    Timestamp real = rs.getTimestamp(1);
+    Timestamp expect = new Timestamp(unixTimeNow);
 
     // Walk around the precision problem
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    String ys = formatter.format(y);
-    String xs = formatter.format(x);
-
-    assertEquals(ys, xs);
+    assertEquals(formatter.format(expect), formatter.format(real));
   }
 
   public void testGetString() throws Exception {
-    ResultSet rs = stmt.executeQuery(
-        "select 'alibaba' name  from dual;");
-
+    ResultSet rs = stmt.executeQuery("select 'alibaba' name from dual;");
     rs.next();
-    String x = rs.getString(1);
-    assertEquals("alibaba", x);
+    assertEquals("alibaba", rs.getString(1));
+
+    // cast from DOUBLE
+    rs.close();
+    rs = stmt.executeQuery("select 0.5 weight from dual;");
+    rs.next();
+    assertEquals("0.5", rs.getString(1));
+
+    // cast from BIGINT
+    rs.close();
+    rs = stmt.executeQuery("select 1 id from dual;");
+    rs.next();
+    assertEquals("1", rs.getString(1));
   }
 }
