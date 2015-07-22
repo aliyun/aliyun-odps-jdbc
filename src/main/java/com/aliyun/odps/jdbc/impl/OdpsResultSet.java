@@ -372,17 +372,17 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public String getNString(int columnIndex) throws SQLException {
-    return getString(columnIndex);
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getString(int columnIndex) throws SQLException {
-    return (String) getObject(columnIndex);
+    return TypeUtils.castToString(getObject(columnIndex));
   }
 
   @Override
   public String getNString(String columnLabel) throws SQLException {
-    return getString(columnLabel);
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override

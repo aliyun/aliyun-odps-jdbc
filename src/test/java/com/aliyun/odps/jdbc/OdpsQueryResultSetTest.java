@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Date;
 import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -15,6 +17,8 @@ public class OdpsQueryResultSetTest extends TestCase {
 
   protected Connection conn;
   protected Statement stmt;
+  protected long unixTimeNow;
+  protected String odpsDatetimeNow;
 
   protected void setUp() throws Exception {
     OdpsDriver driver = OdpsDriver.instance;
@@ -27,6 +31,10 @@ public class OdpsQueryResultSetTest extends TestCase {
 
     conn = driver.connect("jdbc:odps:" + url, info);
     stmt = conn.createStatement();
+
+    unixTimeNow = new java.util.Date().getTime();
+    Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    odpsDatetimeNow = formatter.format(unixTimeNow);
   }
 
   protected void tearDown() throws Exception {
@@ -113,15 +121,38 @@ public class OdpsQueryResultSetTest extends TestCase {
 
   public void testGetDate() throws Exception {
     ResultSet rs = stmt.executeQuery(
-        "select cast('2015-07-09 11:11:11' as datetime) day  from dual;");
+        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
 
     rs.next();
     Date x = rs.getDate(1);
+    Date y = new Date(unixTimeNow);
+    assertEquals(y.toString(), x.toString());
+  }
 
-    Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    Date y = (Date) formatter.parseObject("2015-07-09 11:11:11");
+  public void testGetTime() throws Exception {
+    ResultSet rs = stmt.executeQuery(
+        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
 
-    assertEquals(y, x);
+    rs.next();
+    Time x = rs.getTime(1);
+    Time y = new Time(unixTimeNow);
+    assertEquals(y.toString(), x.toString());
+  }
+
+  public void testGetTimeStamp() throws Exception {
+    ResultSet rs = stmt.executeQuery(
+        "select cast('"+ odpsDatetimeNow +"' as datetime) day from dual;");
+
+    rs.next();
+    Timestamp x = rs.getTimestamp(1);
+    Timestamp y = new Timestamp(unixTimeNow);
+
+    // Walk around the precision problem
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    String ys = formatter.format(y);
+    String xs = formatter.format(x);
+
+    assertEquals(ys, xs);
   }
 
   public void testGetString() throws Exception {

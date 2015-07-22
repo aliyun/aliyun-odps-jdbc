@@ -194,7 +194,7 @@ public class OdpsPreparedStatementTest extends TestCase {
     }
 
     // Walk around the precision problem
-    SimpleDateFormat formatter = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     String ys = formatter.format(y);
     String xs = formatter.format(x);
 
