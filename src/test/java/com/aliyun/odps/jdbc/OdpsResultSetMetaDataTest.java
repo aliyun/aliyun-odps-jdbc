@@ -28,7 +28,8 @@ public class OdpsResultSetMetaDataTest extends TestCase {
     conn = driver.connect("jdbc:odps:" + url, info);
     stmt = conn.createStatement();
     String sql = "select 'yichao' name, true male, 25 age, 173.5 height, "
-                 + "cast('2015-07-09 11:11:11' as datetime) day from dual;";
+                 + "cast('2015-07-09 11:11:11' as datetime) day, "
+                 + "cast('2.1234567890123' as decimal) volume from dual;";
     rs = stmt.executeQuery(sql);
     rsmd = rs.getMetaData();
   }
@@ -40,7 +41,7 @@ public class OdpsResultSetMetaDataTest extends TestCase {
   }
 
   public void testGetColumnCount() throws Exception {
-    assertEquals(5, rsmd.getColumnCount());
+    assertEquals(6, rsmd.getColumnCount());
   }
 
   public void testGetColumnName() throws Exception {
@@ -49,6 +50,7 @@ public class OdpsResultSetMetaDataTest extends TestCase {
     assertEquals("age", rsmd.getColumnName(3));
     assertEquals("height", rsmd.getColumnName(4));
     assertEquals("day", rsmd.getColumnName(5));
+    assertEquals("volume", rsmd.getColumnName(6));
   }
 
   public void testGetColumnType() throws Exception {
@@ -57,5 +59,6 @@ public class OdpsResultSetMetaDataTest extends TestCase {
     assertEquals(Types.BIGINT, rsmd.getColumnType(3));
     assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
     assertEquals(Types.DATE, rsmd.getColumnType(5));
+    assertEquals(Types.DECIMAL, rsmd.getColumnType(6));
   }
 }

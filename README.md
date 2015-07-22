@@ -18,14 +18,14 @@
 
 ## Data Type
 
-| ODPS        | Java SDK Interface    | JDBC Interface                 | JDBC              |  
+| ODPS        | Java SDK Interface    | JDBC Interface \[1\]            | JDBC              |  
 | :-------: | :--------------- | :---------------------- | :-----------: |
 | BIGINT      | java.lang.Long        | Int, Short, Long                | BIGINT           |
 | DOUBLE      | java.lang.Double      | Dougle, Float                   | DOUBLE           |
 | BOOLEAN     | java.lang.Boolean    | Boolean                          | BOOLEAN          |
-| DATETIME    | java.util.Date        | Date, Time, Timestamp \*      | DATE              |
+| DATETIME    | java.util.Date        | Date, Time, Timestamp \[2\]     | DATE              |
 | STRING      | java.lang.String      | String                           | VARCHAR          |
-| DECIAL      | java.math.BigDecimal | BigDecimal                      | DECIMAL          |
+| DECIMAL     | java.math.BigDecimal | BigDecimal                      | DECIMAL          |
 
-
-\* Date, Time, Timestamp are `java.sql.Date`, `java.sql.Time`, and `Timestamp` respectively.
+\[1\] The data value can be accessed by the getters of ResultSet like `getInt()`, `getTime()`, etc.
+\[2\] `java.sql.Date`, `java.sql.Time`, and `Timestamp` respectively.
