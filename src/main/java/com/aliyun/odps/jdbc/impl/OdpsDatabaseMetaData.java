@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -16,8 +15,6 @@ import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.Tables;
 import com.aliyun.odps.account.AliyunAccount;
-import com.aliyun.odps.data.RecordReader;
-import com.aliyun.odps.jdbc.OdpsDriver;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
@@ -977,7 +974,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         OdpsType.STRING,
         OdpsType.STRING,
         OdpsType.STRING,
-        OdpsType.BIGINT,  // Short indead
+        OdpsType.BIGINT,  // Short indeed
         OdpsType.STRING
     );
 

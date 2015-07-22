@@ -5,8 +5,6 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Provide utility for casting a ODPS type value to a sql value.

@@ -8,10 +8,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import com.aliyun.odps.Odps;
-import com.aliyun.odps.account.Account;
-import com.aliyun.odps.account.AliyunAccount;
-
 public class NonRegisteringOdpsDriver implements Driver {
 
   public final static String URL_PREFIX = "jdbc:odps:";

@@ -2,8 +2,6 @@ package com.aliyun.odps.jdbc.impl;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.util.Arrays;
 import java.util.Iterator;
 
 import com.aliyun.odps.Function;
