@@ -71,17 +71,21 @@ public class OdpsQueryResultSetTest extends TestCase {
     rs.next();
     assertEquals(true, rs.getBoolean(1));
 
-    // cast from BIGINT
-    rs.close();
-    rs = stmt.executeQuery("select 12 id from dual;");
-    rs.next();
-    assertEquals(true, rs.getBoolean(1));
-
     // cast from STRING
     rs.close();
-    rs = stmt.executeQuery("select '0' name from dual;");
+    rs = stmt.executeQuery("select '0' namex, '42' namey from dual;");
     rs.next();
     assertEquals(false, rs.getBoolean(1));
+    assertEquals(true, rs.getBoolean(2));
+
+
+    // cast from BIGINT
+    rs.close();
+    rs = stmt.executeQuery("select 42 idx, 0 idy from dual;");
+    rs.next();
+    assertEquals(true, rs.getBoolean(1));
+    assertEquals(false, rs.getBoolean(2));
+
   }
 
   public void testGetInt() throws Exception {
@@ -89,6 +93,12 @@ public class OdpsQueryResultSetTest extends TestCase {
     ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
     rs.next();
     assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
+    rs.next();
+    assertEquals((int)Long.MAX_VALUE, rs.getInt(1));
   }
 
   public void testGetShort() throws Exception {
@@ -96,11 +106,23 @@ public class OdpsQueryResultSetTest extends TestCase {
     ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
     rs.next();
     assertEquals((short) Long.MAX_VALUE, rs.getShort(1));
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
+    rs.next();
+    assertEquals((short)Long.MAX_VALUE, rs.getShort(1));
   }
 
   public void testGetLong() throws Exception {
     // cast from BIGINT
     ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+    rs.next();
+    assertEquals(Long.MAX_VALUE, rs.getLong(1));
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
     rs.next();
     assertEquals(Long.MAX_VALUE, rs.getLong(1));
   }
@@ -110,11 +132,23 @@ public class OdpsQueryResultSetTest extends TestCase {
     ResultSet rs = stmt.executeQuery("select " + Double.MAX_VALUE + " weight from dual;");
     rs.next();
     assertEquals(Double.MAX_VALUE, rs.getDouble(1));
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + Double.MAX_VALUE + "' name from dual;");
+    rs.next();
+    assertEquals(Double.MAX_VALUE, rs.getDouble(1));
   }
 
   public void testGetFloat() throws Exception {
     // cast from DOUBLE
     ResultSet rs = stmt.executeQuery("select " + Double.MAX_VALUE + " weight from dual;");
+    rs.next();
+    assertEquals((float) Double.MAX_VALUE, rs.getFloat(1));
+
+    // cast from STRING
+    rs.close();
+    rs = stmt.executeQuery("select '" + Double.MAX_VALUE + "' name from dual;");
     rs.next();
     assertEquals((float) Double.MAX_VALUE, rs.getFloat(1));
   }
@@ -192,6 +226,7 @@ public class OdpsQueryResultSetTest extends TestCase {
   }
 
   public void testGetString() throws Exception {
+    // cast from STRING
     ResultSet rs = stmt.executeQuery("select 'alibaba' name from dual;");
     rs.next();
     assertEquals("alibaba", rs.getString(1));
