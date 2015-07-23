@@ -3,6 +3,7 @@
 
 ## Quickstart
 
+
     Properties info = new Properties();
     info.put("access_id", "...");
     info.put("access_key", "...");
@@ -38,8 +39,8 @@
 
 | ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
 | :-------: | :----: | :----: | :-----: |:-----: |:-----: |:-----: |
-| bool         |    Y     |    Y     |    Y      |           |    Y     |          |
-| byte         |    Y     |    Y     |           |           |          |          |
+| bool         |    Y     |          |    Y      |           |    Y     |          |
+| byte         |    Y     |          |           |           |          |          |
 | int          |    Y     |          |           |           |     Y    |          |
 | short        |   Y      |          |           |           |    Y     |          |
 | long         |    Y     |          |           |           |    Y     |          |
