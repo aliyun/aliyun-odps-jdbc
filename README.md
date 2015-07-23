@@ -18,6 +18,8 @@
 
 ## Data Type
 
+### Representation and Interface
+
 | ODPS        | Java SDK Interface    | JDBC Interface \[1\]            | JDBC              |  
 | :-------: | :--------------- | :---------------------- | :-----------: |
 | BIGINT      | java.lang.Long        | Int, Short, Long                | BIGINT           |
@@ -28,4 +30,24 @@
 | DECIMAL     | java.math.BigDecimal | BigDecimal                      | DECIMAL          |
 
 \[1\] The data value can be accessed by the getters of ResultSet like `getInt()`, `getTime()`, etc.
+
 \[2\] `java.sql.Date`, `java.sql.Time`, and `Timestamp` respectively.
+
+
+### Casting
+
+| ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
+| :-------: | :----: | :----: | :-----: |:-----: |:-----: |:-----: |
+| bool         |    Y     |    Y     |    Y      |           |    Y     |          |
+| byte         |    Y     |    Y     |           |           |          |          |
+| int          |    Y     |          |           |           |     Y    |          |
+| short        |   Y      |          |           |           |    Y     |          |
+| long         |    Y     |          |           |           |    Y     |          |
+| double       |          |    Y     |           |           |    Y     |          |
+| float        |          |    Y     |           |           |    Y     |          |
+| BigDecial   |          |          |           |           |    Y     |    Y     |
+| String      |    Y     |    Y     |     Y     |     Y     |    Y     |    Y     |
+| Date        |          |          |           |     Y     |    Y     |          |
+| Time        |          |          |           |     Y     |    Y     |          |
+| Timestamp  |          |          |           |     Y     |    Y     |          |
+
