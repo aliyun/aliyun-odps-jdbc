@@ -100,7 +100,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-    parameters.put(parameterIndex, "" + x);
+    parameters.put(parameterIndex, "cast('" + x.toString() + "' as decimal)");
   }
 
   @Override
