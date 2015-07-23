@@ -2,8 +2,6 @@ package com.aliyun.odps.jdbc.impl;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.util.Arrays;
 import java.util.Iterator;
 
 import com.aliyun.odps.Table;
@@ -11,53 +9,31 @@ import com.aliyun.odps.Table;
 public class OdpsTablesResultSet extends OdpsResultSet implements ResultSet {
 
   private Iterator<Table> iterator;
-
-  private OdpsResultSetMetaData meta;
-
   private Table table;
 
-  OdpsTablesResultSet(Iterator<Table> iterator) throws SQLException {
-    super(null);
+  OdpsTablesResultSet(Iterator<Table> iterator, OdpsResultSetMetaData meta)
+      throws SQLException {
+    super(null, meta);
     this.iterator = iterator;
   }
 
   @Override
   public boolean next() throws SQLException {
-    boolean hasNext = iterator.hasNext();
-
-    if (hasNext) {
+    if (iterator.hasNext()) {
       table = iterator.next();
+      return true;
     } else {
       table = null;
+      return false;
     }
-
-    return hasNext;
   }
 
   @Override
   public void close() throws SQLException {
-
   }
 
   @Override
-  public OdpsResultSetMetaData getMetaData() throws SQLException {
-    if (meta != null) {
-      return meta;
-    }
-
-    String[] columns =
-        new String[] {"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS", "TYPE_CAT",
-            "TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME", "REF_GENERATION"};
-    int[] types = new int[columns.length];
-    Arrays.fill(types, Types.VARCHAR);
-
-    meta = new OdpsResultSetMetaData(columns, types);
-
-    return meta;
-  }
-
-  @Override
-  Object getObject0(int columnIndex) throws SQLException {
+  public Object getObject(int columnIndex) throws SQLException {
     switch (columnIndex) {
       case 1:
         return table.getProject();

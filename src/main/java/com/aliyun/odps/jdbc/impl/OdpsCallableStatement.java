@@ -25,23 +25,15 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
     super(conn, sql);
   }
 
-  OdpsCallableStatement(OdpsConnection conn, String sql, int resultSetType,
-      int resultSetConcurrency) {
-    super(conn, sql, resultSetType, resultSetConcurrency);
-  }
-
-  OdpsCallableStatement(OdpsConnection conn, String sql, int resultSetType,
-      int resultSetConcurrency, int resultSetHoldability) {
-    super(conn, sql, resultSetType, resultSetConcurrency, resultSetHoldability);
-  }
-
   @Override
-  public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
+  public void registerOutParameter(int parameterIndex, int sqlType)
+      throws SQLException {
 
   }
 
   @Override
-  public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException {
+  public void registerOutParameter(int parameterIndex, int sqlType, int scale)
+      throws SQLException {
 
   }
 
@@ -142,7 +134,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public Object getObject(int parameterIndex, Map<String, Class<?>> map) throws SQLException {
+  public Object getObject(int parameterIndex, Map<String, Class<?>> map)
+      throws SQLException {
 
     return null;
   }
@@ -196,7 +189,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void registerOutParameter(String parameterName, int sqlType) throws SQLException {
+  public void registerOutParameter(String parameterName, int sqlType)
+      throws SQLException {
 
   }
 
@@ -294,12 +288,14 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setAsciiStream(String parameterName, InputStream x, int length) throws SQLException {
+  public void setAsciiStream(String parameterName, InputStream x, int length)
+      throws SQLException {
 
   }
 
   @Override
-  public void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException {
+  public void setBinaryStream(String parameterName, InputStream x, int length)
+      throws SQLException {
 
   }
 
@@ -310,7 +306,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
+  public void setObject(String parameterName, Object x, int targetSqlType)
+      throws SQLException {
 
   }
 
@@ -336,12 +333,14 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setTimestamp(String parameterName, Timestamp x, Calendar cal) throws SQLException {
+  public void setTimestamp(String parameterName, Timestamp x, Calendar cal)
+      throws SQLException {
 
   }
 
   @Override
-  public void setNull(String parameterName, int sqlType, String typeName) throws SQLException {
+  public void setNull(String parameterName, int sqlType, String typeName)
+      throws SQLException {
 
   }
 
@@ -430,7 +429,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public Object getObject(String parameterName, Map<String, Class<?>> map) throws SQLException {
+  public Object getObject(String parameterName, Map<String, Class<?>> map)
+      throws SQLException {
 
     return null;
   }
@@ -472,7 +472,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public Timestamp getTimestamp(String parameterName, Calendar cal) throws SQLException {
+  public Timestamp getTimestamp(String parameterName, Calendar cal)
+      throws SQLException {
 
     return null;
   }
@@ -517,7 +518,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setClob(String parameterName, Reader reader, long length) throws SQLException {
+  public void setClob(String parameterName, Reader reader, long length)
+      throws SQLException {
 
   }
 
@@ -528,7 +530,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
+  public void setNClob(String parameterName, Reader reader, long length)
+      throws SQLException {
 
   }
 
@@ -608,7 +611,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
+  public void setAsciiStream(String parameterName, InputStream x, long length)
+      throws SQLException {
 
   }
 
@@ -635,12 +639,14 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
+  public void setCharacterStream(String parameterName, Reader reader)
+      throws SQLException {
 
   }
 
   @Override
-  public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
+  public void setNCharacterStream(String parameterName, Reader value)
+      throws SQLException {
 
   }
 
@@ -650,7 +656,8 @@ public class OdpsCallableStatement extends OdpsPreparedStatement implements Call
   }
 
   @Override
-  public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
+  public void setBlob(String parameterName, InputStream inputStream)
+      throws SQLException {
 
   }
 

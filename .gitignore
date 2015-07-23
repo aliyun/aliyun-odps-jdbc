@@ -16,3 +16,7 @@ hs_err_pid*
 /.project
 /.settings
 /src/test/resources/bvt_conf.properties
+
+# Intellij Idea
+.idea
+*.iml

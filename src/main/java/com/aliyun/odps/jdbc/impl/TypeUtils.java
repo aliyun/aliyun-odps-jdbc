@@ -5,9 +5,20 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
+/**
+ * Provide utility for casting a ODPS type value to a sql value.
+ * The type of input value is consistent with how ODPS represents data:
+ *
+ * e.g:
+ * BigInteger -> java.lang.Long
+ * DateTime   -> java.util.Date
+ *
+ * It is safe to convert a date to a integer or a string to date.
+ */
 public class TypeUtils {
+
+  public static String DEFFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
   public static final String castToString(Object value) {
     if (value == null) {
@@ -164,12 +175,7 @@ public class TypeUtils {
         return null;
       }
 
-      try {
-        return Long.parseLong(strVal);
-      } catch (NumberFormatException ex) {
-        //
-      }
-
+      return Long.parseLong(strVal);
     }
 
     throw new SQLException("can not cast to long, value : " + value);
@@ -194,27 +200,6 @@ public class TypeUtils {
     }
 
     return new BigDecimal(strVal);
-  }
-
-  public static final BigInteger castToBigInteger(Object value) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value instanceof BigInteger) {
-      return (BigInteger) value;
-    }
-
-    if (value instanceof Float || value instanceof Double) {
-      return BigInteger.valueOf(((Number) value).longValue());
-    }
-
-    String strVal = value.toString();
-    if (strVal.length() == 0) {
-      return null;
-    }
-
-    return new BigInteger(strVal);
   }
 
   public static final Float castToFloat(Object value) throws SQLException {
@@ -267,19 +252,13 @@ public class TypeUtils {
     throw new SQLException("can not cast to double, value : " + value);
   }
 
-  public static String DEFFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-
   public static final java.sql.Date castToDate(Object value) throws SQLException {
     if (value == null) {
       return null;
     }
 
-    if (value instanceof Calendar) {
-      return new java.sql.Date(((Calendar) value).getTimeInMillis());
-    }
-
-    if (value instanceof java.sql.Date) {
-      return (java.sql.Date) value;
+    if (value instanceof java.util.Date) {
+      return new java.sql.Date(((java.util.Date) value).getTime());
     }
 
     long longValue = -1;
@@ -306,7 +285,7 @@ public class TypeUtils {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(format);
         try {
-          return new java.sql.Date(((java.util.Date) dateFormat.parse(strVal)).getTime());
+          return new java.sql.Date(dateFormat.parse(strVal).getTime());
         } catch (ParseException e) {
           throw new SQLException("can not cast to Date, value : " + strVal);
         }
@@ -331,12 +310,8 @@ public class TypeUtils {
       return null;
     }
 
-    if (value instanceof Calendar) {
-      return new java.sql.Time(((Calendar) value).getTimeInMillis());
-    }
-
-    if (value instanceof java.sql.Time) {
-      return (java.sql.Time) value;
+    if (value instanceof java.util.Date) {
+      return new java.sql.Time(((java.util.Date) value).getTime());
     }
 
     long longValue = -1;
@@ -363,7 +338,7 @@ public class TypeUtils {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(format);
         try {
-          return new java.sql.Time(((java.util.Date) dateFormat.parse(strVal)).getTime());
+          return new java.sql.Time((dateFormat.parse(strVal)).getTime());
         } catch (ParseException e) {
           throw new SQLException("can not cast to Date, value : " + strVal);
         }
@@ -388,12 +363,8 @@ public class TypeUtils {
       return null;
     }
 
-    if (value instanceof Calendar) {
-      return new java.sql.Timestamp(((Calendar) value).getTimeInMillis());
-    }
-
-    if (value instanceof java.sql.Timestamp) {
-      return (java.sql.Timestamp) value;
+    if (value instanceof java.util.Date) {
+      return new java.sql.Timestamp(((java.util.Date)value).getTime());
     }
 
     long longValue = -1;
@@ -420,7 +391,7 @@ public class TypeUtils {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(format);
         try {
-          return new java.sql.Timestamp(((java.util.Date) dateFormat.parse(strVal)).getTime());
+          return new java.sql.Timestamp((dateFormat.parse(strVal)).getTime());
         } catch (ParseException e) {
           throw new SQLException("can not cast to Date, value : " + strVal);
         }
