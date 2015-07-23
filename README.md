@@ -8,7 +8,7 @@
     info.put("access_key", "...");
     info.put("project_name", "...");
     
-    Connection conn = driver.connect("jdbc:odps://<odps_endpoint>"l, info);
+    Connection conn = driver.connect("jdbc:odps://<odps_endpoint>", info);
     Statement stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("sql query");
     while (rs.next()) {
@@ -22,9 +22,9 @@
 
 | ODPS        | Java SDK Interface    | JDBC Interface \[1\]            | JDBC              |  
 | :-------: | :--------------- | :---------------------- | :-----------: |
-| BIGINT      | java.lang.Long        | Int, Short, Long                | BIGINT           |
-| DOUBLE      | java.lang.Double      | Dougle, Float                   | DOUBLE           |
-| BOOLEAN     | java.lang.Boolean    | Boolean                          | BOOLEAN          |
+| BIGINT      | java.lang.Long        | int, short, long                | BIGINT           |
+| DOUBLE      | java.lang.Double      | double, float                   | DOUBLE           |
+| BOOLEAN     | java.lang.Boolean    | bool                          | BOOLEAN          |
 | DATETIME    | java.util.Date        | Date, Time, Timestamp \[2\]     | DATE              |
 | STRING      | java.lang.String      | String                           | VARCHAR          |
 | DECIMAL     | java.math.BigDecimal | BigDecimal                      | DECIMAL          |
