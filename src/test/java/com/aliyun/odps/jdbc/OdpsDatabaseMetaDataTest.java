@@ -2,12 +2,12 @@ package com.aliyun.odps.jdbc;
 
 import com.alibaba.druid.util.JdbcUtils;
 
-import junit.framework.TestCase;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.util.Properties;
+
+import junit.framework.TestCase;
 
 public class OdpsDatabaseMetaDataTest extends TestCase {
 

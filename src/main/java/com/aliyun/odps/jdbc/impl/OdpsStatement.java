@@ -18,7 +18,6 @@ import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
-import com.aliyun.odps.data.RecordReader;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -163,29 +162,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
-    // Read records
-    RecordReader recordReader;
-//    try {
-//      recordReader = table.read(10000);
-//    } catch (OdpsException e) {
-//      throw new SQLException("can not read table records", e);
-//    }
-
-    // Read record through tunnel
+    // Create a download session through tunnel
     TableTunnel tunnel = new TableTunnel(conn.getOdps());
+    DownloadSession downloadSession;
     try {
-      DownloadSession downloadSession =
-          tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), TEMP_TABLE_NAME);
-      long count = downloadSession.getRecordCount();
-      recordReader = downloadSession.openRecordReader(0, count);
+      downloadSession = tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), TEMP_TABLE_NAME);
     } catch (TunnelException e) {
       throw new SQLException("can not create tunnel download session", e);
-    } catch (java.io.IOException e) {
-      throw new SQLException("can not open record reader in download session", e);
     }
 
-
-    resultSet = new OdpsQueryResultSet(this, meta, recordReader);
+    resultSet = new OdpsQueryResultSet(this, meta, downloadSession);
     return resultSet;
   }
 
