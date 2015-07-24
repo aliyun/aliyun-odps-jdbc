@@ -74,9 +74,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
 
   /**
-   * Each resultSet is associated with a statement. If the same statement to execute
-   * another query, the original resultSet must be released. The temp table used to
-   * generate the result must be dropped as well.
+   * Each resultSet is associated with a statement. If the same statement is used to
+   * execute another query, the original resultSet will be invalidated.
+   * And the corresponding temp table will be dropped as well.
    *
    * @throws SQLException
    */
@@ -376,5 +376,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     updateCount = -1;
     resultSet = null;
     isCancelled = false;
+  }
+
+  // Ensure the temp table has been dropped in case the user forget to close the
+  // statement manually.
+  protected void finalize() throws SQLException {
+    close();
   }
 }
