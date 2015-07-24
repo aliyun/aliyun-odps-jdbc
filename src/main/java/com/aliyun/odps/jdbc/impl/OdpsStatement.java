@@ -18,13 +18,15 @@ import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
-import com.aliyun.odps.data.RecordReader;
+import com.aliyun.odps.tunnel.TableTunnel;
+import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
+import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
   // The table name must be unique since there can be two statements querying its results.
   private static final String TEMP_TABLE_NAME =
-      "temp_tbl_for_query_result_" + UUID.randomUUID().toString().replaceAll("-", "_");
+      "jdbc_temp_tbl_for_query_result_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
   private OdpsConnection conn;
   private Instance instance = null;
@@ -72,9 +74,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
 
   /**
-   * Each resultSet is associated with a statement. If the same statement to execute
-   * another query, the original resultSet must be released. The temp table used to
-   * generate the result must be dropped as well.
+   * Each resultSet is associated with a statement. If the same statement is used to
+   * execute another query, the original resultSet will be invalidated.
+   * And the corresponding temp table will be dropped as well.
    *
    * @throws SQLException
    */
@@ -160,15 +162,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
-    // Read records
-    RecordReader recordReader;
+    // Create a download session through tunnel
+    TableTunnel tunnel = new TableTunnel(conn.getOdps());
+    DownloadSession downloadSession;
     try {
-      recordReader = table.read(10000);
-    } catch (OdpsException e) {
-      throw new SQLException("can not read table records", e);
+      downloadSession = tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), TEMP_TABLE_NAME);
+    } catch (TunnelException e) {
+      throw new SQLException("can not create tunnel download session", e);
     }
 
-    resultSet = new OdpsQueryResultSet(this, meta, recordReader);
+    resultSet = new OdpsQueryResultSet(this, meta, downloadSession);
     return resultSet;
   }
 
@@ -373,5 +376,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     updateCount = -1;
     resultSet = null;
     isCancelled = false;
+  }
+
+  // Ensure the temp table has been dropped in case the user forget to close the
+  // statement manually.
+  protected void finalize() throws SQLException {
+    close();
   }
 }

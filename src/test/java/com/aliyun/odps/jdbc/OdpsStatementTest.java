@@ -23,21 +23,12 @@ public class OdpsStatementTest extends TestCase {
 
     conn = driver.connect("jdbc:odps:" + url, info);
     stmt = conn.createStatement();
-
     stmt.executeUpdate(
-        "create table if not exists yichao_test_table_input (name string, id bigint);");
-    stmt.executeUpdate(
-        "create table if not exists yichao_test_table_output (name string, id bigint);");
+        "create table if not exists yichao_test_table_output(id bigint);");
 
-    String sql = "insert into table yichao_test_table_input select '%s' name, %d id from dual ;";
-    stmt.executeUpdate(String.format(sql, "batman", 100));
-    stmt.executeUpdate(String.format(sql, "superman", 200));
-    stmt.executeUpdate(String.format(sql, "spiderman", 300));
-    stmt.executeUpdate(String.format(sql, "ironman", 400));
   }
 
   protected void tearDown() throws Exception {
-    stmt.executeUpdate("drop table if exists yichao_test_table_input;");
     stmt.executeUpdate("drop table if exists yichao_test_table_output;");
     stmt.close();
     conn.close();
@@ -47,17 +38,16 @@ public class OdpsStatementTest extends TestCase {
     String sql =
         "insert into table yichao_test_table_output select * from yichao_test_table_input;";
     int updateCount = stmt.executeUpdate(sql);
-    assertEquals(4, updateCount);
+    assertEquals(100*10000, updateCount);
   }
 
   public void testExecuteQuery() throws Exception {
-    String sql = "select * from yichao_test_table_input order by id limit 4;";
+    String sql = "select * from yichao_test_table_input;";
     ResultSet rs = stmt.executeQuery(sql);
-    String[] names = {"batman", "superman", "spiderman", "ironman"};
 
     int i = 0;
     while (rs.next()) {
-      assertEquals(names[i], rs.getString(1));
+      assertEquals(i, rs.getInt(1));
       i++;
     }
   }

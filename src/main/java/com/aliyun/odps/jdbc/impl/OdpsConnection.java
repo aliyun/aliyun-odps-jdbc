@@ -47,6 +47,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean isClosed = false;
 
 
+  /**
+   * If the client code do not specify the protocol, an https protocol will be used.
+   * @param url
+   * @param info
+   */
   OdpsConnection(String url, Properties info) {
     String accessId = info.getProperty("access_id");
     String accessKey = info.getProperty("access_key");
@@ -55,10 +60,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     Account account = new AliyunAccount(accessId, accessKey);
     this.odps = new Odps(account);
 
-    if (url.startsWith("http://")) {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
       this.url = url;
     } else if (url.startsWith("//")) {
-      this.url = "http:" + url;
+      this.url = "https:" + url;
     } else {
       assert (false);
     }
