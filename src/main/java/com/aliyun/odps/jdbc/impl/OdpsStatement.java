@@ -26,7 +26,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   // The table name must be unique since there can be two statements querying its results.
   private static final String TEMP_TABLE_NAME =
-      "temp_tbl_for_query_result_" + UUID.randomUUID().toString().replaceAll("-", "_");
+      "jdbc_temp_tbl_for_query_result_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
   private OdpsConnection conn;
   private Instance instance = null;
