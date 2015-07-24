@@ -25,6 +25,8 @@ import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
+  private static final String ODPS_DATETIME_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss";
+
   private OdpsResultSetMetaData meta;
   protected OdpsStatement stmt;
   protected boolean wasNull = false;
@@ -319,7 +321,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal to cast column " + columnIndex + " to date: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     try {
       return new Date(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -510,8 +512,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return null;
     } else if (obj instanceof byte[]) {
       return new String((byte[]) obj);
-    }
-    else {
+    } else if (obj instanceof java.util.Date) {
+      SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+      return dateFormat.format(((java.util.Date) obj));
+    } else {
       return obj.toString();
     }
   }
@@ -617,7 +621,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal to cast column " + columnIndex + " to time: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     try {
       return new Time(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -660,7 +664,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal cast column " + columnIndex + " to timestamp: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     try {
       return new Timestamp(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
