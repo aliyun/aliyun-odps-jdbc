@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -30,7 +29,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   // The table name must be unique since there can be two statements querying its results.
   private static final String TEMP_TABLE_NAME =
-      "jdbc_temp_tbl_for_query_result_" + UUID.randomUUID().toString().replaceAll("-", "_");
+      "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
   private OdpsConnection conn;
   private Instance instance = null;
@@ -92,15 +91,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // Drop the temp table for querying result set and ensure it has been dropped
     Instance dropTableInstance = conn.run(String.format("drop table %s;", TEMP_TABLE_NAME));
-    Instance.TaskStatus dropTableStatus;
     try {
-      Map<String, Instance.TaskStatus> statuses = dropTableInstance.getTaskStatus();
-      dropTableStatus = statuses.get("SQL");
+      if (!dropTableInstance.isSuccessful()) {
+        throw new SQLException("can not drop the temp table for querying result");
+      }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
-    }
-    if (dropTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
-      throw new SQLException("can not drop the temp table for querying result");
     }
 
     isClosed = true;
@@ -125,30 +121,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // in case that the table has been created in the former execution.
     Instance dropTableInstance =
         conn.run(String.format("drop table if exists %s;", TEMP_TABLE_NAME));
-    Instance.TaskStatus dropTableStatus;
     try {
-      Map<String, Instance.TaskStatus> statuses = dropTableInstance.getTaskStatus();
-      dropTableStatus = statuses.get("SQL");
+      if (!dropTableInstance.isSuccessful()) {
+        throw new SQLException("can not drop the temp table for querying result");
+      }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
     }
-    if (dropTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
-      throw new SQLException("can not drop the temp table for querying result");
-    }
+
 
     // Create a temp table for querying result set and ensure its creation
     Instance createTableInstance =
         conn.run(String.format("create table %s as %s", TEMP_TABLE_NAME, sql));
-
-    Instance.TaskStatus createTableStatus;
     try {
-      Map<String, Instance.TaskStatus> statuses = createTableInstance.getTaskStatus();
-      createTableStatus = statuses.get("SQL");
+      if (!createTableInstance.isSuccessful()) {
+        throw new SQLException("can not drop the temp table for querying result");
+      }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
-    }
-    if (createTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
-      throw new SQLException("can not create temp table for querying result");
     }
 
     // Read schema
