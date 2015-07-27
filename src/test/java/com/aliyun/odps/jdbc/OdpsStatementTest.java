@@ -34,6 +34,21 @@ public class OdpsStatementTest extends TestCase {
     conn.close();
   }
 
+  public void testExecute() throws Exception {
+    assertEquals(true, stmt.execute("select 1 id from dual;"));
+    assertEquals(true, stmt.execute(" select 1 id from dual;"));
+    assertEquals(true, stmt.execute("\nselect 1 id from dual;"));
+    assertEquals(true, stmt.execute("\t\r\nselect 1 id from dual;"));
+    assertEquals(true, stmt.execute("SELECT 1 id from dual;"));
+    assertEquals(true, stmt.execute(" SELECT 1 id from dual;"));
+    assertEquals(true, stmt.execute("--abcd\nSELECT 1 id from dual;"));
+    assertEquals(true, stmt.execute("--abcd\n--hehehe\nSELECT 1 id from dual;"));
+    assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
+    assertEquals(false, stmt.execute(" sele\nct 1 id from dual;"));
+    assertEquals(false, stmt.execute("insert into table haha select * from xixi;"));
+    assertEquals(false, stmt.execute("--abcd\ninsert into table haha select * from xixi;"));
+  }
+
   public void testExecuteUpdate() throws Exception {
     String sql =
         "insert into table yichao_test_table_output select * from yichao_test_table_input;";

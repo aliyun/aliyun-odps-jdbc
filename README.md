@@ -58,18 +58,18 @@ Then the client code can manipulate the ODPS database with the JDBC APIs, like:
 
 ### Casting
 
-| ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
-| :-------: | :----: | :----: | :-----: |:-----: |:-----: |:-----: |
-| boolean     |    Y     |          |    Y      |           |    Y     |          |
-| byte         |    Y     |          |           |           |          |          |
-| int          |    Y     |          |           |           |     Y    |          |
-| short        |   Y      |          |           |           |    Y     |          |
-| long         |    Y     |          |           |           |    Y     |          |
-| double       |          |    Y     |           |           |    Y     |          |
-| float        |          |    Y     |           |           |    Y     |          |
-| BigDecial   |          |          |           |           |    Y     |    Y     |
-| String      |    Y     |    Y     |     Y     |     Y     |    Y     |    Y     |
-| Date        |          |          |           |     Y     |    Y     |          |
-| Time        |          |          |           |     Y     |    Y     |          |
-| Timestamp  |          |          |           |     Y     |    Y     |          |
 
+| ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
+| :--------: | :----: | :-----: | :-----: |:-------: |:-----: |:------: |
+| boolean    | Y |   | Y |   | Y |   |
+| byte       | Y |   |   |   |   |   |
+| int        | Y |   |   |   | Y |   |
+| short      | Y |   |   |   | Y |   |
+| long       | Y |   |   |   | Y |   |
+| double     |   | Y |   |   | Y |   |
+| float      |   | Y |   |   | Y |   |
+| BigDecial  |   |   |   |   | Y | Y |
+| String     | Y | Y | Y | Y | Y | Y |
+| Date       |   |   |   | Y | Y |   |
+| Time       |   |   |   | Y | Y |   |
+| Timestamp  |   |   |   | Y | Y |   |
