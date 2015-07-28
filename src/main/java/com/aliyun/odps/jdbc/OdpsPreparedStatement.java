@@ -46,6 +46,8 @@ import java.util.HashMap;
 
 public class OdpsPreparedStatement extends OdpsStatement implements PreparedStatement {
 
+  private static final String ODPS_DATETIME_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss";
+
   /**
    * The prepared sql template (immutable).
    */
@@ -207,7 +209,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setDate(int parameterIndex, Date x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat formatter = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
@@ -325,7 +327,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat formatter = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
@@ -337,7 +339,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat formatter = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
