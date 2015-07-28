@@ -1,4 +1,4 @@
-package com.aliyun.odps.jdbc.impl;
+package com.aliyun.odps.jdbc;
 
 import java.io.IOException;
 import java.sql.ResultSet;

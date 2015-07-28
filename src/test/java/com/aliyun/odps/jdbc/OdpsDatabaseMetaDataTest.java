@@ -4,6 +4,7 @@ import com.alibaba.druid.util.JdbcUtils;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.Properties;
 
@@ -15,14 +16,14 @@ public class OdpsDatabaseMetaDataTest extends TestCase {
   DatabaseMetaData databaseMetaData;
 
   protected void setUp() throws Exception {
-    OdpsDriver driver = OdpsDriver.instance;
-
     Properties info = new Properties();
     info.put("access_id", BVTConf.getAccessId());
     info.put("access_key", BVTConf.getAccessKey());
     info.put("project_name", BVTConf.getProjectName());
     String url = BVTConf.getEndPoint();
-    conn = driver.connect("jdbc:odps:" + url, info);
+
+    Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
+    conn = DriverManager.getConnection("jdbc:odps:" + url, info);
     databaseMetaData = conn.getMetaData();
   }
 

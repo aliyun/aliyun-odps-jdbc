@@ -1,4 +1,4 @@
-package com.aliyun.odps.jdbc.impl;
+package com.aliyun.odps.jdbc;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;

@@ -1,6 +1,7 @@
 package com.aliyun.odps.jdbc;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Properties;
@@ -13,7 +14,6 @@ public class OdpsStatementTest extends TestCase {
   protected Statement stmt;
 
   protected void setUp() throws Exception {
-    OdpsDriver driver = OdpsDriver.instance;
 
     Properties info = new Properties();
     info.put("access_id", BVTConf.getAccessId());
@@ -21,7 +21,8 @@ public class OdpsStatementTest extends TestCase {
     info.put("project_name", BVTConf.getProjectName());
     String url = BVTConf.getEndPoint();
 
-    conn = driver.connect("jdbc:odps:" + url, info);
+    Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
+    conn = DriverManager.getConnection("jdbc:odps:" + url, info);
     stmt = conn.createStatement();
     stmt.executeUpdate(
         "create table if not exists yichao_test_table_output(id bigint);");
@@ -39,7 +40,8 @@ public class OdpsStatementTest extends TestCase {
     ResultSet rs = stmt.getResultSet();
     rs.next();
     assertEquals(1, rs.getInt(1));
-    assertEquals(false, stmt.execute("insert into table yichao_test_table_output select 1 id from dual;"));
+    assertEquals(false, stmt.execute(
+        "insert into table yichao_test_table_output select 1 id from dual;"));
     assertEquals(1, stmt.getUpdateCount());
 
     // do not check result

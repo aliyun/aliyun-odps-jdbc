@@ -3,6 +3,7 @@ package com.aliyun.odps.jdbc;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Time;
@@ -19,15 +20,14 @@ public class OdpsPreparedStatementTest extends TestCase {
   protected long unixtime;
 
   protected void setUp() throws Exception {
-    OdpsDriver driver = OdpsDriver.instance;
-
     Properties info = new Properties();
     info.put("access_id", BVTConf.getAccessId());
     info.put("access_key", BVTConf.getAccessKey());
     info.put("project_name", BVTConf.getProjectName());
     String url = BVTConf.getEndPoint();
 
-    conn = driver.connect("jdbc:odps:" + url, info);
+    Class.forName("com.aliyun.odps.jdbc");
+    conn = DriverManager.getConnection("jdbc:odps:" + url, info);
     pstmt = conn.prepareStatement("select ? whatever from dual;");
 
     unixtime = new java.util.Date().getTime();
