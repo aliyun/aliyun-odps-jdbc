@@ -1,38 +1,23 @@
 package com.aliyun.odps.jdbc;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
 public class OdpsStatementTest extends TestCase {
 
-  protected Connection conn;
   protected Statement stmt;
 
   protected void setUp() throws Exception {
-
-    Properties info = new Properties();
-    info.put("access_id", BVTConf.getAccessId());
-    info.put("access_key", BVTConf.getAccessKey());
-    info.put("project_name", BVTConf.getProjectName());
-    String url = BVTConf.getEndPoint();
-
-    Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
-    conn = DriverManager.getConnection("jdbc:odps:" + url, info);
-    stmt = conn.createStatement();
+    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
     stmt.executeUpdate(
         "create table if not exists yichao_test_table_output(id bigint);");
-
   }
 
   protected void tearDown() throws Exception {
     stmt.executeUpdate("drop table if exists yichao_test_table_output;");
     stmt.close();
-    conn.close();
   }
 
   public void testExecute() throws Exception {

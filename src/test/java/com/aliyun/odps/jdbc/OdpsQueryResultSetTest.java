@@ -1,8 +1,6 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Time;
@@ -10,28 +8,17 @@ import java.sql.Timestamp;
 import java.sql.Date;
 import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
 public class OdpsQueryResultSetTest extends TestCase {
 
-  protected Connection conn;
   protected Statement stmt;
   protected long unixTimeNow;
   protected String odpsDatetimeNow;
 
   protected void setUp() throws Exception {
-    Properties info = new Properties();
-    info.put("access_id", BVTConf.getAccessId());
-    info.put("access_key", BVTConf.getAccessKey());
-    info.put("project_name", BVTConf.getProjectName());
-    String url = BVTConf.getEndPoint();
-
-    Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
-    conn = DriverManager.getConnection("jdbc:odps:" + url, info);
-    stmt = conn.createStatement();
-
+    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
     unixTimeNow = new java.util.Date().getTime();
     Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     odpsDatetimeNow = formatter.format(unixTimeNow);
@@ -39,7 +26,6 @@ public class OdpsQueryResultSetTest extends TestCase {
 
   protected void tearDown() throws Exception {
     stmt.close();
-    conn.close();
   }
 
   public void testGetObject() throws Exception {
