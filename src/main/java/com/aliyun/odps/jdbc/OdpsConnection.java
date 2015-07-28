@@ -124,6 +124,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String accessKey = info.getProperty("access_key");
     String project = info.getProperty("project_name");
 
+    // Compatible with JDBC's API: getConnection("url", "user", "password")
+    if (accessId == null) {
+      info.getProperty("user");
+    }
+
+    if (accessKey == null) {
+      info.getProperty("password");
+    }
+
     Account account = new AliyunAccount(accessId, accessKey);
     this.odps = new Odps(account);
 
