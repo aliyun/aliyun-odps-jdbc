@@ -153,11 +153,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
     int columnIndex = findColumn(columnLabel);
     return getBigDecimal(columnIndex);
@@ -186,6 +181,9 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
+
+  @Override
+  public abstract Object getObject(int columnIndex) throws SQLException;
 
   @Override
   public Object getObject(String columnLabel) throws SQLException {
