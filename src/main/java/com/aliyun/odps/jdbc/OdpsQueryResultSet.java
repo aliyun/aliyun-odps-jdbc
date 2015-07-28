@@ -158,13 +158,14 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public Object getObject(int columnIndex) throws SQLException {
-    return rowValues != null ? rowValues[toZeroIndex(columnIndex)] : null;
-  }
+    if (rowValues == null) {
+      wasNull = true;
+      return null;
+    }
 
-  @Override
-  public Object getObject(String columnName) throws SQLException {
-    int columnIndex = getMetaData().getColumnIndex(columnName);
-    return getObject(columnIndex);
+    Object obj = rowValues[toZeroIndex(columnIndex)];
+    wasNull = (obj == null);
+    return obj;
   }
 
   protected int toZeroIndex(int column) {
