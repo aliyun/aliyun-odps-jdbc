@@ -3,35 +3,48 @@
 
 ## Quickstart
 
-### Setup a connection
 
-An ODPS server provide service via RESTFULL API, so there are three kinds of `ODPS_JDBC_URL`
-which are acceptable: 
+1\. Explictly load the ODPS JDBC driver using Class.`forName()`.
+    
+For example:
+    
+    Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
-* `jdbc:odps:http://<domain>/<subdomain>`
-* `jdbc:odps:https://<domain>/<subdomain>`
 
-If the user does not specify the protocal, an "https" protocal will be used: 
+2\. Connect to the ODPS by creating a `Connection` object with the JDC driver:
 
-* `jdbc:odps://<domain>/<subdomain>`
+For example:
+    
+    Connection conn = DriverManager.getConnection("jdbc:odps:<ODPS_URL>", config);
 
-Other information is configured through a `java.util.Properties`. For each ODPS connection,
-a `project_name` is also required.
+The ODPS server works with HTTP or HTTPS protocol, so an `ODPS_URL` looks like:
 
-    Properties info = new Properties();
-    info.put("access_id", "...");
-    info.put("access_key", "...");
-    info.put("project_name", "...");
+* `http://<domain>/<subdomain>`
+* `https://<domain>/<subdomain>`
+
+If the user does not specify the protocal, HTTPS will be used: 
+
+Other information is passed through a `config`. 
+
+For example:
+
+    Properties config = new Properties();
+    config.put("access_id", "...");
+    config.put("access_key", "...");
+    config.put("project_name", "...");
        
-A JDBC connection is built through the following API call:
-    
-    Connection conn = driver.connect("<ODPS_JDBC_URL>", info);
 
+3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method.
 
-Then the client code can manipulate the ODPS database with the JDBC APIs, like:    
+For example:
+
+    Statement stmt = cnct.createStatement();
+    ResultSet rset = stmt.executeQuery("SELECT foo FROM bar");
+
+4\. Process the result set.
+
+For example
     
-    Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("sql query");
     while (rs.next()) {
         ...
     }
@@ -39,37 +52,32 @@ Then the client code can manipulate the ODPS database with the JDBC APIs, like:
 
 ## Data Type
 
-### Representation and Interface
 
+| ODPS Type   | Java Type   | JDBC Interface               | JDBC            |  
+| :-------: | :-------- | :-------------------- | :-----------: |
+| BIGINT      | Long         | int, short, long              | BIGINT        |
+| DOUBLE      | Double       | double, float                 | DOUBLE         |
+| BOOLEAN     | Boolean     | boolean                        | BOOLEAN       |
+| DATETIME    | util.Date    | sql.Date/Time/Timestamp    | DATE           |
+| STRING      | byte[]       | String                        | VARCHAR       |
+| DECIMAL     | math.BigDecimal  | math.BigDecimal       | DECIMAL        |
 
-| ODPS        | Java SDK Interface    | JDBC Interface \[1\]               | JDBC            |  
-| :-------: | :--------------- | :-------------------------- | :-----------: |
-| BIGINT      | java.lang.Long        | `int`, `short`, `long`                | BIGINT        |
-| DOUBLE      | java.lang.Double      | `double`, `float`                     | DOUBLE         |
-| BOOLEAN     | java.lang.Boolean    | `boolean`                              | BOOLEAN       |
-| DATETIME    | java.util.Date        | `Date`, `Time`, `Timestamp` \[2\] | DATE           |
-| STRING      | java.lang.String      | `String`                              | VARCHAR       |
-| DECIMAL     | java.math.BigDecimal | `BigDecimal`                        | DECIMAL        |
+The data value can be accessed by the getters of `ResultSet` like `getInt()`, `getTime()`, etc.
 
-\[1\] The data value can be accessed by the getters of ResultSet like `getInt()`, `getTime()`, etc.
+The implicit type conversion follows the rule:
 
-\[2\] `Date`, `Time`, and `Timestamp` stands for `java.sql.Date`, `java.sql.Time`, and `Timestamp` respectively.
-
-
-### Casting
 
 | ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
-| :-------: | :----: | :----: | :-----: |:-----: |:-----: |:-----: |
-| boolean     |    Y     |          |    Y      |           |    Y     |          |
-| byte         |    Y     |          |           |           |          |          |
-| int          |    Y     |          |           |           |     Y    |          |
-| short        |   Y      |          |           |           |    Y     |          |
-| long         |    Y     |          |           |           |    Y     |          |
-| double       |          |    Y     |           |           |    Y     |          |
-| float        |          |    Y     |           |           |    Y     |          |
-| BigDecial   |          |          |           |           |    Y     |    Y     |
-| String      |    Y     |    Y     |     Y     |     Y     |    Y     |    Y     |
-| Date        |          |          |           |     Y     |    Y     |          |
-| Time        |          |          |           |     Y     |    Y     |          |
-| Timestamp  |          |          |           |     Y     |    Y     |          |
-
+| :--------: | :----: | :-----: | :-----: |:-------: |:-----: |:------: |
+| boolean    | Y |   | Y |   | Y |   |
+| byte       | Y |   |   |   |   |   |
+| int        | Y |   |   |   | Y |   |
+| short      | Y |   |   |   | Y |   |
+| long       | Y |   |   |   | Y |   |
+| double     |   | Y |   |   | Y |   |
+| float      |   | Y |   |   | Y |   |
+| BigDecial  |   |   |   |   | Y | Y |
+| String     | Y | Y | Y | Y | Y | Y |
+| Date       |   |   |   | Y | Y |   |
+| Time       |   |   |   | Y | Y |   |
+| Timestamp  |   |   |   | Y | Y |   |

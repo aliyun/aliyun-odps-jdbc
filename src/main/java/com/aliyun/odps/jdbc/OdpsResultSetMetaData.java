@@ -1,4 +1,4 @@
-package com.aliyun.odps.jdbc.impl;
+package com.aliyun.odps.jdbc;
 
 import com.aliyun.odps.OdpsType;
 

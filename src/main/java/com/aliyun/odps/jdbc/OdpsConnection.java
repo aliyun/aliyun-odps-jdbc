@@ -1,7 +1,6 @@
-package com.aliyun.odps.jdbc.impl;
+package com.aliyun.odps.jdbc;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -19,32 +18,80 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.Executor;
 
 import com.aliyun.odps.Instance;
-import com.aliyun.odps.Instance.StageProgress;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.task.SQLTask;
+import com.aliyun.odps.utils.StringUtils;
+import com.aliyun.odps.security.SecurityManager;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
 
-  private static final int FIXED_WIDTH = 100;
-
-  private PrintWriter stdout = new PrintWriter(System.out);
-
   private Odps odps;
   private Properties info;
-  private String schema;
   private String url;
+  private String schema;
 
   private boolean isClosed = false;
+
+  public class LogView {
+
+    private static final String POLICY_TYPE = "BEARER";
+    private static final String HOST_DEFAULT = "http://webconsole.odps.aliyun-inc.com:8080";
+    private String logViewHost = HOST_DEFAULT;
+
+    Odps odps;
+
+    public LogView(Odps odps) {
+      this.odps = odps;
+      if (odps.getLogViewHost() != null) {
+        logViewHost = odps.getLogViewHost();
+      }
+    }
+
+    public String getLogViewHost() {
+      return logViewHost;
+    }
+
+    public void setLogViewHost(String logViewHost) {
+      this.logViewHost = logViewHost;
+    }
+
+    public String generateLogView(Instance instance, long hours) throws OdpsException {
+      if (StringUtils.isNullOrEmpty(logViewHost)) {
+        return "";
+      }
+
+      SecurityManager sm = odps.projects().get(instance.getProject()).getSecurityManager();
+      String policy = generatePolicy(instance, hours);
+      String token = sm.generateAuthorizationToken(policy, POLICY_TYPE);
+      String logview = logViewHost + "/logview/?h=" + odps.getEndpoint() + "&p="
+                       + instance.getProject() + "&i=" + instance.getId() + "&token=" + token;
+      return logview;
+    }
+
+    private String generatePolicy(Instance instance, long hours) {
+      String policy = "{\n" //
+                      + "    \"expires_in_hours\": " + String.valueOf(hours) + ",\n" //
+                      + "    \"policy\": {\n" + "        \"Statement\": [{\n"
+                      + "            \"Action\": [\"odps:Read\"],\n"
+                      + "            \"Effect\": \"Allow\",\n" //
+                      + "            \"Resource\": \"acs:odps:*:projects/" + instance.getProject()
+                      + "/instances/"
+                      + instance.getId() + "\"\n" //
+                      + "        }],\n"//
+                      + "        \"Version\": \"1\"\n" //
+                      + "    }\n" //
+                      + "}";
+      return policy;
+    }
+  }
 
 
   /**
@@ -389,15 +436,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
 
-      PrintWriter out = this.getStdout();
-      out.println("ID = " + instance.getId());
+      PrintWriter out = new PrintWriter(System.out);
+
+      out.println(sql);
 
       LogView logView = new LogView(odps);
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      out.println(sql);
       out.println("Log View: ");
       out.println(logViewUrl);
-      waiting(instance);
+      out.println();
+      out.flush();
+      instance.waitForSuccess();
     } catch (OdpsException e) {
       throw new SQLException("run sql error", e);
     }
@@ -405,90 +454,4 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return instance;
   }
 
-  public void waiting(Instance instance) throws OdpsException {
-    boolean newLine = true;
-
-    PrintWriter out = this.getStdout();
-
-    boolean terminated = false;
-
-    String blankLine = buildString(' ', FIXED_WIDTH);
-
-    int round = 0;
-
-    while (!terminated) {
-      terminated = instance.isTerminated();
-
-      if (terminated) {
-        return;
-      }
-
-      if (!newLine) {
-        out.print(blankLine);
-        out.print('\r');
-      }
-
-      out.print(getStageProgress(instance, round));
-      round++;
-
-      if (!newLine) {
-        out.print('\r');
-      } else {
-        out.println();
-      }
-
-      out.flush();
-    }
-
-    out.println();
-  }
-
-  private static String buildString(char c, int n) {
-    if (n < 0) {
-      throw new IllegalArgumentException();
-    }
-
-    StringBuilder sb = new StringBuilder(n);
-    for (int i = 0; i < n; i++) {
-      sb.append(c);
-    }
-    return sb.toString();
-  }
-
-  public static String getStageProgress(Instance instance, int round) throws OdpsException {
-    StringBuilder sb = new StringBuilder();
-
-    Set<String> taskNames = instance.getTaskNames();
-
-    StringWriter strWriter = new StringWriter();
-    PrintWriter writer = new PrintWriter(strWriter);
-    int i = 0;
-    for (String taskName : taskNames) {
-      List<StageProgress> stages = instance.getTaskProgress(taskName);
-
-      if (stages.size() == 0) {
-        writer.print(taskName + ": " + buildString('.', round % 3 + 1));
-      } else {
-        writer.print(taskName + ":");
-        for (StageProgress stage : stages) {
-          writer.printf(" %s:%s/%s/%s", stage.getName(), stage.getRunningWorkers(),
-                        stage.getTerminatedWorkers(), stage.getTotalWorkers());
-        }
-      }
-      if (++i < taskNames.size()) {
-        writer.print(", ");
-      }
-    }
-
-    String str = strWriter.toString();
-    String padding =
-        str.length() >= FIXED_WIDTH ? "" : buildString(' ', FIXED_WIDTH - str.length());
-    sb.append(str);
-    sb.append(padding);
-    return sb.toString();
-  }
-
-  public PrintWriter getStdout() {
-    return stdout;
-  }
 }

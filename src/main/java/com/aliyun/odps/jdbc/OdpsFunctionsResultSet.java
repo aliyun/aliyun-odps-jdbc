@@ -1,4 +1,4 @@
-package com.aliyun.odps.jdbc.impl;
+package com.aliyun.odps.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -44,7 +44,7 @@ public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
       case 4: // REMARKS
         return null;
       case 5: // FUNCTION_TYPE
-        return 0;   // TODO: set a more reasonable value
+        return (long) 0;   // TODO: set a more reasonable value
       case 6: // SPECIFIC_NAME
         return null;
       default:
