@@ -1,34 +1,93 @@
+/*
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ *
+ */
+
 package com.aliyun.odps.jdbc;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.Properties;
+import java.util.logging.Logger;
 
-import com.aliyun.odps.jdbc.impl.NonRegisteringOdpsDriver;
-
-public class OdpsDriver extends NonRegisteringOdpsDriver implements Driver {
-
-    public final static OdpsDriver instance = new OdpsDriver();
-
-    static {
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
-
-            @Override public Object run() {
-                registerDriver(instance);
-                return null;
-            }
-        });
+public class OdpsDriver implements Driver {
+  static {
+    try {
+      DriverManager.registerDriver(new OdpsDriver());
+    } catch (SQLException e) {
+      e.printStackTrace();
     }
+  }
 
-    public static boolean registerDriver(Driver driver) {
-        try {
-            DriverManager.registerDriver(driver);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return true;
+  public final static String URL_PREFIX = "jdbc:odps:";
+
+  public OdpsDriver() {
+    SecurityManager security = System.getSecurityManager();
+    if (security != null) {
+      security.checkWrite("odps");
     }
+  }
+
+  @Override
+  public Connection connect(String url, Properties info) throws SQLException {
+    if (!acceptsURL(url)) {
+      return null;
+    }
+    String tuncatedUrl = url.substring(URL_PREFIX.length());
+    return new OdpsConnection(tuncatedUrl, info);
+  }
+
+  @Override
+  public boolean acceptsURL(String url) throws SQLException {
+    if (url != null && url.startsWith(URL_PREFIX)) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
+      throws SQLException {
+    return null;
+  }
+
+  @Override
+  public int getMajorVersion() {
+    return 0;
+  }
+
+  @Override
+  public int getMinorVersion() {
+    return 0;
+  }
+
+  @Override
+  public boolean jdbcCompliant() {
+    return false;
+  }
+
+  @Override
+  public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+    return null;
+  }
 
 }

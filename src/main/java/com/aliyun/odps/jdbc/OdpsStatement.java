@@ -1,5 +1,28 @@
-package com.aliyun.odps.jdbc.impl;
+/*
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ *
+ */
 
+package com.aliyun.odps.jdbc;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -7,7 +30,6 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import com.alibaba.fastjson.JSON;
@@ -18,17 +40,17 @@ import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
-import com.aliyun.odps.data.RecordReader;
+import com.aliyun.odps.tunnel.TableTunnel;
+import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
+import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-  // The table name must be unique since there can be two statements querying its results.
-  private static final String TEMP_TABLE_NAME =
-      "temp_tbl_for_query_result_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
   private OdpsConnection conn;
   private Instance instance = null;
   private ResultSet resultSet = null;
+  private String tempTableName = null;
   private int updateCount = -1;
   private int maxRows;
   private int fetchSize;
@@ -38,6 +60,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   OdpsStatement(OdpsConnection conn) {
     this.conn = conn;
+    tempTableName = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
   }
 
   @Override
@@ -45,19 +68,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * TODO: should we support cancel?
+   * @throws SQLException
+   */
   @Override
   public void cancel() throws SQLException {
-    if (isCancelled || instance == null) {
-      return;
-    }
-
-    try {
-      instance.stop();
-    } catch (OdpsException e) {
-      throw new SQLException("cancel error", e);
-    }
-
-    isCancelled = true;
+    throw new SQLFeatureNotSupportedException();
+//    if (isCancelled || instance == null) {
+//      return;
+//    }
+//
+//    try {
+//      instance.stop();
+//    } catch (OdpsException e) {
+//      throw new SQLException("cancel error", e);
+//    }
+//
+//    isCancelled = true;
   }
 
   @Override
@@ -70,11 +98,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
-
   /**
-   * Each resultSet is associated with a statement. If the same statement to execute
-   * another query, the original resultSet must be released. The temp table used to
-   * generate the result must be dropped as well.
+   * Each resultSet is associated with a statement. If the same statement is used to
+   * execute another query, the original resultSet will be invalidated.
+   * And the corresponding temp table will be dropped as well.
    *
    * @throws SQLException
    */
@@ -85,20 +112,19 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     // Drop the temp table for querying result set and ensure it has been dropped
-    Instance dropTableInstance = conn.run(String.format("drop table %s;", TEMP_TABLE_NAME));
-    Instance.TaskStatus dropTableStatus;
+    Instance dropTableInstance = conn.run(String.format("drop table %s;", tempTableName));
     try {
-      Map<String, Instance.TaskStatus> statuses = dropTableInstance.getTaskStatus();
-      dropTableStatus = statuses.get("SQL");
+      if (!dropTableInstance.isSuccessful()) {
+        throw new SQLException("can not drop the temp table for querying result");
+      }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
     }
-    if (dropTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
-      throw new SQLException("can not drop the temp table for querying result");
-    }
 
-    isClosed = true;
+    resultSet.close();
     resultSet = null;
+    tempTableName = null;
+    isClosed = true;
   }
 
   public void closeOnCompletion() throws SQLException {
@@ -117,36 +143,23 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // Drop the temp table for querying result set
     // in case that the table has been created in the former execution.
-    Instance dropTableInstance =
-        conn.run(String.format("drop table if exists %s;", TEMP_TABLE_NAME));
-    Instance.TaskStatus dropTableStatus;
-    try {
-      Map<String, Instance.TaskStatus> statuses = dropTableInstance.getTaskStatus();
-      dropTableStatus = statuses.get("SQL");
-    } catch (OdpsException e) {
-      throw new SQLException("can not read instance status", e);
-    }
-    if (dropTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
-      throw new SQLException("can not drop the temp table for querying result");
-    }
+    conn.run(String.format("drop table if exists %s;", tempTableName));
 
-    // Create a temp table for querying result set and ensure its creation
+    // Create a temp table for querying ResultSet and ensure its creation.
+    // If the table can not be created, an exception will be caused.
+    // Once the table has been created, it will last until the Statement is closed.
     Instance createTableInstance =
-        conn.run(String.format("create table %s as %s", TEMP_TABLE_NAME, sql));
-
-    Instance.TaskStatus createTableStatus;
+        conn.run(String.format("create table %s as %s", tempTableName, sql));
     try {
-      Map<String, Instance.TaskStatus> statuses = createTableInstance.getTaskStatus();
-      createTableStatus = statuses.get("SQL");
+      if (!createTableInstance.isSuccessful()) {
+        throw new SQLException("can not create the temp table for querying result");
+      }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
-    }
-    if (createTableStatus.getStatus() != Instance.TaskStatus.Status.SUCCESS) {
-      throw new SQLException("can not create temp table for querying result");
     }
 
     // Read schema
-    Table table = conn.getOdps().tables().get(TEMP_TABLE_NAME);
+    Table table = conn.getOdps().tables().get(tempTableName);
     List<String> columnNames = new ArrayList<String>();
     List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
     try {
@@ -160,15 +173,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
-    // Read records
-    RecordReader recordReader;
+    // Create a download session through tunnel
+    TableTunnel tunnel = new TableTunnel(conn.getOdps());
+    DownloadSession downloadSession;
     try {
-      recordReader = table.read(10000);
-    } catch (OdpsException e) {
-      throw new SQLException("can not read table records", e);
+      downloadSession =
+          tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), tempTableName);
+    } catch (TunnelException e) {
+      throw new SQLException("can not create tunnel download session", e);
     }
 
-    resultSet = new OdpsQueryResultSet(this, meta, recordReader);
+    resultSet = new OdpsQueryResultSet(this, meta, downloadSession);
     return resultSet;
   }
 
@@ -201,8 +216,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
-    execute(sql, autoGeneratedKeys);
-    return getUpdateCount();
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -222,6 +236,23 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean execute(String sql) throws SQLException {
+    BufferedReader reader = new BufferedReader(new StringReader(sql));
+    try {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (line.matches("^\\s*(--|#)")) {  // skip the comment starting with '--' or '#'
+          continue;
+        }
+        if (line.matches("(?i)^(\\s*)(SELECT).*$")) {
+          executeQuery(sql);
+          return true;
+        }
+      }
+    } catch (IOException e) {
+      throw new SQLException("can not read sql: ", e);
+    }
+
+    executeUpdate(sql);
     return false;
   }
 

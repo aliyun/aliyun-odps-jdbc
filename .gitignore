@@ -15,8 +15,9 @@ hs_err_pid*
 /.classpath
 /.project
 /.settings
-/src/test/resources/bvt_conf.properties
 
 # Intellij Idea
 .idea
 *.iml
+*.py
+yichao_test_table_input
