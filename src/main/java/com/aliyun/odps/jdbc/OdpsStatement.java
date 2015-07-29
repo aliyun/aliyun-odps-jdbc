@@ -241,8 +241,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     BufferedReader reader = new BufferedReader(new StringReader(sql));
     try {
       String line;
-      while ((line = reader.readLine()) != null){
-        if (line.matches("--.*$")){
+      while ((line = reader.readLine()) != null) {
+        if (line.matches("^\\s*(--|#)")){  // skip the comment starting with '--' or '#'
           continue;
         }
         if (line.matches("(?i)^(\\s*)(SELECT).*;$")) {

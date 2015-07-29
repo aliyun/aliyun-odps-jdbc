@@ -55,6 +55,7 @@ public class OdpsStatementTest extends TestCase {
     assertEquals(true, stmt.execute("\t\r\nselect 1 id from dual;"));
     assertEquals(true, stmt.execute("SELECT 1 id from dual;"));
     assertEquals(true, stmt.execute(" SELECT 1 id from dual;"));
+    assertEquals(true, stmt.execute(" SELECT 1 id--xixi\n from dual;"));
     assertEquals(true, stmt.execute("--abcd\nSELECT 1 id from dual;"));
     assertEquals(true, stmt.execute("--abcd\n--hehehe\nSELECT 1 id from dual;"));
     assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
