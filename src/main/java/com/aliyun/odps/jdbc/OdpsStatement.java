@@ -68,19 +68,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * TODO: should we support cancel?
+   * @throws SQLException
+   */
   @Override
   public void cancel() throws SQLException {
-    if (isCancelled || instance == null) {
-      return;
-    }
-
-    try {
-      instance.stop();
-    } catch (OdpsException e) {
-      throw new SQLException("cancel error", e);
-    }
-
-    isCancelled = true;
+    throw new SQLFeatureNotSupportedException();
+//    if (isCancelled || instance == null) {
+//      return;
+//    }
+//
+//    try {
+//      instance.stop();
+//    } catch (OdpsException e) {
+//      throw new SQLException("cancel error", e);
+//    }
+//
+//    isCancelled = true;
   }
 
   @Override
