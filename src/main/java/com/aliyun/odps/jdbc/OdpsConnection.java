@@ -1,3 +1,23 @@
+/*
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ *
+ */
+
 package com.aliyun.odps.jdbc;
 
 import java.io.PrintWriter;
@@ -17,7 +37,9 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -37,6 +59,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private Properties info;
   private String url;
   private String schema;
+  private List<Statement> stmtHandles;
 
   private boolean isClosed = false;
 
@@ -53,14 +76,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       if (odps.getLogViewHost() != null) {
         logViewHost = odps.getLogViewHost();
       }
-    }
-
-    public String getLogViewHost() {
-      return logViewHost;
-    }
-
-    public void setLogViewHost(String logViewHost) {
-      this.logViewHost = logViewHost;
     }
 
     public String generateLogView(Instance instance, long hours) throws OdpsException {
@@ -93,9 +108,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-
   /**
    * If the client code do not specify the protocol, an https protocol will be used.
+   *
    * @param url
    * @param info
    */
@@ -103,6 +118,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String accessId = info.getProperty("access_id");
     String accessKey = info.getProperty("access_key");
     String project = info.getProperty("project_name");
+
+    // Compatible with JDBC's API: getConnection("url", "user", "password")
+    if (accessId == null) {
+      info.getProperty("user");
+    }
+
+    if (accessKey == null) {
+      info.getProperty("password");
+    }
 
     Account account = new AliyunAccount(accessId, accessKey);
     this.odps = new Odps(account);
@@ -118,6 +142,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.info = info;
     odps.setDefaultProject(project);
     odps.setEndpoint(url);
+
+    stmtHandles = new ArrayList<Statement>();
   }
 
   public Odps getOdps() {
@@ -219,6 +245,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void close() throws SQLException {
+    if (!isClosed) {
+      for (Statement stmt : stmtHandles) {
+        if (stmt != null) {
+          stmt.close();
+        }
+      }
+    }
     isClosed = true;
   }
 
@@ -325,7 +358,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public OdpsStatement createStatement() throws SQLException {
     checkClosed();
-    return new OdpsStatement(this);
+    OdpsStatement stmt = new OdpsStatement(this);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override

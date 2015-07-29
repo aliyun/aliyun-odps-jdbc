@@ -1,3 +1,23 @@
+/*
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ *
+ */
+
 package com.aliyun.odps.jdbc;
 
 import java.io.IOException;
@@ -22,14 +42,22 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   private Integer fetchDirection;
   private Integer fetchSize;
 
-  private Boolean isClosed = false;
-
   OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
     super(stmt, meta);
     this.sessionHandle = session;
     totalRows = sessionHandle.getRecordCount();
     startRow = 0;
+  }
+
+  @Override
+  public void close() throws SQLException {
+    isClosed = true;
+    fetchDirection = null;
+    fetchSize = null;
+    recordReader = null;
+    sessionHandle = null;
+    rowValues = null;
   }
 
   /**
@@ -39,7 +67,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
    * a fewer number of rows will be downloaded from the session.
    * Otherwise, a number of `nextFewRows` rows will be downloaded.
    *
-   * @param nextFewRows the number of rows attempts to download
+   * @param nextFewRows
+   *     the number of rows attempts to download
    * @return
    * @throws SQLException
    */
@@ -67,6 +96,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public boolean next() throws SQLException {
+    checkClosed();
 
     if (recordReader == null) {
       if (!downloadMoreRows(DOWNLOAD_ROWS_STEP)) {
@@ -95,6 +125,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public int getFetchDirection() throws SQLException {
+    checkClosed();
+
     if (fetchDirection == null) {
       return stmt.getFetchDirection();
     }
@@ -104,11 +136,15 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public void setFetchDirection(int direction) throws SQLException {
+    checkClosed();
+
     fetchDirection = direction;
   }
 
   @Override
   public int getFetchSize() throws SQLException {
+    checkClosed();
+
     if (fetchSize == null) {
       return stmt.getFetchSize();
     }
@@ -122,29 +158,16 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public void close() throws SQLException {
-    if (!isClosed() && stmt != null) {
-      stmt.close();
+  public Object getObject(int columnIndex) throws SQLException {
+    checkClosed();
+    if (rowValues == null) {
+      wasNull = true;
+      return null;
     }
 
-    isClosed = true;
-    stmt = null;
-  }
-
-  @Override
-  public boolean isClosed() throws SQLException {
-    return isClosed;
-  }
-
-  @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    return rowValues != null ? rowValues[toZeroIndex(columnIndex)] : null;
-  }
-
-  @Override
-  public Object getObject(String columnName) throws SQLException {
-    int columnIndex = getMetaData().getColumnIndex(columnName);
-    return getObject(columnIndex);
+    Object obj = rowValues[toZeroIndex(columnIndex)];
+    wasNull = (obj == null);
+    return obj;
   }
 
   protected int toZeroIndex(int column) {
