@@ -121,11 +121,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     // Compatible with JDBC's API: getConnection("url", "user", "password")
     if (accessId == null) {
-      info.getProperty("user");
+      accessId = info.getProperty("user");
     }
 
     if (accessKey == null) {
-      info.getProperty("password");
+      accessKey = info.getProperty("password");
     }
 
     Account account = new AliyunAccount(accessId, accessKey);
