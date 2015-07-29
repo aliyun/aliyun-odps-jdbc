@@ -238,7 +238,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         if (line.matches("^\\s*(--|#)")) {  // skip the comment starting with '--' or '#'
           continue;
         }
-        if (line.matches("(?i)^(\\s*)(SELECT).*;$")) {
+        if (line.matches("(?i)^(\\s*)(SELECT).*$")) {
           executeQuery(sql);
           return true;
         }
