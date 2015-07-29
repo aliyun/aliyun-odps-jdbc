@@ -29,7 +29,7 @@ import com.aliyun.odps.Table;
 public class OdpsTablesResultSet extends OdpsResultSet implements ResultSet {
 
   private Iterator<Table> iterator;
-  private Table table;
+  private Table table = null;
 
   OdpsTablesResultSet(Iterator<Table> iterator, OdpsResultSetMetaData meta)
       throws SQLException {
@@ -38,7 +38,16 @@ public class OdpsTablesResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
+  public void close() throws SQLException {
+    isClosed = true;
+    iterator = null;
+    table = null;
+  }
+
+  @Override
   public boolean next() throws SQLException {
+    checkClosed();
+
     if (iterator.hasNext()) {
       table = iterator.next();
       return true;
@@ -49,11 +58,9 @@ public class OdpsTablesResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public void close() throws SQLException {
-  }
-
-  @Override
   public Object getObject(int columnIndex) throws SQLException {
+    checkClosed();
+
     switch (columnIndex) {
       case 1:
         return table.getProject();

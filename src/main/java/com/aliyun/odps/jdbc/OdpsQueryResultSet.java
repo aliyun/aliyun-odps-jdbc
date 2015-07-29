@@ -42,14 +42,22 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   private Integer fetchDirection;
   private Integer fetchSize;
 
-  private Boolean isClosed = false;
-
   OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
     super(stmt, meta);
     this.sessionHandle = session;
     totalRows = sessionHandle.getRecordCount();
     startRow = 0;
+  }
+
+  @Override
+  public void close() throws SQLException {
+    isClosed = true;
+    fetchDirection = null;
+    fetchSize = null;
+    recordReader = null;
+    sessionHandle = null;
+    rowValues = null;
   }
 
   /**
@@ -59,7 +67,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
    * a fewer number of rows will be downloaded from the session.
    * Otherwise, a number of `nextFewRows` rows will be downloaded.
    *
-   * @param nextFewRows the number of rows attempts to download
+   * @param nextFewRows
+   *     the number of rows attempts to download
    * @return
    * @throws SQLException
    */
@@ -87,6 +96,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public boolean next() throws SQLException {
+    checkClosed();
 
     if (recordReader == null) {
       if (!downloadMoreRows(DOWNLOAD_ROWS_STEP)) {
@@ -115,6 +125,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public int getFetchDirection() throws SQLException {
+    checkClosed();
+
     if (fetchDirection == null) {
       return stmt.getFetchDirection();
     }
@@ -124,11 +136,15 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public void setFetchDirection(int direction) throws SQLException {
+    checkClosed();
+
     fetchDirection = direction;
   }
 
   @Override
   public int getFetchSize() throws SQLException {
+    checkClosed();
+
     if (fetchSize == null) {
       return stmt.getFetchSize();
     }
@@ -142,22 +158,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public void close() throws SQLException {
-    if (!isClosed() && stmt != null) {
-      stmt.close();
-    }
-
-    isClosed = true;
-    stmt = null;
-  }
-
-  @Override
-  public boolean isClosed() throws SQLException {
-    return isClosed;
-  }
-
-  @Override
   public Object getObject(int columnIndex) throws SQLException {
+    checkClosed();
     if (rowValues == null) {
       wasNull = true;
       return null;

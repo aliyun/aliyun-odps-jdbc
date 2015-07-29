@@ -23,58 +23,67 @@ package com.aliyun.odps.jdbc;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-import junit.framework.TestCase;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.Assert;
 
-public class OdpsStatementTest extends TestCase {
+public class OdpsStatementTest {
 
-  protected Statement stmt;
+  static Statement stmt;
 
-  protected void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
     stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
     stmt.executeUpdate(
         "create table if not exists yichao_test_table_output(id bigint);");
   }
 
-  protected void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     stmt.executeUpdate("drop table if exists yichao_test_table_output;");
     stmt.close();
+    OdpsConnectionFactory.getInstance().conn.close();
   }
 
+  @Test
   public void testExecute() throws Exception {
-    assertEquals(true, stmt.execute("select 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
     ResultSet rs = stmt.getResultSet();
     rs.next();
-    assertEquals(1, rs.getInt(1));
-    assertEquals(false, stmt.execute(
+    Assert.assertEquals(1, rs.getInt(1));
+    Assert.assertEquals(false, stmt.execute(
         "insert into table yichao_test_table_output select 1 id from dual;"));
-    assertEquals(1, stmt.getUpdateCount());
+    Assert.assertEquals(1, stmt.getUpdateCount());
 
     // do not check result
-    assertEquals(true, stmt.execute(" select 1 id from dual;"));
-    assertEquals(true, stmt.execute("\nselect 1 id from dual;"));
-    assertEquals(true, stmt.execute("\t\r\nselect 1 id from dual;"));
-    assertEquals(true, stmt.execute("SELECT 1 id from dual;"));
-    assertEquals(true, stmt.execute(" SELECT 1 id from dual;"));
-    assertEquals(true, stmt.execute(" SELECT 1 id--xixi\n from dual;"));
-    assertEquals(true, stmt.execute("--abcd\nSELECT 1 id from dual;"));
-    assertEquals(true, stmt.execute("--abcd\n--hehehe\nSELECT 1 id from dual;"));
-    assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute(" select 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("\nselect 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("\t\r\nselect 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("SELECT 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute(" SELECT 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute(" SELECT 1 id--xixi\n from dual;"));
+    Assert.assertEquals(true, stmt.execute("--abcd\nSELECT 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\nSELECT 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
   }
 
+  @Test
   public void testExecuteUpdate() throws Exception {
     String sql =
         "insert into table yichao_test_table_output select * from yichao_test_table_input;";
     int updateCount = stmt.executeUpdate(sql);
-    assertEquals(100*10000, updateCount);
+    Assert.assertEquals(100 * 10000, updateCount);
   }
 
+  @Test
   public void testExecuteQuery() throws Exception {
     String sql = "select * from yichao_test_table_input;";
     ResultSet rs = stmt.executeQuery(sql);
 
     int i = 0;
     while (rs.next()) {
-      assertEquals(i, rs.getInt(1));
+      Assert.assertEquals(i, rs.getInt(1));
       i++;
     }
   }

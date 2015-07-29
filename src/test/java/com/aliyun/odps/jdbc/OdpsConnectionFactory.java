@@ -59,10 +59,5 @@ public class OdpsConnectionFactory {
   public static OdpsConnectionFactory getInstance() {
     return cf;
   }
-
-  @Override
-  protected void finalize() throws Throwable {
-    conn.close();
-  }
 }
 

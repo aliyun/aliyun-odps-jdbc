@@ -25,22 +25,32 @@ import com.alibaba.druid.util.JdbcUtils;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 
-import junit.framework.TestCase;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-public class OdpsDatabaseMetaDataTest extends TestCase {
+public class OdpsDatabaseMetaDataTest {
 
-  DatabaseMetaData databaseMetaData;
+  static DatabaseMetaData databaseMetaData;
 
-  protected void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
     databaseMetaData = OdpsConnectionFactory.getInstance().conn.getMetaData();
   }
 
+  @AfterClass
+  public static void tearDown() throws Exception {
+    OdpsConnectionFactory.getInstance().conn.close();
+  }
+
+  @Test
   public void testGetTables() throws Exception {
     ResultSet rs = databaseMetaData.getTables(null, null, null, null);
     JdbcUtils.printResultSet(rs);
     rs.close();
   }
 
+  @Test
   public void testGetFunctions() throws Exception {
     ResultSet rs = databaseMetaData.getFunctions(null, null, null);
     JdbcUtils.printResultSet(rs);

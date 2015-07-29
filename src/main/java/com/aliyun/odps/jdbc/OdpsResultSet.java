@@ -27,7 +27,6 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
-import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
 import java.sql.ResultSet;
@@ -50,6 +49,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private OdpsResultSetMetaData meta;
   protected OdpsStatement stmt;
   protected boolean wasNull = false;
+  protected boolean isClosed = false;
 
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
@@ -102,11 +102,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   @Override
-  public void close() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void deleteRow() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -144,7 +139,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     } else if (obj instanceof BigDecimal) {
       return (BigDecimal) obj;
     } else if (obj instanceof String) {
-      return new BigDecimal((String)obj);
+      return new BigDecimal((String) obj);
     } else if (obj instanceof byte[]) {
       return new BigDecimal(new String((byte[]) obj));
     }
@@ -321,12 +316,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   @Override
-  public Date getDate(int columnIndex) throws SQLException {
+  public java.sql.Date getDate(int columnIndex) throws SQLException {
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return null;
     } else if (obj instanceof java.util.Date) {
-      return new Date(((java.util.Date) obj).getTime());
+      return new java.sql.Date(((java.util.Date) obj).getTime());
     }
 
     String strVal;
@@ -341,25 +336,25 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
     SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
     try {
-      return new Date(dateFormat.parse(strVal).getTime());
+      return new java.sql.Date(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
       throw new SQLException("can not parse datetime: " + strVal, e);
     }
   }
 
   @Override
-  public Date getDate(String columnLabel) throws SQLException {
+  public java.sql.Date getDate(String columnLabel) throws SQLException {
     int columnIndex = findColumn(columnLabel);
     return getDate(columnIndex);
   }
 
   @Override
-  public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+  public java.sql.Date getDate(int columnIndex, Calendar cal) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+  public java.sql.Date getDate(String columnLabel, Calendar cal) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -708,6 +703,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getType() throws SQLException {
+    checkClosed();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
 
@@ -753,7 +749,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public boolean isClosed() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return isClosed;
   }
 
   @Override
@@ -1034,12 +1030,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   @Override
-  public void updateDate(int columnIndex, Date x) throws SQLException {
+  public void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public void updateDate(String columnLabel, Date x) throws SQLException {
+  public void updateDate(String columnLabel, java.sql.Date x) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -1258,5 +1254,11 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public boolean wasNull() throws SQLException {
     return wasNull;
+  }
+
+  protected void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("The result set has been closed");
+    }
   }
 }

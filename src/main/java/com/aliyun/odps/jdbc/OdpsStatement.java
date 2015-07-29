@@ -30,7 +30,6 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import com.alibaba.fastjson.JSON;
@@ -47,13 +46,11 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-  // The table name must be unique since there can be two statements querying its results.
-  private static final String TEMP_TABLE_NAME =
-      "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
   private OdpsConnection conn;
   private Instance instance = null;
   private ResultSet resultSet = null;
+  private String tempTableName = null;
   private int updateCount = -1;
   private int maxRows;
   private int fetchSize;
@@ -63,6 +60,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   OdpsStatement(OdpsConnection conn) {
     this.conn = conn;
+    tempTableName = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
   }
 
   @Override
@@ -95,7 +93,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
-
   /**
    * Each resultSet is associated with a statement. If the same statement is used to
    * execute another query, the original resultSet will be invalidated.
@@ -110,7 +107,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     // Drop the temp table for querying result set and ensure it has been dropped
-    Instance dropTableInstance = conn.run(String.format("drop table %s;", TEMP_TABLE_NAME));
+    Instance dropTableInstance = conn.run(String.format("drop table %s;", tempTableName));
     try {
       if (!dropTableInstance.isSuccessful()) {
         throw new SQLException("can not drop the temp table for querying result");
@@ -119,8 +116,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("can not read instance status", e);
     }
 
-    isClosed = true;
+    resultSet.close();
     resultSet = null;
+    tempTableName = null;
+    isClosed = true;
   }
 
   public void closeOnCompletion() throws SQLException {
@@ -139,30 +138,23 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // Drop the temp table for querying result set
     // in case that the table has been created in the former execution.
-    Instance dropTableInstance =
-        conn.run(String.format("drop table if exists %s;", TEMP_TABLE_NAME));
-    try {
-      if (!dropTableInstance.isSuccessful()) {
-        throw new SQLException("can not drop the temp table for querying result");
-      }
-    } catch (OdpsException e) {
-      throw new SQLException("can not read instance status", e);
-    }
+    conn.run(String.format("drop table if exists %s;", tempTableName));
 
-
-    // Create a temp table for querying result set and ensure its creation
+    // Create a temp table for querying ResultSet and ensure its creation.
+    // If the table can not be created, an exception will be caused.
+    // Once the table has been created, it will last until the Statement is closed.
     Instance createTableInstance =
-        conn.run(String.format("create table %s as %s", TEMP_TABLE_NAME, sql));
+        conn.run(String.format("create table %s as %s", tempTableName, sql));
     try {
       if (!createTableInstance.isSuccessful()) {
-        throw new SQLException("can not drop the temp table for querying result");
+        throw new SQLException("can not create the temp table for querying result");
       }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
     }
 
     // Read schema
-    Table table = conn.getOdps().tables().get(TEMP_TABLE_NAME);
+    Table table = conn.getOdps().tables().get(tempTableName);
     List<String> columnNames = new ArrayList<String>();
     List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
     try {
@@ -180,7 +172,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     TableTunnel tunnel = new TableTunnel(conn.getOdps());
     DownloadSession downloadSession;
     try {
-      downloadSession = tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), TEMP_TABLE_NAME);
+      downloadSession =
+          tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), tempTableName);
     } catch (TunnelException e) {
       throw new SQLException("can not create tunnel download session", e);
     }
@@ -242,7 +235,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     try {
       String line;
       while ((line = reader.readLine()) != null) {
-        if (line.matches("^\\s*(--|#)")){  // skip the comment starting with '--' or '#'
+        if (line.matches("^\\s*(--|#)")) {  // skip the comment starting with '--' or '#'
           continue;
         }
         if (line.matches("(?i)^(\\s*)(SELECT).*;$")) {
@@ -406,11 +399,5 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     updateCount = -1;
     resultSet = null;
     isCancelled = false;
-  }
-
-  // Ensure the temp table has been dropped in case the user forget to close the
-  // statement manually.
-  protected void finalize() throws SQLException {
-    close();
   }
 }

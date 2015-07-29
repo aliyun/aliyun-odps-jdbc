@@ -29,7 +29,7 @@ import com.aliyun.odps.Function;
 public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
 
   private Iterator<Function> iterator;
-  private Function function;
+  private Function function = null;
 
   OdpsFunctionsResultSet(Iterator<Function> iterator, OdpsResultSetMetaData meta)
       throws SQLException {
@@ -38,7 +38,16 @@ public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
+  public void close() throws SQLException {
+    isClosed = true;
+    iterator = null;
+    function = null;
+  }
+
+  @Override
   public boolean next() throws SQLException {
+    checkClosed();
+
     if (iterator.hasNext()) {
       function = iterator.next();
       return true;
@@ -49,11 +58,9 @@ public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public void close() throws SQLException {
-  }
-
-  @Override
   public Object getObject(int columnIndex) throws SQLException {
+    checkClosed();
+
     switch (columnIndex) {
       case 1: // FUNCTION_CAT
         return null;
