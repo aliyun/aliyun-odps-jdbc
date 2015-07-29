@@ -11,7 +11,7 @@ For example:
     Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
 
-2\. Connect to the ODPS by creating a `Connection` object with the JDC driver:
+2\. Connect to the ODPS by creating a `Connection` object with the JDBC driver:
 
 For example:
     
@@ -22,9 +22,14 @@ The ODPS server works with HTTP or HTTPS protocol, so an `ODPS_URL` looks like:
 * `http://<domain>/<subdomain>`
 * `https://<domain>/<subdomain>`
 
-If the user does not specify the protocal, HTTPS will be used: 
+If the user does not specify the protocal, HTTPS will be used.
 
-Other information is passed through a `config`. 
+For example:
+
+    Connection conn = DriverManager.getConnection("jdbc:odps://<domain>/<subdomain>", config);
+
+
+And other information is passed through a `config`. 
 
 For example:
 
