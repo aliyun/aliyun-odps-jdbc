@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public class OdpsDriver implements Driver {
+
   static {
     try {
       DriverManager.registerDriver(new OdpsDriver());

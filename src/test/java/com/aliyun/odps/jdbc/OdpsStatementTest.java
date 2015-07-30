@@ -79,7 +79,7 @@ public class OdpsStatementTest {
     Assert.assertEquals(10000, stmt.getFetchSize());
 
     // Test performance for difference fetch size
-    int[] fetchSizes = {50*10000, 20*10000, 10*10000, 5*10000, 2*10000, 10000};
+    int[] fetchSizes = {50 * 10000, 20 * 10000, 10 * 10000, 5 * 10000, 2 * 10000, 10000};
 
     int i;
     for (int round = 0; round < fetchSizes.length; round++) {

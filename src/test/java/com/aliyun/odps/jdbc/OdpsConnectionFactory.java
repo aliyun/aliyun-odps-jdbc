@@ -26,6 +26,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 
+import org.junit.Assert;
+
 /**
  * This class manage a global JDBC connection and multiple testing instances
  * can access it simultaneously. It will also close the connection automatically.
@@ -47,6 +49,7 @@ public class OdpsConnectionFactory {
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
       String url = odpsConfig.getProperty("end_point");
       conn = DriverManager.getConnection("jdbc:odps:" + url, odpsConfig);
+      Assert.assertNotNull(conn);
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {

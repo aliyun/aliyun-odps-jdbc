@@ -106,7 +106,9 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   /**
    * Get the sql type of a certain column
-   * @param column column index
+   *
+   * @param column
+   *     column index
    * @return the sql enum code
    * @throws SQLException
    */

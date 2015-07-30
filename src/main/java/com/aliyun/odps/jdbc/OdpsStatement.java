@@ -76,6 +76,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   /**
    * TODO: should we support cancel?
+   *
    * @throws SQLException
    */
   @Override

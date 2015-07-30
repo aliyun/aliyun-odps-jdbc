@@ -96,17 +96,17 @@ The implicit type conversion follows the rule:
 
 * TYPE_FORWARD_ONLY
 * TYPE_SCROLL_INSENSITIVE
-** absolute []
-** afterLast []
-** beforeFirst [Y]
-** first []
-** isAfterLast []
-** IsBeforeFirst [Y]
-** isFirst []
-** isLast []
-** last []
-** previous []
-** relative []
+  * absolute []
+  * afterLast []
+  * beforeFirst [Y]
+  * first []
+  * isAfterLast []
+  * IsBeforeFirst [Y]
+  * isFirst []
+  * isLast []
+  * last []
+  * previous []
+  * relative []
 * TYPE_SCROLL_SENSITIVE (Not supported)
 
 ### ResultSet Concurrency
