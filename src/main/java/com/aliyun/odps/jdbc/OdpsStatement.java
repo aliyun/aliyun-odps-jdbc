@@ -46,20 +46,26 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-
   private OdpsConnection conn;
   private Instance instance = null;
   private ResultSet resultSet = null;
-  private String tempTableName = null;
   private int updateCount = -1;
   private int maxRows;
-  private int fetchSize;
+  private int fetchSize = 10000;
   private int queryTimeout = -1;
   private boolean isClosed = false;
   private boolean isCancelled = false;
+  protected boolean isResultSetScrollable;
+  private final String tempTableName;
 
   OdpsStatement(OdpsConnection conn) {
     this.conn = conn;
+    tempTableName = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
+  }
+
+  OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
+    this.conn = conn;
+    this.isResultSetScrollable = isResultSetScrollable;
     tempTableName = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
   }
 
@@ -123,7 +129,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     resultSet.close();
     resultSet = null;
-    tempTableName = null;
     isClosed = true;
   }
 
@@ -183,7 +188,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("can not create tunnel download session", e);
     }
 
-    resultSet = new OdpsQueryResultSet(this, meta, downloadSession);
+    resultSet = new OdpsQueryResultSet(this, meta, downloadSession, isResultSetScrollable);
+    resultSet.setFetchSize(fetchSize);
     return resultSet;
   }
 
@@ -271,18 +277,27 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return conn;
   }
 
+  /**
+   * Only allow Forward fetching
+   *
+   * @return ResultSet.FETCH_FORWARD
+   * @throws SQLException
+   */
   @Override
   public int getFetchDirection() throws SQLException {
+    checkClosed();
     return ResultSet.FETCH_FORWARD;
   }
 
   @Override
   public int getFetchSize() throws SQLException {
+    checkClosed();
     return fetchSize;
   }
 
   @Override
   public void setFetchSize(int rows) throws SQLException {
+    checkClosed();
     fetchSize = rows;
   }
 
@@ -404,5 +419,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     updateCount = -1;
     resultSet = null;
     isCancelled = false;
+  }
+
+  protected void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("The statement has been closed");
+    }
   }
 }

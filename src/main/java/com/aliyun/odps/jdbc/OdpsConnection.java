@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -358,7 +359,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public OdpsStatement createStatement() throws SQLException {
     checkClosed();
-    OdpsStatement stmt = new OdpsStatement(this);
+    OdpsStatement stmt = new OdpsStatement(this, false);
     stmtHandles.add(stmt);
     return stmt;
   }
@@ -366,7 +367,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    checkClosed();
+
+    if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
+        && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset type: " + resultSetType + " is not supported");
+    }
+
+    if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
+    }
+
+    boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
+    OdpsStatement stmt = new OdpsStatement(this, isResultSetScrollable);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override

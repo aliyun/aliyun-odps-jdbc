@@ -86,3 +86,34 @@ The implicit type conversion follows the rule:
 | Date       |   |   |   | Y | Y |   |
 | Time       |   |   |   | Y | Y |   |
 | Timestamp  |   |   |   | Y | Y |   |
+
+
+
+## Functionality of ResultSet
+
+
+### ResultSet Types
+
+* TYPE_FORWARD_ONLY
+* TYPE_SCROLL_INSENSITIVE
+** absolute []
+** afterLast []
+** beforeFirst [Y]
+** first []
+** isAfterLast []
+** IsBeforeFirst [Y]
+** isFirst []
+** isLast []
+** last []
+** previous []
+** relative []
+* TYPE_SCROLL_SENSITIVE (Not supported)
+
+### ResultSet Concurrency
+
+* CONCUR_READ_ONLY
+* CONCUR_UPDATABLE (Not supported)
+
+### ResultSet Holdablity
+
+Not supported

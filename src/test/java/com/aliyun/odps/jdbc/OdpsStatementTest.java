@@ -20,6 +20,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -30,24 +31,79 @@ import org.junit.Assert;
 
 public class OdpsStatementTest {
 
-  static Statement stmt;
+  private static Connection conn = OdpsConnectionFactory.getInstance().conn;
 
   @BeforeClass
   public static void setUp() throws Exception {
-    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+    Statement stmt = conn.createStatement();
     stmt.executeUpdate(
         "create table if not exists yichao_test_table_output(id bigint);");
+    stmt.close();
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
+    Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists yichao_test_table_output;");
     stmt.close();
-    OdpsConnectionFactory.getInstance().conn.close();
+    conn.close();
+  }
+
+
+  @Test
+  public void testExecuteUpdate() throws Exception {
+    Statement stmt = conn.createStatement();
+    String sql =
+        "insert into table yichao_test_table_output select * from yichao_test_table_input;";
+    int updateCount = stmt.executeUpdate(sql);
+    Assert.assertEquals(100 * 10000, updateCount);
+  }
+
+  /**
+   * Test the scrollability of the resultset.
+   * This function covers the following API of ResultSet:
+   * 1. getRow()
+   * 2. beforeFirst() / isBeforeFirst()
+   * 4. setFetchSize() / getFetchSize()
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testExecuteQuery() throws Exception {
+    Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                                          ResultSet.CONCUR_READ_ONLY);
+
+    String sql = "select * from yichao_test_table_input;";
+    ResultSet rs = stmt.executeQuery(sql);
+    Assert.assertEquals(ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
+    Assert.assertEquals(10000, stmt.getFetchSize());
+
+    // Test performance for difference fetch size
+    int[] fetchSizes = {50*10000, 20*10000, 10*10000, 5*10000, 2*10000, 10000};
+
+    int i;
+    for (int round = 0; round < fetchSizes.length; round++) {
+      long start = System.currentTimeMillis();
+      rs.setFetchSize(fetchSizes[round]);
+      Assert.assertEquals(fetchSizes[round], rs.getFetchSize());
+      rs.beforeFirst();
+      Assert.assertEquals(true, rs.isBeforeFirst());
+      {
+        i = 0;
+        while (rs.next()) {
+          Assert.assertEquals(i + 1, rs.getRow());
+          Assert.assertEquals(i, rs.getInt(1));
+          i++;
+        }
+      }
+      long end = System.currentTimeMillis();
+      System.out.printf("step\t%d\tmillis\t%d\n", rs.getFetchSize(), end - start);
+    }
   }
 
   @Test
   public void testExecute() throws Exception {
+    Statement stmt = conn.createStatement();
     Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
     ResultSet rs = stmt.getResultSet();
     rs.next();
@@ -68,23 +124,5 @@ public class OdpsStatementTest {
     Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
   }
 
-  @Test
-  public void testExecuteUpdate() throws Exception {
-    String sql =
-        "insert into table yichao_test_table_output select * from yichao_test_table_input;";
-    int updateCount = stmt.executeUpdate(sql);
-    Assert.assertEquals(100 * 10000, updateCount);
-  }
 
-  @Test
-  public void testExecuteQuery() throws Exception {
-    String sql = "select * from yichao_test_table_input;";
-    ResultSet rs = stmt.executeQuery(sql);
-
-    int i = 0;
-    while (rs.next()) {
-      Assert.assertEquals(i, rs.getInt(1));
-      i++;
-    }
-  }
 }

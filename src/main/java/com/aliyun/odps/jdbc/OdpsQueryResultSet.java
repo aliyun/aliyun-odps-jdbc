@@ -31,33 +31,107 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
-  private static final long DOWNLOAD_ROWS_STEP = 10000;
-
   private RecordReader recordReader = null;
   private DownloadSession sessionHandle;
   private Object[] rowValues;
 
-  private long startRow;
-  private long totalRows;
-  private Integer fetchDirection;
-  private Integer fetchSize;
+  private int startRow;
+  private final int totalRows;
+  private int fetchedRows;
 
-  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
+  /**
+   * The number of rows to be fetched for each time.
+   */
+  private int fetchSize;
+
+  /**
+   * A boolean is sufficient to tell the type among:
+   * TYPE_FORWARD_ONLY:        false
+   * TYPE_SCROLL_INSENSITIVE: true
+   * TYPE_SCROLL_SENSITIVE:    not supported
+   */
+  private boolean isScrollable = false;
+
+  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
+                     boolean scrollable)
       throws SQLException {
     super(stmt, meta);
     this.sessionHandle = session;
-    totalRows = sessionHandle.getRecordCount();
+    totalRows = (int) sessionHandle.getRecordCount();
     startRow = 0;
+    fetchedRows = 0;
+    fetchSize = stmt.getFetchSize();
+    isScrollable = scrollable;
+  }
+
+  @Override
+  public void beforeFirst() throws SQLException {
+    checkClosed();
+    fetchedRows = 0;
+    startRow = 0;
+    recordReader = null;
+    rowValues = null;
+  }
+
+  @Override
+  public int getRow() throws SQLException {
+    checkClosed();
+    return fetchedRows;
+  }
+
+  @Override
+  public boolean isBeforeFirst() throws SQLException {
+    checkClosed();
+    return (fetchedRows == 0);
+  }
+
+  @Override
+  public void setFetchSize(int rows) throws SQLException {
+    fetchSize = rows;
+  }
+
+  @Override
+  public int getFetchSize() throws SQLException {
+    return fetchSize;
   }
 
   @Override
   public void close() throws SQLException {
     isClosed = true;
-    fetchDirection = null;
-    fetchSize = null;
     recordReader = null;
     sessionHandle = null;
     rowValues = null;
+  }
+
+  @Override
+  public boolean next() throws SQLException {
+    checkClosed();
+
+    try {
+      if (recordReader == null) {
+        if (!downloadMoreRows(fetchSize)) {
+          return false;
+        }
+      }
+
+      Record record = recordReader.read();
+      if (record == null) {
+        if (!downloadMoreRows(fetchSize)) {
+          return false;
+        } else {
+          record = recordReader.read();
+          rowValues = record.toArray();
+          fetchedRows++;
+          return true;
+        }
+      }
+
+      rowValues = record.toArray();
+      fetchedRows++;
+      return true;
+    } catch (IOException e) {
+      throw new SQLException(e);
+    }
   }
 
   /**
@@ -72,7 +146,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
    * @return
    * @throws SQLException
    */
-  private boolean downloadMoreRows(long nextFewRows) throws SQLException {
+  private boolean downloadMoreRows(int nextFewRows) throws SQLException {
     if (startRow >= totalRows) {
       return false;
     }
@@ -95,66 +169,14 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public boolean next() throws SQLException {
+  public int getType() throws SQLException {
     checkClosed();
 
-    if (recordReader == null) {
-      if (!downloadMoreRows(DOWNLOAD_ROWS_STEP)) {
-        return false;
-      }
+    if (isScrollable) {
+      return ResultSet.TYPE_SCROLL_INSENSITIVE;
+    } else {
+      return ResultSet.TYPE_FORWARD_ONLY;
     }
-
-    try {
-      Record record = recordReader.read();
-      if (record == null) {
-        if (!downloadMoreRows(DOWNLOAD_ROWS_STEP)) {
-          return false;
-        } else {
-          record = recordReader.read();
-          rowValues = record.toArray();
-          return true;
-        }
-      }
-
-      rowValues = record.toArray();
-      return true;
-    } catch (IOException e) {
-      throw new SQLException(e);
-    }
-  }
-
-  @Override
-  public int getFetchDirection() throws SQLException {
-    checkClosed();
-
-    if (fetchDirection == null) {
-      return stmt.getFetchDirection();
-    }
-
-    return fetchDirection;
-  }
-
-  @Override
-  public void setFetchDirection(int direction) throws SQLException {
-    checkClosed();
-
-    fetchDirection = direction;
-  }
-
-  @Override
-  public int getFetchSize() throws SQLException {
-    checkClosed();
-
-    if (fetchSize == null) {
-      return stmt.getFetchSize();
-    }
-
-    return fetchSize;
-  }
-
-  @Override
-  public void setFetchSize(int rows) throws SQLException {
-    fetchSize = rows;
   }
 
   @Override

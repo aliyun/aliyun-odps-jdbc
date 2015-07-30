@@ -58,7 +58,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getFetchDirection() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    checkClosed();
+    return stmt.getFetchDirection();
   }
 
   @Override
@@ -154,7 +155,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   /**
-   * The column index can be acquired from the MetaData (implemented by the child class)
+   * The column index can be retrieved by name through the ResultSetMetaData.
    *
    * @param columnLabel
    *     the name of the column
