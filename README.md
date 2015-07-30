@@ -1,8 +1,6 @@
 # JDBC Driver for ODPS
 
-
 ## Quickstart
-
 
 1\. Explictly load the ODPS JDBC driver using Class.`forName()`.
     
@@ -57,7 +55,6 @@ For example
 
 ## Data Type
 
-
 | ODPS Type   | Java Type   | JDBC Interface               | JDBC            |  
 | :-------: | :-------- | :-------------------- | :-----------: |
 | BIGINT      | Long         | int, short, long              | BIGINT        |
@@ -88,7 +85,6 @@ The implicit type conversion follows the rule:
 | Timestamp  |   |   |   | Y | Y |   |
 
 
-
 ## Functionality of ResultSet
 
 
@@ -96,17 +92,17 @@ The implicit type conversion follows the rule:
 
 * TYPE_FORWARD_ONLY
 * TYPE_SCROLL_INSENSITIVE
-  * absolute []
-  * afterLast []
-  * beforeFirst [Y]
-  * first []
-  * isAfterLast []
-  * IsBeforeFirst [Y]
-  * isFirst []
-  * isLast []
-  * last []
-  * previous []
-  * relative []
+  * absolute
+  * afterLast
+  * beforeFirst Y
+  * first
+  * isAfterLast
+  * IsBeforeFirst Y
+  * isFirst
+  * isLast
+  * last
+  * previous
+  * relative
 * TYPE_SCROLL_SENSITIVE (Not supported)
 
 ### ResultSet Concurrency

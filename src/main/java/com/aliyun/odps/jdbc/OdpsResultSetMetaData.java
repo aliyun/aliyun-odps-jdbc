@@ -80,7 +80,7 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     Integer index = nameIndexMap.get(name);
     if (index == null) {
       String lowerName = name.toLowerCase();
-      if (lowerName == name) {
+      if (lowerName.equals(name)) {
         return -1;
       }
 
@@ -91,12 +91,12 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
       return -1;
     }
 
-    return index.intValue();
+    return index;
   }
 
   @Override
   public String getColumnLabel(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return columnNames.get(toZeroIndex(column));
   }
 
   @Override
@@ -134,19 +134,90 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     }
   }
 
+  /**
+   * TODO: Replace with serde in the latest API.
+   *
+   * @param column
+   * @return
+   * @throws SQLException
+   */
   @Override
   public String getColumnTypeName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+
+    if (type == OdpsType.BIGINT) {
+      return "bigint";
+    } else if (type == OdpsType.BOOLEAN) {
+      return "boolean";
+    } else if (type == OdpsType.DOUBLE) {
+      return "double";
+    } else if (type == OdpsType.STRING) {
+      return "string";
+    } else if (type == OdpsType.DATETIME) {
+      return "datetime";
+    } else if (type == OdpsType.DECIMAL) {
+      return "decimal";
+    } else {
+      throw new SQLException("unknown OdpsType to sql type conversion");
+    }
   }
 
+  /**
+   * TODO: Remove the hard code.
+   *
+   * @param column
+   *     the column index
+   * @return
+   * @throws SQLException
+   */
   @Override
   public int getPrecision(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+
+    if (type == OdpsType.BIGINT) {
+      return 19;
+    } else if (type == OdpsType.BOOLEAN) {
+      return 1;
+    } else if (type == OdpsType.DOUBLE) {
+      return 15; // http://stackoverflow.com/questions/9999221/double-precision-decimal-places
+    } else if (type == OdpsType.STRING) {  // UTF-8
+      return 2 * 1024 * 1024 / 3;
+    } else if (type == OdpsType.DATETIME) { //"yyyy-MM-dd HH:mm:ss"
+      return 19;
+    } else if (type == OdpsType.DECIMAL) {
+      return 18 + 36;
+    } else {
+      throw new SQLException("unknown OdpsType to sql type conversion");
+    }
   }
 
+  /**
+   * TODO: Remove the hard code.
+   *
+   * @param column
+   *     the column index
+   * @return
+   * @throws SQLException
+   */
   @Override
   public int getScale(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+
+    if (type == OdpsType.BIGINT) {
+      return 0;
+    } else if (type == OdpsType.BOOLEAN) {
+      return 0;
+    } else if (type == OdpsType.DOUBLE) {
+      return 15;
+    } else if (type == OdpsType.STRING) {
+      return 0;
+    } else if (type == OdpsType.DATETIME) {
+      return 0;
+    } else if (type == OdpsType.DECIMAL) {
+      return 18;
+    } else {
+      throw new SQLException("unknown OdpsType to sql type conversion");
+    }
   }
 
   @Override
@@ -164,9 +235,17 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * Only string type is case sensitive
+   *
+   * @param column
+   * @return
+   * @throws SQLException
+   */
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return (type == OdpsType.STRING);
   }
 
   @Override
@@ -186,7 +265,7 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   @Override
   public boolean isReadOnly(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return true;
   }
 
   @Override

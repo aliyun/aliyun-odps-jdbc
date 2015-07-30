@@ -435,9 +435,15 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * Do not support Stored Procedures.
+   *
+   * @return
+   * @throws SQLException
+   */
   @Override
   public boolean supportsStoredProcedures() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
