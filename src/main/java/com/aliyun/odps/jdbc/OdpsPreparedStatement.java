@@ -63,6 +63,11 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     this.sql = sql;
   }
 
+  OdpsPreparedStatement(OdpsConnection conn, String sql, boolean isResultSetScrollable) {
+    this(conn, sql);
+    this.isResultSetScrollable = isResultSetScrollable;
+  }
+
   @Override
   public void addBatch() throws SQLException {
     throw new SQLFeatureNotSupportedException();

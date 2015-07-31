@@ -63,12 +63,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean isClosed = false;
 
-  /**
-   * If the client code do not specify the protocol, an https protocol will be used.
-   *
-   * @param url
-   * @param info
-   */
   OdpsConnection(String url, Properties info) {
     // Compatible with JDBC's API: getConnection("url", "user", "password")
     String accessId = info.getProperty("access_id");
@@ -85,10 +79,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.odps = new Odps(account);
     if (url.startsWith("http://") || url.startsWith("https://")) {
       this.url = url;
-    } else if (url.startsWith("//")) {
+    } else if (url.startsWith("//")) {   // default is https
       this.url = "https:" + url;
     } else {
-      assert (false);
+      assert(false);
     }
     odps.setEndpoint(url);
 
@@ -104,7 +98,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
-    return new OdpsPreparedStatement(this, sql);
+    OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override
@@ -125,10 +121,33 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * Only support the following type
+   * @param sql the prepared sql
+   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency CONCUR_READ_ONLY
+   * @return OdpsPreparedStatement
+   * @throws SQLException
+   */
   @Override
-  public PreparedStatement prepareStatement(String sql, int resultSetType,
+  public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
                                             int resultSetConcurrency) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    checkClosed();
+    if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
+        && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset type: " + resultSetType + " is not supported");
+    }
+
+    if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
+    }
+
+    boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
+    OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql, isResultSetScrollable);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override
@@ -157,7 +176,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public String nativeSQL(String sql) throws SQLException {
-    return sql;
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -208,12 +227,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public DatabaseMetaData getMetaData() throws SQLException {
     checkClosed();
     return new OdpsDatabaseMetaData(this);
-  }
-
-  private void checkClosed() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("the connection has already been closed");
-    }
   }
 
   @Override
@@ -301,6 +314,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return stmt;
   }
 
+  /**
+   * Only support the following type:
+   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency CONCUR_READ_ONLY
+   * @return OdpsStatement object
+   * @throws SQLException
+   */
   @Override
   public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency)
       throws SQLException {
@@ -478,5 +498,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
 
     return instance;
+  }
+
+  private void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("the connection has already been closed");
+    }
   }
 }

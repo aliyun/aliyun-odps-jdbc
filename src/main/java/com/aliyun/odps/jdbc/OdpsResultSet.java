@@ -51,6 +51,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   protected boolean wasNull = false;
   protected boolean isClosed = false;
 
+  protected SQLWarning warningChain = null;
+
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
     this.meta = meta;
@@ -99,7 +101,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    warningChain = null;
   }
 
   @Override
@@ -729,7 +731,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return warningChain;
   }
 
   @Override

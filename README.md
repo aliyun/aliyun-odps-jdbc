@@ -85,31 +85,90 @@ The implicit type conversion follows the rule:
 | Timestamp  |   |   |   | Y | Y |   |
 
 
-## Functionality of ResultSet
+## JDBC 4.0 Comliance RoadMap
 
 
-### ResultSet Types
+### DataSource 
 
-* TYPE_FORWARD_ONLY
-* TYPE_SCROLL_INSENSITIVE
-  * absolute
-  * afterLast
-  * beforeFirst Y
-  * first
-  * isAfterLast
-  * IsBeforeFirst Y
-  * isFirst
-  * isLast
-  * last
-  * previous
-  * relative
-* TYPE_SCROLL_SENSITIVE (Not supported)
+TODO
 
-### ResultSet Concurrency
+### Driver
 
-* CONCUR_READ_ONLY
-* CONCUR_UPDATABLE (Not supported)
+Fully implented with the exception of the following methods:
 
-### ResultSet Holdablity
+* getMajorVersion
+* getMinorVersion
 
-Not supported
+And the following methods whose absence is permitted:
+
+* getParentLogger
+
+### Connection
+
+Fully implented with the exception of the following methods:
+
+* setHoldability
+* getHoldability
+* isValid
+* nativeSQL
+* setTransactionIsolation
+* commit
+* rollback
+* prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+* prepareCall
+* setReadOnly
+* setAutoCommit 
+
+### Statement
+
+Fully implented with the exception of the following methods:
+
+* addBatch
+* clearBatch
+* executeBatch
+* closeOnCompletion
+* setEscapeProcessing
+* setMaxFieldSize
+* setPoolable
+* getMoreResults()
+* getQueryTimeout
+* setQueryTimeout
+* ~~setFetchDirection(Statement.FETCH_REVERSE)~~
+
+
+The parts ODPS JDBC supports but Hive does not:
+
+* getUpdateCount
+
+
+### ResultSet
+
+
+* ResultSet Concurrency 
+  * CONCUR_READ_ONLY 
+  * ~~CONCUR_UPDATABLE~~
+* ResultSet Holdablity 
+  * ~~HOLD_CURSORS_OVER_COMMIT~~
+  * ~~CLOSE_CURSORS_AT_COMMIT~~
+* ResultSet Type
+  * TYPE_FORWARD_ONLY 
+  * TYPE_SCROLL_INSENSITIVE
+    * FETCH_FORWARD
+    * FETCH_REVERSE (Hive partially supported)
+    * FETCH_UNKNOWN
+  * ~~TYPE_SCROLL_SENSITIVE~~
+
+Fully implented with the exception of the following methods:
+
+* absolute
+* afterLast
+* ~~beforeFirst~~
+* first
+* isAfterLast
+* ~~isBeforeFirst~~
+* isFirst
+* isLast
+* last
+* previous
+* relative
+
