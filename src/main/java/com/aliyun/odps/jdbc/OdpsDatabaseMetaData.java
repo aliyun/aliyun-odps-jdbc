@@ -435,12 +435,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  /**
-   * Do not support Stored Procedures.
-   *
-   * @return
-   * @throws SQLException
-   */
   @Override
   public boolean supportsStoredProcedures() throws SQLException {
     return false;
@@ -697,8 +691,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     );
 
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
-    ResultSet rs = new OdpsTablesResultSet(iterator, meta);
-    return rs;
+    return new OdpsTablesResultSet(iterator, meta);
   }
 
   @Override
@@ -1005,8 +998,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     );
 
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
-    OdpsFunctionsResultSet rs = new OdpsFunctionsResultSet(iterator, meta);
-    return rs;
+    return new OdpsFunctionsResultSet(iterator, meta);
   }
 
   @Override

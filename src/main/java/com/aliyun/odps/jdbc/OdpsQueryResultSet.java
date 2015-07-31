@@ -64,6 +64,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
    * A builder class which makes the parameter list of constructor less verbose.
    */
   public static class Builder {
+
     private OdpsStatement stmtHandle;
     private DownloadSession sessionHandle;
     private OdpsResultSetMetaData meta;
@@ -214,7 +215,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
    *
    * @param nextFewRows
    *     the number of rows attempts to download
-   * @return
+   * @return a boolean that indicates whether the download is successful
    * @throws SQLException
    */
   private boolean downloadMoreRows(int nextFewRows) throws SQLException {
