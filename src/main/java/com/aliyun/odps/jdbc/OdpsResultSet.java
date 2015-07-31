@@ -164,8 +164,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
    */
   @Override
   public int findColumn(String columnLabel) throws SQLException {
-    int columnIndex = getMetaData().getColumnIndex(columnLabel);
-    return columnIndex;
+    return getMetaData().getColumnIndex(columnLabel);
   }
 
   @Override
@@ -365,7 +364,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return 0;
     } else if (obj instanceof Double) {
-      return ((Double) obj).doubleValue();
+      return (Double) obj;
     }
 
     String strVal;
@@ -424,7 +423,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getHoldability() throws SQLException {
-    return stmt.getResultSetHoldability();
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -464,7 +463,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return 0;
     } else if (obj instanceof Long) {
-      return ((Long) obj).longValue();
+      return (Long) obj;
     }
 
     String strVal;

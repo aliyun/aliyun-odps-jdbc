@@ -914,7 +914,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getResultSetHoldability() throws SQLException {
-    return 0;
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
