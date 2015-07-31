@@ -50,12 +50,35 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private Instance instance = null;
   private ResultSet resultSet = null;
   private int updateCount = -1;
-  private int maxRows;
-  private int fetchSize = 10000;
   private int queryTimeout = -1;
   private boolean isClosed = false;
   private boolean isCancelled = false;
-  protected boolean isResultSetScrollable;
+
+  /**
+   * Sets the scrollablity of ResultSet objects produced by this statement.
+   */
+  protected boolean isResultSetScrollable = false;
+
+  /**
+   * Sets the fetch direction of ResultSet objects produced by this statement.
+   */
+  protected boolean isResultSetFetchForward = true;
+
+  /**
+   * Sets the limits of row numbers that a ResultSet object produced by this statement
+   * can contain. If maxRows equals 0, then there is no limits.
+   */
+  private int maxRows = 0;
+
+  /**
+   * Sets the number of rows to be fetched from the server each time.
+   * It is just a hint which can be ignored by the implementation of ResultSet.
+   */
+  private int fetchSize = 10000;
+
+  /**
+   * Used to create a temp table for producing ResultSet object.
+   */
   private final String tempTableName;
 
   OdpsStatement(OdpsConnection conn) {
@@ -189,9 +212,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("can not create tunnel download session", e);
     }
 
-    resultSet = new OdpsQueryResultSet(this, meta, downloadSession, isResultSetScrollable);
-    resultSet.setFetchSize(fetchSize);
-    return resultSet;
+    return new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
+        .setSessionHandle(downloadSession)
+        .setFetchForward(isResultSetFetchForward)
+        .setScollable(isResultSetScrollable)
+        .setFetchSize(fetchSize)
+        .setMaxRows(maxRows).build();
   }
 
   @Override
@@ -278,16 +304,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return conn;
   }
 
-  /**
-   * Only allow Forward fetching
-   *
-   * @return ResultSet.FETCH_FORWARD
-   * @throws SQLException
-   */
   @Override
   public int getFetchDirection() throws SQLException {
     checkClosed();
-    return ResultSet.FETCH_FORWARD;
+    return isResultSetFetchForward ? ResultSet.FETCH_FORWARD : ResultSet.FETCH_REVERSE;
   }
 
   @Override

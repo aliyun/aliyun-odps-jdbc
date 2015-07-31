@@ -31,42 +31,109 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
+  private DownloadSession sessionHandle = null;
   private RecordReader recordReader = null;
-  private DownloadSession sessionHandle;
   private Object[] rowValues;
 
-  private int startRow;
   private final int totalRows;
+  private int startRow;
   private int fetchedRows;
 
   /**
-   * The number of rows to be fetched for each time.
+   * The maximum number of rows can be fetched from the server.
+   * If it equals 0, do not limit.
    */
-  private int fetchSize;
+  private int maxRows = 0;
 
   /**
-   * A boolean is sufficient to tell the type among:
-   * TYPE_FORWARD_ONLY:        false
-   * TYPE_SCROLL_INSENSITIVE: true
-   * TYPE_SCROLL_SENSITIVE:    not supported
+   * The number of rows to be fetched from the server each time.
+   */
+  private int fetchSize = 10000;
+
+  /**
+   * Tells whether this ResultSet object is scrollable.
    */
   private boolean isScrollable = false;
 
-  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
-                     boolean scrollable)
-      throws SQLException {
-    super(stmt, meta);
-    this.sessionHandle = session;
+  /**
+   * Tells the fetch direction for a scrollable ResultSet object.
+   */
+  private boolean isFetchForward = true;
+
+  /**
+   * A builder class which makes the parameter list of constructor less verbose.
+   */
+  public static class Builder {
+    private OdpsStatement stmtHandle;
+    private DownloadSession sessionHandle;
+    private OdpsResultSetMetaData meta;
+    private int fetchSize;
+    private boolean isFetchForwad;
+    private boolean isScrollable;
+    private int maxRows;
+
+    public Builder setStmtHandle(OdpsStatement stmtHandle) {
+      this.stmtHandle = stmtHandle;
+      return this;
+    }
+
+    public Builder setSessionHandle(DownloadSession sessionHandle) {
+      this.sessionHandle = sessionHandle;
+      return this;
+    }
+
+    public Builder setMeta(OdpsResultSetMetaData meta) {
+      this.meta = meta;
+      return this;
+    }
+
+    public Builder setFetchSize(int fetchSize) {
+      this.fetchSize = fetchSize;
+      return this;
+    }
+
+    public Builder setScollable(boolean scollable) {
+      this.isScrollable = scollable;
+      return this;
+    }
+
+    public Builder setFetchForward(boolean fetchForward) {
+      this.isFetchForwad = fetchForward;
+      return this;
+    }
+
+    public Builder setMaxRows(int rows) {
+      this.maxRows = rows;
+      return this;
+    }
+
+    public OdpsQueryResultSet build() throws SQLException {
+      return new OdpsQueryResultSet(this);
+    }
+  }
+
+  OdpsQueryResultSet(Builder builder) throws SQLException {
+    super(builder.stmtHandle, builder.meta);
+    sessionHandle = builder.sessionHandle;
+    fetchSize = builder.fetchSize;
+    isFetchForward = builder.isFetchForwad;
+    isScrollable = builder.isScrollable;
+    maxRows = builder.maxRows;
+
+    // Initialize the auxiliary variables
     totalRows = (int) sessionHandle.getRecordCount();
     startRow = 0;
     fetchedRows = 0;
-    fetchSize = stmt.getFetchSize();
-    isScrollable = scrollable;
   }
 
   @Override
   public void beforeFirst() throws SQLException {
     checkClosed();
+
+    if (!isScrollable) {
+      throw new SQLException("Method not supported for TYPE_FORWARD_ONLY resultset");
+    }
+
     fetchedRows = 0;
     startRow = 0;
     recordReader = null;
@@ -106,6 +173,10 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public boolean next() throws SQLException {
     checkClosed();
+
+    if (maxRows > 0 && fetchedRows >= maxRows) {
+      return false;
+    }
 
     try {
       if (recordReader == null) {
