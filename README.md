@@ -60,7 +60,7 @@ For example
 | BIGINT      | Long         | int, short, long              | BIGINT        |
 | DOUBLE      | Double       | double, float                 | DOUBLE         |
 | BOOLEAN     | Boolean     | boolean                        | BOOLEAN       |
-| DATETIME    | util.Date    | sql.Date/Time/Timestamp    | DATE           |
+| DATETIME    | util.Date    | sql.Date/Time/Timestamp    | TIMESTAMP     |
 | STRING      | byte[]       | String                        | VARCHAR       |
 | DECIMAL     | math.BigDecimal  | math.BigDecimal       | DECIMAL        |
 
@@ -70,19 +70,19 @@ The implicit type conversion follows the rule:
 
 
 | ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
-| :--------: | :----: | :-----: | :-----: |:-------: |:-----: |:------: |
-| boolean    | Y |   | Y |   | Y |   |
-| byte       | Y |   |   |   |   |   |
-| int        | Y |   |   |   | Y |   |
-| short      | Y |   |   |   | Y |   |
-| long       | Y |   |   |   | Y |   |
-| double     |   | Y |   |   | Y |   |
-| float      |   | Y |   |   | Y |   |
-| BigDecial  |   |   |   |   | Y | Y |
-| String     | Y | Y | Y | Y | Y | Y |
-| Date       |   |   |   | Y | Y |   |
-| Time       |   |   |   | Y | Y |   |
-| Timestamp  |   |   |   | Y | Y |   |
+| :-------: | :----: | :-----: | :-----: |:-------: |:-----: |:------: |
+| boolean     | Y |   | Y |   | Y |   |
+| byte         | Y |   |   |   |   |   |
+| int          | Y |   |   |   | Y |   |
+| short        | Y |   |   |   | Y |   |
+| long         | Y |   |   |   | Y |   |
+| double       |   | Y |   |   | Y |   |
+| float        |   | Y |   |   | Y |   |
+| BigDecimal  |   |   |   |   | Y | Y |
+| String       | Y | Y | Y | Y | Y | Y |
+| Date         |   |   |   | Y | Y |   |
+| Time         |   |   |   | Y | Y |   |
+| Timestamp   |   |   |   | Y | Y |   |
 
 
 ## JDBC 4.0 Comliance RoadMap

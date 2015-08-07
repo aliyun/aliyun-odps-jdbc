@@ -126,7 +126,7 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     } else if (type == OdpsType.STRING) {
       return Types.VARCHAR;
     } else if (type == OdpsType.DATETIME) {
-      return Types.DATE;
+      return Types.TIMESTAMP;
     } else if (type == OdpsType.DECIMAL) {
       return Types.DECIMAL;
     } else {
@@ -146,17 +146,17 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     OdpsType type = columnTypes.get(toZeroIndex(column));
 
     if (type == OdpsType.BIGINT) {
-      return "bigint";
+      return "bigint".toUpperCase();
     } else if (type == OdpsType.BOOLEAN) {
-      return "boolean";
+      return "boolean".toUpperCase();
     } else if (type == OdpsType.DOUBLE) {
-      return "double";
+      return "double".toUpperCase();
     } else if (type == OdpsType.STRING) {
-      return "string";
+      return "string".toUpperCase();
     } else if (type == OdpsType.DATETIME) {
-      return "datetime";
+      return "datetime".toUpperCase();
     } else if (type == OdpsType.DECIMAL) {
-      return "decimal";
+      return "decimal".toUpperCase();
     } else {
       throw new SQLException("unknown OdpsType to sql type conversion");
     }

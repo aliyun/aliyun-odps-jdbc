@@ -74,7 +74,18 @@ public class OdpsResultSetMetaDataTest {
     Assert.assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
     Assert.assertEquals(Types.BIGINT, rsmd.getColumnType(3));
     Assert.assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
-    Assert.assertEquals(Types.DATE, rsmd.getColumnType(5));
+    Assert.assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
     Assert.assertEquals(Types.DECIMAL, rsmd.getColumnType(6));
   }
+
+  @Test
+  public void testGetColumnTypeName() throws Exception {
+    Assert.assertEquals("STRING", rsmd.getColumnTypeName(1));
+    Assert.assertEquals("BOOLEAN", rsmd.getColumnTypeName(2));
+    Assert.assertEquals("BIGINT", rsmd.getColumnTypeName(3));
+    Assert.assertEquals("DOUBLE", rsmd.getColumnTypeName(4));
+    Assert.assertEquals("DATETIME", rsmd.getColumnTypeName(5));
+    Assert.assertEquals("DECIMAL", rsmd.getColumnTypeName(6));
+  }
+
 }
