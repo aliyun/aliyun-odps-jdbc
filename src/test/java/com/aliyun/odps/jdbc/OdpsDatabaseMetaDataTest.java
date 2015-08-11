@@ -36,6 +36,9 @@ public class OdpsDatabaseMetaDataTest {
   @BeforeClass
   public static void setUp() throws Exception {
     databaseMetaData = OdpsConnectionFactory.getInstance().conn.getMetaData();
+    System.out.println(databaseMetaData.getCatalogTerm());
+    System.out.println(databaseMetaData.getProcedureTerm());
+    System.out.println(databaseMetaData.getSchemaTerm());
   }
 
   @AfterClass

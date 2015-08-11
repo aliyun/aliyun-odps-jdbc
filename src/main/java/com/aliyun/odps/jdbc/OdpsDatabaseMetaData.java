@@ -192,22 +192,22 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getNumericFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return " ";
   }
 
   @Override
   public String getStringFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return " ";
   }
 
   @Override
   public String getSystemFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return " ";
   }
 
   @Override
   public String getTimeDateFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return "  ";
   }
 
   @Override
@@ -357,17 +357,17 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSchemaTerm() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return new String("project");
   }
 
   @Override
   public String getProcedureTerm() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return new String("UDF");
   }
 
   @Override
   public String getCatalogTerm() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return new String("endpoint");
   }
 
   @Override
@@ -382,7 +382,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSchemasInDataManipulation() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return true;
   }
 
   @Override
@@ -694,26 +694,46 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public ResultSet getSchemas() throws SQLException {
-    return null;
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS"),
+        Arrays.asList(OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   // TODO
   @Override
   public ResultSet getSchemas(String catalog, String schemaPattern)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS"),
+        Arrays.asList(OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   // TODO
   @Override
   public ResultSet getCatalogs() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS"),
+        Arrays.asList(OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   // TODO
   @Override
   public ResultSet getTableTypes() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS"),
+        Arrays.asList(OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   @Override
@@ -834,7 +854,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   // TODO
   @Override
   public ResultSet getTypeInfo() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS"),
+        Arrays.asList(OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   @Override
