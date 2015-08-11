@@ -212,12 +212,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("can not create tunnel download session", e);
     }
 
-    return new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
+    // Construct result set if the query
+    resultSet = new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
         .setSessionHandle(downloadSession)
         .setFetchForward(isResultSetFetchForward)
         .setScollable(isResultSetScrollable)
         .setFetchSize(fetchSize)
         .setMaxRows(maxRows).build();
+
+    return resultSet;
   }
 
   @Override
