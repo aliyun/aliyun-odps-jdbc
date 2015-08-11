@@ -55,16 +55,21 @@ import com.aliyun.odps.utils.StringUtils;
 import com.aliyun.odps.security.SecurityManager;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
+
   private Odps odps;
   private Properties info;
-  private String url;
+//  private String url;
   private List<Statement> stmtHandles;
   private SQLWarning warningChain = null;
 
   private boolean isClosed = false;
 
+  /**
+   *   Compatible with JDBC's API: getConnection("url", "user", "password")
+   */
   OdpsConnection(String url, Properties info) {
-    // Compatible with JDBC's API: getConnection("url", "user", "password")
+    this.info = info;
+
     String accessId = info.getProperty("access_id");
     if (accessId == null) {
       accessId = info.getProperty("user");
@@ -75,24 +80,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       accessKey = info.getProperty("password");
     }
 
+    String projectName = info.getProperty("project_name");
+
+    // extract the project name from the url
+    int atPos = url.indexOf("@");
+    String endpoint;
+    if (atPos != -1) {
+      endpoint = url.substring(0, atPos);
+      projectName = url.substring(atPos + 1);
+    } else {
+      endpoint = url;
+    }
+
     Account account = new AliyunAccount(accessId, accessKey);
     this.odps = new Odps(account);
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      this.url = url;
-    } else if (url.startsWith("//")) {   // default is https
-      this.url = "https:" + url;
-    } else {
-      assert(false);
-    }
-    odps.setEndpoint(url);
-
-    // Set default project via info or set it later.
-    String projectName = info.getProperty("project_name");
-    if (projectName != null) {
-      odps.setDefaultProject(projectName);
-    }
-
-    this.info = info;
+    odps.setDefaultProject(projectName);
+    odps.setEndpoint(endpoint);
+    odps.getRestClient().setRetryTimes(0);
+    odps.getRestClient().setReadTimeout(3);
+    odps.getRestClient().setConnectTimeout(3);
     stmtHandles = new ArrayList<Statement>();
   }
 
@@ -123,15 +129,19 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   /**
    * Only support the following type
-   * @param sql the prepared sql
-   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
-   * @param resultSetConcurrency CONCUR_READ_ONLY
+   *
+   * @param sql
+   *     the prepared sql
+   * @param resultSetType
+   *     TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency
+   *     CONCUR_READ_ONLY
    * @return OdpsPreparedStatement
    * @throws SQLException
    */
   @Override
   public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
-                                            int resultSetConcurrency) throws SQLException {
+                                                int resultSetConcurrency) throws SQLException {
     checkClosed();
     if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
         && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
@@ -316,8 +326,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   /**
    * Only support the following type:
-   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
-   * @param resultSetConcurrency CONCUR_READ_ONLY
+   *
+   * @param resultSetType
+   *     TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency
+   *     CONCUR_READ_ONLY
    * @return OdpsStatement object
    * @throws SQLException
    */
@@ -433,10 +446,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   public String getUrl() {
-    return this.url;
+    return this.odps.getEndpoint();
   }
 
   public class LogView {
+
     private static final String POLICY_TYPE = "BEARER";
     private static final String HOST_DEFAULT = "http://webconsole.odps.aliyun-inc.com:8080";
     private String logViewHost = HOST_DEFAULT;
@@ -485,6 +499,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     try {
       Map<String, String> hints = new HashMap<String, String>();
       Map<String, String> aliases = new HashMap<String, String>();
+
+      if (!sql.matches("\\s*;\\s*$")) {
+        sql += ";";
+      }
+
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       PrintWriter out = new PrintWriter(System.out);
       out.println(sql);
