@@ -67,6 +67,63 @@ public class JdbcColumn {
     }
   }
 
+  public static int columnDisplaySize(OdpsType type) throws SQLException {
+    switch(type) {
+      case BIGINT:
+        return columnPrecision(type) + 1; // +/-
+      case BOOLEAN:
+        return columnPrecision(type);
+      case DOUBLE:
+        return 25;
+      case STRING:
+        return columnPrecision(type);
+      case DATETIME:
+        return columnPrecision(type);
+      case DECIMAL:
+        return columnPrecision(type) + 2;
+      default:
+        throw new SQLException("unknown OdpsType to sql type conversion");
+    }
+  }
+
+  public static int columnPrecision(OdpsType type) throws SQLException {
+    switch(type) {
+      case BIGINT:
+        return 19;
+      case BOOLEAN:
+        return 1;
+      case DOUBLE:
+        return 15;
+      case STRING:
+        return 10;   // TODO
+      case DATETIME:
+        return 19;   // YYYY-mm-dd HH:mm:ss
+      case DECIMAL:
+        return 18 + 36;
+      default:
+        throw new SQLException("unknown OdpsType to sql type conversion");
+    }
+  }
+
+  public static int columnScale(OdpsType type) throws SQLException {
+    switch(type) {
+      case BIGINT:
+        return 0;
+      case BOOLEAN:
+        return 0;
+      case DOUBLE:
+        return 15;
+      case STRING:
+        return 0;
+      case DATETIME:
+        return 0;
+      case DECIMAL:
+        return 18;
+      default:
+        throw new SQLException("unknown OdpsType to sql type conversion");
+    }
+  }
+
   public String getColumnName() {
     return columnName;
   }
@@ -100,7 +157,7 @@ public class JdbcColumn {
   }
 
   public int getColumnSize() {
-    return 0;
+    return 10;
   }
 
   public int getIsNullable() {

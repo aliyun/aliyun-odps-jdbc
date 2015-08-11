@@ -57,6 +57,99 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return JdbcColumn.columnDisplaySize(type);
+  }
+
+  @Override
+  public String getColumnLabel(int column) throws SQLException {
+    return columnNames.get(toZeroIndex(column));
+  }
+
+  @Override
+  public String getColumnName(int column) throws SQLException {
+    return columnNames.get(toZeroIndex(column));
+  }
+
+  @Override
+  public int getColumnType(int column) throws SQLException {
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return JdbcColumn.OdpsTypeToSqlType(type);
+  }
+
+  @Override
+  public String getColumnTypeName(int column) throws SQLException {
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return OdpsType.getFullTypeString(type, null);
+  }
+
+  @Override
+  public int getPrecision(int column) throws SQLException {
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return JdbcColumn.columnPrecision(type);
+  }
+
+  @Override
+  public int getScale(int column) throws SQLException {
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return JdbcColumn.columnScale(type);
+  }
+
+  @Override
+  public String getSchemaName(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public String getTableName(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean isAutoIncrement(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean isCaseSensitive(int column) throws SQLException {
+    // Only string type is case sensitive
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return (type == OdpsType.STRING);
+  }
+
+  @Override
+  public boolean isCurrency(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean isDefinitelyWritable(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  // TODO: check
+  @Override
+  public int isNullable(int column) throws SQLException {
+    return ResultSetMetaData.columnNullable;
+  }
+
+  @Override
+  public boolean isReadOnly(int column) throws SQLException {
+    return true;
+  }
+
+  @Override
+  public boolean isSearchable(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean isSigned(int column) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  @Override
+  public boolean isWritable(int column) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -91,149 +184,6 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     }
 
     return index;
-  }
-
-  @Override
-  public String getColumnLabel(int column) throws SQLException {
-    return columnNames.get(toZeroIndex(column));
-  }
-
-  @Override
-  public String getColumnName(int column) throws SQLException {
-    return columnNames.get(toZeroIndex(column));
-  }
-
-  @Override
-  public int getColumnType(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-    return JdbcColumn.OdpsTypeToSqlType(type);
-  }
-
-  @Override
-  public String getColumnTypeName(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-    return OdpsType.getFullTypeString(type, null);
-  }
-
-  /**
-   * TODO: Remove the hard code.
-   *
-   * @param column
-   *     the column index
-   * @return
-   * @throws SQLException
-   */
-  @Override
-  public int getPrecision(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-
-    if (type == OdpsType.BIGINT) {
-      return 19;
-    } else if (type == OdpsType.BOOLEAN) {
-      return 1;
-    } else if (type == OdpsType.DOUBLE) {
-      return 15; // http://stackoverflow.com/questions/9999221/double-precision-decimal-places
-    } else if (type == OdpsType.STRING) {  // UTF-8
-      return 2 * 1024 * 1024 / 3;
-    } else if (type == OdpsType.DATETIME) { //"yyyy-MM-dd HH:mm:ss"
-      return 19;
-    } else if (type == OdpsType.DECIMAL) {
-      return 18 + 36;
-    } else {
-      throw new SQLException("unknown OdpsType to sql type conversion");
-    }
-  }
-
-  /**
-   * TODO: Remove the hard code.
-   *
-   * @param column
-   *     the column index
-   * @return
-   * @throws SQLException
-   */
-  @Override
-  public int getScale(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-
-    if (type == OdpsType.BIGINT) {
-      return 0;
-    } else if (type == OdpsType.BOOLEAN) {
-      return 0;
-    } else if (type == OdpsType.DOUBLE) {
-      return 15;
-    } else if (type == OdpsType.STRING) {
-      return 0;
-    } else if (type == OdpsType.DATETIME) {
-      return 0;
-    } else if (type == OdpsType.DECIMAL) {
-      return 18;
-    } else {
-      throw new SQLException("unknown OdpsType to sql type conversion");
-    }
-  }
-
-  @Override
-  public String getSchemaName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getTableName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean isAutoIncrement(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  /**
-   * Only string type is case sensitive
-   *
-   * @param column
-   * @return
-   * @throws SQLException
-   */
-  @Override
-  public boolean isCaseSensitive(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-    return (type == OdpsType.STRING);
-  }
-
-  @Override
-  public boolean isCurrency(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean isDefinitelyWritable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int isNullable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean isReadOnly(int column) throws SQLException {
-    return true;
-  }
-
-  @Override
-  public boolean isSearchable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean isSigned(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean isWritable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
   }
 
   protected int toZeroIndex(int column) {

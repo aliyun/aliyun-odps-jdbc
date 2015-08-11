@@ -88,4 +88,15 @@ public class OdpsResultSetMetaDataTest {
     Assert.assertEquals("DECIMAL", rsmd.getColumnTypeName(6));
   }
 
+  @Test
+  public void testGetColumnMeta() throws Exception {
+    for (int i = 0; i < rsmd.getColumnCount(); i++) {
+      Assert.assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(i+1));
+      int scale = rsmd.getScale(i+1);
+      int precision = rsmd.getPrecision(i+1);
+      int displaySize = rsmd.getColumnDisplaySize(i+1);
+      System.out.printf("%d: %d %d %d\n", i+1, scale, precision, displaySize);
+    }
+  }
+
 }
