@@ -25,7 +25,6 @@ import com.aliyun.odps.OdpsType;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,62 +103,16 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     return columnNames.get(toZeroIndex(column));
   }
 
-  /**
-   * Get the sql type of a certain column
-   *
-   * @param column
-   *     column index
-   * @return the sql enum code
-   * @throws SQLException
-   */
   @Override
   public int getColumnType(int column) throws SQLException {
-
     OdpsType type = columnTypes.get(toZeroIndex(column));
-
-    if (type == OdpsType.BIGINT) {
-      return Types.BIGINT;
-    } else if (type == OdpsType.BOOLEAN) {
-      return Types.BOOLEAN;
-    } else if (type == OdpsType.DOUBLE) {
-      return Types.DOUBLE;
-    } else if (type == OdpsType.STRING) {
-      return Types.VARCHAR;
-    } else if (type == OdpsType.DATETIME) {
-      return Types.TIMESTAMP;
-    } else if (type == OdpsType.DECIMAL) {
-      return Types.DECIMAL;
-    } else {
-      throw new SQLException("unknown OdpsType to sql type conversion");
-    }
+    return JdbcColumn.OdpsTypeToSqlType(type);
   }
 
-  /**
-   * TODO: Replace with serde in the latest API.
-   *
-   * @param column
-   * @return
-   * @throws SQLException
-   */
   @Override
   public String getColumnTypeName(int column) throws SQLException {
     OdpsType type = columnTypes.get(toZeroIndex(column));
-
-    if (type == OdpsType.BIGINT) {
-      return "bigint".toUpperCase();
-    } else if (type == OdpsType.BOOLEAN) {
-      return "boolean".toUpperCase();
-    } else if (type == OdpsType.DOUBLE) {
-      return "double".toUpperCase();
-    } else if (type == OdpsType.STRING) {
-      return "string".toUpperCase();
-    } else if (type == OdpsType.DATETIME) {
-      return "datetime".toUpperCase();
-    } else if (type == OdpsType.DECIMAL) {
-      return "decimal".toUpperCase();
-    } else {
-      throw new SQLException("unknown OdpsType to sql type conversion");
-    }
+    return OdpsType.getFullTypeString(type, null);
   }
 
   /**
