@@ -96,9 +96,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.odps = new Odps(account);
     odps.setDefaultProject(projectName);
     odps.setEndpoint(endpoint);
+
+    // TODO
     odps.getRestClient().setRetryTimes(0);
     odps.getRestClient().setReadTimeout(3);
     odps.getRestClient().setConnectTimeout(3);
+
     stmtHandles = new ArrayList<Statement>();
   }
 

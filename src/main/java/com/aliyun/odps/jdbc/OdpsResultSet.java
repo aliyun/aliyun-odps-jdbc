@@ -40,6 +40,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.DoubleSummaryStatistics;
 import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
@@ -237,8 +238,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return false;
     } else if (obj instanceof Boolean) {
       return (Boolean) obj;
-    } else if (obj instanceof Number) {  // deal with Long Int Short Double Float
-      return ((Number) obj).longValue() != 0;
+    } else if (obj instanceof Long) {
+      return (Long) obj != 0;
+    } else if (obj instanceof Double) {
+      return (Double) obj != 0;
     } else if (obj instanceof String) {
       return !obj.equals("0");
     } else if (obj instanceof byte[]) {
@@ -261,10 +264,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
+    } else if (obj instanceof Long) {
+      return ((Long) obj).byteValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).byteValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).byteValue();
     }
-    if (obj instanceof Number) {   // deal with Long Int Short Double Float Byte
-      return ((Number) obj).byteValue();
-    }
+
     throw new SQLException(
         "Illegal to cast column " + columnIndex + "to byte: " + obj.toString());
   }
@@ -365,8 +372,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Number) {  // deal with Long Int Short Double Float
-      return ((Number) obj).doubleValue();
+    } else if (obj instanceof Double) {
+      return (Double) obj;
+    } else if (obj instanceof Long) {
+      return ((Long) obj).doubleValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).doubleValue();
     }
 
     String strVal;
@@ -396,8 +407,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Number) {    // deal with Long Int Short Double Float Byte
-      return ((Number) obj).floatValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).floatValue();
+    } else if (obj instanceof Long) {
+      return ((Long) obj).floatValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).floatValue();
     }
 
     String strVal;
@@ -433,8 +448,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Number) {    // deal with Long Int Short Double Float
-      return ((Number) obj).intValue();
+    } else if (obj instanceof Long) {
+      return ((Long) obj).intValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).intValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).intValue();
     }
 
     String strVal;
@@ -464,8 +483,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Number) { // deal with Long Int Short Double Float
-      return ((Number) obj).longValue();
+    } else if (obj instanceof Long) {
+      return ((Long) obj).longValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).longValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).longValue();
     }
 
     String strVal;
@@ -586,8 +609,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Number) {   // deal with Long Int Short Double Float Byte
-      return ((Number) obj).shortValue();
+    } else if (obj instanceof Long) {
+      return ((Long) obj).shortValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).shortValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).shortValue();
     }
 
     String strVal;

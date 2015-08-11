@@ -71,13 +71,13 @@ The implicit type conversion follows the rule:
 
 | ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
 | :-------: | :----: | :-----: | :-----: |:-------: |:-----: |:------: |
-| boolean     | Y |   | Y |   | Y |   |
-| byte         | Y |   |   |   |   |   |
-| int          | Y |   |   |   | Y |   |
-| short        | Y |   |   |   | Y |   |
-| long         | Y |   |   |   | Y |   |
-| double       |   | Y |   |   | Y |   |
-| float        |   | Y |   |   | Y |   |
+| boolean     | Y | Y | Y |   | Y |   |
+| byte         | Y | Y |   |   |   | Y |
+| int          | Y | Y |   |   | Y | Y |
+| short        | Y | Y |   |   | Y | Y |
+| long         | Y | Y |   |   | Y | Y |
+| double       | Y | Y |   |   | Y | Y |
+| float        | Y | Y |   |   | Y | Y |
 | BigDecimal  |   |   |   |   | Y | Y |
 | String       | Y | Y | Y | Y | Y | Y |
 | Date         |   |   |   | Y | Y |   |

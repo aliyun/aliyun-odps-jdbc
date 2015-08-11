@@ -78,19 +78,6 @@ public class OdpsQueryResultSetTest {
   }
 
   @Test
-  public void testGetByte() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from BIGINT
-    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((byte) Long.MAX_VALUE, rs.getByte(1));
-    Assert.assertEquals((byte) Long.MAX_VALUE, rs.getByte("id"));
-    rs.close();
-
-  }
-
-  @Test
   public void testGetBoolean() throws Exception {
     Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
 
@@ -108,11 +95,43 @@ public class OdpsQueryResultSetTest {
     Assert.assertEquals(true, rs.getBoolean(2));
     rs.close();
 
+    // cast from DOUBLE
+    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
+    rs.next();
+    Assert.assertEquals(true, rs.getBoolean(1));
+    rs.close();
+
     // cast from BIGINT
     rs = stmt.executeQuery("select 42 idx, 0 idy from dual;");
     rs.next();
     Assert.assertEquals(true, rs.getBoolean(1));
     Assert.assertEquals(false, rs.getBoolean(2));
+    rs.close();
+  }
+
+  @Test
+  public void testGetByte() throws Exception {
+    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+
+    // cast from BIGINT
+    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+    rs.next();
+    Assert.assertEquals((byte) Long.MAX_VALUE, rs.getByte(1));
+    Assert.assertEquals((byte) Long.MAX_VALUE, rs.getByte("id"));
+    rs.close();
+
+    // cast from DOUBLE
+    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
+    rs.next();
+    Assert.assertEquals((byte) 3.1415926, rs.getByte(1));
+    rs.close();
+
+    // cast from DECIMAL
+    String decimalStr = "55.123456789012345";
+    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
+    rs.next();
+    BigDecimal expect = new BigDecimal(decimalStr);
+    Assert.assertEquals(expect.byteValue(), rs.getByte(1));
     rs.close();
   }
 
@@ -127,10 +146,24 @@ public class OdpsQueryResultSetTest {
     Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt("id"));
     rs.close();
 
+    // cast from DOUBLE
+    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
+    rs.next();
+    Assert.assertEquals((int) 3.1415926, rs.getInt(1));
+    rs.close();
+
     // cast from STRING
     rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
     rs.next();
     Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
+    rs.close();
+
+    // cast from DECIMAL
+    String decimalStr = "55.123456789012345";
+    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
+    rs.next();
+    BigDecimal expect = new BigDecimal(decimalStr);
+    Assert.assertEquals(expect.intValue(), rs.getInt(1));
     rs.close();
   }
 
@@ -145,10 +178,24 @@ public class OdpsQueryResultSetTest {
     Assert.assertEquals((short) Long.MAX_VALUE, rs.getShort("id"));
     rs.close();
 
+    // cast from DOUBLE
+    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
+    rs.next();
+    Assert.assertEquals((short) 3.1415926, rs.getShort(1));
+    rs.close();
+
     // cast from STRING
     rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
     rs.next();
     Assert.assertEquals((short) Long.MAX_VALUE, rs.getShort(1));
+    rs.close();
+
+    // cast from DECIMAL
+    String decimalStr = "55.123456789012345";
+    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
+    rs.next();
+    BigDecimal expect = new BigDecimal(decimalStr);
+    Assert.assertEquals(expect.shortValue(), rs.getShort(1));
     rs.close();
   }
 
@@ -163,10 +210,24 @@ public class OdpsQueryResultSetTest {
     Assert.assertEquals(Long.MAX_VALUE, rs.getLong("id"));
     rs.close();
 
+    // cast from DOUBLE
+    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
+    rs.next();
+    Assert.assertEquals((long) 3.1415926, rs.getLong(1));
+    rs.close();
+
     // cast from STRING
     rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
     rs.next();
     Assert.assertEquals(Long.MAX_VALUE, rs.getLong(1));
+    rs.close();
+
+    // cast from DECIMAL
+    String decimalStr = "55.123456789012345";
+    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
+    rs.next();
+    BigDecimal expect = new BigDecimal(decimalStr);
+    Assert.assertEquals(expect.longValue(), rs.getLong(1));
     rs.close();
   }
 
@@ -186,6 +247,20 @@ public class OdpsQueryResultSetTest {
     rs.next();
     Assert.assertEquals(Double.MAX_VALUE, rs.getDouble(1), 0);
     rs.close();
+
+    // Cast from BIGINT
+    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+    rs.next();
+    Assert.assertEquals((double) Long.MAX_VALUE, rs.getDouble(1), 0);
+    rs.close();
+
+    // cast from DECIMAL
+    String decimalStr = "55.123456789012345";
+    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
+    rs.next();
+    BigDecimal expect = new BigDecimal(decimalStr);
+    Assert.assertEquals(expect.doubleValue(), rs.getDouble(1), 0);
+    rs.close();
   }
 
   @Test
@@ -203,6 +278,20 @@ public class OdpsQueryResultSetTest {
     rs = stmt.executeQuery("select '" + Double.MAX_VALUE + "' name from dual;");
     rs.next();
     Assert.assertEquals((float) Double.MAX_VALUE, rs.getFloat(1), 0);
+    rs.close();
+
+    // Cast from BIGINT
+    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+    rs.next();
+    Assert.assertEquals((float) Long.MAX_VALUE, rs.getFloat(1), 0);
+    rs.close();
+
+    // cast from DECIMAL
+    String decimalStr = "55.123456789012345";
+    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
+    rs.next();
+    BigDecimal expect = new BigDecimal(decimalStr);
+    Assert.assertEquals(expect.floatValue(), rs.getFloat(1), 0);
     rs.close();
   }
 
