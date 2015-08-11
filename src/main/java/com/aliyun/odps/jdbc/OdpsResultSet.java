@@ -237,8 +237,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return false;
     } else if (obj instanceof Boolean) {
       return (Boolean) obj;
-    } else if (obj instanceof Long) {
-      return ((Long) obj).intValue() != 0;
+    } else if (obj instanceof Number) {  // deal with Long Int Short Double Float
+      return ((Number) obj).longValue() != 0;
     } else if (obj instanceof String) {
       return !obj.equals("0");
     } else if (obj instanceof byte[]) {
@@ -262,8 +262,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return 0;
     }
-    if (obj instanceof Long) {
-      return ((Long) obj).byteValue();
+    if (obj instanceof Number) {   // deal with Long Int Short Double Float Byte
+      return ((Number) obj).byteValue();
     }
     throw new SQLException(
         "Illegal to cast column " + columnIndex + "to byte: " + obj.toString());
@@ -365,8 +365,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Double) {
-      return (Double) obj;
+    } else if (obj instanceof Number) {  // deal with Long Int Short Double Float
+      return ((Number) obj).doubleValue();
     }
 
     String strVal;
@@ -396,8 +396,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Double) {
-      return ((Double) obj).floatValue();
+    } else if (obj instanceof Number) {    // deal with Long Int Short Double Float Byte
+      return ((Number) obj).floatValue();
     }
 
     String strVal;
@@ -433,8 +433,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Long) {
-      return ((Long) obj).intValue();
+    } else if (obj instanceof Number) {    // deal with Long Int Short Double Float
+      return ((Number) obj).intValue();
     }
 
     String strVal;
@@ -464,8 +464,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Long) {
-      return (Long) obj;
+    } else if (obj instanceof Number) { // deal with Long Int Short Double Float
+      return ((Number) obj).longValue();
     }
 
     String strVal;
@@ -586,8 +586,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    } else if (obj instanceof Long) {
-      return ((Long) obj).shortValue();
+    } else if (obj instanceof Number) {   // deal with Long Int Short Double Float Byte
+      return ((Number) obj).shortValue();
     }
 
     String strVal;
