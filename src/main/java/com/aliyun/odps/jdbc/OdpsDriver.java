@@ -62,15 +62,12 @@ public class OdpsDriver implements Driver {
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
     return acceptsURL(url) ? new OdpsConnection(url.substring(URL_PREFIX.length()), info) : null;
-
   }
 
+  // TODO: the check is very loose.
   @Override
   public boolean acceptsURL(String url) throws SQLException {
-    if (url != null && url.startsWith(URL_PREFIX)) {
-      return true;
-    }
-    return false;
+    return (url != null) && url.startsWith(URL_PREFIX);
   }
 
   @Override

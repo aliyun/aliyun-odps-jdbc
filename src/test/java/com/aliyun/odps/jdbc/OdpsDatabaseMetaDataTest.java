@@ -47,12 +47,31 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetTables() throws Exception {
     ResultSet rs = databaseMetaData.getTables(null, null, null, null);
     JdbcUtils.printResultSet(rs);
-    rs.close();
+//    while (rs.next()) {
+//      for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+//        String col = rs.getString(i);
+//        if (col != null) {
+//          System.out.printf(col);
+//        } else {
+//          System.out.printf("NULL");
+//        }
+//        System.out.printf("\t");
+//      }
+//      System.out.println();
+//    }
+//    rs.close();
   }
 
   @Test
   public void testGetFunctions() throws Exception {
     ResultSet rs = databaseMetaData.getFunctions(null, null, null);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetColumns() throws Exception {
+    ResultSet rs = databaseMetaData.getColumns(null, null, "zhemin_test", null);
     JdbcUtils.printResultSet(rs);
     rs.close();
   }

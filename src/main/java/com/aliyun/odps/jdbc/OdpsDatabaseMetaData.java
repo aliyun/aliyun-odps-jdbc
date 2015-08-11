@@ -25,18 +25,28 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
 import com.aliyun.odps.Functions;
+import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.Tables;
 import com.aliyun.odps.account.AliyunAccount;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
+
+  private final String PRODUCT_NAME = "ODPS-JDBC";
+  private final String NON_SQL_92_KEYWORDS = "WHILE";
+
+  private final String DRIVER_NAME = "ODPS-JDBC";
+  private final String DRIVER_VERSION = "0.0.1";
 
   private OdpsConnection conn;
 
@@ -92,7 +102,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getDatabaseProductName() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return PRODUCT_NAME;
   }
 
   @Override
@@ -102,12 +112,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getDriverName() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return DRIVER_NAME;
   }
 
   @Override
   public String getDriverVersion() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return DRIVER_VERSION;
   }
 
   @Override
@@ -177,7 +187,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSQLKeywords() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return NON_SQL_92_KEYWORDS;
   }
 
   @Override
@@ -697,6 +707,37 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getSchemas() throws SQLException {
     return null;
+
+//    Projects projects = conn.getOdps().projects();
+//    Iterator<Project> iterator;
+//
+//    for (Project p: projects) {
+//
+//    }
+//
+//
+//
+//
+//    List<String> columnNames = Arrays.asList(
+//        "FUNCTION_CAT",
+//        "FUNCTION_SCHEM",
+//        "FUNCTION_NAME",
+//        "REMARKS",
+//        "FUNCTION_TYPE",
+//        "SPECIFIC_NAME"
+//    );
+//
+//    List<OdpsType> columnSqlTypes = Arrays.asList(
+//        OdpsType.STRING,
+//        OdpsType.STRING,
+//        OdpsType.STRING,
+//        OdpsType.STRING,
+//        OdpsType.BIGINT,  // Short indeed
+//        OdpsType.STRING
+//    );
+//
+//    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+//    return new OdpsFunctionsResultSet(iterator, meta);
   }
 
   // TODO
@@ -723,7 +764,81 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   public ResultSet getColumns(String catalog, String schemaPattern,
                               String tableNamePattern, String columnNamePattern)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+
+    // Read column information from tale schema
+    Collection<JdbcColumn> jdbcColumns = new ArrayList<JdbcColumn>();
+    try {
+      Table table = conn.getOdps().tables().get(tableNamePattern);
+      table.reload();
+      List<Column> columns = table.getSchema().getColumns();
+      for (int i = 0; i < columns.size(); i++) {
+        Column col = columns.get(i);
+        JdbcColumn jdbcCol = new JdbcColumn(
+            col.getName(),
+            tableNamePattern,
+            conn.getOdps().getEndpoint(),
+            col.getType(),
+            col.getComment(),
+            i + 1);
+        jdbcColumns.add(jdbcCol);
+      }
+    } catch (OdpsException e) {
+      throw new SQLException("can not read table schema", e);
+    }
+
+    // Build result set meta data
+    List<String> columnNames = Arrays.asList(
+        "TABLE_CAT",
+        "TABLE_SCHEM",
+        "TABLE_NAME",
+        "COLUMN_NAME",
+        "DATA_TYPE",
+        "TYPE_NAME",
+        "COLUMN_SIZE",
+        "BUFFER_LENGTH",
+        "DECIMAL_DIGITS",
+        "NUM_PERC_RADIX",
+        "NULLABLE",
+        "REMARKS",
+        "COLUMN_DEF",
+        "SQL_DATA_TYPE",
+        "SQL_DATETIME_SUB",
+        "CHAR_OCTET_LENGTH",
+        "ORDINAL_POSITION",
+        "IS_NULLABLE",
+        "SCOPE_CATALOG",
+        "SCOPE_SCHEMA",
+        "SCOPE_TABLE",
+        "SOURCE_DATA_TYPE"
+    );
+
+    List<OdpsType> columnSqlTypes = Arrays.asList(
+        OdpsType.STRING,
+        OdpsType.STRING,
+        OdpsType.STRING,
+        OdpsType.STRING,
+        OdpsType.BIGINT, // DATA_TYPE int
+        OdpsType.STRING, // TYPE_NAME
+        OdpsType.BIGINT, // COLUMN_SIZE int
+        OdpsType.BIGINT, // BUFFER_LENGTH int
+        OdpsType.BIGINT, // DECIMAL_DIGITS int
+        OdpsType.BIGINT, // NUM_PERC_RADIX int
+        OdpsType.BIGINT, // NULLABLE int
+        OdpsType.STRING, // REMARKS
+        OdpsType.STRING, // COLUMN_DEF
+        OdpsType.BIGINT, // SQL_DATA_TYPE int
+        OdpsType.BIGINT, // SQL_DATETIME_SUB int
+        OdpsType.BIGINT, // CHAR_OCTET_LENGTH int
+        OdpsType.BIGINT, // ORDINAL_POSITION int
+        OdpsType.STRING, // IS_NULLABLE
+        OdpsType.STRING,
+        OdpsType.STRING,
+        OdpsType.STRING,
+        OdpsType.BIGINT  // SOURCE_DATA_TYPE short
+    );
+
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+    return new OdpsColumnsResultSet(jdbcColumns.iterator(), meta);
   }
 
   @Override
