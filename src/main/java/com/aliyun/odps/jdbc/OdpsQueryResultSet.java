@@ -26,6 +26,7 @@ import java.sql.SQLException;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordReader;
+import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 
@@ -40,25 +41,31 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   private int fetchedRows;
 
   /**
+   * Whether the query result set is empty.
+   * For some meta query (like procedures) we need to return an empty query result.
+   */
+  private boolean isEmptyResultSet = false;
+
+  /**
    * The maximum number of rows can be fetched from the server.
    * If it equals 0, do not limit.
    */
-  private int maxRows = 0;
+  private int maxRows;
 
   /**
    * The number of rows to be fetched from the server each time.
    */
-  private int fetchSize = 10000;
+  private int fetchSize;
 
   /**
    * Tells whether this ResultSet object is scrollable.
    */
-  private boolean isScrollable = false;
+  private boolean isScrollable;
 
   /**
    * Tells the fetch direction for a scrollable ResultSet object.
    */
-  private boolean isFetchForward = true;
+  private boolean isFetchForward;
 
   /**
    * A builder class which makes the parameter list of constructor less verbose.
@@ -68,10 +75,11 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     private OdpsStatement stmtHandle;
     private DownloadSession sessionHandle;
     private OdpsResultSetMetaData meta;
-    private int fetchSize;
-    private boolean isFetchForwad;
-    private boolean isScrollable;
-    private int maxRows;
+    private int fetchSize = 10000;
+    private boolean isFetchForwad = true;
+    private boolean isScrollable = false;
+    private int maxRows = 0;
+    private boolean isEmptyResultSet = false;
 
     public Builder setStmtHandle(OdpsStatement stmtHandle) {
       this.stmtHandle = stmtHandle;
@@ -108,6 +116,11 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       return this;
     }
 
+    public Builder setEmptyResultSet(boolean isEmpty) {
+      this.isEmptyResultSet = isEmpty;
+      return this;
+    }
+
     public OdpsQueryResultSet build() throws SQLException {
       return new OdpsQueryResultSet(this);
     }
@@ -120,11 +133,16 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     isFetchForward = builder.isFetchForwad;
     isScrollable = builder.isScrollable;
     maxRows = builder.maxRows;
+    isEmptyResultSet = builder.isEmptyResultSet;
 
     // Initialize the auxiliary variables
-    totalRows = (int) sessionHandle.getRecordCount();
-    startRow = 0;
-    fetchedRows = 0;
+    if (!isEmptyResultSet) {
+      totalRows = (int) sessionHandle.getRecordCount();
+      startRow = 0;
+      fetchedRows = 0;
+    } else {
+      totalRows = 0;
+    }
   }
 
   @Override
@@ -174,6 +192,10 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public boolean next() throws SQLException {
     checkClosed();
+
+    if (isEmptyResultSet) {
+      return false;
+    }
 
     if (maxRows > 0 && fetchedRows >= maxRows) {
       return false;
@@ -228,6 +250,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
 
     try {
+      // TODO: 24 hours limitation
+      assert(sessionHandle.getStatus() == TableTunnel.DownloadStatus.NORMAL);
       recordReader = sessionHandle.openRecordReader(startRow, nextFewRows);
       startRow += nextFewRows;
       return true;

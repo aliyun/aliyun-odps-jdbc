@@ -75,4 +75,25 @@ public class OdpsDatabaseMetaDataTest {
     JdbcUtils.printResultSet(rs);
     rs.close();
   }
+
+  @Test
+  public void testGetUDTs() throws Exception {
+    ResultSet rs = databaseMetaData.getUDTs(null, null, null, null);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetPrimaryKeys() throws Exception {
+    ResultSet rs = databaseMetaData.getPrimaryKeys(null, null, null);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetProcedures() throws Exception {
+    ResultSet rs = databaseMetaData.getProcedures(null, null, null);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
 }

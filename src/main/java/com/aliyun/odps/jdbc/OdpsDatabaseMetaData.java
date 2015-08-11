@@ -407,27 +407,27 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsCatalogsInDataManipulation() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
@@ -646,10 +646,20 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
+
   @Override
   public ResultSet getProcedures(String catalog, String schemaPattern,
                                  String procedureNamePattern) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME", "RESERVERD",
+                      "RESERVERD", "RESERVERD", "REMARKS", "PROCEDURE_TYPE", "SPECIFIC_NAME"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.BIGINT,
+                      OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   // TODO
@@ -660,7 +670,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  // TODO
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern,
                              String[] types) throws SQLException {
@@ -674,70 +683,18 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       iterator = tables.iterator(catalog);
     }
 
-    List<String> columnNames = Arrays.asList(
-        "TABLE_CAT",
-        "TABLE_SCHEM",
-        "TABLE_NAME",
-        "TABLE_TYPE",
-        "REMARKS",
-        "TYPE_CAT",
-        "TYPE_SCHEM",
-        "TYPE_NAME",
-        "SELF_REFERENCING_COL_NAME",
-        "REF_GENERATION"
-    );
-
-    List<OdpsType> columnSqlTypes = Arrays.asList(
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING
-    );
-
-    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS", "TYPE_CAT",
+                      "TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME", "REF_GENERATION"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.STRING, OdpsType.STRING));
     return new OdpsTablesResultSet(iterator, meta);
   }
 
   @Override
   public ResultSet getSchemas() throws SQLException {
     return null;
-
-//    Projects projects = conn.getOdps().projects();
-//    Iterator<Project> iterator;
-//
-//    for (Project p: projects) {
-//
-//    }
-//
-//
-//
-//
-//    List<String> columnNames = Arrays.asList(
-//        "FUNCTION_CAT",
-//        "FUNCTION_SCHEM",
-//        "FUNCTION_NAME",
-//        "REMARKS",
-//        "FUNCTION_TYPE",
-//        "SPECIFIC_NAME"
-//    );
-//
-//    List<OdpsType> columnSqlTypes = Arrays.asList(
-//        OdpsType.STRING,
-//        OdpsType.STRING,
-//        OdpsType.STRING,
-//        OdpsType.STRING,
-//        OdpsType.BIGINT,  // Short indeed
-//        OdpsType.STRING
-//    );
-//
-//    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
-//    return new OdpsFunctionsResultSet(iterator, meta);
   }
 
   // TODO
@@ -759,7 +716,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  // TODO
   @Override
   public ResultSet getColumns(String catalog, String schemaPattern,
                               String tableNamePattern, String columnNamePattern)
@@ -787,57 +743,22 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     // Build result set meta data
-    List<String> columnNames = Arrays.asList(
-        "TABLE_CAT",
-        "TABLE_SCHEM",
-        "TABLE_NAME",
-        "COLUMN_NAME",
-        "DATA_TYPE",
-        "TYPE_NAME",
-        "COLUMN_SIZE",
-        "BUFFER_LENGTH",
-        "DECIMAL_DIGITS",
-        "NUM_PERC_RADIX",
-        "NULLABLE",
-        "REMARKS",
-        "COLUMN_DEF",
-        "SQL_DATA_TYPE",
-        "SQL_DATETIME_SUB",
-        "CHAR_OCTET_LENGTH",
-        "ORDINAL_POSITION",
-        "IS_NULLABLE",
-        "SCOPE_CATALOG",
-        "SCOPE_SCHEMA",
-        "SCOPE_TABLE",
-        "SOURCE_DATA_TYPE"
-    );
 
-    List<OdpsType> columnSqlTypes = Arrays.asList(
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.BIGINT, // DATA_TYPE int
-        OdpsType.STRING, // TYPE_NAME
-        OdpsType.BIGINT, // COLUMN_SIZE int
-        OdpsType.BIGINT, // BUFFER_LENGTH int
-        OdpsType.BIGINT, // DECIMAL_DIGITS int
-        OdpsType.BIGINT, // NUM_PERC_RADIX int
-        OdpsType.BIGINT, // NULLABLE int
-        OdpsType.STRING, // REMARKS
-        OdpsType.STRING, // COLUMN_DEF
-        OdpsType.BIGINT, // SQL_DATA_TYPE int
-        OdpsType.BIGINT, // SQL_DATETIME_SUB int
-        OdpsType.BIGINT, // CHAR_OCTET_LENGTH int
-        OdpsType.BIGINT, // ORDINAL_POSITION int
-        OdpsType.STRING, // IS_NULLABLE
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.BIGINT  // SOURCE_DATA_TYPE short
-    );
-
-    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+    OdpsResultSetMetaData
+        meta =
+        new OdpsResultSetMetaData(
+            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "DATA_TYPE",
+                          "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH", "DECIMAL_DIGITS",
+                          "NUM_PERC_RADIX", "NULLABLE", "REMARKS", "COLUMN_DEF", "SQL_DATA_TYPE",
+                          "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
+                          "IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA", "SCOPE_TABLE",
+                          "SOURCE_DATA_TYPE"),
+            Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                          OdpsType.BIGINT, OdpsType.STRING, OdpsType.BIGINT, OdpsType.BIGINT,
+                          OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.STRING,
+                          OdpsType.STRING, OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.BIGINT,
+                          OdpsType.BIGINT, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                          OdpsType.STRING, OdpsType.BIGINT));
     return new OdpsColumnsResultSet(jdbcColumns.iterator(), meta);
   }
 
@@ -865,18 +786,35 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  // TODO
   @Override
   public ResultSet getPrimaryKeys(String catalog, String schema, String table)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "KEY_SEQ",
+                      "PK_NAME"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.BIGINT, OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
-  // TODO
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays
+            .asList("PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME", "PKCOLUMN_NAME", "FKTABLE_CAT",
+                    "FKTABLE_SCHEM", "FKTABLE_NAME", "FKCOLUMN_NAME", "KEY_SEQ", "UPDATE_RULE",
+                    "DELETE_RULE", "FK_NAME", "PK_NAME", "DEFERRABILITY"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.STRING,
+                      OdpsType.STRING, OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   @Override
@@ -969,7 +907,15 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern,
                            int[] types) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "CLASS_NAME", "DATA_TYPE", "REMARKS",
+                      "BASE_TYPE"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.BIGINT, OdpsType.STRING, OdpsType.BIGINT));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   @Override
@@ -1080,7 +1026,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  // TODO
   @Override
   public ResultSet getFunctions(String catalog, String schemaPattern,
                                 String functionNamePattern) throws SQLException {
@@ -1094,25 +1039,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       iterator = functions.iterator(catalog);
     }
 
-    List<String> columnNames = Arrays.asList(
-        "FUNCTION_CAT",
-        "FUNCTION_SCHEM",
-        "FUNCTION_NAME",
-        "REMARKS",
-        "FUNCTION_TYPE",
-        "SPECIFIC_NAME"
-    );
-
-    List<OdpsType> columnSqlTypes = Arrays.asList(
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.STRING,
-        OdpsType.BIGINT,  // Short indeed
-        OdpsType.STRING
-    );
-
-    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME", "REMARKS", "FUNCTION_TYPE",
+                      "SPECIFIC_NAME"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
+                      OdpsType.BIGINT, OdpsType.STRING
+        ));
     return new OdpsFunctionsResultSet(iterator, meta);
   }
 
