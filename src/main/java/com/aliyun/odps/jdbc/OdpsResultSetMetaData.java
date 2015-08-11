@@ -24,7 +24,6 @@ import com.aliyun.odps.OdpsType;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,10 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
   private final List<OdpsType> columnTypes;
   private Map<String, Integer> nameIndexMap;
 
+  private String catalogName = " ";
+  private String schemeName = " ";
+  private String tableName = " ";
+
   OdpsResultSetMetaData(List<String> columnNames, List<OdpsType> columnTypes) {
     this.columnNames = columnNames;
     this.columnTypes = columnTypes;
@@ -42,12 +45,13 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   @Override
   public String getCatalogName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return catalogName;
   }
 
   @Override
   public String getColumnClassName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return JdbcColumn.columnClassName(type);
   }
 
   @Override
@@ -97,34 +101,33 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   @Override
   public String getSchemaName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return schemeName;
   }
 
   @Override
   public String getTableName(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return tableName;
   }
 
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
-    // Only string type is case sensitive
     OdpsType type = columnTypes.get(toZeroIndex(column));
-    return (type == OdpsType.STRING);
+    return JdbcColumn.columnCaseSensitive(type);
   }
 
   @Override
   public boolean isCurrency(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean isDefinitelyWritable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   // TODO: check
@@ -140,17 +143,30 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   @Override
   public boolean isSearchable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return true;
   }
 
   @Override
   public boolean isSigned(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    OdpsType type = columnTypes.get(toZeroIndex(column));
+    return JdbcColumn.columnSigned(type);
   }
 
   @Override
   public boolean isWritable(int column) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return false;
+  }
+
+  public void setTableName(String table) {
+    tableName = table;
+  }
+
+  public void setSchemeName(String scheme) {
+    schemeName = scheme;
+  }
+
+  public void setCatalogName(String catalog) {
+    catalogName = catalog;
   }
 
   /**

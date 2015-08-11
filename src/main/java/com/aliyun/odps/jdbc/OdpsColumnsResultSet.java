@@ -75,7 +75,7 @@ public class OdpsColumnsResultSet extends OdpsResultSet implements ResultSet {
       case 6: // TYPE_NAME
         return column.getTypeName();
       case 7: // COLUMN_SIZE
-        return column.getColumnSize();
+        return null;
       case 8: // BUFFER_LENGTH
         return null;
       case 9: // DECIMAL_DIGITS
@@ -110,5 +110,4 @@ public class OdpsColumnsResultSet extends OdpsResultSet implements ResultSet {
         return null;
     }
   }
-
 }

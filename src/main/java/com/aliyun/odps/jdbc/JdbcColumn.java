@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.DoubleSummaryStatistics;
 
 import com.aliyun.odps.OdpsType;
 
@@ -31,6 +32,7 @@ import com.aliyun.odps.OdpsType;
  * easily.
  */
 public class JdbcColumn {
+
   private final String columnName;
   private final String tableName;
   private final String tableCatalog;
@@ -49,7 +51,7 @@ public class JdbcColumn {
   }
 
   public static int OdpsTypeToSqlType(OdpsType type) throws SQLException {
-    switch(type) {
+    switch (type) {
       case BIGINT:
         return Types.BIGINT;
       case BOOLEAN:
@@ -63,12 +65,31 @@ public class JdbcColumn {
       case DECIMAL:
         return Types.DECIMAL;
       default:
-        throw new SQLException("unknown OdpsType to sql type conversion");
+        throw new SQLException("unknown OdpsType");
+    }
+  }
+
+  public static String columnClassName(OdpsType type) throws SQLException {
+    switch (type) {
+      case BIGINT:
+        return Long.class.getName();
+      case BOOLEAN:
+        return Boolean.class.getName();
+      case DOUBLE:
+        return Double.class.getName();
+      case STRING:
+        return String.class.getName();
+      case DATETIME:
+        return java.sql.Timestamp.class.getName();
+      case DECIMAL:
+        return java.math.BigDecimal.class.getName();
+      default:
+        throw new SQLException("unknown OdpsType");
     }
   }
 
   public static int columnDisplaySize(OdpsType type) throws SQLException {
-    switch(type) {
+    switch (type) {
       case BIGINT:
         return columnPrecision(type) + 1; // +/-
       case BOOLEAN:
@@ -82,12 +103,12 @@ public class JdbcColumn {
       case DECIMAL:
         return columnPrecision(type) + 2;
       default:
-        throw new SQLException("unknown OdpsType to sql type conversion");
+        throw new SQLException("unknown OdpsType");
     }
   }
 
   public static int columnPrecision(OdpsType type) throws SQLException {
-    switch(type) {
+    switch (type) {
       case BIGINT:
         return 19;
       case BOOLEAN:
@@ -101,12 +122,12 @@ public class JdbcColumn {
       case DECIMAL:
         return 18 + 36;
       default:
-        throw new SQLException("unknown OdpsType to sql type conversion");
+        throw new SQLException("unknown OdpsType");
     }
   }
 
   public static int columnScale(OdpsType type) throws SQLException {
-    switch(type) {
+    switch (type) {
       case BIGINT:
         return 0;
       case BOOLEAN:
@@ -120,7 +141,36 @@ public class JdbcColumn {
       case DECIMAL:
         return 18;
       default:
-        throw new SQLException("unknown OdpsType to sql type conversion");
+        throw new SQLException("unknown OdpsType");
+    }
+  }
+
+  public static boolean columnCaseSensitive(OdpsType type) throws SQLException {
+    switch (type) {
+      case BIGINT:
+      case DECIMAL:
+      case DOUBLE:
+      case DATETIME:
+      case BOOLEAN:
+        return false;
+      case STRING:
+        return true;
+      default:
+        throw new SQLException("unknown OdpsType");
+    }  }
+
+  public static boolean columnSigned(OdpsType type) throws SQLException {
+    switch (type) {
+      case BIGINT:
+      case DECIMAL:
+      case DOUBLE:
+        return true;
+      case STRING:
+      case DATETIME:
+      case BOOLEAN:
+        return false;
+      default:
+        throw new SQLException("unknown OdpsType");
     }
   }
 
@@ -156,21 +206,17 @@ public class JdbcColumn {
     return 10;
   }
 
-  public int getColumnSize() {
-    return 10;
-  }
-
   public int getIsNullable() {
     return DatabaseMetaData.columnNullable;
   }
 
   public String getIsNullableString() {
     switch (getIsNullable()) {
-      case(DatabaseMetaData.columnNoNulls):
+      case (DatabaseMetaData.columnNoNulls):
         return "NO";
-      case(DatabaseMetaData.columnNullable):
+      case (DatabaseMetaData.columnNullable):
         return "YES";
-      case(DatabaseMetaData.columnNullableUnknown):
+      case (DatabaseMetaData.columnNullableUnknown):
         return null;
       default:
         return null;

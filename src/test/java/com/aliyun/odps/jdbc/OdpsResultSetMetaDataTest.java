@@ -91,12 +91,14 @@ public class OdpsResultSetMetaDataTest {
   @Test
   public void testGetColumnMeta() throws Exception {
     for (int i = 0; i < rsmd.getColumnCount(); i++) {
-      Assert.assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(i+1));
-      int scale = rsmd.getScale(i+1);
-      int precision = rsmd.getPrecision(i+1);
-      int displaySize = rsmd.getColumnDisplaySize(i+1);
-      System.out.printf("%d: %d %d %d\n", i+1, scale, precision, displaySize);
+      Assert.assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(i + 1));
+      int scale = rsmd.getScale(i + 1);
+      int precision = rsmd.getPrecision(i + 1);
+      int displaySize = rsmd.getColumnDisplaySize(i + 1);
+      boolean caseSensive = rsmd.isCaseSensitive(i + 1);
+      boolean signed = rsmd.isSigned(i + 1);
+      System.out.printf("%d: %d %d %d %b %b\n", i + 1, scale, precision, displaySize, caseSensive,
+                        signed);
     }
   }
-
 }

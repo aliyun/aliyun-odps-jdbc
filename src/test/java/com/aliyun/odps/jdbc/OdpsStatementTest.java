@@ -52,7 +52,6 @@ public class OdpsStatementTest {
     conn.close();
   }
 
-
   @Test
   public void testExecuteUpdate() throws Exception {
     Statement stmt = conn.createStatement();
@@ -192,7 +191,6 @@ public class OdpsStatementTest {
     Assert.assertEquals(1, rs.getInt(1));
     stmt.close();
   }
-
 
   @Test
   public void testExecuteAutoBranch() throws Exception {
