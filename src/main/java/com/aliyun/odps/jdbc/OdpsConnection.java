@@ -500,13 +500,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       Map<String, String> hints = new HashMap<String, String>();
       Map<String, String> aliases = new HashMap<String, String>();
 
-      if (!sql.matches("\\s*;\\s*$")) {
+      // If te user forget to put with a semi-colon, add it.
+      if (sql.matches(".*[^;]\\s*$")) {
         sql += ";";
       }
 
-      instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       PrintWriter out = new PrintWriter(System.out);
       out.println(sql);
+      out.flush();
+
+      instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
+
       LogView logView = new LogView(odps);
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       out.println("Log View: " + logViewUrl + "\n");

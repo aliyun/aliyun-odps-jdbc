@@ -22,12 +22,15 @@ package com.aliyun.odps.jdbc;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
+
+import com.alibaba.druid.util.JdbcUtils;
 
 public class OdpsStatementTest {
 
@@ -60,11 +63,65 @@ public class OdpsStatementTest {
   }
 
   /**
+   * Test the result set in the case that the lifetime of fetching rows will exceed
+   * the 600 seconds which is the lifecycle of a download session.
+   */
+  @Test
+  public void testSlowlyExecuteQuery() throws Exception {
+    Statement stmt = conn.createStatement();
+    String sql = "select * from yichao_test_table_input;";
+    ResultSet rs = stmt.executeQuery(sql);
+    rs.setFetchSize(10000);
+    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
+    Assert.assertEquals(true, rs.isBeforeFirst());
+    Assert.assertEquals(10000, rs.getFetchSize());
+
+    int i = 0;
+    int j = 0;
+    int time = 1;
+    while (rs.next()) {
+      Assert.assertEquals(i + 1, rs.getRow());
+      Assert.assertEquals(i, rs.getInt(1));
+      i++;
+      j++;
+      if (j > 9000) {
+        Thread.sleep(time * 1000);
+        System.out.println(String.format("%d: %ds", i, time));
+        time *= 2;
+      }
+    }
+    stmt.close();
+  }
+
+  /**
+   * The result has zero rows.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testExecuteQueryEmpty() throws Exception {
+    Statement stmt = conn.createStatement();
+    String sql = "select * from yichao_test_table_input where id < 0;";
+    ResultSet rs = stmt.executeQuery(sql);
+
+    Assert.assertNotNull(rs);
+    ResultSetMetaData rsmd = rs.getMetaData();
+    Assert.assertEquals(1, rsmd.getColumnCount());
+
+    while (rs.next()) {
+      System.out.println("+1");
+    }
+    stmt.close();
+  }
+
+  /**
    * Test the scrollability of the resultset.
    * This function covers the following API of ResultSet:
-   * 1. getRow()
-   * 2. beforeFirst() / isBeforeFirst()
-   * 4. setFetchSize() / getFetchSize()
+   * getRow()
+   * beforeFirst()
+   * isBeforeFirst()
+   * setFetchSize()
+   * getFetchSize()
    *
    * @throws Exception
    */
@@ -79,13 +136,19 @@ public class OdpsStatementTest {
     Assert.assertEquals(10000, stmt.getFetchSize());
 
     // Test performance for difference fetch size
-    int[] fetchSizes = {50 * 10000, 20 * 10000, 10 * 10000, 5 * 10000, 2 * 10000, 10000};
+    int[] fetchSizes = {
+        500000,
+        200000,
+        100000,
+        50000,
+        20000,
+        10000};
 
     int i;
-    for (int round = 0; round < fetchSizes.length; round++) {
+    for (int fetchSize : fetchSizes) {
       long start = System.currentTimeMillis();
-      rs.setFetchSize(fetchSizes[round]);
-      Assert.assertEquals(fetchSizes[round], rs.getFetchSize());
+      rs.setFetchSize(fetchSize);
+      Assert.assertEquals(fetchSize, rs.getFetchSize());
       rs.beforeFirst();
       Assert.assertEquals(true, rs.isBeforeFirst());
       {
@@ -99,10 +162,40 @@ public class OdpsStatementTest {
       long end = System.currentTimeMillis();
       System.out.printf("step\t%d\tmillis\t%d\n", rs.getFetchSize(), end - start);
     }
+
+    stmt.close();
+  }
+
+  @Test
+  public void testExecuteMissingSemiColon() throws Exception {
+    Statement stmt = conn.createStatement();
+    Assert.assertEquals(true, stmt.execute(" select 1 id from dual"));
+    ResultSet rs = stmt.getResultSet();
+
+    rs.next();
+    Assert.assertEquals(1, rs.getInt(1));
+    stmt.close();
   }
 
   @Test
   public void testExecute() throws Exception {
+    Statement stmt = conn.createStatement();
+    boolean rs_generated = stmt.execute("select 1 id, 1.5 weight from dual;");
+    Assert.assertEquals(true, rs_generated);
+
+    ResultSet rs = stmt.getResultSet();
+    // Assure the result set can be generated
+    Assert.assertNotNull(rs);
+
+    rs.next();
+    Assert.assertEquals(1.5, rs.getDouble(2), 0);
+    Assert.assertEquals(1, rs.getInt(1));
+    stmt.close();
+  }
+
+
+  @Test
+  public void testExecuteAutoBranch() throws Exception {
     Statement stmt = conn.createStatement();
     Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
     ResultSet rs = stmt.getResultSet();
@@ -122,6 +215,8 @@ public class OdpsStatementTest {
     Assert.assertEquals(true, stmt.execute("--abcd\nSELECT 1 id from dual;"));
     Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\nSELECT 1 id from dual;"));
     Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
+
+    stmt.close();
   }
 
 
