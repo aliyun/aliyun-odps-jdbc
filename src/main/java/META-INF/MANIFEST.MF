@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Class-Path: commons-codec-1.9.jar jackson-core-asl-1.9.13.jar fastjson
+ -1.2.6.jar aspectjrt-1.8.2.jar commons-lang-2.4.jar jcabi-aspects-0.2
+ 0.1.jar odps-sdk-core-0.17.3.jar bcprov-jdk15on-1.52.jar javacsv-2.0.
+ jar jackson-mapper-asl-1.9.13.jar tools.jar odps-sdk-commons-0.17.3.j
+ ar validation-api-1.1.0.Final.jar snappy-java-1.1.1.6.jar jcabi-log-0
+ .15.jar jconsole.jar
+Main-Class: com.aliyun.odps.jdbc.OdpsDriver
+
