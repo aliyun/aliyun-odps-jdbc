@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -52,6 +55,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private int updateCount = -1;
   private boolean isClosed = false;
   private boolean isCancelled = false;
+
+  private Log log = LogFactory.getLog(OdpsStatement.class);
 
   /**
    * Sets the scrollablity of ResultSet objects produced by this statement.
@@ -145,11 +150,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Instance dropTableInstance = conn.run(String.format("drop table %s;", tempTableName));
     try {
       if (!dropTableInstance.isSuccessful()) {
+        log.fatal("fail to drop temp table: " + tempTableName);
         throw new SQLException("can not drop the temp table for querying result");
       }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
     }
+
+    log.debug("successfully drop temp table: " + tempTableName);
 
     resultSet.close();
     resultSet = null;
@@ -179,13 +187,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // Once the table has been created, it will last until the Statement is closed.
     Instance createTableInstance =
         conn.run(String.format("create table %s as %s", tempTableName, sql));
+
     try {
       if (!createTableInstance.isSuccessful()) {
+        log.fatal("fail to create temp table: " + tempTableName);
         throw new SQLException("can not create the temp table for querying result");
       }
     } catch (OdpsException e) {
       throw new SQLException("can not read instance status", e);
     }
+
+    log.debug("successfully create temp table: " + tempTableName);
 
     // Read schema
     Table table = conn.getOdps().tables().get(tempTableName);
@@ -212,7 +224,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("can not create tunnel download session", e);
     }
 
-    // Construct result set if the query
     resultSet = new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
         .setSessionHandle(downloadSession)
         .setFetchForward(isResultSetFetchForward)

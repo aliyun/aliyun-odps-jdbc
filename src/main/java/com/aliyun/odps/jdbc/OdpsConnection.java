@@ -20,7 +20,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import java.io.PrintWriter;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -45,6 +44,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
@@ -63,6 +65,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private SQLWarning warningChain = null;
 
   private boolean isClosed = false;
+
+  private Log log = LogFactory.getLog(OdpsConnection.class);
+
 
   /**
    *   Compatible with JDBC's API: getConnection("url", "user", "password")
@@ -508,15 +513,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         sql += ";";
       }
 
-      PrintWriter out = new PrintWriter(System.out);
-      out.println(sql);
-      out.flush();
-
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       LogView logView = new LogView(odps);
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      out.println("Log View: " + logViewUrl + "\n");
-      out.flush();
+      log.debug("Run client SQL: " + sql + "=>Log View: " + logViewUrl);
       instance.waitForSuccess();
     } catch (OdpsException e) {
       throw new SQLException("run sql error: " + e.getMessage());

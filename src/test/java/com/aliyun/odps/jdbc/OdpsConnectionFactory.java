@@ -42,6 +42,8 @@ public class OdpsConnectionFactory {
 
   private OdpsConnectionFactory() {
     try {
+      org.apache.log4j.BasicConfigurator.configure();
+
       Properties odpsConfig = new Properties();
 
       InputStream is =

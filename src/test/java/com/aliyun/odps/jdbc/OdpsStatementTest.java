@@ -30,8 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
-import com.alibaba.druid.util.JdbcUtils;
-
 public class OdpsStatementTest {
 
   private static Connection conn = OdpsConnectionFactory.getInstance().conn;
