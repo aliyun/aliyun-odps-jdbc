@@ -42,11 +42,15 @@ import com.aliyun.odps.account.AliyunAccount;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
-  private final String PRODUCT_NAME = "ODPS-JDBC";
-  private final String NON_SQL_92_KEYWORDS = "WHILE";
+  private static final String PRODUCT_NAME = "ODPS JDBC";
+  private static final String PRODUCT_VERSION = "0.0.1";
+  private static final String DRIVER_NAME = "ODPS-JDBC";
+  private static final int DRIVER_MAJOR_VERSION = 1;
+  private static final int DRIVER_MINOR_VERSION = 0;
 
-  private final String DRIVER_NAME = "ODPS-JDBC";
-  private final String DRIVER_VERSION = "0.0.1";
+  private static final String SCHEMA_TERM = "project";
+  private static final String CATALOG_TERM = "endpoint";
+  private static final String PROCEDURE_TERM = "UDF";
 
   private OdpsConnection conn;
 
@@ -107,7 +111,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getDatabaseProductVersion() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return PRODUCT_VERSION;
   }
 
   @Override
@@ -117,17 +121,17 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getDriverVersion() throws SQLException {
-    return DRIVER_VERSION;
+    return DRIVER_MAJOR_VERSION + "." + DRIVER_MINOR_VERSION;
   }
 
   @Override
   public int getDriverMajorVersion() {
-    return 0;
+    return DRIVER_MAJOR_VERSION;
   }
 
   @Override
   public int getDriverMinorVersion() {
-    return 0;
+    return DRIVER_MINOR_VERSION;
   }
 
   @Override
@@ -187,7 +191,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSQLKeywords() throws SQLException {
-    return NON_SQL_92_KEYWORDS;
+    return " ";
   }
 
   @Override
@@ -357,17 +361,17 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSchemaTerm() throws SQLException {
-    return new String("project");
+    return SCHEMA_TERM;
   }
 
   @Override
   public String getProcedureTerm() throws SQLException {
-    return new String("UDF");
+    return PROCEDURE_TERM;
   }
 
   @Override
   public String getCatalogTerm() throws SQLException {
-    return new String("endpoint");
+    return CATALOG_TERM;
   }
 
   @Override
@@ -646,7 +650,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-
   @Override
   public ResultSet getProcedures(String catalog, String schemaPattern,
                                  String procedureNamePattern) throws SQLException {
@@ -662,12 +665,16 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
-  // TODO
   @Override
   public ResultSet getProcedureColumns(String catalog, String schemaPattern,
                                        String procedureNamePattern, String columnNamePattern)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
+
+    return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
   @Override
@@ -696,8 +703,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   public ResultSet getSchemas() throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-        Arrays.asList("STUPID_PLACEHOLDERS"),
-        Arrays.asList(OdpsType.STRING));
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
     return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
@@ -708,30 +715,28 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-        Arrays.asList("STUPID_PLACEHOLDERS"),
-        Arrays.asList(OdpsType.STRING));
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
     return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
-  // TODO
   @Override
   public ResultSet getCatalogs() throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-        Arrays.asList("STUPID_PLACEHOLDERS"),
-        Arrays.asList(OdpsType.STRING));
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
     return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
 
-  // TODO
   @Override
   public ResultSet getTableTypes() throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-        Arrays.asList("STUPID_PLACEHOLDERS"),
-        Arrays.asList(OdpsType.STRING));
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
     return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
@@ -851,13 +856,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  // TODO
   @Override
   public ResultSet getTypeInfo() throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-        Arrays.asList("STUPID_PLACEHOLDERS"),
-        Arrays.asList(OdpsType.STRING));
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
     return new OdpsQueryResultSet.Builder().setEmptyResultSet(true).setMeta(meta).build();
   }
