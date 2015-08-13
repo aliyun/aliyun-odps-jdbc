@@ -2,7 +2,7 @@
 
 ## Quickstart
 
-1\. Explictly load the ODPS JDBC driver using Class.`forName()`.
+1\. Explictly load the ODPS JDBC driver using `Class.forName()`.
     
 For example:
     
@@ -11,30 +11,25 @@ For example:
 
 2\. Connect to the ODPS by creating a `Connection` object with the JDBC driver:
 
+    
+    Connection conn = DriverManager.getConnection(url, accessId, accessKey);
+
+The ODPS server works with HTTP or HTTPS protocol, so the url looks like: `jdbc:odps:<endpoint>@<project>`
+
+For example:
+
+* `jdbc:odps:http://www.aliyun.com/service@foobar`
+* `jdbc:odps:https://www.aliyun.com/service@foobar`
+
+`project`, `accessId` and `accessKey` can also be passed through `Properties`. 
+
 For example:
     
-    Connection conn = DriverManager.getConnection("jdbc:odps:<ODPS_URL>", config);
-
-The ODPS server works with HTTP or HTTPS protocol, so an `ODPS_URL` looks like:
-
-* `http://<domain>/<subdomain>`
-* `https://<domain>/<subdomain>`
-
-If the user does not specify the protocal, HTTPS will be used.
-
-For example:
-
-    Connection conn = DriverManager.getConnection("jdbc:odps://<domain>/<subdomain>", config);
-
-
-And other information is passed through a `config`. 
-
-For example:
-
     Properties config = new Properties();
     config.put("access_id", "...");
     config.put("access_key", "...");
     config.put("project_name", "...");
+    Connection conn = DriverManager.getConnection("jdbc:odps:<endpoint>", config);
        
 
 3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method.
@@ -85,7 +80,7 @@ The implicit type conversion follows the rule:
 | Timestamp   |   |   |   | Y | Y |   |
 
 
-## JDBC 4.0 Comliance RoadMap
+## JDBC Comliance RoadMap
 
 
 ### DataSource 
@@ -94,14 +89,7 @@ TODO
 
 ### Driver
 
-Fully implented with the exception of the following methods:
-
-* getMajorVersion
-* getMinorVersion
-
-And the following methods whose absence is permitted:
-
-* getParentLogger
+Fully implented
 
 ### Connection
 
@@ -153,9 +141,9 @@ The parts ODPS JDBC supports but Hive does not:
 * ResultSet Type
   * TYPE_FORWARD_ONLY 
   * TYPE_SCROLL_INSENSITIVE
-    * FETCH_FORWARD
-    * FETCH_REVERSE (Hive partially supported)
-    * FETCH_UNKNOWN
+     * FETCH_FORWARD
+     * FETCH_REVERSE (Hive partially supported)
+     * FETCH_UNKNOWN
   * ~~TYPE_SCROLL_SENSITIVE~~
 
 Fully implented with the exception of the following methods:
