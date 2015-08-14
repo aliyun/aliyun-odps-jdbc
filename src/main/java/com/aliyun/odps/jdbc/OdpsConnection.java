@@ -516,12 +516,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       LogView logView = new LogView(odps);
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      log.debug("Run client SQL: " + sql + "=>Log View: " + logViewUrl);
-      instance.waitForSuccess();
+      log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {
-      throw new SQLException("run sql error: " + e.getMessage());
+      throw new SQLException("fail kick off sql: " + e.getMessage());
     }
-
     return instance;
   }
 

@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.AfterClass;
@@ -90,6 +91,92 @@ public class OdpsStatementTest {
     stmt.close();
   }
 
+
+  /**
+   * Thread for a sql to be cancelled
+   */
+  class ExecuteSQL implements Runnable {
+
+    Statement stmt;
+    public Thread mythread;
+    String sql;
+
+    ExecuteSQL(Statement stmt, String sql) {
+      this.stmt = stmt;
+      this.sql = sql;
+      mythread = new Thread(this, "sql thread");
+      System.out.println("thread created: " + mythread);
+    }
+
+    public void run() {
+      try {
+        System.out.println("trigger sql");
+        boolean kind = stmt.execute(sql);
+        System.out.println(kind ? "query ok" : "update ok");
+      } catch (SQLException e) {
+        System.out.println("run sql fail: " + e.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Thread class for cancelling sql
+   */
+  class CancelSQL implements Runnable {
+
+    Statement stmt;
+    public Thread mythread;
+
+    CancelSQL(Statement stmt) {
+      this.stmt = stmt;
+      mythread = new Thread(this, "cancel thread");
+      System.out.println("thread created: " + mythread);
+    }
+
+    public void run() {
+      try {
+        System.out.println("trigger cancel");
+        stmt.cancel();
+      } catch (SQLException e) {
+        System.out.println("cancel fail: " + e.getMessage());
+      }
+    }
+  }
+
+  @Test
+  public void testCancelQuery() throws Exception {
+    Statement stmt = conn.createStatement();
+    String sql = "select * from yichao_test_table_input limit 10000;";
+    ExecuteSQL updateIt = new ExecuteSQL(stmt, sql);
+    CancelSQL cancelIt = new CancelSQL(stmt);
+
+    // kicks-off execution 4s earlier
+    updateIt.mythread.start();
+    Thread.sleep(4000);
+    cancelIt.mythread.start();
+
+    updateIt.mythread.join();
+    cancelIt.mythread.join();
+    stmt.close();
+  }
+
+  @Test
+  public void testCancelUpdate() throws Exception {
+    Statement stmt = conn.createStatement();
+    String sql = "insert into table yichao_test_table_output select * from yichao_test_table_input limit 10000;";
+    ExecuteSQL updateIt = new ExecuteSQL(stmt, sql);
+    CancelSQL cancelIt = new CancelSQL(stmt);
+
+    // kicks-off execution 4s earlier
+    updateIt.mythread.start();
+    Thread.sleep(4000);
+    cancelIt.mythread.start();
+
+    updateIt.mythread.join();
+    cancelIt.mythread.join();
+    stmt.close();
+  }
+
   /**
    * The result has zero rows.
    *
@@ -112,7 +199,7 @@ public class OdpsStatementTest {
   }
 
   /**
-   * Test the scrollability of the resultset.
+   * Test the scrollability of the result set.
    * This function covers the following API of ResultSet:
    * getRow()
    * beforeFirst()
@@ -175,7 +262,7 @@ public class OdpsStatementTest {
   }
 
   @Test
-  public void testExecute() throws Exception {
+  public void testExecuteSimple() throws Exception {
     Statement stmt = conn.createStatement();
     boolean rs_generated = stmt.execute("select 1 id, 1.5 weight from dual;");
     Assert.assertEquals(true, rs_generated);
@@ -191,7 +278,7 @@ public class OdpsStatementTest {
   }
 
   @Test
-  public void testExecuteAutoBranch() throws Exception {
+  public void testExecuteComplex() throws Exception {
     Statement stmt = conn.createStatement();
     Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
     ResultSet rs = stmt.getResultSet();

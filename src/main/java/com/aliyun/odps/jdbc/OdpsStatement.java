@@ -83,7 +83,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   /**
    * Used to create a temp table for producing ResultSet object.
    */
-  private final String tempTableName;
+  private List<String> tempTables;
 
   private SQLWarning warningChain = null;
 
@@ -94,7 +94,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.conn = conn;
     this.isResultSetScrollable = isResultSetScrollable;
-    tempTableName = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
+    this.tempTables = new ArrayList<String>();
   }
 
   @Override
@@ -102,25 +102,20 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
-  /**
-   * TODO: should we support cancel?
-   *
-   * @throws SQLException
-   */
   @Override
   public void cancel() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-//    if (isCancelled || instance == null) {
-//      return;
-//    }
-//
-//    try {
-//      instance.stop();
-//    } catch (OdpsException e) {
-//      throw new SQLException("cancel error", e);
-//    }
-//
-//    isCancelled = true;
+    if (isCancelled || instance == null) {
+      return;
+    }
+
+    try {
+      instance.stop();
+      log.debug("the cancel request has been sent");
+    } catch (OdpsException e) {
+      throw new SQLException(e.getMessage());
+    }
+
+    isCancelled = true;
   }
 
   @Override
@@ -146,22 +141,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       return;
     }
 
-    // Drop the temp table for querying result set and ensure it has been dropped
-    Instance dropTableInstance = conn.run(String.format("drop table %s;", tempTableName));
-    try {
-      if (!dropTableInstance.isSuccessful()) {
-        log.fatal("fail to drop temp table: " + tempTableName);
-        throw new SQLException("can not drop the temp table for querying result");
-      }
-    } catch (OdpsException e) {
-      throw new SQLException("can not read instance status", e);
-    }
-
-    log.debug("successfully drop temp table: " + tempTableName);
-
     resultSet.close();
     resultSet = null;
     isClosed = true;
+
+    try {
+      for (String table : tempTables) {
+        conn.run("drop table " + table + ";").waitForSuccess();
+        log.debug("silently drop temp table: " + table);
+      }
+    } catch (OdpsException e) {
+      throw new SQLException(e.getMessage());
+    }
   }
 
   public void closeOnCompletion() throws SQLException {
@@ -178,54 +169,73 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     beforeExecute();
 
-    // Drop the temp table for querying result set
-    // in case that the table has been created in the former execution.
-    conn.run(String.format("drop table if exists %s;", tempTableName));
-
     // Create a temp table for querying ResultSet and ensure its creation.
-    // If the table can not be created, an exception will be caused.
+    // If the table can not be created (CANCELLED/FAIL), an exception will be caused.
     // Once the table has been created, it will last until the Statement is closed.
-    Instance createTableInstance =
-        conn.run(String.format("create table %s as %s", tempTableName, sql));
+    String tempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
     try {
-      if (!createTableInstance.isSuccessful()) {
-        log.fatal("fail to create temp table: " + tempTableName);
-        throw new SQLException("can not create the temp table for querying result");
+      instance = conn.run(String.format("create table %s as %s", tempTable, sql));
+
+      boolean complete = false;
+      while (!complete) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          break;
+        }
+
+        switch (instance.getTaskStatus().get("SQL").getStatus()) {
+          case SUCCESS:
+            complete = true;
+            break;
+          case FAILED:
+            log.debug("create temp table failed");
+            throw new SQLException(instance.getTaskResults().get("SQL"), "FAILED");
+          case CANCELLED:
+            log.debug("create temp table cancelled");
+            throw new SQLException("create temp table cancelled", "CANCELLED");
+          case WAITING:
+          case RUNNING:
+          case SUSPENDED:
+            break;
+        }
       }
     } catch (OdpsException e) {
-      throw new SQLException("can not read instance status", e);
+      throw new SQLException(e.getMessage());
     }
 
-    log.debug("successfully create temp table: " + tempTableName);
+    log.debug("successfully create temp table: " + tempTable);
+    tempTables.add(tempTable);
 
     // Read schema
-    Table table = conn.getOdps().tables().get(tempTableName);
     List<String> columnNames = new ArrayList<String>();
     List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
     try {
+      Table table = conn.getOdps().tables().get(tempTable);
       table.reload();
       for (Column col : table.getSchema().getColumns()) {
         columnNames.add(col.getName());
         columnSqlTypes.add(col.getType());
       }
     } catch (OdpsException e) {
-      throw new SQLException("can not read table schema", e);
+      throw new SQLException(e.getMessage());
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
     // Create a download session through tunnel
-    TableTunnel tunnel = new TableTunnel(conn.getOdps());
-    DownloadSession downloadSession;
+    DownloadSession session;
     try {
-      downloadSession =
-          tunnel.createDownloadSession(conn.getOdps().getDefaultProject(), tempTableName);
+      TableTunnel tunnel = new TableTunnel(conn.getOdps());
+      String project_name = conn.getOdps().getDefaultProject();
+      session = tunnel.createDownloadSession(project_name, tempTable);
+      log.debug("create download session id=" + session.getId());
     } catch (TunnelException e) {
-      throw new SQLException("can not create tunnel download session", e);
+      throw new SQLException(e.getMessage());
     }
 
     resultSet = new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
-        .setSessionHandle(downloadSession)
+        .setSessionHandle(session)
         .setFetchForward(isResultSetFetchForward)
         .setScollable(isResultSetScrollable)
         .setFetchSize(fetchSize)
@@ -238,9 +248,35 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public int executeUpdate(String sql) throws SQLException {
     beforeExecute();
 
-    instance = conn.run(sql);
-
     try {
+      instance = conn.run(sql);
+
+      boolean complete = false;
+      while (!complete) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          break;
+        }
+
+        switch (instance.getTaskStatus().get("SQL").getStatus()) {
+          case SUCCESS:
+            complete = true;
+            break;
+          case FAILED:
+            log.debug("update failed");
+            throw new SQLException(instance.getTaskResults().get("SQL"), "FAILED");
+          case CANCELLED:
+            log.debug("update cancelled");
+            throw new SQLException("update cancelled", "CANCELLED");
+          case WAITING:
+          case RUNNING:
+          case SUSPENDED:
+            break;
+        }
+      }
+
+      // extract update count
       Instance.TaskSummary taskSummary = instance.getTaskSummary("SQL");
       if (taskSummary != null) {
         JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
@@ -255,9 +291,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (OdpsException e) {
-      throw new SQLException("get task summary error", e);
+      throw new SQLException(e.getMessage());
     }
 
+    log.debug("successfully updated " + updateCount + " records");
     return updateCount;
   }
 
@@ -296,7 +333,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (IOException e) {
-      throw new SQLException("can not read sql: ", e);
+      throw new SQLException(e.getMessage());
     }
 
     executeUpdate(sql);

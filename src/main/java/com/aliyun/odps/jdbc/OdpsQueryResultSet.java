@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordReader;
 import com.aliyun.odps.tunnel.TableTunnel;
@@ -39,6 +42,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   private final int totalRows;
   private int startRow;
   private int fetchedRows;
+
+  private Log log = LogFactory.getLog(OdpsQueryResultSet.class);
 
   /**
    * Whether the query result set is empty.
@@ -203,14 +208,14 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
     try {
       if (recordReader == null) {
-        if (!downloadMoreRows(fetchSize)) {
+        if (!fetchMoreRows(fetchSize)) {
           return false;
         }
       }
 
       Record record = recordReader.read();
       if (record == null) {
-        if (!downloadMoreRows(fetchSize)) {
+        if (!fetchMoreRows(fetchSize)) {
           return false;
         } else {
           record = recordReader.read();
@@ -229,38 +234,37 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   /**
-   * Download a number of `nextFewRows` records from the session handle.
+   * Fetch a number of `nextFewRows` records from the session handle.
    *
    * If the `startRows` plus `nextFewRows` exceeds the limit of the rows,
    * a fewer number of rows will be downloaded from the session.
    * Otherwise, a number of `nextFewRows` rows will be downloaded.
    *
-   * @param nextFewRows
+   * @param count
    *     the number of rows attempts to download
    * @return a boolean that indicates whether the download is successful
    * @throws SQLException
    */
-  private boolean downloadMoreRows(int nextFewRows) throws SQLException {
+  private boolean fetchMoreRows(int count) throws SQLException {
     if (startRow >= totalRows) {
       return false;
     }
 
-    if (startRow + nextFewRows > totalRows) {
-      nextFewRows = totalRows - startRow;
+    if (startRow + count > totalRows) {
+      count = totalRows - startRow;
     }
 
     try {
-      // TODO: 24 hours limitation
-      assert(sessionHandle.getStatus() == TableTunnel.DownloadStatus.NORMAL);
-      recordReader = sessionHandle.openRecordReader(startRow, nextFewRows);
-      startRow += nextFewRows;
+      recordReader = sessionHandle.openRecordReader(startRow, count);
+      log.debug("open record reader from session id=" + sessionHandle.getId());
+      startRow += count;
       return true;
     } catch (TunnelException e) {
       throw new SQLException(
-          "can not open record reader: " + startRow + ":" + nextFewRows, e);
+          "can not open record reader@" + startRow);
     } catch (IOException e) {
       throw new SQLException(
-          "can not open record reader: " + startRow + ":" + nextFewRows, e);
+          "can not open record reader@" + startRow);
     }
   }
 

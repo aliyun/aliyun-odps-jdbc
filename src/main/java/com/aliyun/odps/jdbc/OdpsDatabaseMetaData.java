@@ -191,7 +191,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSQLKeywords() throws SQLException {
-    return " ";
+    return "overwrite ";
   }
 
   @Override
