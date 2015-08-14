@@ -1,5 +1,23 @@
 # JDBC Driver for ODPS
 
+
+
+## Installation
+
+### Requirements
+
+* Java 6+
+
+
+
+### Build
+
+
+	git clone ....
+	cd odps-jdbc
+	mvn install -Dmaven.test.skip=true
+
+
 ## Quickstart
 
 1\. Explictly load the ODPS JDBC driver using `Class.forName()`.
@@ -59,7 +77,10 @@ For example
 | STRING      | byte[]       | String                        | VARCHAR       |
 | DECIMAL     | math.BigDecimal  | math.BigDecimal       | DECIMAL        |
 
-The data value can be accessed by the getters of `ResultSet` like `getInt()`, `getTime()`, etc.
+The data of ODPS can be accessed by the getters of `ResultSet` like `getInt()`, `getTime()`, etc.
+
+
+### Type Conversion
 
 The implicit type conversion follows the rule:
 
