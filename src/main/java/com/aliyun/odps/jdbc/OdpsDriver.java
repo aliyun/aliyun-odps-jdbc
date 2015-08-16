@@ -107,8 +107,7 @@ public class OdpsDriver implements Driver {
     projectNameProp.required = false;
     projectNameProp.description = "ODPS project name";
 
-    DriverPropertyInfo[] dpi = {endPointProp, accessIdProp, accessKeyProp, projectNameProp};
-    return dpi;
+    return new DriverPropertyInfo[] {endPointProp, accessIdProp, accessKeyProp, projectNameProp};
   }
 
   @Override

@@ -508,7 +508,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       Map<String, String> hints = new HashMap<String, String>();
       Map<String, String> aliases = new HashMap<String, String>();
 
-      // If the user forget to put with a semi-colon, add it.
+      // If the user forget to end with a semi-colon, append it.
       if (sql.matches(".*[^;]\\s*$")) {
         sql += ";";
       }
@@ -518,7 +518,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {
-      throw new SQLException("fail kick off sql: " + e.getMessage());
+      throw new SQLException("fail to run sql: " + e.getMessage());
     }
     return instance;
   }

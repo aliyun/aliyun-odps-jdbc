@@ -46,7 +46,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   private static final String ODPS_DATETIME_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss";
 
-  private OdpsResultSetMetaData meta;
+  protected OdpsResultSetMetaData meta;
   protected OdpsStatement stmt;
   protected boolean wasNull = false;
   protected boolean isClosed = false;
@@ -483,7 +483,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return 0;
     } else if (obj instanceof Long) {
-      return ((Long) obj).longValue();
+      return (Long) obj;
     } else if (obj instanceof Double) {
       return ((Double) obj).longValue();
     } else if (obj instanceof BigDecimal) {

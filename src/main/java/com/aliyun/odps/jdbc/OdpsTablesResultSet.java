@@ -42,6 +42,7 @@ public class OdpsTablesResultSet extends OdpsResultSet implements ResultSet {
     isClosed = true;
     iterator = null;
     table = null;
+    meta = null;
   }
 
   @Override

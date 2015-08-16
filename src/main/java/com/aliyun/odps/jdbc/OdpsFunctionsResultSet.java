@@ -42,6 +42,7 @@ public class OdpsFunctionsResultSet extends OdpsResultSet implements ResultSet {
     isClosed = true;
     iterator = null;
     function = null;
+    meta = null;
   }
 
   @Override
