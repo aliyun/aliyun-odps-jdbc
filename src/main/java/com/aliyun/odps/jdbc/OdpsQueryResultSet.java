@@ -192,6 +192,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     recordReader = null;
     sessionHandle = null;
     rowValues = null;
+    meta = null;
   }
 
   @Override
@@ -256,15 +257,14 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
     try {
       recordReader = sessionHandle.openRecordReader(startRow, count);
-      log.debug("open record reader from session id=" + sessionHandle.getId());
+      log.debug(String.format("open record reader: ssid=%s, begin=%, cnt=%d",
+                              sessionHandle.getId(), startRow, count));
       startRow += count;
       return true;
     } catch (TunnelException e) {
-      throw new SQLException(
-          "can not open record reader@" + startRow);
+      throw new SQLException(e);
     } catch (IOException e) {
-      throw new SQLException(
-          "can not open record reader@" + startRow);
+      throw new SQLException(e);
     }
   }
 
@@ -282,6 +282,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public Object getObject(int columnIndex) throws SQLException {
     checkClosed();
+
     if (rowValues == null) {
       wasNull = true;
       return null;
