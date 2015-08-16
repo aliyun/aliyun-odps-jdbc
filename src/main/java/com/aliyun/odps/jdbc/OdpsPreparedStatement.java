@@ -47,8 +47,6 @@ import java.util.HashMap;
 
 public class OdpsPreparedStatement extends OdpsStatement implements PreparedStatement {
 
-  private static final String ODPS_DATETIME_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss";
-
   /**
    * The prepared sql template (immutable).
    * e.g. insert into table FOO select * from BAR where id = ? and weight = ?
@@ -242,7 +240,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   @Override
   public void setNull(int parameterIndex, int sqlType, String typeName)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
+    parameters.put(parameterIndex, "NULL");
   }
 
   /**
@@ -287,131 +286,50 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     }
   }
 
-  /**
-   * Set a single parameter to a BigDecimal object
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
     parameters.put(parameterIndex, "cast('" + x.toString() + "' as decimal)");
   }
 
-  /**
-   * Set a single parameter to a boolean value
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * Set a single parameter to a byte value
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * Set a single parameter to a Date object
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
-  @Override
   public void setDate(int parameterIndex, Date x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+    SimpleDateFormat formatter = new SimpleDateFormat(OdpsResultSet.ODPS_DATETIME_FORMAT);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
 
-  /**
-   * Set a single parameter to a Double object
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * Set a single parameter to a float value
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * Set a single parameter to a int value
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * Set a single parameter to a long value
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
-   *
-   * @param parameterIndex
-   *     the index of the parameter to set
-   * @param sqlType
-   *     the sql type of the NULL to represent.
-   * @throws SQLException
-   */
   @Override
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
+    // ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
     parameters.put(parameterIndex, "NULL");
   }
 
@@ -420,48 +338,21 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     parameters.put(parameterIndex, "" + x);
   }
 
-  /**
-   * Set a single parameter to a String object
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
     parameters.put(parameterIndex, "'" + x + "'");
   }
 
-  /**
-   * Set a single parameter to a Time object
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+    SimpleDateFormat formatter = new SimpleDateFormat(OdpsResultSet.ODPS_DATETIME_FORMAT);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
 
-  /**
-   * Set a single parameter to a Timestamp object
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     a Date object
-   * @throws SQLException
-   */
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+    SimpleDateFormat formatter = new SimpleDateFormat(OdpsResultSet.ODPS_DATETIME_FORMAT);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
