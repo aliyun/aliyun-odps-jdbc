@@ -52,11 +52,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private OdpsConnection conn;
   private Instance instance = null;
   private ResultSet resultSet = null;
+  private String tempTable = null;
   private int updateCount = -1;
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
   private Log log = LogFactory.getLog(OdpsStatement.class);
+
+  private static final int POOLING_INTERVAL = 1000;
 
   /**
    * Sets the scrollablity of ResultSet objects produced by this statement.
@@ -80,11 +83,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    */
   private int fetchSize = 10000;
 
-  /**
-   * Used to create a temp table for producing ResultSet object.
-   */
-  private List<String> tempTables;
-
   private SQLWarning warningChain = null;
 
   OdpsStatement(OdpsConnection conn) {
@@ -94,7 +92,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.conn = conn;
     this.isResultSetScrollable = isResultSetScrollable;
-    this.tempTables = new ArrayList<String>();
   }
 
   @Override
@@ -110,9 +107,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     try {
       instance.stop();
-      log.debug("the cancel request has been sent");
+      log.debug("cancel instance id=" + instance.getId());
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
 
     isCancelled = true;
@@ -128,31 +125,28 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     warningChain = null;
   }
 
-  /**
-   * Each resultSet is associated with a statement. If the same statement is used to
-   * execute another query, the original resultSet will be invalidated.
-   * And the corresponding temp table will be dropped as well.
-   *
-   * @throws SQLException
-   */
   @Override
   public void close() throws SQLException {
-    if (isClosed || resultSet == null) {
+    if (isClosed) {
       return;
     }
 
-    resultSet.close();
-    resultSet = null;
-    isClosed = true;
+    if (resultSet != null) {
+      resultSet.close();
+      resultSet = null;
+    }
 
     try {
-      for (String table : tempTables) {
-        conn.run("drop table " + table + ";").waitForSuccess();
-        log.debug("silently drop temp table: " + table);
+      if (tempTable != null) {
+        conn.run("drop table " + tempTable + ";").waitForSuccess();
+        log.debug("silently drop temp table: " + tempTable);
+        tempTable = null;
       }
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
+
+    isClosed = true;
   }
 
   public void closeOnCompletion() throws SQLException {
@@ -166,13 +160,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet executeQuery(String sql) throws SQLException {
-
     beforeExecute();
 
     // Create a temp table for querying ResultSet and ensure its creation.
     // If the table can not be created (CANCELLED/FAIL), an exception will be caused.
-    // Once the table has been created, it will last until the Statement is closed.
-    String tempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
+    // Once the table has been created, it will last until the Statement is closed,
+    // or another query is started.
+    tempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
     try {
       instance = conn.run(String.format("create table %s as %s", tempTable, sql));
@@ -180,7 +174,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       boolean complete = false;
       while (!complete) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep(POOLING_INTERVAL);
         } catch (InterruptedException e) {
           break;
         }
@@ -188,10 +182,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         switch (instance.getTaskStatus().get("SQL").getStatus()) {
           case SUCCESS:
             complete = true;
+            log.debug("successfully create temp table: " + tempTable);
             break;
           case FAILED:
-            log.debug("create temp table failed");
-            throw new SQLException(instance.getTaskResults().get("SQL"), "FAILED");
+            String reason = instance.getTaskResults().get("SQL");
+            log.debug("create temp table failed: " + reason);
+            throw new SQLException("create temp table failed: " + reason, "FAILED");
           case CANCELLED:
             log.debug("create temp table cancelled");
             throw new SQLException("create temp table cancelled", "CANCELLED");
@@ -202,11 +198,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
-
-    log.debug("successfully create temp table: " + tempTable);
-    tempTables.add(tempTable);
 
     // Read schema
     List<String> columnNames = new ArrayList<String>();
@@ -219,7 +212,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         columnSqlTypes.add(col.getType());
       }
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
@@ -231,7 +224,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       session = tunnel.createDownloadSession(project_name, tempTable);
       log.debug("create download session id=" + session.getId());
     } catch (TunnelException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
 
     resultSet = new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
@@ -254,7 +247,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       boolean complete = false;
       while (!complete) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep(POOLING_INTERVAL);
         } catch (InterruptedException e) {
           break;
         }
@@ -291,7 +284,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
 
     log.debug("successfully updated " + updateCount + " records");
@@ -333,7 +326,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (IOException e) {
-      throw new SQLException(e.getMessage());
+      throw new SQLException(e);
     }
 
     executeUpdate(sql);
@@ -493,11 +486,28 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
-  private void beforeExecute() {
+  private void beforeExecute() throws SQLException {
+    // If the statement re-executes another query, the previously-generated resultSet
+    // will be implicit closed. And the corresponding temp table will be dropped as well.
+    if (resultSet != null) {
+      resultSet.close();
+      resultSet = null;
+    }
+
+    try {
+      if (tempTable != null) {
+        conn.run("drop table " + tempTable + ";").waitForSuccess();
+        log.debug("silently drop temp table: " + tempTable);
+        tempTable = null;
+      }
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
+
     instance = null;
-    updateCount = -1;
-    resultSet = null;
+    isClosed = false;
     isCancelled = false;
+    updateCount = -1;
   }
 
   protected void checkClosed() throws SQLException {
