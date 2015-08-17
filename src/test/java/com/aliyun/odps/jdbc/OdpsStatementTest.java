@@ -64,6 +64,7 @@ public class OdpsStatementTest {
    * Test the result set in the case that the lifetime of fetching rows will exceed
    * the 600 seconds which is the lifecycle of a download session.
    */
+  @Test
   public void testSlowlyExecuteQuery() throws Exception {
     Statement stmt = conn.createStatement();
     String sql = "select * from yichao_test_table_input;";
@@ -253,8 +254,20 @@ public class OdpsStatementTest {
   public void testExecuteMissingSemiColon() throws Exception {
     Statement stmt = conn.createStatement();
 
-    Assert.assertEquals(true, stmt.execute("select 1 id from dual"));
+    Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
     ResultSet rs = stmt.getResultSet();
+    rs.next();
+    Assert.assertEquals(1, rs.getInt(1));
+    rs.close();
+
+    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom dual;"));
+    rs = stmt.getResultSet();
+    rs.next();
+    Assert.assertEquals(1, rs.getInt(1));
+    rs.close();
+
+    Assert.assertEquals(true, stmt.execute("select 1 id from dual"));
+    rs = stmt.getResultSet();
     rs.next();
     Assert.assertEquals(1, rs.getInt(1));
     rs.close();
@@ -264,6 +277,7 @@ public class OdpsStatementTest {
     rs.next();
     Assert.assertEquals(1, rs.getInt(1));
     rs.close();
+
     stmt.close();
   }
 

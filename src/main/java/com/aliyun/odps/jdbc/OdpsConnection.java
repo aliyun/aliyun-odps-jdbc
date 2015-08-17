@@ -516,7 +516,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       Map<String, String> aliases = new HashMap<String, String>();
 
       // If the client forget to end with a semi-colon, append it.
-      if (!sql.matches(".*;\\s*$")) {
+      if (!sql.contains(";")) {
         sql += ";";
       }
 
