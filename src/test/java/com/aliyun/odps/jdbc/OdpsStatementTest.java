@@ -252,11 +252,18 @@ public class OdpsStatementTest {
   @Test
   public void testExecuteMissingSemiColon() throws Exception {
     Statement stmt = conn.createStatement();
-    Assert.assertEquals(true, stmt.execute(" select 1 id from dual"));
-    ResultSet rs = stmt.getResultSet();
 
+    Assert.assertEquals(true, stmt.execute("select 1 id from dual"));
+    ResultSet rs = stmt.getResultSet();
     rs.next();
     Assert.assertEquals(1, rs.getInt(1));
+    rs.close();
+
+    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom dual"));
+    rs = stmt.getResultSet();
+    rs.next();
+    Assert.assertEquals(1, rs.getInt(1));
+    rs.close();
     stmt.close();
   }
 
