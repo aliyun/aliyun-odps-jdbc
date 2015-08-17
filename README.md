@@ -181,3 +181,30 @@ Fully implented with the exception of the following methods:
 * previous
 * relative
 
+
+## Integration with SQuirrel SQL Client 
+
+
+Fist download and install SQuirrel SQL Client from its [website](http://squirrel-sql.sourceforge.net/).
+
+### Driver registeration
+
+1. Select 'Drivers -> New Driver...' to register ODPS's JDBC driver.
+2. Enter the driver name and example URL:
+  * Name: ODPS
+  * Example URL: `jdbc:odps://<endpoint>@<project>`
+3. Select 'Extra Class Path -> Add' to add the`odps-jdbc-*-standalone.jar`.
+4. Select 'List Drivers'. From the 'Class Name' input box select the ODPS JDBC driver: `com.aliyun.odps.jdbc.OdpsDriver`.
+5. Click 'OK' to complete the driver registration. 
+
+### Alias connection
+
+1. Select 'Aliases -> Add Alias...' to create a connection alias to your ODPS instance.
+2. Give the connection alias a name in the 'Name' input box.
+3. Select the ODPS driver from the 'Driver' drop-down.
+4. Modify the example URL as needed to point to your ODPS instance.
+5. Enter 'User Name' and 'Password' and click 'OK' to save the connection alias.
+6. Double-click the ODPS alias and click 'Connect'.
+
+
+
