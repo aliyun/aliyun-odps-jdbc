@@ -257,7 +257,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
     try {
       recordReader = sessionHandle.openRecordReader(startRow, count);
-      log.debug(String.format("open record reader: ssid=%s, begin=%, cnt=%d",
+      log.debug(String.format("open record reader: ssid=%s, begin=%d, cnt=%d",
                               sessionHandle.getId(), startRow, count));
       startRow += count;
       return true;

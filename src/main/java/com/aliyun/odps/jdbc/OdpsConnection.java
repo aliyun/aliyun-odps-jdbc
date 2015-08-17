@@ -502,13 +502,20 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  protected Instance run(String sql) throws SQLException {
+  /**
+   * Kick-offer
+   *
+   * @param sql sql string
+   * @return an intance
+   * @throws SQLException
+   */
+  protected Instance runClientSQL(String sql) throws SQLException {
     Instance instance;
     try {
       Map<String, String> hints = new HashMap<String, String>();
       Map<String, String> aliases = new HashMap<String, String>();
 
-      // If the user forget to end with a semi-colon, append it.
+      // If the client forget to end with a semi-colon, append it.
       if (sql.matches(".*[^;]\\s*$")) {
         sql += ";";
       }
@@ -518,9 +525,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {
-      throw new SQLException("fail to run sql: " + e.getMessage());
+      throw new SQLException(e);
     }
     return instance;
+  }
+
+  /**
+   * Blocked SQL runner, do not print any log information
+   *
+   * @param sql sql string
+   * @throws SQLException
+   */
+  protected void runSilentSQL(String sql) throws SQLException {
+    try {
+      SQLTask.run(odps, sql).waitForSuccess();
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
   }
 
   private void checkClosed() throws SQLException {
