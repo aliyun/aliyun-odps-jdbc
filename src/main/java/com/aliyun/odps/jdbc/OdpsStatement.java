@@ -318,6 +318,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         if (line.matches("^\\s*(--|#)")) {  // skip the comment starting with '--' or '#'
           continue;
         }
+        if (line.matches("^\\s*$")) { // skip the whitespace line
+          continue;
+        }
         // The first none-comment line start with "select"
         if (line.matches("(?i)^(\\s*)(SELECT).*$")) {
           executeQuery(sql);
