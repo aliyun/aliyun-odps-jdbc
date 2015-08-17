@@ -73,7 +73,7 @@ For example
 | BIGINT      | Long         | int, short, long              | BIGINT        |
 | DOUBLE      | Double       | double, float                 | DOUBLE         |
 | BOOLEAN     | Boolean     | boolean                        | BOOLEAN       |
-| DATETIME    | util.Date    | sql.Date/Time/Timestamp    | TIMESTAMP     |
+| DATETIME    | util.Date    | sql.Date, sql.Time, sql.Timestamp    | TIMESTAMP     |
 | STRING      | byte[]       | String                        | VARCHAR       |
 | DECIMAL     | math.BigDecimal  | math.BigDecimal       | DECIMAL        |
 

@@ -59,7 +59,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private Log log = LogFactory.getLog(OdpsStatement.class);
 
-  private static final int POOLING_INTERVAL = 1000;
+  private static final int POOLING_INTERVAL = 300;
 
   /**
    * Sets the scrollablity of ResultSet objects produced by this statement.
@@ -318,9 +318,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         if (line.matches("^\\s*(--|#)")) {  // skip the comment starting with '--' or '#'
           continue;
         }
+        // The first none-comment line start with "select"
         if (line.matches("(?i)^(\\s*)(SELECT).*$")) {
           executeQuery(sql);
           return true;
+        } else {
+          break;
         }
       }
     } catch (IOException e) {

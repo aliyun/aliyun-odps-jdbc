@@ -163,7 +163,9 @@ public class OdpsStatementTest {
   @Test
   public void testCancelUpdate() throws Exception {
     Statement stmt = conn.createStatement();
-    String sql = "insert into table yichao_test_table_output select * from yichao_test_table_input limit 10000;";
+    String
+        sql =
+        "insert into table yichao_test_table_output select * from yichao_test_table_input limit 10000;";
     ExecuteSQL updateIt = new ExecuteSQL(stmt, sql);
     CancelSQL cancelIt = new CancelSQL(stmt);
 
@@ -306,6 +308,10 @@ public class OdpsStatementTest {
     Assert.assertEquals(1, rs.getInt(1));
     Assert.assertEquals(false, stmt.execute(
         "insert into table yichao_test_table_output select 1 id from dual;"));
+    Assert.assertEquals(1, stmt.getUpdateCount());
+
+    Assert.assertEquals(false, stmt.execute(
+        "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
     Assert.assertEquals(1, stmt.getUpdateCount());
 
     // do not check result
