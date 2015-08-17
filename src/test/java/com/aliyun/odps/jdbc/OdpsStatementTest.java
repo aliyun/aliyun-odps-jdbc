@@ -64,7 +64,6 @@ public class OdpsStatementTest {
    * Test the result set in the case that the lifetime of fetching rows will exceed
    * the 600 seconds which is the lifecycle of a download session.
    */
-  @Test
   public void testSlowlyExecuteQuery() throws Exception {
     Statement stmt = conn.createStatement();
     String sql = "select * from yichao_test_table_input;";

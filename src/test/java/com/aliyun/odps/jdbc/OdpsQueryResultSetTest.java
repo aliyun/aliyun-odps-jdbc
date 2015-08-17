@@ -78,6 +78,30 @@ public class OdpsQueryResultSetTest {
   }
 
   @Test
+  public void testForgetToClose() throws Exception {
+    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+
+    // cast from BIGINT
+    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
+    rs.next();
+    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
+    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt("id"));
+//    rs.close();   forget to close by purpose !!!
+
+    // cast from DOUBLE
+    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
+    rs.next();
+    Assert.assertEquals((int) 3.1415926, rs.getInt(1));
+//    rs.close();   forget to close by purpose !!!
+
+    // cast from STRING
+    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
+    rs.next();
+    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
+    rs.close();
+  }
+
+  @Test
   public void testGetBoolean() throws Exception {
     Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
 
