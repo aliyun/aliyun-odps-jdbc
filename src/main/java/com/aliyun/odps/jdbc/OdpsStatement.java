@@ -315,7 +315,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     try {
       String line;
       while ((line = reader.readLine()) != null) {
-        if (line.matches("^\\s*(--|#)")) {  // skip the comment starting with '--' or '#'
+        if (line.matches("^\\s*(--|#).*")) {  // skip the comment starting with '--' or '#'
           continue;
         }
         if (line.matches("^\\s*$")) { // skip the whitespace line
