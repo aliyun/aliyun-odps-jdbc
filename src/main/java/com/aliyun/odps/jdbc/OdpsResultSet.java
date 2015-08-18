@@ -44,14 +44,14 @@ import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
-  public static final String ODPS_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
-
   protected OdpsResultSetMetaData meta;
   protected OdpsStatement stmt;
   protected boolean wasNull = false;
   protected boolean isClosed = false;
 
   protected SQLWarning warningChain = null;
+
+  protected Object[] rowValues;
 
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
@@ -180,7 +180,18 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   @Override
-  public abstract Object getObject(int columnIndex) throws SQLException;
+  public Object getObject(int columnIndex) throws SQLException {
+    checkClosed();
+
+    if (rowValues == null) {
+      wasNull = true;
+      return null;
+    }
+
+    Object obj = rowValues[toZeroIndex(columnIndex)];
+    wasNull = (obj == null);
+    return obj;
+  }
 
   @Override
   public Object getObject(String columnLabel) throws SQLException {
@@ -342,7 +353,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal to cast column " + columnIndex + " to date: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     try {
       return new java.sql.Date(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -550,7 +561,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     } else if (obj instanceof byte[]) {
       return new String((byte[]) obj);
     } else if (obj instanceof java.util.Date) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT);
+      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return dateFormat.format(((java.util.Date) obj));
     } else {
       return obj.toString();
@@ -662,7 +673,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal to cast column " + columnIndex + " to time: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     try {
       return new Time(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -705,7 +716,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal cast column " + columnIndex + " to timestamp: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     try {
       return new Timestamp(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -1288,5 +1299,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (isClosed) {
       throw new SQLException("The result set has been closed");
     }
+  }
+
+  protected int toZeroIndex(int column) {
+    if (column <= 0 || column > rowValues.length) {
+      throw new IllegalArgumentException();
+    }
+    return column - 1;
   }
 }

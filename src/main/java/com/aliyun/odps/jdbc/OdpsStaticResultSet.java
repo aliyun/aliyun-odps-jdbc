@@ -24,68 +24,49 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 
-import com.aliyun.odps.Table;
 
-public class OdpsTablesResultSet extends OdpsResultSet implements ResultSet {
+class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
 
-  private Iterator<Table> iterator;
-  private Table table = null;
+  private Iterator<Object[]> iterator;
 
-  OdpsTablesResultSet(Iterator<Table> iterator, OdpsResultSetMetaData meta)
-      throws SQLException {
+  /**
+   * Whether the query result set is empty.
+   * For some meta query (like procedures) we need to return an empty query result.
+   */
+  private boolean isEmptyResultSet = false;
+
+  OdpsStaticResultSet(OdpsResultSetMetaData meta) throws SQLException {
     super(null, meta);
-    this.iterator = iterator;
+    // Construct an empty result set
+    isEmptyResultSet = true;
   }
 
-  @Override
+  OdpsStaticResultSet(OdpsResultSetMetaData meta, Iterator<Object[]> iter)
+      throws SQLException {
+    super(null, meta);
+    iterator = iter;
+    isEmptyResultSet = false;
+  }
+
   public void close() throws SQLException {
     isClosed = true;
     iterator = null;
-    table = null;
     meta = null;
   }
 
-  @Override
   public boolean next() throws SQLException {
     checkClosed();
 
+    if (isEmptyResultSet) {
+      return false;
+    }
+
     if (iterator.hasNext()) {
-      table = iterator.next();
+      rowValues = iterator.next();
       return true;
     } else {
-      table = null;
+      rowValues = null;
       return false;
     }
   }
-
-  @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    checkClosed();
-
-    switch (columnIndex) {
-      case 1:
-        return table.getProject();
-      case 2:
-        return null;
-      case 3:
-        return table.getName();
-      case 4:
-        return table.isVirtualView() ? "VIEW" : "TABLE";
-      case 5:
-        return table.getComment();
-      case 6: // TYPE_CAT
-        return null;
-      case 7: // TYPE_SCHEM
-        return null;
-      case 8: // TYPE_NAME
-        return null;
-      case 9: // SELF_REFERENCING_COL_NAME
-        return null;
-      case 10: // REF_GENERATION
-        return "USER";
-      default:
-        return null;
-    }
-  }
-
 }

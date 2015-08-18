@@ -57,7 +57,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
-  private Log log = LogFactory.getLog(OdpsStatement.class);
+  private static Log log = LogFactory.getLog(OdpsStatement.class);
 
   private static final int POOLING_INTERVAL = 300;
 
@@ -101,13 +101,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void cancel() throws SQLException {
+    checkClosed();
     if (isCancelled || executeInstance == null) {
       return;
     }
 
     try {
       executeInstance.stop();
-      log.debug("cancel instance id=" + executeInstance.getId());
+      log.debug("submit cancel to instance id=" + executeInstance.getId());
     } catch (OdpsException e) {
       throw new SQLException(e);
     }
@@ -185,9 +186,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           case FAILED:
             String reason = executeInstance.getTaskResults().get("SQL");
             log.debug("create temp table failed: " + reason);
+            tempTable = null;
             throw new SQLException("create temp table failed: " + reason, "FAILED");
           case CANCELLED:
             log.debug("create temp table cancelled");
+            tempTable = null;
             throw new SQLException("create temp table cancelled", "CANCELLED");
           case WAITING:
           case RUNNING:

@@ -37,19 +37,12 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   private DownloadSession sessionHandle = null;
   private RecordReader recordReader = null;
-  private Object[] rowValues;
 
   private final int totalRows;
   private int startRow;
   private int fetchedRows;
 
-  private Log log = LogFactory.getLog(OdpsQueryResultSet.class);
-
-  /**
-   * Whether the query result set is empty.
-   * For some meta query (like procedures) we need to return an empty query result.
-   */
-  private boolean isEmptyResultSet = false;
+  private static Log log = LogFactory.getLog(OdpsQueryResultSet.class);
 
   /**
    * The maximum number of rows can be fetched from the server.
@@ -84,7 +77,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     private boolean isFetchForwad = true;
     private boolean isScrollable = false;
     private int maxRows = 0;
-    private boolean isEmptyResultSet = false;
 
     public Builder setStmtHandle(OdpsStatement stmtHandle) {
       this.stmtHandle = stmtHandle;
@@ -121,11 +113,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       return this;
     }
 
-    public Builder setEmptyResultSet(boolean isEmpty) {
-      this.isEmptyResultSet = isEmpty;
-      return this;
-    }
-
     public OdpsQueryResultSet build() throws SQLException {
       return new OdpsQueryResultSet(this);
     }
@@ -138,16 +125,11 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     isFetchForward = builder.isFetchForwad;
     isScrollable = builder.isScrollable;
     maxRows = builder.maxRows;
-    isEmptyResultSet = builder.isEmptyResultSet;
 
     // Initialize the auxiliary variables
-    if (!isEmptyResultSet) {
-      totalRows = (int) sessionHandle.getRecordCount();
-      startRow = 0;
-      fetchedRows = 0;
-    } else {
-      totalRows = 0;
-    }
+    totalRows = (int) sessionHandle.getRecordCount();
+    startRow = 0;
+    fetchedRows = 0;
   }
 
   @Override
@@ -186,7 +168,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     return fetchSize;
   }
 
-  @Override
   public void close() throws SQLException {
     isClosed = true;
     recordReader = null;
@@ -195,13 +176,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     meta = null;
   }
 
-  @Override
   public boolean next() throws SQLException {
     checkClosed();
-
-    if (isEmptyResultSet) {
-      return false;
-    }
 
     if (maxRows > 0 && fetchedRows >= maxRows) {
       return false;
@@ -279,24 +255,5 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
   }
 
-  @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    checkClosed();
 
-    if (rowValues == null) {
-      wasNull = true;
-      return null;
-    }
-
-    Object obj = rowValues[toZeroIndex(columnIndex)];
-    wasNull = (obj == null);
-    return obj;
-  }
-
-  protected int toZeroIndex(int column) {
-    if (column <= 0 || column > rowValues.length) {
-      throw new IllegalArgumentException();
-    }
-    return column - 1;
-  }
 }

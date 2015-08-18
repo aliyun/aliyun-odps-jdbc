@@ -66,11 +66,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean isClosed = false;
 
-  private Log log = LogFactory.getLog(OdpsConnection.class);
+  private static Log log = LogFactory.getLog(OdpsConnection.class);
 
 
   /**
-   *   Compatible with JDBC's API: getConnection("url", "user", "password")
+   * Compatible with JDBC's API: getConnection("url", "user", "password")
    */
   OdpsConnection(String url, Properties info) {
     this.info = info;

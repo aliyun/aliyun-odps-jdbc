@@ -302,7 +302,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   }
 
   public void setDate(int parameterIndex, Date x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat(OdpsResultSet.ODPS_DATETIME_FORMAT);
+    SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
@@ -345,14 +345,14 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat(OdpsResultSet.ODPS_DATETIME_FORMAT);
+    SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-    SimpleDateFormat formatter = new SimpleDateFormat(OdpsResultSet.ODPS_DATETIME_FORMAT);
+    SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     String dstr = formatter.format(x);
     parameters.put(parameterIndex, "cast('" + dstr + "' as datetime)");
   }
