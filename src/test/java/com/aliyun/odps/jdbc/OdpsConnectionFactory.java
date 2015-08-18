@@ -52,18 +52,16 @@ public class OdpsConnectionFactory {
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
-      String host =  odpsConfig.getProperty("end_point");
+      String endpoint =  odpsConfig.getProperty("end_point");
       String project = odpsConfig.getProperty("project_name");
       String username = odpsConfig.getProperty("access_id");
       String password = odpsConfig.getProperty("access_key");
 
-      String url = "jdbc:odps:" + host;
-      String url_with_project = "jdbc:odps:" + host + "@" + project;
+      String url = "jdbc:odps:" + endpoint + "@" + project;
 
       // pass project name via url
       //conn = DriverManager.getConnection(url_with_project, odpsConfig);
-      conn = DriverManager.getConnection(url_with_project, username, password);
-
+      conn = DriverManager.getConnection(url, username, password);
       Assert.assertNotNull(conn);
       Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());
       Assert.assertEquals(odpsConfig.getProperty("project_name"), conn.getSchema());
@@ -75,17 +73,6 @@ public class OdpsConnectionFactory {
         System.out.printf("%s\t%s\t%s\t%s\n", dpi[i].name, dpi[i].required, dpi[i].description,
                           dpi[i].value);
       }
-
-      // change to funny names
-      conn.setCatalog("xixi");
-      conn.setSchema("haha");
-      System.out.printf("change to %s:%s\n", conn.getCatalog(), conn.getSchema());
-
-      // change back
-      conn.setCatalog(odpsConfig.getProperty("end_point"));
-      conn.setSchema(odpsConfig.getProperty("project_name"));
-      System.out.printf("change to %s:%s\n", conn.getCatalog(), conn.getSchema());
-
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {

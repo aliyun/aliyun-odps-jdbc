@@ -59,7 +59,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private Odps odps;
   private Properties info;
-//  private String url;
   private List<Statement> stmtHandles;
   private SQLWarning warningChain = null;
 
@@ -100,6 +99,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.odps = new Odps(account);
     odps.setDefaultProject(projectName);
     odps.setEndpoint(endpoint);
+    log.debug("set endpoint=" + endpoint);
+    log.debug("set project=" + projectName);
 
     // TODO
     odps.getRestClient().setRetryTimes(0);
@@ -451,10 +452,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return this.odps;
   }
 
-  public String getUrl() {
-    return this.odps.getEndpoint();
-  }
-
   /**
    * Kick-offer
    *
@@ -475,6 +472,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       LogView logView = new LogView(odps);
+      // for LAN use
+      logView.setLogViewHost("http://webconsole.odps.aliyun-inc.com:8080");
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {

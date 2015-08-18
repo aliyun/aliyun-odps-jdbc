@@ -33,6 +33,7 @@ import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
+
 import com.aliyun.odps.Table;
 
 import com.aliyun.odps.account.AliyunAccount;
@@ -696,20 +697,15 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     return new OdpsStaticResultSet(meta, rows.iterator());
   }
 
+  // TODO
   @Override
   public ResultSet getSchemas() throws SQLException {
-    return null;
-//    List<Object[]> rows = new ArrayList<Object[]>();
-//    for (Project p : Group.getProjects()) {
-//      Object[] rowVals = {p.getName(), null};
-//      rows.add(rowVals);
-//    }
-//
-//    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-//        Arrays.asList("TABLE_SCHEM", "TABLE_CATALOG"),
-//        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
-//
-//    return new OdpsStaticResultSet(meta, rows.iterator());
+    // Return an empty result set
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
+        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
+
+    return new OdpsStaticResultSet(meta);
   }
 
   // TODO
