@@ -28,6 +28,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
+import com.alibaba.druid.util.JdbcUtils;
+
 public class OdpsDatabaseMetaDataTest {
 
   static DatabaseMetaData databaseMetaData;
@@ -49,6 +51,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetTables() throws Exception {
     ResultSet rs = databaseMetaData.getTables(null, null, null, null);
     Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
     rs.close();
   }
 
@@ -56,6 +59,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetFunctions() throws Exception {
     ResultSet rs = databaseMetaData.getFunctions(null, null, null);
     Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
     rs.close();
   }
 
@@ -63,6 +67,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetColumns() throws Exception {
     ResultSet rs = databaseMetaData.getColumns(null, null, "zhemin_test", null);
     Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
     rs.close();
   }
 
@@ -70,6 +75,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetUDTs() throws Exception {
     ResultSet rs = databaseMetaData.getUDTs(null, null, null, null);
     Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
     rs.close();
   }
 
@@ -77,6 +83,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetPrimaryKeys() throws Exception {
     ResultSet rs = databaseMetaData.getPrimaryKeys(null, null, null);
     Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
     rs.close();
   }
 
@@ -84,6 +91,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetProcedures() throws Exception {
     ResultSet rs = databaseMetaData.getProcedures(null, null, null);
     Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
     rs.close();
   }
 }

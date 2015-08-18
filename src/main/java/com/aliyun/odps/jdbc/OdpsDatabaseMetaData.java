@@ -763,10 +763,10 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
         Object[] rowVals = {
             jdbcCol.getTableCatalog(), null, jdbcCol.getTableName(), jdbcCol.getColumnName(),
-            jdbcCol.getType(), jdbcCol.getTypeName(), null, null, jdbcCol.getDecimalDigits(),
-            jdbcCol.getNumPercRaidx(), jdbcCol.getIsNullable(), jdbcCol.getComment(), null,
-            null, null, jdbcCol.getOrdinalPos(), jdbcCol.getIsNullableString(), null, null, null,
-            null, null};
+            (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null, (long) jdbcCol.getDecimalDigits(),
+            (long) jdbcCol.getNumPercRaidx(), (long) jdbcCol.getIsNullable(), jdbcCol.getComment(),
+            null, null, null, null, (long) jdbcCol.getOrdinalPos(), jdbcCol.getIsNullableString(),
+            null, null, null, null};
 
         rows.add(rowVals);
       }
@@ -778,12 +778,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     OdpsResultSetMetaData
         meta =
         new OdpsResultSetMetaData(
-            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "DATA_TYPE",
-                          "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH", "DECIMAL_DIGITS",
-                          "NUM_PERC_RADIX", "NULLABLE", "REMARKS", "COLUMN_DEF", "SQL_DATA_TYPE",
-                          "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
-                          "IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA", "SCOPE_TABLE",
-                          "SOURCE_DATA_TYPE"),
+            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME",
+                          "DATA_TYPE", "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH",
+                          "DECIMAL_DIGITS", "NUM_PERC_RADIX", "NULLABLE", "REMARKS",
+                          "COLUMN_DEF", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH",
+                          "ORDINAL_POSITION", "IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA",
+                          "SCOPE_TABLE", "SOURCE_DATA_TYPE"),
             Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
                           OdpsType.BIGINT, OdpsType.STRING, OdpsType.BIGINT, OdpsType.BIGINT,
                           OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.STRING,
@@ -1068,7 +1068,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     List<Object[]> rows = new ArrayList<Object[]>();
     for (Function f : conn.getOdps().functions()) {
-      Object[] rowVals = {null, null, f.getName(), 0, functionResultUnknown, null};
+      Object[] rowVals = {null, null, f.getName(), 0, (long) functionResultUnknown, null};
       rows.add(rowVals);
     }
 
