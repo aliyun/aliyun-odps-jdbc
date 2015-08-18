@@ -55,7 +55,7 @@
 				</executions>
 				<configuration>
 					<descriptorRefs>
-						<descriptorRef>standalone</descriptorRef>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
 				</configuration>
 			</plugin>
