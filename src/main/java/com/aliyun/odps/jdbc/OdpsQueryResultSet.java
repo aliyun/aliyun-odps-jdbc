@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordReader;
-import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 
@@ -43,6 +42,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   private int fetchedRows;
 
   private static Log log = LogFactory.getLog(OdpsQueryResultSet.class);
+
+  private boolean isClosed = false;
 
   /**
    * The maximum number of rows can be fetched from the server.
@@ -74,8 +75,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     private DownloadSession sessionHandle;
     private OdpsResultSetMetaData meta;
     private int fetchSize = 10000;
-    private boolean isFetchForwad = true;
     private boolean isScrollable = false;
+    private boolean isFetchForward = true;
     private int maxRows = 0;
 
     public Builder setStmtHandle(OdpsStatement stmtHandle) {
@@ -104,7 +105,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
 
     public Builder setFetchForward(boolean fetchForward) {
-      this.isFetchForwad = fetchForward;
+      this.isFetchForward = fetchForward;
       return this;
     }
 
@@ -122,12 +123,14 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     super(builder.stmtHandle, builder.meta);
     sessionHandle = builder.sessionHandle;
     fetchSize = builder.fetchSize;
-    isFetchForward = builder.isFetchForwad;
+    isFetchForward = builder.isFetchForward;
     isScrollable = builder.isScrollable;
     maxRows = builder.maxRows;
 
     // Initialize the auxiliary variables
-    totalRows = (int) sessionHandle.getRecordCount();
+    long recordCount = sessionHandle.getRecordCount();
+    assert(recordCount <= Integer.MAX_VALUE);
+    totalRows = (int) recordCount;
     startRow = 0;
     fetchedRows = 0;
   }
@@ -168,12 +171,28 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     return fetchSize;
   }
 
+  @Override
+  public int getFetchDirection() throws SQLException {
+    return isFetchForward ? FETCH_FORWARD : FETCH_REVERSE;
+  }
+
+  @Override
+  public void setFetchDirection(int direction) throws SQLException {
+    switch (direction) {
+      case FETCH_FORWARD:
+        isFetchForward = true;
+      case FETCH_REVERSE:
+        isFetchForward = false;
+      default:
+        throw new SQLException("Only FETCH_FORWARD and FETCH_REVERSE is valid");
+    }
+  }
+
   public void close() throws SQLException {
     isClosed = true;
     recordReader = null;
     sessionHandle = null;
     rowValues = null;
-    meta = null;
   }
 
   public boolean next() throws SQLException {
@@ -246,7 +265,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public int getType() throws SQLException {
-    checkClosed();
 
     if (isScrollable) {
       return ResultSet.TYPE_SCROLL_INSENSITIVE;
@@ -255,5 +273,15 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
   }
 
+  @Override
+  public boolean isClosed() throws SQLException {
+    return isClosed;
+  }
+
+  protected void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("The result set has been closed");
+    }
+  }
 
 }
