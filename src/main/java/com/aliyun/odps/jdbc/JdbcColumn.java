@@ -33,6 +33,11 @@ import com.aliyun.odps.OdpsType;
  */
 public class JdbcColumn {
 
+  public static final String ODPS_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+  public static final int ODPS_DECIMAL_PRECISON = 54;
+  public static final int ODPS_DECIMAL_SCALE = 18;
+  public static final int ODPS_STRING_CHARACTERS = 8 * 1024 * 1024 / 3;
+
   private final String columnName;
   private final String tableName;
   private final String tableCatalog;
@@ -91,17 +96,18 @@ public class JdbcColumn {
   public static int columnDisplaySize(OdpsType type) throws SQLException {
     switch (type) {
       case BIGINT:
-        return columnPrecision(type) + 1; // +/-
+        return columnPrecision(type) + 1; // '-' sign
+      case DOUBLE:
+        // IEEE 754: | 1-bit sign | 11-bit exponent | 52-bit precision |
+        // exponent: 2^10 = 10^4, precision: 2^52 = 10^15
+        // {-}{.}{precision}{E}{-}{exponent}
+        return 2 + columnPrecision(type) + 2 + 4;
+      case DECIMAL:
+        return columnPrecision(type) + 2; // '-' sign and '.'
+      case STRING:
+      case DATETIME:
       case BOOLEAN:
         return columnPrecision(type);
-      case DOUBLE:
-        return 25;
-      case STRING:
-        return columnPrecision(type);
-      case DATETIME:
-        return columnPrecision(type);
-      case DECIMAL:
-        return columnPrecision(type) + 2;
       default:
         throw new SQLException("unknown OdpsType");
     }
@@ -114,13 +120,15 @@ public class JdbcColumn {
       case BOOLEAN:
         return 1;
       case DOUBLE:
+        // IEEE 754: | 1-bit sign | 10-bit exponent | 52-bit precision |
+        // 2^52 = 10^15
         return 15;
       case STRING:
-        return 10;   // TODO
+        return ODPS_STRING_CHARACTERS;
       case DATETIME:
-        return 19;   // YYYY-mm-dd HH:mm:ss
+        return ODPS_DATETIME_FORMAT.length();
       case DECIMAL:
-        return 18 + 36;
+        return ODPS_DECIMAL_PRECISON;
       default:
         throw new SQLException("unknown OdpsType");
     }
@@ -128,18 +136,15 @@ public class JdbcColumn {
 
   public static int columnScale(OdpsType type) throws SQLException {
     switch (type) {
-      case BIGINT:
-        return 0;
-      case BOOLEAN:
-        return 0;
       case DOUBLE:
-        return 15;
+        return columnPrecision(type);
+      case DECIMAL:
+        return ODPS_DECIMAL_SCALE;
       case STRING:
-        return 0;
+      case BOOLEAN:
+      case BIGINT:
       case DATETIME:
         return 0;
-      case DECIMAL:
-        return 18;
       default:
         throw new SQLException("unknown OdpsType");
     }
