@@ -49,14 +49,10 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
   }
 
   public void close() throws SQLException {
-    isClosed = true;
     iterator = null;
-    meta = null;
   }
 
   public boolean next() throws SQLException {
-    checkClosed();
-
     if (isEmptyResultSet) {
       return false;
     }

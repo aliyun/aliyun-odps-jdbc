@@ -44,12 +44,11 @@ import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
-  protected OdpsResultSetMetaData meta;
-  protected OdpsStatement stmt;
-  protected boolean wasNull = false;
-  protected boolean isClosed = false;
+  private OdpsResultSetMetaData meta;
+  private OdpsStatement stmt;
+  private boolean wasNull = false;
 
-  protected SQLWarning warningChain = null;
+  private SQLWarning warningChain = null;
 
   protected Object[] rowValues;
 
@@ -60,8 +59,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getFetchDirection() throws SQLException {
-    checkClosed();
-    return stmt.getFetchDirection();
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -181,8 +179,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Object getObject(int columnIndex) throws SQLException {
-    checkClosed();
-
     if (rowValues == null) {
       wasNull = true;
       return null;
@@ -742,7 +738,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getType() throws SQLException {
-    checkClosed();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
 
@@ -788,7 +783,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public boolean isClosed() throws SQLException {
-    return isClosed;
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -1293,12 +1288,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public boolean wasNull() throws SQLException {
     return wasNull;
-  }
-
-  protected void checkClosed() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("The result set has been closed");
-    }
   }
 
   protected int toZeroIndex(int column) {

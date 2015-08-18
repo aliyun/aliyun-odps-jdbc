@@ -75,13 +75,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    * Sets the limits of row numbers that a ResultSet object produced by this statement
    * can contain. If maxRows equals 0, then there is no limits.
    */
-  private int maxRows = 0;
+  private int resultSetMaxRows = 0;
 
   /**
    * Sets the number of rows to be fetched from the server each time.
    * It is just a hint which can be ignored by the implementation of ResultSet.
    */
-  private int fetchSize = 10000;
+  private int resultSetFetchSize = 10000;
 
   private SQLWarning warningChain = null;
 
@@ -232,8 +232,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         .setSessionHandle(session)
         .setFetchForward(isResultSetFetchForward)
         .setScollable(isResultSetScrollable)
-        .setFetchSize(fetchSize)
-        .setMaxRows(maxRows).build();
+        .setFetchSize(resultSetFetchSize)
+        .setMaxRows(resultSetMaxRows).build();
 
     return resultSet;
   }
@@ -364,13 +364,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public int getFetchSize() throws SQLException {
     checkClosed();
-    return fetchSize;
+    return resultSetFetchSize;
   }
 
   @Override
   public void setFetchSize(int rows) throws SQLException {
     checkClosed();
-    fetchSize = rows;
+    resultSetFetchSize = rows;
   }
 
   @Override
@@ -385,7 +385,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getMaxRows() throws SQLException {
-    return maxRows;
+    return resultSetMaxRows;
   }
 
   @Override
@@ -393,7 +393,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (max < 0) {
       throw new SQLException("max must be >= 0");
     }
-    this.maxRows = max;
+    this.resultSetMaxRows = max;
   }
 
   /**
