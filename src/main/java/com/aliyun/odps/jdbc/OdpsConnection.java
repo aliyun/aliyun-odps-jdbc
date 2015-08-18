@@ -151,13 +151,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
                                                 int resultSetConcurrency) throws SQLException {
     checkClosed();
-    if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-        && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
+
+    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
       throw new SQLFeatureNotSupportedException(
           "Statement with resultset type: " + resultSetType + " is not supported");
     }
 
-    if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+    if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
       throw new SQLFeatureNotSupportedException(
           "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
     }
@@ -347,13 +347,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throws SQLException {
     checkClosed();
 
-    if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-        && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
+    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
       throw new SQLFeatureNotSupportedException(
           "Statement with resultset type: " + resultSetType + " is not supported");
     }
 
-    if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+    if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
       throw new SQLFeatureNotSupportedException(
           "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
     }
