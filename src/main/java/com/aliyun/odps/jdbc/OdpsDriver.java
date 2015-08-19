@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public class OdpsDriver implements Driver {
+
   static {
     try {
       DriverManager.registerDriver(new OdpsDriver());
@@ -37,6 +38,17 @@ public class OdpsDriver implements Driver {
       e.printStackTrace();
     }
   }
+
+  /**
+   * Is this driver JDBC compliant?
+   */
+  private static final boolean JDBC_COMPLIANT = false;
+
+  private static final String END_POINT_KEY = "end_point";
+  private static final String ACCESS_ID_KEY = "access_id";
+  private static final String ACCESS_KEY_KEY = "access_key";
+  private static final String PROJECT_NAME_KEY = "project_name";
+
 
   public final static String URL_PREFIX = "jdbc:odps:";
 
@@ -49,25 +61,53 @@ public class OdpsDriver implements Driver {
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
-    if (!acceptsURL(url)) {
-      return null;
-    }
-    String tuncatedUrl = url.substring(URL_PREFIX.length());
-    return new OdpsConnection(tuncatedUrl, info);
+    return acceptsURL(url) ? new OdpsConnection(url.substring(URL_PREFIX.length()), info) : null;
   }
 
+  // TODO: the check is very loose.
   @Override
   public boolean acceptsURL(String url) throws SQLException {
-    if (url != null && url.startsWith(URL_PREFIX)) {
-      return true;
-    }
-    return false;
+    return (url != null) && url.startsWith(URL_PREFIX);
   }
 
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
       throws SQLException {
-    return null;
+
+    if (info == null) {
+      info = new Properties();
+    }
+
+    if (url != null && url.startsWith(URL_PREFIX)) {
+      info.put(END_POINT_KEY, url.substring(URL_PREFIX.length()));
+    }
+
+    DriverPropertyInfo
+        endPointProp =
+        new DriverPropertyInfo(END_POINT_KEY, info.getProperty(END_POINT_KEY));
+    endPointProp.required = false;
+    endPointProp.description = "ODPS end point";
+
+    // Fetch from info
+    DriverPropertyInfo
+        accessIdProp =
+        new DriverPropertyInfo(ACCESS_ID_KEY, info.getProperty(ACCESS_ID_KEY, ""));
+    accessIdProp.required = false;
+    accessIdProp.description = "ODPS access id";
+
+    DriverPropertyInfo
+        accessKeyProp =
+        new DriverPropertyInfo(ACCESS_KEY_KEY, info.getProperty(ACCESS_KEY_KEY, ""));
+    accessKeyProp.required = false;
+    accessKeyProp.description = "ODPS access key";
+
+    DriverPropertyInfo
+        projectNameProp =
+        new DriverPropertyInfo(PROJECT_NAME_KEY, info.getProperty(PROJECT_NAME_KEY, ""));
+    projectNameProp.required = false;
+    projectNameProp.description = "ODPS project name";
+
+    return new DriverPropertyInfo[] {endPointProp, accessIdProp, accessKeyProp, projectNameProp};
   }
 
   @Override
@@ -77,17 +117,16 @@ public class OdpsDriver implements Driver {
 
   @Override
   public int getMinorVersion() {
-    return 0;
+    return 1;
   }
 
   @Override
   public boolean jdbcCompliant() {
-    return false;
+    return JDBC_COMPLIANT;
   }
 
   @Override
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-    return null;
+    throw new SQLFeatureNotSupportedException();
   }
-
 }

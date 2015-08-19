@@ -21,11 +21,14 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.text.SimpleDateFormat;
 
 import org.junit.AfterClass;
@@ -67,8 +70,7 @@ public class OdpsPreparedStatementTest {
 
   @Test
   public void testSetBoolean() throws Exception {
-    Boolean x = Boolean.TRUE;
-    pstmt.setBoolean(1, x);
+    pstmt.setBoolean(1, Boolean.TRUE);
 
     ResultSet rs = pstmt.executeQuery();
 
@@ -76,7 +78,7 @@ public class OdpsPreparedStatementTest {
     while (rs.next()) {
       y = rs.getBoolean(1);
     }
-    Assert.assertEquals(x, y);
+    Assert.assertEquals(Boolean.TRUE, y);
   }
 
   @Test
@@ -148,6 +150,51 @@ public class OdpsPreparedStatementTest {
       y = rs.getInt(1);
     }
     Assert.assertEquals(x, y);
+  }
+
+  @Test
+  public void testSetNull() throws Exception {
+    PreparedStatement pstmt2 = OdpsConnectionFactory.getInstance().conn.prepareStatement(
+        "select * from (select 1 id from dual) x where id = ?;");
+
+    pstmt2.setInt(1, 1);
+    ResultSet rs = pstmt2.executeQuery();
+
+    while (rs.next()) {
+      Assert.assertEquals(1, rs.getInt(1));
+    }
+
+    // Set it to null
+    pstmt2.setNull(1, Types.BIGINT);
+    rs = pstmt2.executeQuery();
+
+    // The value of null integer has a literal value of 0
+    // But the invocation to wasNull() will return true.
+    while (rs.next()) {
+      Assert.assertEquals(0, rs.getInt(1));
+      Assert.assertTrue(rs.wasNull());
+    }
+    pstmt2.close();
+  }
+
+  @Test
+  public void testSetObject() throws Exception {
+    Double x = 0.314;
+    pstmt.setObject(1, x);
+
+    ResultSet rs = pstmt.executeQuery();
+
+    double y = 0;
+    while (rs.next()) {
+      y = rs.getDouble(1);
+    }
+    Assert.assertEquals(x.doubleValue(), y, 0);
+  }
+
+  @Test(expected = SQLException.class)
+  public void testSetUndefinedObject() throws Exception {
+    BigInteger x = new BigInteger("123");
+    pstmt.setObject(1, x);
   }
 
   @Test

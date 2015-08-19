@@ -74,7 +74,31 @@ public class OdpsResultSetMetaDataTest {
     Assert.assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
     Assert.assertEquals(Types.BIGINT, rsmd.getColumnType(3));
     Assert.assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
-    Assert.assertEquals(Types.DATE, rsmd.getColumnType(5));
+    Assert.assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
     Assert.assertEquals(Types.DECIMAL, rsmd.getColumnType(6));
+  }
+
+  @Test
+  public void testGetColumnTypeName() throws Exception {
+    Assert.assertEquals("STRING", rsmd.getColumnTypeName(1));
+    Assert.assertEquals("BOOLEAN", rsmd.getColumnTypeName(2));
+    Assert.assertEquals("BIGINT", rsmd.getColumnTypeName(3));
+    Assert.assertEquals("DOUBLE", rsmd.getColumnTypeName(4));
+    Assert.assertEquals("DATETIME", rsmd.getColumnTypeName(5));
+    Assert.assertEquals("DECIMAL", rsmd.getColumnTypeName(6));
+  }
+
+  @Test
+  public void testGetColumnMeta() throws Exception {
+    for (int i = 0; i < rsmd.getColumnCount(); i++) {
+      Assert.assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(i + 1));
+      int scale = rsmd.getScale(i + 1);
+      int precision = rsmd.getPrecision(i + 1);
+      int displaySize = rsmd.getColumnDisplaySize(i + 1);
+      boolean caseSensive = rsmd.isCaseSensitive(i + 1);
+      boolean signed = rsmd.isSigned(i + 1);
+      System.out.printf("%d: %d %d %d %b %b\n", i + 1, scale, precision, displaySize, caseSensive,
+                        signed);
+    }
   }
 }

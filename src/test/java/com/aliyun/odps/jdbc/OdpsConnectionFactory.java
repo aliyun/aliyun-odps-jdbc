@@ -23,8 +23,12 @@ package com.aliyun.odps.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
 import java.util.Properties;
+
+import org.junit.Assert;
 
 /**
  * This class manage a global JDBC connection and multiple testing instances
@@ -38,6 +42,8 @@ public class OdpsConnectionFactory {
 
   private OdpsConnectionFactory() {
     try {
+      org.apache.log4j.BasicConfigurator.configure();
+
       Properties odpsConfig = new Properties();
 
       InputStream is =
@@ -45,8 +51,41 @@ public class OdpsConnectionFactory {
       odpsConfig.load(is);
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
-      String url = odpsConfig.getProperty("end_point");
-      conn = DriverManager.getConnection("jdbc:odps:" + url, odpsConfig);
+
+      String host =  odpsConfig.getProperty("end_point");
+      String project = odpsConfig.getProperty("project_name");
+      String username = odpsConfig.getProperty("access_id");
+      String password = odpsConfig.getProperty("access_key");
+
+      String url = "jdbc:odps:" + host;
+      String url_with_project = "jdbc:odps:" + host + "@" + project;
+
+      // pass project name via url
+      //conn = DriverManager.getConnection(url_with_project, odpsConfig);
+      conn = DriverManager.getConnection(url_with_project, username, password);
+
+      Assert.assertNotNull(conn);
+      Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());
+      Assert.assertEquals(odpsConfig.getProperty("project_name"), conn.getSchema());
+
+      // Print info
+      Driver driver = DriverManager.getDriver(url);
+      DriverPropertyInfo[] dpi = driver.getPropertyInfo(url, odpsConfig);
+      for (int i = 0; i < dpi.length; i++) {
+        System.out.printf("%s\t%s\t%s\t%s\n", dpi[i].name, dpi[i].required, dpi[i].description,
+                          dpi[i].value);
+      }
+
+      // change to funny names
+      conn.setCatalog("xixi");
+      conn.setSchema("haha");
+      System.out.printf("change to %s:%s\n", conn.getCatalog(), conn.getSchema());
+
+      // change back
+      conn.setCatalog(odpsConfig.getProperty("end_point"));
+      conn.setSchema(odpsConfig.getProperty("project_name"));
+      System.out.printf("change to %s:%s\n", conn.getCatalog(), conn.getSchema());
+
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {

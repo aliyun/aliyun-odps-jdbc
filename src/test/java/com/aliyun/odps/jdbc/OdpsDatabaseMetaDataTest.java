@@ -20,14 +20,15 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.alibaba.druid.util.JdbcUtils;
-
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Assert;
+
+import com.alibaba.druid.util.JdbcUtils;
 
 public class OdpsDatabaseMetaDataTest {
 
@@ -36,6 +37,9 @@ public class OdpsDatabaseMetaDataTest {
   @BeforeClass
   public static void setUp() throws Exception {
     databaseMetaData = OdpsConnectionFactory.getInstance().conn.getMetaData();
+    System.out.println(databaseMetaData.getCatalogTerm());
+    System.out.println(databaseMetaData.getProcedureTerm());
+    System.out.println(databaseMetaData.getSchemaTerm());
   }
 
   @AfterClass
@@ -46,6 +50,7 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetTables() throws Exception {
     ResultSet rs = databaseMetaData.getTables(null, null, null, null);
+    Assert.assertNotNull(rs);
     JdbcUtils.printResultSet(rs);
     rs.close();
   }
@@ -53,6 +58,39 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetFunctions() throws Exception {
     ResultSet rs = databaseMetaData.getFunctions(null, null, null);
+    Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetColumns() throws Exception {
+    ResultSet rs = databaseMetaData.getColumns(null, null, "zhemin_test", null);
+    Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetUDTs() throws Exception {
+    ResultSet rs = databaseMetaData.getUDTs(null, null, null, null);
+    Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetPrimaryKeys() throws Exception {
+    ResultSet rs = databaseMetaData.getPrimaryKeys(null, null, null);
+    Assert.assertNotNull(rs);
+    JdbcUtils.printResultSet(rs);
+    rs.close();
+  }
+
+  @Test
+  public void testGetProcedures() throws Exception {
+    ResultSet rs = databaseMetaData.getProcedures(null, null, null);
+    Assert.assertNotNull(rs);
     JdbcUtils.printResultSet(rs);
     rs.close();
   }

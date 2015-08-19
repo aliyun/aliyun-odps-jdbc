@@ -20,7 +20,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import java.io.PrintWriter;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -29,6 +28,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -44,6 +44,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
@@ -57,106 +60,61 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private Odps odps;
   private Properties info;
-  private String url;
-  private String schema;
+//  private String url;
   private List<Statement> stmtHandles;
+  private SQLWarning warningChain = null;
 
   private boolean isClosed = false;
 
-  public class LogView {
+  private static Log log = LogFactory.getLog(OdpsConnection.class);
 
-    private static final String POLICY_TYPE = "BEARER";
-    private static final String HOST_DEFAULT = "http://webconsole.odps.aliyun-inc.com:8080";
-    private String logViewHost = HOST_DEFAULT;
-
-    Odps odps;
-
-    public LogView(Odps odps) {
-      this.odps = odps;
-      if (odps.getLogViewHost() != null) {
-        logViewHost = odps.getLogViewHost();
-      }
-    }
-
-    public String generateLogView(Instance instance, long hours) throws OdpsException {
-      if (StringUtils.isNullOrEmpty(logViewHost)) {
-        return "";
-      }
-
-      SecurityManager sm = odps.projects().get(instance.getProject()).getSecurityManager();
-      String policy = generatePolicy(instance, hours);
-      String token = sm.generateAuthorizationToken(policy, POLICY_TYPE);
-      String logview = logViewHost + "/logview/?h=" + odps.getEndpoint() + "&p="
-                       + instance.getProject() + "&i=" + instance.getId() + "&token=" + token;
-      return logview;
-    }
-
-    private String generatePolicy(Instance instance, long hours) {
-      String policy = "{\n" //
-                      + "    \"expires_in_hours\": " + String.valueOf(hours) + ",\n" //
-                      + "    \"policy\": {\n" + "        \"Statement\": [{\n"
-                      + "            \"Action\": [\"odps:Read\"],\n"
-                      + "            \"Effect\": \"Allow\",\n" //
-                      + "            \"Resource\": \"acs:odps:*:projects/" + instance.getProject()
-                      + "/instances/"
-                      + instance.getId() + "\"\n" //
-                      + "        }],\n"//
-                      + "        \"Version\": \"1\"\n" //
-                      + "    }\n" //
-                      + "}";
-      return policy;
-    }
-  }
 
   /**
-   * If the client code do not specify the protocol, an https protocol will be used.
-   *
-   * @param url
-   * @param info
+   * Compatible with JDBC's API: getConnection("url", "user", "password")
    */
   OdpsConnection(String url, Properties info) {
-    String accessId = info.getProperty("access_id");
-    String accessKey = info.getProperty("access_key");
-    String project = info.getProperty("project_name");
+    this.info = info;
 
-    // Compatible with JDBC's API: getConnection("url", "user", "password")
+    String accessId = info.getProperty("access_id");
     if (accessId == null) {
       accessId = info.getProperty("user");
     }
 
+    String accessKey = info.getProperty("access_key");
     if (accessKey == null) {
       accessKey = info.getProperty("password");
     }
 
-    Account account = new AliyunAccount(accessId, accessKey);
-    this.odps = new Odps(account);
+    String projectName = info.getProperty("project_name");
 
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      this.url = url;
-    } else if (url.startsWith("//")) {
-      this.url = "https:" + url;
+    // extract the project name from the url
+    int atPos = url.indexOf("@");
+    String endpoint;
+    if (atPos != -1) {
+      endpoint = url.substring(0, atPos);
+      projectName = url.substring(atPos + 1);
     } else {
-      assert (false);
+      endpoint = url;
     }
 
-    this.info = info;
-    odps.setDefaultProject(project);
-    odps.setEndpoint(url);
+    Account account = new AliyunAccount(accessId, accessKey);
+    this.odps = new Odps(account);
+    odps.setDefaultProject(projectName);
+    odps.setEndpoint(endpoint);
+
+    // TODO
+    odps.getRestClient().setRetryTimes(0);
+    odps.getRestClient().setReadTimeout(3);
+    odps.getRestClient().setConnectTimeout(3);
 
     stmtHandles = new ArrayList<Statement>();
   }
 
-  public Odps getOdps() {
-    return this.odps;
-  }
-
-  public String getUrl() {
-    return this.url;
-  }
-
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
-    return new OdpsPreparedStatement(this, sql);
+    OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override
@@ -177,10 +135,37 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * Only support the following type
+   *
+   * @param sql
+   *     the prepared sql
+   * @param resultSetType
+   *     TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency
+   *     CONCUR_READ_ONLY
+   * @return OdpsPreparedStatement
+   * @throws SQLException
+   */
   @Override
-  public PreparedStatement prepareStatement(String sql, int resultSetType,
-                                            int resultSetConcurrency) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+  public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
+                                                int resultSetConcurrency) throws SQLException {
+    checkClosed();
+
+    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset type: " + resultSetType + " is not supported");
+    }
+
+    if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
+    }
+
+    boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
+    OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql, isResultSetScrollable);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override
@@ -193,8 +178,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public CallableStatement prepareCall(String sql) throws SQLException {
     throw new SQLFeatureNotSupportedException();
-//         should we support prepareCall?
-//        return new OdpsCallableStatement(this, sql);
   }
 
   @Override
@@ -211,21 +194,19 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public String nativeSQL(String sql) throws SQLException {
-    return sql;
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
     if (autoCommit) {
-      return;
+      throw new SQLFeatureNotSupportedException("enabling autocommit is not supported");
     }
-
-    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean getAutoCommit() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
@@ -266,12 +247,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return new OdpsDatabaseMetaData(this);
   }
 
-  private void checkClosed() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("the connection has already been closed");
-    }
-  }
-
   @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
     throw new SQLFeatureNotSupportedException();
@@ -285,19 +260,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public void setCatalog(String catalog) throws SQLException {
     checkClosed();
-    this.odps.setDefaultProject(catalog);
+    odps.setEndpoint(catalog);
   }
 
-  /**
-   * The catalog is equivalent to ODPS's project name.
-   *
-   * @return
-   * @throws SQLException
-   */
   @Override
   public String getCatalog() throws SQLException {
     checkClosed();
-    return odps.getDefaultProject();
+    return odps.getEndpoint();
   }
 
   @Override
@@ -312,12 +281,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return warningChain;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    warningChain = null;
   }
 
   @Override
@@ -358,15 +327,40 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public OdpsStatement createStatement() throws SQLException {
     checkClosed();
-    OdpsStatement stmt = new OdpsStatement(this);
+    OdpsStatement stmt = new OdpsStatement(this, false);
     stmtHandles.add(stmt);
     return stmt;
   }
 
+  /**
+   * Only support the following type:
+   *
+   * @param resultSetType
+   *     TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency
+   *     CONCUR_READ_ONLY
+   * @return OdpsStatement object
+   * @throws SQLException
+   */
   @Override
   public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    checkClosed();
+
+    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset type: " + resultSetType + " is not supported");
+    }
+
+    if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
+      throw new SQLFeatureNotSupportedException(
+          "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
+    }
+
+    boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
+    OdpsStatement stmt = new OdpsStatement(this, isResultSetScrollable);
+    stmtHandles.add(stmt);
+    return stmt;
   }
 
   @Override
@@ -432,15 +426,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void setSchema(String schema) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    checkClosed();
+    odps.setDefaultProject(schema);
   }
 
   @Override
   public String getSchema() throws SQLException {
-    if (schema != null) {
-      return schema;
-    }
-
+    checkClosed();
     return odps.getDefaultProject();
   }
 
@@ -452,41 +444,109 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
-  /**
-   * Get the network timeout of the current connection.
-   *
-   * @return
-   * @throws SQLException
-   */
   public int getNetworkTimeout() throws SQLException {
-    checkClosed();
-    return odps.getRestClient().getConnectTimeout();
+    throw new SQLFeatureNotSupportedException();
   }
 
-  protected Instance run(String sql) throws SQLException {
+  public Odps getOdps() {
+    return this.odps;
+  }
+
+  public String getUrl() {
+    return this.odps.getEndpoint();
+  }
+
+  public class LogView {
+
+    private static final String POLICY_TYPE = "BEARER";
+    private static final String HOST_DEFAULT = "http://webconsole.odps.aliyun-inc.com:8080";
+    private String logViewHost = HOST_DEFAULT;
+
+    Odps odps;
+
+    public LogView(Odps odps) {
+      this.odps = odps;
+      if (odps.getLogViewHost() != null) {
+        logViewHost = odps.getLogViewHost();
+      }
+    }
+
+    public String generateLogView(Instance instance, long hours) throws OdpsException {
+      if (StringUtils.isNullOrEmpty(logViewHost)) {
+        return "";
+      }
+
+      SecurityManager sm = odps.projects().get(instance.getProject()).getSecurityManager();
+      String policy = generatePolicy(instance, hours);
+      String token = sm.generateAuthorizationToken(policy, POLICY_TYPE);
+      String logview = logViewHost + "/logview/?h=" + odps.getEndpoint() + "&p="
+                       + instance.getProject() + "&i=" + instance.getId() + "&token=" + token;
+      return logview;
+    }
+
+    private String generatePolicy(Instance instance, long hours) {
+      String policy = "{\n" //
+                      + "    \"expires_in_hours\": " + String.valueOf(hours) + ",\n" //
+                      + "    \"policy\": {\n" + "        \"Statement\": [{\n"
+                      + "            \"Action\": [\"odps:Read\"],\n"
+                      + "            \"Effect\": \"Allow\",\n" //
+                      + "            \"Resource\": \"acs:odps:*:projects/" + instance.getProject()
+                      + "/instances/"
+                      + instance.getId() + "\"\n" //
+                      + "        }],\n"//
+                      + "        \"Version\": \"1\"\n" //
+                      + "    }\n" //
+                      + "}";
+      return policy;
+    }
+  }
+
+  /**
+   * Kick-offer
+   *
+   * @param sql sql string
+   * @return an intance
+   * @throws SQLException
+   */
+  protected Instance runClientSQL(String sql) throws SQLException {
     Instance instance;
     try {
       Map<String, String> hints = new HashMap<String, String>();
       Map<String, String> aliases = new HashMap<String, String>();
 
+      // If the client forget to end with a semi-colon, append it.
+      if (!sql.contains(";")) {
+        sql += ";";
+      }
+
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
-
-      PrintWriter out = new PrintWriter(System.out);
-
-      out.println(sql);
-
       LogView logView = new LogView(odps);
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      out.println("Log View: ");
-      out.println(logViewUrl);
-      out.println();
-      out.flush();
-      instance.waitForSuccess();
+      log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {
-      throw new SQLException("run sql error", e);
+      log.fatal("fail to run sql: " + sql);
+      throw new SQLException(e);
     }
-
     return instance;
   }
 
+  /**
+   * Blocked SQL runner, do not print any log information
+   *
+   * @param sql sql string
+   * @throws SQLException
+   */
+  protected void runSilentSQL(String sql) throws SQLException {
+    try {
+      SQLTask.run(odps, sql).waitForSuccess();
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
+  }
+
+  private void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("the connection has already been closed");
+    }
+  }
 }

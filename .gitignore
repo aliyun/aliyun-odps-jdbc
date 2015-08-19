@@ -21,3 +21,4 @@ hs_err_pid*
 *.iml
 *.py
 yichao_test_table_input
+/out

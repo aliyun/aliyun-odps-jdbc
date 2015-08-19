@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordReader;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
@@ -31,125 +34,131 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
-  private static final long DOWNLOAD_ROWS_STEP = 10000;
-
+  private DownloadSession sessionHandle = null;
   private RecordReader recordReader = null;
-  private DownloadSession sessionHandle;
-  private Object[] rowValues;
 
-  private long startRow;
-  private long totalRows;
-  private Integer fetchDirection;
-  private Integer fetchSize;
+  private final int totalRows;
+  private int startRow;
+  private int fetchedRows;
 
-  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
-      throws SQLException {
-    super(stmt, meta);
-    this.sessionHandle = session;
-    totalRows = sessionHandle.getRecordCount();
+  private static Log log = LogFactory.getLog(OdpsQueryResultSet.class);
+
+  private boolean isClosed = false;
+
+  /**
+   * The maximum number of rows can be fetched from the server.
+   * If it equals 0, do not limit.
+   */
+  private int maxRows;
+
+  /**
+   * The number of rows to be fetched from the server each time.
+   */
+  private int fetchSize;
+
+  /**
+   * Tells whether this ResultSet object is scrollable.
+   */
+  private boolean isScrollable;
+
+  /**
+   * Tells the fetch direction for a scrollable ResultSet object.
+   */
+  private boolean isFetchForward;
+
+  /**
+   * A builder class which makes the parameter list of constructor less verbose.
+   */
+  public static class Builder {
+
+    private OdpsStatement stmtHandle;
+    private DownloadSession sessionHandle;
+    private OdpsResultSetMetaData meta;
+    private int fetchSize = 10000;
+    private boolean isScrollable = false;
+    private boolean isFetchForward = true;
+    private int maxRows = 0;
+
+    public Builder setStmtHandle(OdpsStatement stmtHandle) {
+      this.stmtHandle = stmtHandle;
+      return this;
+    }
+
+    public Builder setSessionHandle(DownloadSession sessionHandle) {
+      this.sessionHandle = sessionHandle;
+      return this;
+    }
+
+    public Builder setMeta(OdpsResultSetMetaData meta) {
+      this.meta = meta;
+      return this;
+    }
+
+    public Builder setFetchSize(int fetchSize) {
+      this.fetchSize = fetchSize;
+      return this;
+    }
+
+    public Builder setScollable(boolean scollable) {
+      this.isScrollable = scollable;
+      return this;
+    }
+
+    public Builder setFetchForward(boolean fetchForward) {
+      this.isFetchForward = fetchForward;
+      return this;
+    }
+
+    public Builder setMaxRows(int rows) {
+      this.maxRows = rows;
+      return this;
+    }
+
+    public OdpsQueryResultSet build() throws SQLException {
+      return new OdpsQueryResultSet(this);
+    }
+  }
+
+  OdpsQueryResultSet(Builder builder) throws SQLException {
+    super(builder.stmtHandle, builder.meta);
+    sessionHandle = builder.sessionHandle;
+    fetchSize = builder.fetchSize;
+    isFetchForward = builder.isFetchForward;
+    isScrollable = builder.isScrollable;
+    maxRows = builder.maxRows;
+
+    // Initialize the auxiliary variables
+    long recordCount = sessionHandle.getRecordCount();
+    assert(recordCount <= Integer.MAX_VALUE);
+    totalRows = (int) recordCount;
     startRow = 0;
+    fetchedRows = 0;
   }
 
   @Override
-  public void close() throws SQLException {
-    isClosed = true;
-    fetchDirection = null;
-    fetchSize = null;
+  public void beforeFirst() throws SQLException {
+    checkClosed();
+
+    if (!isScrollable) {
+      throw new SQLException("Method not supported for TYPE_FORWARD_ONLY resultset");
+    }
+
+    fetchedRows = 0;
+    startRow = 0;
     recordReader = null;
-    sessionHandle = null;
     rowValues = null;
   }
 
-  /**
-   * Download a number of `nextFewRows` records from the session handle.
-   *
-   * If the `startRows` plus `nextFewRows` exceeds the limit of the rows,
-   * a fewer number of rows will be downloaded from the session.
-   * Otherwise, a number of `nextFewRows` rows will be downloaded.
-   *
-   * @param nextFewRows
-   *     the number of rows attempts to download
-   * @return
-   * @throws SQLException
-   */
-  private boolean downloadMoreRows(long nextFewRows) throws SQLException {
-    if (startRow >= totalRows) {
-      return false;
-    }
-
-    if (startRow + nextFewRows > totalRows) {
-      nextFewRows = totalRows - startRow;
-    }
-
-    try {
-      recordReader = sessionHandle.openRecordReader(startRow, nextFewRows);
-      startRow += nextFewRows;
-      return true;
-    } catch (TunnelException e) {
-      throw new SQLException(
-          "can not open record reader: " + startRow + ":" + nextFewRows, e);
-    } catch (IOException e) {
-      throw new SQLException(
-          "can not open record reader: " + startRow + ":" + nextFewRows, e);
-    }
+  @Override
+  public int getRow() throws SQLException {
+    checkClosed();
+    return fetchedRows;
   }
 
   @Override
-  public boolean next() throws SQLException {
+  public boolean isBeforeFirst() throws SQLException {
     checkClosed();
-
-    if (recordReader == null) {
-      if (!downloadMoreRows(DOWNLOAD_ROWS_STEP)) {
-        return false;
-      }
-    }
-
-    try {
-      Record record = recordReader.read();
-      if (record == null) {
-        if (!downloadMoreRows(DOWNLOAD_ROWS_STEP)) {
-          return false;
-        } else {
-          record = recordReader.read();
-          rowValues = record.toArray();
-          return true;
-        }
-      }
-
-      rowValues = record.toArray();
-      return true;
-    } catch (IOException e) {
-      throw new SQLException(e);
-    }
-  }
-
-  @Override
-  public int getFetchDirection() throws SQLException {
-    checkClosed();
-
-    if (fetchDirection == null) {
-      return stmt.getFetchDirection();
-    }
-
-    return fetchDirection;
-  }
-
-  @Override
-  public void setFetchDirection(int direction) throws SQLException {
-    checkClosed();
-
-    fetchDirection = direction;
-  }
-
-  @Override
-  public int getFetchSize() throws SQLException {
-    checkClosed();
-
-    if (fetchSize == null) {
-      return stmt.getFetchSize();
-    }
-
-    return fetchSize;
+    return (fetchedRows == 0);
   }
 
   @Override
@@ -158,22 +167,121 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public Object getObject(int columnIndex) throws SQLException {
+  public int getFetchSize() throws SQLException {
+    return fetchSize;
+  }
+
+  @Override
+  public int getFetchDirection() throws SQLException {
+    return isFetchForward ? FETCH_FORWARD : FETCH_REVERSE;
+  }
+
+  @Override
+  public void setFetchDirection(int direction) throws SQLException {
+    switch (direction) {
+      case FETCH_FORWARD:
+        isFetchForward = true;
+      case FETCH_REVERSE:
+        isFetchForward = false;
+      default:
+        throw new SQLException("Only FETCH_FORWARD and FETCH_REVERSE is valid");
+    }
+  }
+
+  public void close() throws SQLException {
+    isClosed = true;
+    recordReader = null;
+    sessionHandle = null;
+    rowValues = null;
+  }
+
+  public boolean next() throws SQLException {
     checkClosed();
-    if (rowValues == null) {
-      wasNull = true;
-      return null;
+
+    if (maxRows > 0 && fetchedRows >= maxRows) {
+      return false;
     }
 
-    Object obj = rowValues[toZeroIndex(columnIndex)];
-    wasNull = (obj == null);
-    return obj;
+    try {
+      if (recordReader == null) {
+        if (!fetchMoreRows(fetchSize)) {
+          return false;
+        }
+      }
+
+      Record record = recordReader.read();
+      if (record == null) {
+        if (!fetchMoreRows(fetchSize)) {
+          return false;
+        } else {
+          record = recordReader.read();
+          rowValues = record.toArray();
+          fetchedRows++;
+          return true;
+        }
+      }
+
+      rowValues = record.toArray();
+      fetchedRows++;
+      return true;
+    } catch (IOException e) {
+      throw new SQLException(e);
+    }
   }
 
-  protected int toZeroIndex(int column) {
-    if (column <= 0 || column > rowValues.length) {
-      throw new IllegalArgumentException();
+  /**
+   * Fetch a number of `nextFewRows` records from the session handle.
+   *
+   * If the `startRows` plus `nextFewRows` exceeds the limit of the rows,
+   * a fewer number of rows will be downloaded from the session.
+   * Otherwise, a number of `nextFewRows` rows will be downloaded.
+   *
+   * @param count
+   *     the number of rows attempts to download
+   * @return a boolean that indicates whether the download is successful
+   * @throws SQLException
+   */
+  private boolean fetchMoreRows(int count) throws SQLException {
+    if (startRow >= totalRows) {
+      return false;
     }
-    return column - 1;
+
+    if (startRow + count > totalRows) {
+      count = totalRows - startRow;
+    }
+
+    try {
+      recordReader = sessionHandle.openRecordReader(startRow, count);
+      log.debug(String.format("open record reader: ssid=%s, begin=%d, cnt=%d",
+                              sessionHandle.getId(), startRow, count));
+      startRow += count;
+      return true;
+    } catch (TunnelException e) {
+      throw new SQLException(e);
+    } catch (IOException e) {
+      throw new SQLException(e);
+    }
   }
+
+  @Override
+  public int getType() throws SQLException {
+
+    if (isScrollable) {
+      return ResultSet.TYPE_SCROLL_INSENSITIVE;
+    } else {
+      return ResultSet.TYPE_FORWARD_ONLY;
+    }
+  }
+
+  @Override
+  public boolean isClosed() throws SQLException {
+    return isClosed;
+  }
+
+  protected void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("The result set has been closed");
+    }
+  }
+
 }

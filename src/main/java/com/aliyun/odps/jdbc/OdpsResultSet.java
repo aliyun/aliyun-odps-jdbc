@@ -44,12 +44,13 @@ import java.util.Map;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
-  private static final String ODPS_DATETIME_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss";
-
   private OdpsResultSetMetaData meta;
-  protected OdpsStatement stmt;
-  protected boolean wasNull = false;
-  protected boolean isClosed = false;
+  private OdpsStatement stmt;
+  private boolean wasNull = false;
+
+  private SQLWarning warningChain = null;
+
+  protected Object[] rowValues;
 
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
@@ -98,7 +99,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    warningChain = null;
   }
 
   @Override
@@ -154,7 +155,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   /**
-   * The column index can be acquired from the MetaData (implemented by the child class)
+   * The column index can be retrieved by name through the ResultSetMetaData.
    *
    * @param columnLabel
    *     the name of the column
@@ -163,8 +164,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
    */
   @Override
   public int findColumn(String columnLabel) throws SQLException {
-    int columnIndex = getMetaData().getColumnIndex(columnLabel);
-    return columnIndex;
+    return getMetaData().getColumnIndex(columnLabel);
   }
 
   @Override
@@ -178,7 +178,16 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   @Override
-  public abstract Object getObject(int columnIndex) throws SQLException;
+  public Object getObject(int columnIndex) throws SQLException {
+    if (rowValues == null) {
+      wasNull = true;
+      return null;
+    }
+
+    Object obj = rowValues[toZeroIndex(columnIndex)];
+    wasNull = (obj == null);
+    return obj;
+  }
 
   @Override
   public Object getObject(String columnLabel) throws SQLException {
@@ -236,7 +245,9 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     } else if (obj instanceof Boolean) {
       return (Boolean) obj;
     } else if (obj instanceof Long) {
-      return ((Long) obj).intValue() != 0;
+      return (Long) obj != 0;
+    } else if (obj instanceof Double) {
+      return (Double) obj != 0;
     } else if (obj instanceof String) {
       return !obj.equals("0");
     } else if (obj instanceof byte[]) {
@@ -259,10 +270,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getObject(columnIndex);
     if (obj == null) {
       return 0;
-    }
-    if (obj instanceof Long) {
+    } else if (obj instanceof Long) {
       return ((Long) obj).byteValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).byteValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).byteValue();
     }
+
     throw new SQLException(
         "Illegal to cast column " + columnIndex + "to byte: " + obj.toString());
   }
@@ -334,7 +349,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal to cast column " + columnIndex + " to date: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     try {
       return new java.sql.Date(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -364,7 +379,11 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return 0;
     } else if (obj instanceof Double) {
-      return ((Double) obj).doubleValue();
+      return (Double) obj;
+    } else if (obj instanceof Long) {
+      return ((Long) obj).doubleValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).doubleValue();
     }
 
     String strVal;
@@ -396,6 +415,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return 0;
     } else if (obj instanceof Double) {
       return ((Double) obj).floatValue();
+    } else if (obj instanceof Long) {
+      return ((Long) obj).floatValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).floatValue();
     }
 
     String strVal;
@@ -423,7 +446,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getHoldability() throws SQLException {
-    return stmt.getResultSetHoldability();
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -433,6 +456,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return 0;
     } else if (obj instanceof Long) {
       return ((Long) obj).intValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).intValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).intValue();
     }
 
     String strVal;
@@ -463,7 +490,11 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return 0;
     } else if (obj instanceof Long) {
-      return ((Long) obj).longValue();
+      return (Long) obj;
+    } else if (obj instanceof Double) {
+      return ((Double) obj).longValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).longValue();
     }
 
     String strVal;
@@ -526,7 +557,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     } else if (obj instanceof byte[]) {
       return new String((byte[]) obj);
     } else if (obj instanceof java.util.Date) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return dateFormat.format(((java.util.Date) obj));
     } else {
       return obj.toString();
@@ -586,6 +617,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return 0;
     } else if (obj instanceof Long) {
       return ((Long) obj).shortValue();
+    } else if (obj instanceof Double) {
+      return ((Double) obj).shortValue();
+    } else if (obj instanceof BigDecimal) {
+      return ((BigDecimal) obj).shortValue();
     }
 
     String strVal;
@@ -634,7 +669,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal to cast column " + columnIndex + " to time: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     try {
       return new Time(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -677,7 +712,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
           "Illegal cast column " + columnIndex + " to timestamp: " + obj.toString());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat(ODPS_DATETIME_FORMAT_STRING);
+    SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
     try {
       return new Timestamp(dateFormat.parse(strVal).getTime());
     } catch (ParseException e) {
@@ -703,7 +738,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getType() throws SQLException {
-    checkClosed();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
 
@@ -729,7 +763,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return warningChain;
   }
 
   @Override
@@ -749,7 +783,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public boolean isClosed() throws SQLException {
-    return isClosed;
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -1256,9 +1290,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     return wasNull;
   }
 
-  protected void checkClosed() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("The result set has been closed");
+  protected int toZeroIndex(int column) {
+    if (column <= 0 || column > rowValues.length) {
+      throw new IllegalArgumentException();
     }
+    return column - 1;
   }
 }
