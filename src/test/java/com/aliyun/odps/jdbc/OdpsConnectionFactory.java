@@ -52,17 +52,18 @@ public class OdpsConnectionFactory {
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
-      String host =  odpsConfig.getProperty("end_point");
+      String endpoint =  odpsConfig.getProperty("end_point");
       String project = odpsConfig.getProperty("project_name");
       String username = odpsConfig.getProperty("access_id");
       String password = odpsConfig.getProperty("access_key");
 
-      String url = "jdbc:odps:" + host;
-      String url_with_project = "jdbc:odps:" + host + "@" + project;
+      String url = String.format("jdbc:odps:%s?defaultProject=%s", endpoint, project);
 
       // pass project name via url
-      //conn = DriverManager.getConnection(url_with_project, odpsConfig);
-      conn = DriverManager.getConnection(url_with_project, username, password);
+//      conn = DriverManager.getConnection(url, username, password);
+
+      // pass everything (except endpoint) via info
+      conn = DriverManager.getConnection("jdbc:odps:"+endpoint, odpsConfig);
 
       Assert.assertNotNull(conn);
       Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());
@@ -70,10 +71,9 @@ public class OdpsConnectionFactory {
 
       // Print info
       Driver driver = DriverManager.getDriver(url);
-      DriverPropertyInfo[] dpi = driver.getPropertyInfo(url, odpsConfig);
-      for (int i = 0; i < dpi.length; i++) {
-        System.out.printf("%s\t%s\t%s\t%s\n", dpi[i].name, dpi[i].required, dpi[i].description,
-                          dpi[i].value);
+      DriverPropertyInfo[] dpis = driver.getPropertyInfo(url, odpsConfig);
+      for (DriverPropertyInfo dpi : dpis) {
+        System.out.printf("%s\t%s\t%s\t%s\n", dpi.name, dpi.required, dpi.description, dpi.value);
       }
 
       // change to funny names

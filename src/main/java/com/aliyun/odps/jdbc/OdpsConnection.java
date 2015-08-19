@@ -60,54 +60,45 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private Odps odps;
   private Properties info;
-//  private String url;
   private List<Statement> stmtHandles;
   private SQLWarning warningChain = null;
+  private String charset;
 
   private boolean isClosed = false;
 
   private static Log log = LogFactory.getLog(OdpsConnection.class);
 
-
-  /**
-   * Compatible with JDBC's API: getConnection("url", "user", "password")
-   */
   OdpsConnection(String url, Properties info) {
-    this.info = info;
 
-    String accessId = info.getProperty("access_id");
-    if (accessId == null) {
-      accessId = info.getProperty("user");
-    }
+    ConnectionResource connRes = new ConnectionResource(url, info);
 
-    String accessKey = info.getProperty("access_key");
-    if (accessKey == null) {
-      accessKey = info.getProperty("password");
-    }
+    String accessId = connRes.getAccessId();
+    String accessKey = connRes.getAccessKey();
+    String charset = connRes.getCharset();
+    String defaultProject = connRes.getDefaultProject();
+    String endpoint = connRes.getEndpoint();
 
-    String projectName = info.getProperty("project_name");
-
-    // extract the project name from the url
-    int atPos = url.indexOf("@");
-    String endpoint;
-    if (atPos != -1) {
-      endpoint = url.substring(0, atPos);
-      projectName = url.substring(atPos + 1);
-    } else {
-      endpoint = url;
-    }
+    log.debug("accessId=" + accessId);
+    log.debug("accessKey=" + accessKey);
+    log.debug("endpoint=" + endpoint);
+    log.debug("defaultProject=" + defaultProject);
+    log.debug("charset=" + charset);
 
     Account account = new AliyunAccount(accessId, accessKey);
-    this.odps = new Odps(account);
-    odps.setDefaultProject(projectName);
+    odps = new Odps(account);
     odps.setEndpoint(endpoint);
+    odps.setDefaultProject(defaultProject);
+
+
+    this.info = info;
+    this.charset = charset;
+    this.stmtHandles = new ArrayList<Statement>();
+
 
     // TODO
     odps.getRestClient().setRetryTimes(0);
     odps.getRestClient().setReadTimeout(3);
     odps.getRestClient().setConnectTimeout(3);
-
-    stmtHandles = new ArrayList<Statement>();
   }
 
   @Override
@@ -504,7 +495,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Kick-offer
    *
-   * @param sql sql string
+   * @param sql
+   *     sql string
    * @return an intance
    * @throws SQLException
    */
@@ -533,7 +525,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Blocked SQL runner, do not print any log information
    *
-   * @param sql sql string
+   * @param sql
+   *     sql string
    * @throws SQLException
    */
   protected void runSilentSQL(String sql) throws SQLException {
