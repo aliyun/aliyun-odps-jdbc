@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -42,6 +43,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
   private OdpsResultSetMetaData meta;
@@ -51,6 +55,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private SQLWarning warningChain = null;
 
   protected Object[] rowValues;
+
+  private static Log log = LogFactory.getLog(OdpsResultSet.class);
 
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
@@ -555,6 +561,16 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return null;
     } else if (obj instanceof byte[]) {
+        try {
+          String charset = stmt.getConnection().getCharacterSet();
+          if (charset != null) {
+            return new String((byte[]) obj, charset);
+          }
+        } catch (UnsupportedEncodingException e) {
+          throw new SQLException(e);
+        }
+      log.info("no specified charset found, using system default charset decoder");
+      // Use the java.nio.charset.CharsetDecoder to decode the byte[]
       return new String((byte[]) obj);
     } else if (obj instanceof java.util.Date) {
       SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);

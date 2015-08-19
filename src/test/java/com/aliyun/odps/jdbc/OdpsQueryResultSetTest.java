@@ -404,6 +404,20 @@ public class OdpsQueryResultSetTest {
     rs.close();
   }
 
+  // Do not forget to modify the charset and run this test
+  @Test
+  public void testGetNonUTFString() throws Exception {
+    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+
+    // cast from STRING
+    ResultSet rs = stmt.executeQuery("select '你好' name from dual;");
+    rs.next();
+    System.out.println(rs.getString(1));
+    rs.close();
+
+    stmt.close();
+  }
+
   @Test
   public void testGetString() throws Exception {
     Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
