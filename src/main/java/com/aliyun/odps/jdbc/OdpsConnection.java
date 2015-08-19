@@ -58,15 +58,22 @@ import com.aliyun.odps.security.SecurityManager;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
 
-  private Odps odps;
-  private Properties info;
-  private List<Statement> stmtHandles;
-  private SQLWarning warningChain = null;
-  private String charset;
+  private final Odps odps;
+  private final Properties info;
+  private final List<Statement> stmtHandles;
+
+  /**
+   * For each connection, keep a character set label for layout the ODPS's byte[] storage
+   */
+  private final String charset;
+
+  private final String logviewHost;
 
   private boolean isClosed = false;
 
   private static Log log = LogFactory.getLog(OdpsConnection.class);
+
+  private SQLWarning warningChain = null;
 
   OdpsConnection(String url, Properties info) {
 
@@ -77,23 +84,24 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String charset = connRes.getCharset();
     String defaultProject = connRes.getDefaultProject();
     String endpoint = connRes.getEndpoint();
+    String logviewHost = connRes.getLogviewHost();
 
     log.debug("accessId=" + accessId);
     log.debug("accessKey=" + accessKey);
     log.debug("endpoint=" + endpoint);
     log.debug("defaultProject=" + defaultProject);
     log.debug("charset=" + charset);
+    log.debug("logviewHost=" + logviewHost);
 
     Account account = new AliyunAccount(accessId, accessKey);
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(defaultProject);
 
-
     this.info = info;
     this.charset = charset;
+    this.logviewHost = logviewHost;
     this.stmtHandles = new ArrayList<Statement>();
-
 
     // TODO
     odps.getRestClient().setRetryTimes(0);
@@ -541,5 +549,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (isClosed) {
       throw new SQLException("the connection has already been closed");
     }
+  }
+
+  protected String getCharacterSet() {
+    return charset;
   }
 }

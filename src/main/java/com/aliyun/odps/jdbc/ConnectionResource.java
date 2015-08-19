@@ -26,6 +26,8 @@ import java.util.Properties;
 
 public class ConnectionResource {
 
+  private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
+
   /**
    * keys to retrive properties from url.
    */
@@ -37,23 +39,28 @@ public class ConnectionResource {
   /**
    * Keys to retrieve properties from info.
    */
-  public static final String ACCESS_ID_PROP_KEY ="access_id";
+  public static final String ACCESS_ID_PROP_KEY = "access_id";
   public static final String ACCESS_KEY_PROP_KEY = "access_key";
   public static final String PROJECT_PROP_KEY = "project_name";
   public static final String CHARSET_PROP_KEY = "character_set";
+  public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
 
   // To support DriverManager.getConnection(url, user, password) API, which put the 'user'
   // and 'password' to the 'info'. So the `access id` and `access_key` have aliases.
-  private static final String ACCESS_ID_PROP_KEY_ALT ="user";
+  private static final String ACCESS_ID_PROP_KEY_ALT = "user";
   private static final String ACCESS_KEY_PROP_KEY_ALT = "password";
 
-  private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
+  /**
+   * Default value for parameters
+   */
+  private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
 
   private String endpoint;
   private String accessId;
   private String accessKey;
   private String defaultProject;
-  private String charset;
+  private String charset = CHARSET_DEFAULT_VALUE;
+  private String logviewHost;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -109,6 +116,12 @@ public class ConnectionResource {
       String value = info.getProperty(CHARSET_PROP_KEY);
       charset = (value == null) ? charset : value;
     }
+
+    {
+      // Logview host can only be get from props
+      String value = info.getProperty(LOGVIEW_HOST_PROP_KEY);
+      logviewHost = (value == null) ? logviewHost : value;
+    }
   }
 
   public String getEndpoint() {
@@ -129,5 +142,9 @@ public class ConnectionResource {
 
   public String getAccessKey() {
     return accessKey;
+  }
+
+  public String getLogviewHost() {
+    return logviewHost;
   }
 }

@@ -52,7 +52,7 @@ public class OdpsConnectionFactory {
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
-      String endpoint =  odpsConfig.getProperty("end_point");
+      String endpoint = odpsConfig.getProperty("end_point");
       String project = odpsConfig.getProperty("project_name");
       String username = odpsConfig.getProperty("access_id");
       String password = odpsConfig.getProperty("access_key");
@@ -60,10 +60,10 @@ public class OdpsConnectionFactory {
       String url = String.format("jdbc:odps:%s?defaultProject=%s", endpoint, project);
 
       // pass project name via url
-//      conn = DriverManager.getConnection(url, username, password);
+      // conn = DriverManager.getConnection(url, username, password);
 
       // pass everything (except endpoint) via info
-      conn = DriverManager.getConnection("jdbc:odps:"+endpoint, odpsConfig);
+      conn = DriverManager.getConnection("jdbc:odps:" + endpoint, odpsConfig);
 
       Assert.assertNotNull(conn);
       Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());

@@ -94,6 +94,12 @@ public class OdpsDriver implements Driver {
     charsetProp.description = "character set for the string type";
     charsetProp.choices = new String[]{"UTF-8", "GBK"};
 
+    DriverPropertyInfo
+        logviewProp =
+        new DriverPropertyInfo(ConnectionResource.LOGVIEW_HOST_PROP_KEY, connRes.getCharset());
+    logviewProp.required = false;
+    logviewProp.description = "logview host";
+
     return new DriverPropertyInfo[]{accessIdProp, accessKeyProp, projectProp, charsetProp};
   }
 
