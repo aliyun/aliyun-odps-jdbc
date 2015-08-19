@@ -48,13 +48,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.aliyun.odps.Instance;
+import com.aliyun.odps.LogView;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.task.SQLTask;
-import com.aliyun.odps.utils.StringUtils;
-import com.aliyun.odps.security.SecurityManager;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
 
@@ -521,6 +520,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       LogView logView = new LogView(odps);
+      // for LAN use
+      logView.setLogViewHost("http://webconsole.odps.aliyun-inc.com:8080");
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {
