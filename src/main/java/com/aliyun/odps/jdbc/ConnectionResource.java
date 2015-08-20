@@ -91,6 +91,8 @@ public class ConnectionResource {
       defaultProject = paramsInURL.get(PROJECT_URL_KEY);
     }
 
+    if (info == null) return;
+
     {
       String value = info.getProperty(ACCESS_ID_PROP_KEY);
       accessId = (value == null) ? accessId : value;
