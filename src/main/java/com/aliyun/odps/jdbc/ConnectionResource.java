@@ -29,7 +29,7 @@ public class ConnectionResource {
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
 
   /**
-   * keys to retrive properties from url.
+   * keys to retrieve properties from url.
    */
   private static final String ACCESS_ID_URL_KEY = "accessId";
   private static final String ACCESS_KEY_URL_KEY = "accessKey";

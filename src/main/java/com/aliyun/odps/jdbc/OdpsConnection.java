@@ -106,6 +106,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps.getRestClient().setRetryTimes(0);
     odps.getRestClient().setReadTimeout(3);
     odps.getRestClient().setConnectTimeout(3);
+
+    stmtHandles = new ArrayList<Statement>();
   }
 
   @Override
