@@ -61,38 +61,6 @@ public class OdpsStatementTest {
   }
 
   /**
-   * Test the result set in the case that the lifetime of fetching rows will exceed
-   * the 600 seconds which is the lifecycle of a download session.
-   */
-  @Test
-  public void testSlowlyExecuteQuery() throws Exception {
-    Statement stmt = conn.createStatement();
-    String sql = "select * from yichao_test_table_input;";
-    ResultSet rs = stmt.executeQuery(sql);
-    rs.setFetchSize(10000);
-    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
-    Assert.assertEquals(true, rs.isBeforeFirst());
-    Assert.assertEquals(10000, rs.getFetchSize());
-
-    int i = 0;
-    int j = 0;
-    int time = 1;
-    while (rs.next()) {
-      Assert.assertEquals(i + 1, rs.getRow());
-      Assert.assertEquals(i, rs.getInt(1));
-      i++;
-      j++;
-      if (j > 9000) {
-        Thread.sleep(time * 1000);
-        System.out.println(String.format("%d: %ds", i, time));
-        time *= 2;
-      }
-    }
-    stmt.close();
-  }
-
-
-  /**
    * Thread for a sql to be cancelled
    */
   class ExecuteSQL implements Runnable {
@@ -179,11 +147,6 @@ public class OdpsStatementTest {
     stmt.close();
   }
 
-  /**
-   * The result has zero rows.
-   *
-   * @throws Exception
-   */
   @Test
   public void testExecuteQueryEmpty() throws Exception {
     Statement stmt = conn.createStatement();
@@ -197,58 +160,6 @@ public class OdpsStatementTest {
     while (rs.next()) {
       System.out.println("+1");
     }
-    stmt.close();
-  }
-
-  /**
-   * Test the scrollability of the result set.
-   * This function covers the following API of ResultSet:
-   * getRow()
-   * beforeFirst()
-   * isBeforeFirst()
-   * setFetchSize()
-   * getFetchSize()
-   *
-   * @throws Exception
-   */
-  @Test
-  public void testExecuteQuery() throws Exception {
-    Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                          ResultSet.CONCUR_READ_ONLY);
-
-    String sql = "select * from yichao_test_table_input;";
-    ResultSet rs = stmt.executeQuery(sql);
-    Assert.assertEquals(ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
-    Assert.assertEquals(10000, stmt.getFetchSize());
-
-    // Test performance for difference fetch size
-    int[] fetchSizes = {
-        500000,
-        200000,
-        100000,
-        50000,
-        20000,
-        10000};
-
-    int i;
-    for (int fetchSize : fetchSizes) {
-      long start = System.currentTimeMillis();
-      rs.setFetchSize(fetchSize);
-      Assert.assertEquals(fetchSize, rs.getFetchSize());
-      rs.beforeFirst();
-      Assert.assertEquals(true, rs.isBeforeFirst());
-      {
-        i = 0;
-        while (rs.next()) {
-          Assert.assertEquals(i + 1, rs.getRow());
-          Assert.assertEquals(i, rs.getInt(1));
-          i++;
-        }
-      }
-      long end = System.currentTimeMillis();
-      System.out.printf("step\t%d\tmillis\t%d\n", rs.getFetchSize(), end - start);
-    }
-
     stmt.close();
   }
 
