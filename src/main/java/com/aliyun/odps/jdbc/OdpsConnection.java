@@ -106,8 +106,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps.getRestClient().setRetryTimes(0);
     odps.getRestClient().setReadTimeout(3);
     odps.getRestClient().setConnectTimeout(3);
-
-    stmtHandles = new ArrayList<Statement>();
   }
 
   @Override
@@ -483,7 +481,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       }
 
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
+      log.info("Run SQL: " + sql + " => Log View: " + logViewUrl);
+
     } catch (OdpsException e) {
       log.fatal("fail to run sql: " + sql);
       throw new SQLException(e);
