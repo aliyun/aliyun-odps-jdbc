@@ -44,14 +44,6 @@ public class OdpsDriver implements Driver {
    */
   private static final boolean JDBC_COMPLIANT = false;
 
-  private static final String END_POINT_KEY = "end_point";
-  private static final String ACCESS_ID_KEY = "access_id";
-  private static final String ACCESS_KEY_KEY = "access_key";
-  private static final String PROJECT_NAME_KEY = "project_name";
-
-
-  public final static String URL_PREFIX = "jdbc:odps:";
-
   public OdpsDriver() {
     SecurityManager security = System.getSecurityManager();
     if (security != null) {
@@ -61,53 +53,54 @@ public class OdpsDriver implements Driver {
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
-    return acceptsURL(url) ? new OdpsConnection(url.substring(URL_PREFIX.length()), info) : null;
+    return acceptsURL(url) ? new OdpsConnection(url, info) : null;
   }
 
-  // TODO: the check is very loose.
   @Override
   public boolean acceptsURL(String url) throws SQLException {
-    return (url != null) && url.startsWith(URL_PREFIX);
+    return ConnectionResource.acceptURL(url);
   }
 
+  // each element is a DriverPropertyInfo object representing a connection URL attribute
+  // that has not already been specified.
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
       throws SQLException {
 
-    if (info == null) {
-      info = new Properties();
-    }
+    ConnectionResource connRes = new ConnectionResource(url, info);
 
-    if (url != null && url.startsWith(URL_PREFIX)) {
-      info.put(END_POINT_KEY, url.substring(URL_PREFIX.length()));
-    }
-
-    DriverPropertyInfo
-        endPointProp =
-        new DriverPropertyInfo(END_POINT_KEY, info.getProperty(END_POINT_KEY));
-    endPointProp.required = false;
-    endPointProp.description = "ODPS end point";
-
-    // Fetch from info
     DriverPropertyInfo
         accessIdProp =
-        new DriverPropertyInfo(ACCESS_ID_KEY, info.getProperty(ACCESS_ID_KEY, ""));
-    accessIdProp.required = false;
+        new DriverPropertyInfo(ConnectionResource.ACCESS_ID_PROP_KEY, connRes.getAccessId());
+    accessIdProp.required = true;
     accessIdProp.description = "ODPS access id";
 
     DriverPropertyInfo
         accessKeyProp =
-        new DriverPropertyInfo(ACCESS_KEY_KEY, info.getProperty(ACCESS_KEY_KEY, ""));
-    accessKeyProp.required = false;
+        new DriverPropertyInfo(ConnectionResource.ACCESS_KEY_PROP_KEY, connRes.getAccessKey());
+    accessKeyProp.required = true;
     accessKeyProp.description = "ODPS access key";
 
     DriverPropertyInfo
-        projectNameProp =
-        new DriverPropertyInfo(PROJECT_NAME_KEY, info.getProperty(PROJECT_NAME_KEY, ""));
-    projectNameProp.required = false;
-    projectNameProp.description = "ODPS project name";
+        projectProp =
+        new DriverPropertyInfo(ConnectionResource.PROJECT_PROP_KEY, connRes.getDefaultProject());
+    projectProp.required = true;
+    projectProp.description = "ODPS default project";
 
-    return new DriverPropertyInfo[] {endPointProp, accessIdProp, accessKeyProp, projectNameProp};
+    DriverPropertyInfo
+        charsetProp =
+        new DriverPropertyInfo(ConnectionResource.CHARSET_PROP_KEY, connRes.getCharset());
+    charsetProp.required = false;
+    charsetProp.description = "character set for the string type";
+    charsetProp.choices = new String[]{"UTF-8", "GBK"};
+
+    DriverPropertyInfo
+        logviewProp =
+        new DriverPropertyInfo(ConnectionResource.LOGVIEW_HOST_PROP_KEY, connRes.getCharset());
+    logviewProp.required = false;
+    logviewProp.description = "logview host";
+
+    return new DriverPropertyInfo[]{accessIdProp, accessKeyProp, projectProp, charsetProp};
   }
 
   @Override

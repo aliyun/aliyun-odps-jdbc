@@ -48,66 +48,64 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.aliyun.odps.Instance;
+import com.aliyun.odps.LogView;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.task.SQLTask;
-import com.aliyun.odps.utils.StringUtils;
-import com.aliyun.odps.security.SecurityManager;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
 
-  private Odps odps;
-  private Properties info;
-//  private String url;
-  private List<Statement> stmtHandles;
-  private SQLWarning warningChain = null;
+  private final Odps odps;
+  private final Properties info;
+  private final List<Statement> stmtHandles;
+
+  /**
+   * For each connection, keep a character set label for layout the ODPS's byte[] storage
+   */
+  private final String charset;
+
+  private final String logviewHost;
 
   private boolean isClosed = false;
 
   private static Log log = LogFactory.getLog(OdpsConnection.class);
 
+  private SQLWarning warningChain = null;
 
-  /**
-   * Compatible with JDBC's API: getConnection("url", "user", "password")
-   */
   OdpsConnection(String url, Properties info) {
-    this.info = info;
 
-    String accessId = info.getProperty("access_id");
-    if (accessId == null) {
-      accessId = info.getProperty("user");
-    }
+    ConnectionResource connRes = new ConnectionResource(url, info);
 
-    String accessKey = info.getProperty("access_key");
-    if (accessKey == null) {
-      accessKey = info.getProperty("password");
-    }
+    String accessId = connRes.getAccessId();
+    String accessKey = connRes.getAccessKey();
+    String charset = connRes.getCharset();
+    String defaultProject = connRes.getDefaultProject();
+    String endpoint = connRes.getEndpoint();
+    String logviewHost = connRes.getLogviewHost();
 
-    String projectName = info.getProperty("project_name");
-
-    // extract the project name from the url
-    int atPos = url.indexOf("@");
-    String endpoint;
-    if (atPos != -1) {
-      endpoint = url.substring(0, atPos);
-      projectName = url.substring(atPos + 1);
-    } else {
-      endpoint = url;
-    }
+    log.debug("accessId=" + accessId);
+    log.debug("accessKey=" + accessKey);
+    log.debug("endpoint=" + endpoint);
+    log.debug("defaultProject=" + defaultProject);
+    log.debug("charset=" + charset);
+    log.debug("logviewHost=" + logviewHost);
 
     Account account = new AliyunAccount(accessId, accessKey);
-    this.odps = new Odps(account);
-    odps.setDefaultProject(projectName);
+    odps = new Odps(account);
     odps.setEndpoint(endpoint);
+    odps.setDefaultProject(defaultProject);
+
+    this.info = info;
+    this.charset = charset;
+    this.logviewHost = logviewHost;
+    this.stmtHandles = new ArrayList<Statement>();
 
     // TODO
     odps.getRestClient().setRetryTimes(0);
     odps.getRestClient().setReadTimeout(3);
     odps.getRestClient().setConnectTimeout(3);
-
-    stmtHandles = new ArrayList<Statement>();
   }
 
   @Override
@@ -456,55 +454,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return this.odps.getEndpoint();
   }
 
-  public class LogView {
-
-    private static final String POLICY_TYPE = "BEARER";
-    private static final String HOST_DEFAULT = "http://webconsole.odps.aliyun-inc.com:8080";
-    private String logViewHost = HOST_DEFAULT;
-
-    Odps odps;
-
-    public LogView(Odps odps) {
-      this.odps = odps;
-      if (odps.getLogViewHost() != null) {
-        logViewHost = odps.getLogViewHost();
-      }
-    }
-
-    public String generateLogView(Instance instance, long hours) throws OdpsException {
-      if (StringUtils.isNullOrEmpty(logViewHost)) {
-        return "";
-      }
-
-      SecurityManager sm = odps.projects().get(instance.getProject()).getSecurityManager();
-      String policy = generatePolicy(instance, hours);
-      String token = sm.generateAuthorizationToken(policy, POLICY_TYPE);
-      String logview = logViewHost + "/logview/?h=" + odps.getEndpoint() + "&p="
-                       + instance.getProject() + "&i=" + instance.getId() + "&token=" + token;
-      return logview;
-    }
-
-    private String generatePolicy(Instance instance, long hours) {
-      String policy = "{\n" //
-                      + "    \"expires_in_hours\": " + String.valueOf(hours) + ",\n" //
-                      + "    \"policy\": {\n" + "        \"Statement\": [{\n"
-                      + "            \"Action\": [\"odps:Read\"],\n"
-                      + "            \"Effect\": \"Allow\",\n" //
-                      + "            \"Resource\": \"acs:odps:*:projects/" + instance.getProject()
-                      + "/instances/"
-                      + instance.getId() + "\"\n" //
-                      + "        }],\n"//
-                      + "        \"Version\": \"1\"\n" //
-                      + "    }\n" //
-                      + "}";
-      return policy;
-    }
-  }
-
   /**
    * Kick-offer
    *
-   * @param sql sql string
+   * @param sql
+   *     sql string
    * @return an intance
    * @throws SQLException
    */
@@ -521,6 +475,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
       instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       LogView logView = new LogView(odps);
+
+      if (logviewHost != null) {
+        logView.setLogViewHost(logviewHost);
+      }
+
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       log.debug("Run SQL: " + sql + " => Log View: " + logViewUrl);
     } catch (OdpsException e) {
@@ -533,7 +492,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Blocked SQL runner, do not print any log information
    *
-   * @param sql sql string
+   * @param sql
+   *     sql string
    * @throws SQLException
    */
   protected void runSilentSQL(String sql) throws SQLException {
@@ -548,5 +508,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (isClosed) {
       throw new SQLException("the connection has already been closed");
     }
+  }
+
+  protected String getCharacterSet() {
+    return charset;
   }
 }
