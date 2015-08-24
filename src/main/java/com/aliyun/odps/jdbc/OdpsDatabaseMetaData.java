@@ -749,7 +749,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     try {
       Table table = conn.getOdps().tables().get(tableNamePattern);
       table.reload();
-      // Read column information from tale schema
+      // Read column information from table schema
       List<Column> columns = table.getSchema().getColumns();
       for (int i = 0; i < columns.size(); i++) {
         Column col = columns.get(i);
