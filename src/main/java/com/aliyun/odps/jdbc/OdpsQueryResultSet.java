@@ -205,8 +205,10 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   public boolean previous() throws SQLException {
     checkClosed();
 
-    cursorRow--;
-    return cursorRow != -1;
+    if (cursorRow != -1) {
+      cursorRow--;
+    }
+    return (cursorRow != -1);
   }
 
   @Override
@@ -247,7 +249,9 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   public boolean next() throws SQLException {
     checkClosed();
 
-    cursorRow++;
+    if (cursorRow != totalRows) {
+      cursorRow++;
+    }
     return cursorRow != totalRows;
   }
 
