@@ -26,6 +26,7 @@ import java.util.Properties;
 
 public class ConnectionResource {
 
+  private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
 
   /**
@@ -42,18 +43,14 @@ public class ConnectionResource {
   public static final String ACCESS_ID_PROP_KEY = "access_id";
   public static final String ACCESS_KEY_PROP_KEY = "access_key";
   public static final String PROJECT_PROP_KEY = "project_name";
-  public static final String CHARSET_PROP_KEY = "character_set";
+  public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
 
-  // To support DriverManager.getConnection(url, user, password) API, which put the 'user'
-  // and 'password' to the 'info'. So the `access id` and `access_key` have aliases.
+  // This is to support DriverManager.getConnection(url, user, password) API,
+  // which put the 'user' and 'password' to the 'info'.
+  // So the `access id` and `access_key` have aliases.
   private static final String ACCESS_ID_PROP_KEY_ALT = "user";
   private static final String ACCESS_KEY_PROP_KEY_ALT = "password";
-
-  /**
-   * Default value for parameters
-   */
-  private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
 
   private String endpoint;
   private String accessId;
