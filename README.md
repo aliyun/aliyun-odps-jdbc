@@ -22,14 +22,12 @@ For example:
     
     Connection conn = DriverManager.getConnection(url, accessId, accessKey);
 
-The ODPS server works with HTTP or HTTPS protocol, so the url looks like: `jdbc:odps:<endpoint>@<project>`
+The ODPS server works with HTTP (or HTTPS) service, so the url looks like:
 
-For example:
+    String url = "jdbc:odps:http://your.endpoint.domain/subdomain?defaultProject=PROJECT_NAME&charset=UTF-8"
 
-* `jdbc:odps:http://www.aliyun.com/service@foobar`
-* `jdbc:odps:https://www.aliyun.com/service@foobar`
 
-`project`, `accessId` and `accessKey` can also be passed through `Properties`. 
+`project`, `accessId`, `accessKey` and other information can also be passed through `Properties`. 
 
 For example:
     
@@ -37,6 +35,7 @@ For example:
     config.put("access_id", "...");
     config.put("access_key", "...");
     config.put("project_name", "...");
+    config.put("charset", "...");
     Connection conn = DriverManager.getConnection("jdbc:odps:<endpoint>", config);
        
 
