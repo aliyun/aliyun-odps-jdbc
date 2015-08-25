@@ -284,7 +284,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       for (int i = 0; i < count; i++) {
         recordCache[i] = reader.read();
       }
-      log.debug(String.format("read record, start=%d, cnt=%d, %dKb", cachedUpperRow, count,
+      log.debug(String.format("read record, start=%d, cnt=%d, %dKB", cachedUpperRow, count,
                               reader.getTotalBytes() / 1024));
       reader.close();
     } catch (TunnelException e) {
