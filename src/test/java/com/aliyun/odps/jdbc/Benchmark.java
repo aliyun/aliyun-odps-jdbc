@@ -31,7 +31,7 @@ public class Benchmark {
 
 
   @Test
-  public void testExecuteQuery() throws Exception {
+  public void testWithDiffFetchSize() throws Exception {
 
     Connection conn = OdpsConnectionFactory.getInstance().conn;
 
