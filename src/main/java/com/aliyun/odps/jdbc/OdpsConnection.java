@@ -81,31 +81,22 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String accessId = connRes.getAccessId();
     String accessKey = connRes.getAccessKey();
     String charset = connRes.getCharset();
-    String defaultProject = connRes.getDefaultProject();
+    String project = connRes.getProject();
     String endpoint = connRes.getEndpoint();
-    String logviewHost = connRes.getLogviewHost();
+    String logviewHost = connRes.getLogview();
 
-    log.debug("accessId=" + accessId);
-    log.debug("accessKey=" + accessKey);
-    log.debug("endpoint=" + endpoint);
-    log.debug("defaultProject=" + defaultProject);
-    log.debug("charset=" + charset);
-    log.debug("logviewHost=" + logviewHost);
+    log.info(String.format("OdpsConnection@[endpoint=%s, project=%s, charset=%s, logview=%s",
+                           endpoint, project, charset, logviewHost));
 
     Account account = new AliyunAccount(accessId, accessKey);
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
-    odps.setDefaultProject(defaultProject);
+    odps.setDefaultProject(project);
 
     this.info = info;
     this.charset = charset;
     this.logviewHost = logviewHost;
     this.stmtHandles = new ArrayList<Statement>();
-
-    // TODO
-    odps.getRestClient().setRetryTimes(0);
-    odps.getRestClient().setReadTimeout(3);
-    odps.getRestClient().setConnectTimeout(3);
   }
 
   @Override

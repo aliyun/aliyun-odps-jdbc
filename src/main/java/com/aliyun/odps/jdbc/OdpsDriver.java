@@ -83,7 +83,7 @@ public class OdpsDriver implements Driver {
 
     DriverPropertyInfo
         projectProp =
-        new DriverPropertyInfo(ConnectionResource.PROJECT_PROP_KEY, connRes.getDefaultProject());
+        new DriverPropertyInfo(ConnectionResource.PROJECT_PROP_KEY, connRes.getProject());
     projectProp.required = true;
     projectProp.description = "ODPS default project";
 
@@ -96,7 +96,7 @@ public class OdpsDriver implements Driver {
 
     DriverPropertyInfo
         logviewProp =
-        new DriverPropertyInfo(ConnectionResource.LOGVIEW_HOST_PROP_KEY, connRes.getCharset());
+        new DriverPropertyInfo(ConnectionResource.LOGVIEW_HOST_PROP_KEY, connRes.getLogview());
     logviewProp.required = false;
     logviewProp.description = "logview host";
 

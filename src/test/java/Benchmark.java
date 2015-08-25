@@ -67,8 +67,10 @@ public class Benchmark {
       String project = odpsConfig.getProperty("project_name");
       String user = odpsConfig.getProperty("access_id");
       String password = odpsConfig.getProperty("access_key");
+      String logview = odpsConfig.getProperty("logview_host");
 
-      String url = String.format("jdbc:odps:%s?defaultProject=%s", endpoint, project);
+
+      String url = String.format("jdbc:odps:%s?project=%s;logview=%s", endpoint, project, logview);
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
