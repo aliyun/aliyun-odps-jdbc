@@ -573,7 +573,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       return null;
     } else if (obj instanceof byte[]) {
       try {
-        String charset = stmt.getConnection().getCharacterSet();
+        String charset = stmt.getConnection().getCharset();
         if (charset != null) {
           return new String((byte[]) obj, charset);
         }
