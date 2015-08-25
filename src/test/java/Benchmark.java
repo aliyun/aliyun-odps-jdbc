@@ -70,7 +70,7 @@ public class Benchmark {
       String logview = odpsConfig.getProperty("logview_host");
 
 
-      String url = String.format("jdbc:odps:%s?project=%s;logview=%s", endpoint, project, logview);
+      String url = String.format("jdbc:odps:%s?project=%s&logview=%s", endpoint, project, logview);
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 

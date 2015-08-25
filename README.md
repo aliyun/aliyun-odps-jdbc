@@ -24,10 +24,10 @@ For example:
 
 The ODPS server works with HTTP (or HTTPS) service, so the url looks like:
 
-    String url = "jdbc:odps:http://your.endpoint.domain/subdomain?defaultProject=PROJECT_NAME&charset=UTF-8"
+    String url = "jdbc:odps:http://your.endpoint.domain/subdomain?project=PROJECT_NAME&charset=UTF-8"
 
 
-`project`, `accessId`, `accessKey` and other information can also be passed through `Properties`. 
+`project`, `accessId`, `accessKey` and other information (e.g. `logviewHost`) can also be passed through `Properties`. 
 
 For example:
     

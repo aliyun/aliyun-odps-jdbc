@@ -85,7 +85,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String endpoint = connRes.getEndpoint();
     String logviewHost = connRes.getLogview();
 
-    log.info(String.format("OdpsConnection@[endpoint=%s, project=%s, charset=%s, logview=%s",
+    log.info(String.format("OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s]",
                            endpoint, project, charset, logviewHost));
 
     Account account = new AliyunAccount(accessId, accessKey);
