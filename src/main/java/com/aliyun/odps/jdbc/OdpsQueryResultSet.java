@@ -40,10 +40,9 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   private boolean isFetchForward;
 
   /**
-   * Keeps in the memory a frame of records which are likely be accessed
-   * in the near future.
+   * Keeps in the memory a frame of rows which are likely be accessed in the near future.
    */
-  private Record[] recordCache;
+  private Object[][] rowsCache;
 
   private final long totalRows;
 
@@ -89,7 +88,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     // For a FETCH_FORWARD resultset, the cursor will be -1 initially.
     // For a FETEH_REVERSE resultset, the cursor will be initialized to `totalRows`.
     cursorRow = isFetchForward ? -1 : totalRows;
-    recordCache = new Record[fetchSize];
+    rowsCache = new Object[fetchSize][];
   }
 
   @Override
@@ -147,7 +146,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public void setFetchSize(int rows) throws SQLException {
     fetchSize = rows;
-    recordCache = new Record[fetchSize];  // realloc memory
+    rowsCache = new Object[fetchSize][];  // realloc memory
   }
 
   @Override
@@ -242,7 +241,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   public void close() throws SQLException {
     isClosed = true;
     sessionHandle = null;
-    recordCache = null;
+    rowsCache = null;
   }
 
   @Override
@@ -263,8 +262,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
 
     int offset = (int) (cursorRow - cachedUpperRow);
-    Record record = recordCache[offset];
-    return record.toArray();
+    return rowsCache[offset];
   }
 
   /**
@@ -281,9 +279,11 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
 
     try {
+      Record reuseRecord = null;
       TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count);
       for (int i = 0; i < count; i++) {
-        recordCache[i] = reader.read();
+        reuseRecord = reader.read(reuseRecord);
+        rowsCache[i] = reuseRecord.toArray();
       }
       log.debug(String.format("read record, start=%d, cnt=%d, %dKB", cachedUpperRow, count,
                               reader.getTotalBytes() / 1024));
