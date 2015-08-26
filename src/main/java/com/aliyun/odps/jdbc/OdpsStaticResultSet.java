@@ -28,9 +28,9 @@ import java.util.Iterator;
 class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
 
   private Iterator<Object[]> iterator;
+  Object[] row;
 
   /**
-   * Whether the query result set is empty.
    * For some meta query (like procedures) we need to return an empty query result.
    */
   private boolean isEmptyResultSet = false;
@@ -41,6 +41,9 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
     isEmptyResultSet = true;
   }
 
+  /**
+   * For non-empty result set, its data is passed via parameter
+   */
   OdpsStaticResultSet(OdpsResultSetMetaData meta, Iterator<Object[]> iter)
       throws SQLException {
     super(null, meta);
@@ -48,21 +51,27 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
     isEmptyResultSet = false;
   }
 
+  @Override
   public void close() throws SQLException {
     iterator = null;
   }
 
+  @Override
   public boolean next() throws SQLException {
     if (isEmptyResultSet) {
       return false;
     }
-
     if (iterator.hasNext()) {
-      rowValues = iterator.next();
+      row = iterator.next();
       return true;
     } else {
-      rowValues = null;
       return false;
     }
   }
+
+  protected Object[] rowAtCursor() throws SQLException {
+    return row;
+  }
 }
+
+

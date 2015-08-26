@@ -57,33 +57,19 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
-  private static Log log = LogFactory.getLog(OdpsStatement.class);
-
   private static final int POOLING_INTERVAL = 300;
 
   /**
-   * Sets the scrollablity of ResultSet objects produced by this statement.
+   * The attributes of result set produced by this statement
    */
   protected boolean isResultSetScrollable = false;
-
-  /**
-   * Sets the fetch direction of ResultSet objects produced by this statement.
-   */
-  private boolean isResultSetFetchForward = true;
-
-  /**
-   * Sets the limits of row numbers that a ResultSet object produced by this statement
-   * can contain. If maxRows equals 0, then there is no limits.
-   */
-  private int resultSetMaxRows = 0;
-
-  /**
-   * Sets the number of rows to be fetched from the server each time.
-   * It is just a hint which can be ignored by the implementation of ResultSet.
-   */
-  private int resultSetFetchSize = 10000;
+  protected boolean isResultSetFetchForward = true;
+  protected int resultSetMaxRows = 0;
+  protected int resultSetFetchSize = 10000;
 
   private SQLWarning warningChain = null;
+
+  private static Log log = LogFactory.getLog(OdpsStatement.class);
 
   OdpsStatement(OdpsConnection conn) {
     this(conn, false);
@@ -228,12 +214,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException(e);
     }
 
-    resultSet = new OdpsQueryResultSet.Builder().setStmtHandle(this).setMeta(meta)
-        .setSessionHandle(session)
-        .setFetchForward(isResultSetFetchForward)
-        .setScollable(isResultSetScrollable)
-        .setFetchSize(resultSetFetchSize)
-        .setMaxRows(resultSetMaxRows).build();
+    resultSet = new OdpsQueryResultSet(this, meta, session);
 
     return resultSet;
   }

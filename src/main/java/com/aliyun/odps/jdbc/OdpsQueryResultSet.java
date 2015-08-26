@@ -28,142 +28,115 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.aliyun.odps.data.Record;
-import com.aliyun.odps.data.RecordReader;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
+import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   private DownloadSession sessionHandle = null;
-  private RecordReader recordReader = null;
-
-  private final int totalRows;
-  private int startRow;
-  private int fetchedRows;
-
-  private static Log log = LogFactory.getLog(OdpsQueryResultSet.class);
-
-  private boolean isClosed = false;
-
-  /**
-   * The maximum number of rows can be fetched from the server.
-   * If it equals 0, do not limit.
-   */
-  private int maxRows;
-
-  /**
-   * The number of rows to be fetched from the server each time.
-   */
   private int fetchSize;
-
-  /**
-   * Tells whether this ResultSet object is scrollable.
-   */
   private boolean isScrollable;
-
-  /**
-   * Tells the fetch direction for a scrollable ResultSet object.
-   */
   private boolean isFetchForward;
 
   /**
-   * A builder class which makes the parameter list of constructor less verbose.
+   * Keeps in the memory a frame of records which are likely be accessed
+   * in the near future.
    */
-  public static class Builder {
+  private Record[] recordCache;
 
-    private OdpsStatement stmtHandle;
-    private DownloadSession sessionHandle;
-    private OdpsResultSetMetaData meta;
-    private int fetchSize = 10000;
-    private boolean isScrollable = false;
-    private boolean isFetchForward = true;
-    private int maxRows = 0;
+  private final long totalRows;
 
-    public Builder setStmtHandle(OdpsStatement stmtHandle) {
-      this.stmtHandle = stmtHandle;
-      return this;
+  /**
+   * The range of cursorRow is from -1 to totalRows
+   *
+   * [0, totalRows] indicated an effective row
+   * cursorRow == -1 indicates a beforeFirst row
+   * cursorRow == totalRows indicated an afterLast row
+   */
+  private long cursorRow;
+
+  /**
+   * Marks the upper bound of the record frame which has been cached.
+   *
+   * cachedUpperRow == totalRows simply means there are no cached records.
+   */
+  private long cachedUpperRow;
+
+  private boolean isClosed = false;
+
+  private static Log log = LogFactory.getLog(OdpsQueryResultSet.class);
+
+  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
+      throws SQLException {
+    super(stmt, meta);
+    sessionHandle = session;
+    fetchSize = stmt.resultSetFetchSize;
+    isFetchForward = stmt.isResultSetFetchForward;
+    isScrollable = stmt.isResultSetScrollable;
+    int maxRows = stmt.resultSetMaxRows;
+
+    long recordCount = sessionHandle.getRecordCount();
+
+    // maxRows take effect only if it > 0
+    if (maxRows > 0 && maxRows <= recordCount) {
+      totalRows = maxRows;
+    } else {
+      totalRows = recordCount;
     }
+    cachedUpperRow = totalRows;
 
-    public Builder setSessionHandle(DownloadSession sessionHandle) {
-      this.sessionHandle = sessionHandle;
-      return this;
-    }
-
-    public Builder setMeta(OdpsResultSetMetaData meta) {
-      this.meta = meta;
-      return this;
-    }
-
-    public Builder setFetchSize(int fetchSize) {
-      this.fetchSize = fetchSize;
-      return this;
-    }
-
-    public Builder setScollable(boolean scollable) {
-      this.isScrollable = scollable;
-      return this;
-    }
-
-    public Builder setFetchForward(boolean fetchForward) {
-      this.isFetchForward = fetchForward;
-      return this;
-    }
-
-    public Builder setMaxRows(int rows) {
-      this.maxRows = rows;
-      return this;
-    }
-
-    public OdpsQueryResultSet build() throws SQLException {
-      return new OdpsQueryResultSet(this);
-    }
+    // For a FETCH_FORWARD resultset, the cursor will be -1 initially.
+    // For a FETEH_REVERSE resultset, the cursor will be initialized to `totalRows`.
+    cursorRow = isFetchForward ? -1 : totalRows;
+    recordCache = new Record[fetchSize];
   }
 
-  OdpsQueryResultSet(Builder builder) throws SQLException {
-    super(builder.stmtHandle, builder.meta);
-    sessionHandle = builder.sessionHandle;
-    fetchSize = builder.fetchSize;
-    isFetchForward = builder.isFetchForward;
-    isScrollable = builder.isScrollable;
-    maxRows = builder.maxRows;
+  @Override
+  public boolean absolute(int rows) throws SQLException {
+    checkClosed();
 
-    // Initialize the auxiliary variables
-    long recordCount = sessionHandle.getRecordCount();
-    assert(recordCount <= Integer.MAX_VALUE);
-    totalRows = (int) recordCount;
-    startRow = 0;
-    fetchedRows = 0;
+    long target = rows >= 0 ? rows : totalRows + rows;
+    target = rows >= 0 ? target - 1 : target;  // to zero-index
+
+    if (target >= 0 && target < totalRows) {
+      cursorRow = target;
+      return true;
+    }
+
+    // leaves the cursor beforeFirst or afterLast
+    cursorRow = target < 0 ? -1 : totalRows;
+    return false;
+  }
+
+  @Override
+  public void afterLast() throws SQLException {
+    checkClosed();
+    cursorRow = totalRows;
+  }
+
+  protected void checkClosed() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("The result set has been closed");
+    }
   }
 
   @Override
   public void beforeFirst() throws SQLException {
     checkClosed();
-
-    if (!isScrollable) {
-      throw new SQLException("Method not supported for TYPE_FORWARD_ONLY resultset");
-    }
-
-    fetchedRows = 0;
-    startRow = 0;
-    recordReader = null;
-    rowValues = null;
+    cursorRow = -1;
   }
 
   @Override
-  public int getRow() throws SQLException {
+  public boolean first() throws SQLException {
     checkClosed();
-    return fetchedRows;
+    cursorRow = 0;
+    return totalRows > 0;
   }
 
   @Override
-  public boolean isBeforeFirst() throws SQLException {
-    checkClosed();
-    return (fetchedRows == 0);
-  }
-
-  @Override
-  public void setFetchSize(int rows) throws SQLException {
-    fetchSize = rows;
+  public int getFetchDirection() throws SQLException {
+    return isFetchForward ? FETCH_FORWARD : FETCH_REVERSE;
   }
 
   @Override
@@ -172,8 +145,85 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public int getFetchDirection() throws SQLException {
-    return isFetchForward ? FETCH_FORWARD : FETCH_REVERSE;
+  public void setFetchSize(int rows) throws SQLException {
+    fetchSize = rows;
+    recordCache = new Record[fetchSize];  // realloc memory
+  }
+
+  @Override
+  public int getRow() throws SQLException {
+    checkClosed();
+    return (int) cursorRow + 1;
+  }
+
+  @Override
+  public int getType() throws SQLException {
+    if (isScrollable) {
+      return ResultSet.TYPE_SCROLL_INSENSITIVE;
+    } else {
+      return ResultSet.TYPE_FORWARD_ONLY;
+    }
+  }
+
+  @Override
+  public boolean isAfterLast() throws SQLException {
+    checkClosed();
+    return (cursorRow == totalRows);
+  }
+
+  @Override
+  public boolean isBeforeFirst() throws SQLException {
+    checkClosed();
+    return (cursorRow == -1);
+  }
+
+  @Override
+  public boolean isClosed() throws SQLException {
+    return isClosed;
+  }
+
+  @Override
+  public boolean isFirst() throws SQLException {
+    checkClosed();
+    return (cursorRow == 0);
+  }
+
+  @Override
+  public boolean isLast() throws SQLException {
+    checkClosed();
+    return (cursorRow == totalRows - 1);
+  }
+
+  @Override
+  public boolean last() throws SQLException {
+    checkClosed();
+    cursorRow = totalRows;
+    return totalRows > 0;
+  }
+
+  @Override
+  public boolean previous() throws SQLException {
+    checkClosed();
+
+    if (cursorRow != -1) {
+      cursorRow--;
+    }
+    return (cursorRow != -1);
+  }
+
+  @Override
+  public boolean relative(int rows) throws SQLException {
+    checkClosed();
+
+    long target = cursorRow + rows;
+    if (target >= 0 && target < totalRows) {
+      cursorRow = target;
+      return true;
+    }
+
+    // leaves the cursor beforeFirst or afterLast
+    cursorRow = target < 0 ? -1 : totalRows;
+    return false;
   }
 
   @Override
@@ -188,100 +238,60 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
   }
 
+  @Override
   public void close() throws SQLException {
     isClosed = true;
-    recordReader = null;
     sessionHandle = null;
-    rowValues = null;
+    recordCache = null;
   }
 
+  @Override
   public boolean next() throws SQLException {
     checkClosed();
 
-    if (maxRows > 0 && fetchedRows >= maxRows) {
-      return false;
+    if (cursorRow != totalRows) {
+      cursorRow++;
+    }
+    return cursorRow != totalRows;
+  }
+
+  protected Object[] rowAtCursor() throws SQLException {
+    // detect whether the cache contains the record
+    boolean cacheHit = (cursorRow >= cachedUpperRow) && (cursorRow < cachedUpperRow + fetchSize);
+    if (!cacheHit) {
+      fetchRows();
     }
 
-    try {
-      if (recordReader == null) {
-        if (!fetchMoreRows(fetchSize)) {
-          return false;
-        }
-      }
-
-      Record record = recordReader.read();
-      if (record == null) {
-        if (!fetchMoreRows(fetchSize)) {
-          return false;
-        } else {
-          record = recordReader.read();
-          rowValues = record.toArray();
-          fetchedRows++;
-          return true;
-        }
-      }
-
-      rowValues = record.toArray();
-      fetchedRows++;
-      return true;
-    } catch (IOException e) {
-      throw new SQLException(e);
-    }
+    int offset = (int) (cursorRow - cachedUpperRow);
+    Record record = recordCache[offset];
+    return record.toArray();
   }
 
   /**
-   * Fetch a number of `nextFewRows` records from the session handle.
-   *
-   * If the `startRows` plus `nextFewRows` exceeds the limit of the rows,
-   * a fewer number of rows will be downloaded from the session.
-   * Otherwise, a number of `nextFewRows` rows will be downloaded.
-   *
-   * @param count
-   *     the number of rows attempts to download
-   * @return a boolean that indicates whether the download is successful
-   * @throws SQLException
+   * Fetch into buffer from the session a frame of records in where cursorRow appears.
    */
-  private boolean fetchMoreRows(int count) throws SQLException {
-    if (startRow >= totalRows) {
-      return false;
-    }
+  private void fetchRows() throws SQLException {
+    // determines the frame id to be cached
+    cachedUpperRow = (cursorRow / fetchSize) * fetchSize;
 
-    if (startRow + count > totalRows) {
-      count = totalRows - startRow;
+    // tailor the fetchSize to read effective records
+    long count = fetchSize;
+    if (cachedUpperRow + count > totalRows) {
+      count = totalRows - cachedUpperRow;
     }
 
     try {
-      recordReader = sessionHandle.openRecordReader(startRow, count);
-      log.debug(String.format("open record reader: ssid=%s, begin=%d, cnt=%d",
-                              sessionHandle.getId(), startRow, count));
-      startRow += count;
-      return true;
+      TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count);
+      for (int i = 0; i < count; i++) {
+        recordCache[i] = reader.read();
+      }
+      log.debug(String.format("read record, start=%d, cnt=%d, %dKB", cachedUpperRow, count,
+                              reader.getTotalBytes() / 1024));
+      reader.close();
     } catch (TunnelException e) {
       throw new SQLException(e);
     } catch (IOException e) {
       throw new SQLException(e);
     }
   }
-
-  @Override
-  public int getType() throws SQLException {
-
-    if (isScrollable) {
-      return ResultSet.TYPE_SCROLL_INSENSITIVE;
-    } else {
-      return ResultSet.TYPE_FORWARD_ONLY;
-    }
-  }
-
-  @Override
-  public boolean isClosed() throws SQLException {
-    return isClosed;
-  }
-
-  protected void checkClosed() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("The result set has been closed");
-    }
-  }
-
 }

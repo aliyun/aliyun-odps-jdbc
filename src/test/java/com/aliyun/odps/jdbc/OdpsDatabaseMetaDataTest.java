@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -45,10 +46,29 @@ public class OdpsDatabaseMetaDataTest {
     OdpsConnectionFactory.getInstance().conn.close();
   }
 
+  private void printRs(ResultSet rs) throws Exception {
+    ResultSetMetaData meta = rs.getMetaData();
+    for (int i = 1; i <= meta.getColumnCount(); i++) {
+      System.out.printf("\t" + meta.getColumnName(i));
+    }
+    for (int i = 1; i <= meta.getColumnCount(); i++) {
+      System.out.printf("\t" + meta.getColumnTypeName(i));
+    }
+    System.out.println();
+
+    while(rs.next()) {
+      for (int i = 1; i <= meta.getColumnCount(); i++) {
+        System.out.printf("\t" + rs.getObject(i));
+      }
+      System.out.println();
+    }
+  }
+
   @Test
   public void testGetTables() throws Exception {
     ResultSet rs = databaseMetaData.getTables(null, null, null, null);
     Assert.assertNotNull(rs);
+    printRs(rs);
     rs.close();
   }
 
@@ -56,6 +76,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetFunctions() throws Exception {
     ResultSet rs = databaseMetaData.getFunctions(null, null, null);
     Assert.assertNotNull(rs);
+    printRs(rs);
     rs.close();
   }
 
@@ -63,6 +84,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetColumns() throws Exception {
     ResultSet rs = databaseMetaData.getColumns(null, null, "zhemin_test", null);
     Assert.assertNotNull(rs);
+    printRs(rs);
     rs.close();
   }
 
@@ -70,6 +92,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetUDTs() throws Exception {
     ResultSet rs = databaseMetaData.getUDTs(null, null, null, null);
     Assert.assertNotNull(rs);
+    printRs(rs);
     rs.close();
   }
 
@@ -77,6 +100,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetPrimaryKeys() throws Exception {
     ResultSet rs = databaseMetaData.getPrimaryKeys(null, null, null);
     Assert.assertNotNull(rs);
+    printRs(rs);
     rs.close();
   }
 
@@ -84,6 +108,7 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetProcedures() throws Exception {
     ResultSet rs = databaseMetaData.getProcedures(null, null, null);
     Assert.assertNotNull(rs);
+    printRs(rs);
     rs.close();
   }
 }

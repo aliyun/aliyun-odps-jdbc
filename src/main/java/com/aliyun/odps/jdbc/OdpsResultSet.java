@@ -41,6 +41,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.IllegalFormatCodePointException;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -53,8 +54,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private boolean wasNull = false;
 
   private SQLWarning warningChain = null;
-
-  protected Object[] rowValues;
 
   private static Log log = LogFactory.getLog(OdpsResultSet.class);
 
@@ -187,14 +186,22 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     throw new SQLFeatureNotSupportedException();
   }
 
+  // Accessor
+  abstract Object[] rowAtCursor() throws SQLException;
+
   @Override
   public Object getObject(int columnIndex) throws SQLException {
-    if (rowValues == null) {
-      wasNull = true;
+    Object[] row = rowAtCursor();
+
+    if (row == null) {
       return null;
     }
 
-    Object obj = rowValues[toZeroIndex(columnIndex)];
+    if (columnIndex < 1 || columnIndex > rowAtCursor().length) {
+      throw new SQLException("column index must >=1 and <=" + rowAtCursor().length);
+    }
+
+    Object obj = row[columnIndex-1];
     wasNull = (obj == null);
     return obj;
   }
@@ -565,14 +572,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (obj == null) {
       return null;
     } else if (obj instanceof byte[]) {
-        try {
-          String charset = stmt.getConnection().getCharacterSet();
-          if (charset != null) {
-            return new String((byte[]) obj, charset);
-          }
-        } catch (UnsupportedEncodingException e) {
-          throw new SQLException(e);
+      try {
+        String charset = stmt.getConnection().getCharset();
+        if (charset != null) {
+          return new String((byte[]) obj, charset);
         }
+      } catch (UnsupportedEncodingException e) {
+        throw new SQLException(e);
+      }
       log.info("no specified charset found, using system default charset decoder");
       // Use the java.nio.charset.CharsetDecoder to decode the byte[]
       return new String((byte[]) obj);
@@ -830,9 +837,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   public void moveToInsertRow() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
-
-  @Override
-  public abstract boolean next() throws SQLException;
 
   @Override
   public boolean previous() throws SQLException {
@@ -1310,10 +1314,4 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     return wasNull;
   }
 
-  protected int toZeroIndex(int column) {
-    if (column <= 0 || column > rowValues.length) {
-      throw new IllegalArgumentException();
-    }
-    return column - 1;
-  }
 }
