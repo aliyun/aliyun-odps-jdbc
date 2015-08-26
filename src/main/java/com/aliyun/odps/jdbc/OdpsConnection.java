@@ -502,7 +502,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  protected String getCharacterSet() {
+  protected String getCharset() {
     return charset;
   }
 }

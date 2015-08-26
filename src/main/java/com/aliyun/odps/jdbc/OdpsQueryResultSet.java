@@ -205,8 +205,10 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   public boolean previous() throws SQLException {
     checkClosed();
 
-    cursorRow--;
-    return cursorRow != -1;
+    if (cursorRow != -1) {
+      cursorRow--;
+    }
+    return (cursorRow != -1);
   }
 
   @Override
@@ -247,7 +249,9 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   public boolean next() throws SQLException {
     checkClosed();
 
-    cursorRow++;
+    if (cursorRow != totalRows) {
+      cursorRow++;
+    }
     return cursorRow != totalRows;
   }
 
@@ -258,7 +262,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       fetchRows();
     }
 
-    Record record = recordCache[(int) cursorRow % fetchSize];
+    int offset = (int) (cursorRow - cachedUpperRow);
+    Record record = recordCache[offset];
     return record.toArray();
   }
 
@@ -280,7 +285,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       for (int i = 0; i < count; i++) {
         recordCache[i] = reader.read();
       }
-      log.debug(String.format("read record, start=%d, cnt=%d, %dKb", cachedUpperRow, count,
+      log.debug(String.format("read record, start=%d, cnt=%d, %dKB", cachedUpperRow, count,
                               reader.getTotalBytes() / 1024));
       reader.close();
     } catch (TunnelException e) {
