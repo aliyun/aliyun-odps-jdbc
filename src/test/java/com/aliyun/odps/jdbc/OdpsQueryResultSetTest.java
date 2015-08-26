@@ -51,14 +51,16 @@ public class OdpsQueryResultSetTest {
 
   @Test
   public void testSetMaxRows() throws Exception {
-    Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                          ResultSet.CONCUR_READ_ONLY);
+    Statement stmt = conn.createStatement();
+
     final int ROWS = 12345;
     stmt.setMaxRows(ROWS);
     Assert.assertEquals(ROWS, stmt.getMaxRows());
+
     String sql = "select * from yichao_test_table_input;";
     ResultSet rs = stmt.executeQuery(sql);
     Assert.assertEquals(true, rs.isBeforeFirst());
+
     int i = 0;
     while (rs.next()) {
       Assert.assertEquals(i, rs.getInt(1));
@@ -66,64 +68,50 @@ public class OdpsQueryResultSetTest {
     }
     Assert.assertEquals(true, rs.isAfterLast());
     Assert.assertEquals(ROWS, i);
+
     rs.close();
     stmt.close();
   }
 
   @Test
   public void testExecuteQuery() throws Exception {
-    Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                          ResultSet.CONCUR_READ_ONLY);
+    Statement stmt = conn.createStatement();
 
-    String sql = "select * from save_private_ryan;";
+    String sql = "select * from yichao_test_table_input;";
     ResultSet rs = stmt.executeQuery(sql);
-    Assert.assertEquals(ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
+    Assert.assertEquals(true, rs.isBeforeFirst());
+    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
     Assert.assertEquals(10000, stmt.getFetchSize());
 
-    // Test performance for difference fetch size
-    int[] fetchSizes = {100000, 50000, 20000, 10000};
-    long[] elpasedTime = new long[fetchSizes.length];
-
-    for (int i = 0; i < fetchSizes.length; i++) {
-      long start = System.currentTimeMillis();
-      rs.setFetchSize(fetchSizes[i]);
-      Assert.assertEquals(fetchSizes[i], rs.getFetchSize());
-      rs.beforeFirst();
-      Assert.assertEquals(true, rs.isBeforeFirst());
-      {
-        int index = 0;
-        while (rs.next()) {
-          Assert.assertEquals(index + 1, rs.getRow());
-          rs.getInt(1);
-          index++;
-        }
-      }
-      long end = System.currentTimeMillis();
-      elpasedTime[i] = end - start;
+    int i = 0;
+    while (rs.next()) {
+      Assert.assertEquals(i + 1, rs.getRow());
+      rs.getInt(1);
+      i++;
     }
 
-    for (int i = 0; i < fetchSizes.length; i++) {
-      System.out.printf("step\t%d\tmillis\t%d\n", fetchSizes[i], elpasedTime[i]);
-    }
-
+    Assert.assertEquals(true, rs.isAfterLast());
+    rs.close();
     stmt.close();
   }
 
   @Test
-  public void testPerfomance() throws Exception {
-    Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                          ResultSet.CONCUR_READ_ONLY);
+  public void testSetFetchSize() throws Exception {
+    Statement stmt = conn.createStatement();
+
     final int FETCH_SIZE = 12345;
     stmt.setFetchSize(FETCH_SIZE);
     Assert.assertEquals(FETCH_SIZE, stmt.getFetchSize());
     String sql = "select * from yichao_test_table_input;";
     ResultSet rs = stmt.executeQuery(sql);
     Assert.assertEquals(true, rs.isBeforeFirst());
+
     int i = 0;
     while (rs.next()) {
       Assert.assertEquals(i, rs.getInt(1));
       i++;
     }
+
     Assert.assertEquals(true, rs.isAfterLast());
     rs.close();
     stmt.close();
