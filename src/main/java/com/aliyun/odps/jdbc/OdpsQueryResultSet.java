@@ -262,7 +262,8 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       fetchRows();
     }
 
-    Record record = recordCache[(int) cursorRow % fetchSize];
+    int offset = (int) (cursorRow - cachedUpperRow);
+    Record record = recordCache[offset];
     return record.toArray();
   }
 
