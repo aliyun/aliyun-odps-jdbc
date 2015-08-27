@@ -145,6 +145,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet executeQuery(String sql) throws SQLException {
+    checkClosed();
     beforeExecute();
 
     // Create a temp table for querying ResultSet and ensure its creation.
@@ -221,6 +222,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int executeUpdate(String sql) throws SQLException {
+    checkClosed();
     beforeExecute();
 
     try {
