@@ -487,7 +487,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     if (tempTable != null) {
-      connHanlde.runSilentSQL("drop table " + tempTable + ";");
+      connHanlde.runSilentSQL("drop table if exists " + tempTable + ";");
       log.debug("silently drop temp table: " + tempTable);
       tempTable = null;
     }
