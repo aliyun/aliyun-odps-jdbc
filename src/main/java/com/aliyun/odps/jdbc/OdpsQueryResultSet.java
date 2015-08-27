@@ -283,7 +283,11 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count);
       for (int i = 0; i < count; i++) {
         reuseRecord = reader.read(reuseRecord);
-        rowsCache[i] = reuseRecord.toArray();
+        int columns = reuseRecord.getColumnCount();
+        rowsCache[i] = new Object[columns];
+        for (int j = 0; j < reuseRecord.getColumnCount(); j++) {
+          rowsCache[i][j] = reuseRecord.get(j);
+        }
       }
       log.debug(String.format("read record, start=%d, cnt=%d, %dKB", cachedUpperRow, count,
                               reader.getTotalBytes() / 1024));
