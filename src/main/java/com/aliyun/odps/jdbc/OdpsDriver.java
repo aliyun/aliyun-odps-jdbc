@@ -118,7 +118,6 @@ public class OdpsDriver implements Driver {
     return JDBC_COMPLIANT;
   }
 
-  @Override
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
     throw new SQLFeatureNotSupportedException();
   }

@@ -413,13 +413,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
   public void setSchema(String schema) throws SQLException {
     checkClosed();
     odps.setDefaultProject(schema);
   }
 
-  @Override
   public String getSchema() throws SQLException {
     checkClosed();
     return odps.getDefaultProject();

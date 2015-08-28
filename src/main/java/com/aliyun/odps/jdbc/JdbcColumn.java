@@ -23,7 +23,6 @@ package com.aliyun.odps.jdbc;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.DoubleSummaryStatistics;
 
 import com.aliyun.odps.OdpsType;
 
