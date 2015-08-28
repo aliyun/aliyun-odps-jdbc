@@ -57,7 +57,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
-  private static final int POOLING_INTERVAL = 300;
+  private static final int POOLING_INTERVAL = 1000;
 
   /**
    * The attributes of result set produced by this statement
@@ -152,10 +152,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // If the table can not be created (CANCELLED/FAIL), an exception will be caused.
     // Once the table has been created, it will last until the Statement is closed,
     // or another query is started.
-    tempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
+    String tempTempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
     try {
-      executeInstance = connHanlde.runClientSQL("create table " + tempTable + " as " + sql);
+      executeInstance = connHanlde.runClientSQL("create table " + tempTempTable + " as " + sql);
 
       boolean complete = false;
       while (!complete) {
@@ -168,16 +168,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         switch (executeInstance.getTaskStatus().get("SQL").getStatus()) {
           case SUCCESS:
             complete = true;
-            log.debug("successfully create temp table for '" + sql + "': " + tempTable);
+            log.debug("successfully create temp table for '" + sql + "': " + tempTempTable);
             break;
           case FAILED:
             String reason = executeInstance.getTaskResults().get("SQL");
             log.debug("create temp table failed: " + reason);
-            tempTable = null;
             throw new SQLException("create temp table failed: " + reason, "FAILED");
           case CANCELLED:
             log.debug("create temp table cancelled");
-            tempTable = null;
             throw new SQLException("create temp table cancelled", "CANCELLED");
           case WAITING:
           case RUNNING:
@@ -186,8 +184,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (OdpsException e) {
+      log.debug("create temp table failed: " + e.getMessage());
       throw new SQLException(e);
     }
+
+    // If we arrive here, the temp table must be effective
+    tempTable = tempTempTable;
 
     // Read schema
     List<String> columnNames = new ArrayList<String>();
@@ -485,7 +487,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     if (tempTable != null) {
-      connHanlde.runSilentSQL("drop table " + tempTable + ";");
+      connHanlde.runSilentSQL("drop table if exists " + tempTable + ";");
       log.debug("silently drop temp table: " + tempTable);
       tempTable = null;
     }
