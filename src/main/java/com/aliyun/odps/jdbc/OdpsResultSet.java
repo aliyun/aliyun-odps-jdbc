@@ -194,11 +194,15 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object[] row = rowAtCursor();
 
     if (row == null) {
-      return null;
+      throw new SQLException("No row found at all!");
     }
 
-    if (columnIndex < 1 || columnIndex > rowAtCursor().length) {
-      throw new SQLException("column index must >=1 and <=" + rowAtCursor().length);
+    if (row.length == 0) {
+      throw new SQLException("The row does not contain any columns!");
+    }
+
+    if (columnIndex < 1 || columnIndex > row.length) {
+      throw new SQLException("column index must be >=1 and <=" + rowAtCursor().length);
     }
 
     Object obj = row[columnIndex-1];
