@@ -129,6 +129,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       tempTable = null;
     }
 
+    log.debug("the statement has been closed");
+
     connHanlde = null;
     executeInstance = null;
     isClosed = true;
@@ -220,7 +222,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException(e);
     }
 
-    resultSet = new OdpsQueryResultSet(this, meta, session);
+    resultSet =
+        isResultSetScrollable ? new OdpsQueryResultSet(this, meta, session)
+                              : new OdpsForwardResultSet(this, meta, session);
 
     return resultSet;
   }
