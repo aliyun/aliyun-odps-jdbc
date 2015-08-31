@@ -262,7 +262,18 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
 
     int offset = (int) (cursorRow - cachedUpperRow);
-    return rowsCache[offset];
+
+    Object[] row = rowsCache[offset];
+
+    if (row == null) {
+      throw new SQLException("the row should be not-null, row=" + cursorRow);
+    }
+
+    if (row.length == 0) {
+      throw new SQLException("the row should have more than 1 column , row=" + cursorRow);
+    }
+
+    return row;
   }
 
   /**
