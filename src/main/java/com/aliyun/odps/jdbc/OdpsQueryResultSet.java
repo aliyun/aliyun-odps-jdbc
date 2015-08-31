@@ -147,6 +147,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   public void setFetchSize(int rows) throws SQLException {
     fetchSize = rows;
     rowsCache = new Object[fetchSize][];  // realloc memory
+    cachedUpperRow = totalRows;
   }
 
   @Override

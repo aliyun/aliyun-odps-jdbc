@@ -28,32 +28,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-
 public class Benchmark {
 
-  public static void run(Statement stmt, int fetchSize) {
-    try {
-      String sql = "select * from save_private_ryan limit 1000000";
-      ResultSet rs = stmt.executeQuery(sql);
-      long elpasedTime;
-      long start = System.currentTimeMillis();
-      {
-        int index = 0;
-        while (rs.next()) {
-          assert ((index + 1) == rs.getRow());
-          rs.getInt(1);
-          index++;
-        }
+  public static void run(Statement stmt, int fetchSize) throws SQLException {
+    String sql = "select * from save_private_ryan limit 1000000";
+    ResultSet rs = stmt.executeQuery(sql);
+    long elpasedTime;
+    long start = System.currentTimeMillis();
+    {
+      int index = 0;
+      while (rs.next()) {
+        assert ((index + 1) == rs.getRow());
+        rs.getInt(1);
+        index++;
       }
-      long end = System.currentTimeMillis();
-      elpasedTime = end - start;
-
-      System.out.printf("step\t%d\tmillis\t%d\n", fetchSize, elpasedTime);
-      rs.close();
-      stmt.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
     }
+    long end = System.currentTimeMillis();
+    elpasedTime = end - start;
+
+    System.out.printf("step\t%d\tmillis\t%d\n", fetchSize, elpasedTime);
+    rs.close();
   }
 
   public static void main(String[] args) {
@@ -69,17 +63,25 @@ public class Benchmark {
       String password = odpsConfig.getProperty("access_key");
       String logview = odpsConfig.getProperty("logview_host");
 
-
       String url = String.format("jdbc:odps:%s?project=%s&logview=%s", endpoint, project, logview);
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
       Connection conn = DriverManager.getConnection(url, user, password);
-
       Statement stmt = conn.createStatement();
 
-      int fetchSize = Integer.parseInt(args[0]);
-      run(stmt, fetchSize);
+      try {
+        int fetchSize = Integer.parseInt(args[0]);
+        int round = Integer.parseInt(args[1]);
+        for (int i = 0; i< round; i++) {
+          run(stmt, fetchSize);
+        }
+      } catch (SQLException e) {
+        e.printStackTrace();
+      } finally {
+        stmt.close();
+        conn.close();
+      }
 
     } catch (FileNotFoundException e) {
       e.printStackTrace();
@@ -87,7 +89,7 @@ public class Benchmark {
       e.printStackTrace();
     } catch (SQLException e) {
       e.printStackTrace();
-    } catch(ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       e.printStackTrace();
     }
   }
