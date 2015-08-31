@@ -224,12 +224,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }

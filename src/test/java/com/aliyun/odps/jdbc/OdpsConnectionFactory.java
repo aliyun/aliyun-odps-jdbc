@@ -67,7 +67,6 @@ public class OdpsConnectionFactory {
 
       Assert.assertNotNull(conn);
       Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());
-      Assert.assertEquals(odpsConfig.getProperty("project_name"), conn.getSchema());
 
       // Print info
       Driver driver = DriverManager.getDriver(url);
@@ -78,13 +77,9 @@ public class OdpsConnectionFactory {
 
       // change to funny names
       conn.setCatalog("xixi");
-      conn.setSchema("haha");
-      System.out.printf("change to %s:%s\n", conn.getCatalog(), conn.getSchema());
 
       // change back
       conn.setCatalog(odpsConfig.getProperty("end_point"));
-      conn.setSchema(odpsConfig.getProperty("project_name"));
-      System.out.printf("change to %s:%s\n", conn.getCatalog(), conn.getSchema());
 
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
@@ -99,4 +94,3 @@ public class OdpsConnectionFactory {
     return cf;
   }
 }
-

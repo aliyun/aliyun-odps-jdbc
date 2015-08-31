@@ -437,7 +437,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return warningChain;
   }
 
-  @Override
   public boolean isCloseOnCompletion() throws SQLException {
     return false;
   }

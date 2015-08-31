@@ -1084,13 +1084,11 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
   public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern,
                                     String columnNamePattern) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
   public boolean generatedKeyAlwaysReturned() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
