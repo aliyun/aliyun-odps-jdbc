@@ -34,6 +34,7 @@ import org.junit.Assert;
 public class OdpsStatementTest {
 
   private static Connection conn = OdpsConnectionFactory.getInstance().conn;
+  private static final int ROWS = 1000000;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -52,12 +53,55 @@ public class OdpsStatementTest {
   }
 
   @Test
+  public void testExecuteQuery() throws Exception {
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("select * from yichao_test_table_input;");
+    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
+    Assert.assertEquals(ResultSet.FETCH_FORWARD, rs.getFetchDirection());
+
+    long start = System.currentTimeMillis();
+    {
+      int i = 0;
+      while (rs.next()) {
+        Assert.assertEquals(i + 1, rs.getRow());
+        Assert.assertEquals(i, rs.getInt(1));
+        i++;
+      }
+      Assert.assertTrue(rs.isClosed());
+    }
+    long end = System.currentTimeMillis();
+    System.out.printf("step\tmillis\t%d\n", end - start);
+    rs.close();
+    stmt.close();
+  }
+
+  @Test
+  public void testSetMaxRows() throws Exception {
+    Statement stmt = conn.createStatement();
+    stmt.setMaxRows(45678);
+    Assert.assertEquals(45678, stmt.getMaxRows());
+    ResultSet rs = stmt.executeQuery("select * from yichao_test_table_input;");
+    {
+      int i = 0;
+      while (rs.next()) {
+        Assert.assertEquals(i + 1, rs.getRow());
+        Assert.assertEquals(i, rs.getInt(1));
+        i++;
+      }
+      Assert.assertEquals(45678, i);
+    }
+    rs.close();
+    stmt.close();
+  }
+
+  @Test
   public void testExecuteUpdate() throws Exception {
     Statement stmt = conn.createStatement();
     String sql =
         "insert into table yichao_test_table_output select * from yichao_test_table_input;";
     int updateCount = stmt.executeUpdate(sql);
-    Assert.assertEquals(100 * 10000, updateCount);
+    Assert.assertEquals(ROWS, updateCount);
+    stmt.close();
   }
 
   /**
@@ -157,9 +201,6 @@ public class OdpsStatementTest {
     ResultSetMetaData rsmd = rs.getMetaData();
     Assert.assertEquals(1, rsmd.getColumnCount());
 
-    while (rs.next()) {
-      System.out.println("+1");
-    }
     stmt.close();
   }
 
@@ -169,61 +210,75 @@ public class OdpsStatementTest {
 
     Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
     ResultSet rs = stmt.getResultSet();
-    rs.next();
-    Assert.assertEquals(1, rs.getInt(1));
-    rs.close();
+    {
+      rs.next();
+      Assert.assertEquals(1, rs.getInt(1));
+    }
 
     Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom dual;"));
     rs = stmt.getResultSet();
-    rs.next();
-    Assert.assertEquals(1, rs.getInt(1));
-    rs.close();
+    {
+      rs.next();
+      Assert.assertEquals(1, rs.getInt(1));
+    }
 
     Assert.assertEquals(true, stmt.execute("select 1 id from dual"));
     rs = stmt.getResultSet();
-    rs.next();
-    Assert.assertEquals(1, rs.getInt(1));
-    rs.close();
+    {
+      rs.next();
+      Assert.assertEquals(1, rs.getInt(1));
+    }
 
     Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom dual"));
     rs = stmt.getResultSet();
-    rs.next();
-    Assert.assertEquals(1, rs.getInt(1));
-    rs.close();
+    {
+      rs.next();
+      Assert.assertEquals(1, rs.getInt(1));
+    }
 
+    rs.close();
     stmt.close();
   }
 
   @Test
   public void testExecuteSimple() throws Exception {
     Statement stmt = conn.createStatement();
-    boolean rs_generated = stmt.execute("select 1 id, 1.5 weight from dual;");
-    Assert.assertEquals(true, rs_generated);
-
-    ResultSet rs = stmt.getResultSet();
-    // Assure the result set can be generated
-    Assert.assertNotNull(rs);
-
-    rs.next();
-    Assert.assertEquals(1.5, rs.getDouble(2), 0);
-    Assert.assertEquals(1, rs.getInt(1));
+    {
+      boolean rs_generated = stmt.execute("select 1 id, 1.5 weight from dual;");
+      Assert.assertEquals(true, rs_generated);
+      ResultSet rs = stmt.getResultSet();
+      Assert.assertNotNull(rs); // Assure the result set can be generated
+      {
+        rs.next();
+        Assert.assertEquals(1.5, rs.getDouble(2), 0);
+        Assert.assertEquals(1, rs.getInt(1));
+      }
+      rs.close();
+    }
     stmt.close();
   }
 
   @Test
   public void testExecuteComplex() throws Exception {
     Statement stmt = conn.createStatement();
-    Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
-    ResultSet rs = stmt.getResultSet();
-    rs.next();
-    Assert.assertEquals(1, rs.getInt(1));
-    Assert.assertEquals(false, stmt.execute(
-        "insert into table yichao_test_table_output select 1 id from dual;"));
-    Assert.assertEquals(1, stmt.getUpdateCount());
+    {
+      Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
+      ResultSet rs = stmt.getResultSet();
+      {
+        rs.next();
+        Assert.assertEquals(1, rs.getInt(1));
+      }
+      rs.close();
+    }
 
-    Assert.assertEquals(false, stmt.execute(
-        "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
-    Assert.assertEquals(1, stmt.getUpdateCount());
+    {
+      Assert.assertEquals(false, stmt.execute(
+          "insert into table yichao_test_table_output select 1 id from dual;"));
+      Assert.assertEquals(1, stmt.getUpdateCount());
+      Assert.assertEquals(false, stmt.execute(
+          "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
+      Assert.assertEquals(1, stmt.getUpdateCount());
+    }
 
     // do not check result
     Assert.assertEquals(true, stmt.execute(" select 1 id from dual;"));
@@ -238,6 +293,4 @@ public class OdpsStatementTest {
 
     stmt.close();
   }
-
-
 }

@@ -28,6 +28,7 @@ import java.sql.Timestamp;
 import java.sql.Date;
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.Formatter;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -36,425 +37,190 @@ import org.junit.Assert;
 
 public class OdpsResultSetTest {
 
+  static Statement stmt;
+
   static long unixTimeNow;
-  static String odpsDatetimeNow;
+  static SimpleDateFormat formatter;
+  static String nowStr;
+  static String odpsNowStr;
+
+  static String decimalStr;
+  static String odpsDecimalStr;
+  static BigDecimal bigDecimal;
 
   @BeforeClass
   public static void setUp() throws Exception {
+    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+
+    formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     unixTimeNow = new java.util.Date().getTime();
-    Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    odpsDatetimeNow = formatter.format(unixTimeNow);
+    nowStr = formatter.format(unixTimeNow);
+    odpsNowStr = "cast('" + nowStr + "' as datetime)";
+
+    decimalStr = "55.123456789012345";
+    odpsDecimalStr = "cast('" + decimalStr + "' as decimal)";
+    bigDecimal = new BigDecimal(decimalStr);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
+    stmt.close();
     OdpsConnectionFactory.getInstance().conn.close();
   }
 
   @Test
   public void testGetObject() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-    String sql = "select * from" + "(select 1 id, 1.5 weight from dual" + " union all"
-                 + " select 2 id, 2.9 weight from dual) x;";
-    ResultSet rs = stmt.executeQuery(sql);
+    ResultSet
+        rs = stmt.executeQuery("select * from (select 1 id, 1.5 weight from dual" +
+                               " union all select 2 id, 2.9 weight from dual) x;");
+    {
+      rs.next();
+      Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
+      Assert.assertEquals(1, ((Long) rs.getObject("id")).longValue());
+      Assert.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
+      Assert.assertEquals(1.5, ((Double) rs.getObject("weight")).doubleValue(), 0);
+    }
 
-    rs.next();
-    Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
-    Assert.assertEquals(1, ((Long) rs.getObject("id")).longValue());
-    Assert.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
-    Assert.assertEquals(1.5, ((Double) rs.getObject("weight")).doubleValue(), 0);
+    {
+      rs.next();
+      Assert.assertEquals(2, ((Long) rs.getObject(1)).longValue());
+      Assert.assertEquals(2, ((Long) rs.getObject("id")).longValue());
+      Assert.assertEquals(2.9, ((Double) rs.getObject(2)).doubleValue(), 0);
+      Assert.assertEquals(2.9, ((Double) rs.getObject("weight")).doubleValue(), 0);
+    }
 
-    rs.next();
-    Assert.assertEquals(2, ((Long) rs.getObject(1)).longValue());
-    Assert.assertEquals(2, ((Long) rs.getObject("id")).longValue());
-    Assert.assertEquals(2.9, ((Double) rs.getObject(2)).doubleValue(), 0);
-    Assert.assertEquals(2.9, ((Double) rs.getObject("weight")).doubleValue(), 0);
-    rs.close();
-  }
-
-  @Test
-  public void testForgetToClose() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from BIGINT
-    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
-    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt("id"));
-//    rs.close();   forget to close by purpose !!!
-
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
-    rs.next();
-    Assert.assertEquals((int) 3.1415926, rs.getInt(1));
-//    rs.close();   forget to close by purpose !!!
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
-    rs.next();
-    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
     rs.close();
   }
 
   @Test
   public void testGetBoolean() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from BOOLEAN
-    ResultSet rs = stmt.executeQuery("select " + Boolean.TRUE + " male from dual;");
-    rs.next();
-    Assert.assertEquals(true, rs.getBoolean(1));
-    Assert.assertEquals(true, rs.getBoolean("male"));
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '0' namex, '42' namey from dual;");
-    rs.next();
-    Assert.assertEquals(false, rs.getBoolean(1));
-    Assert.assertEquals(true, rs.getBoolean(2));
-    rs.close();
-
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
-    rs.next();
-    Assert.assertEquals(true, rs.getBoolean(1));
-    rs.close();
-
-    // cast from BIGINT
-    rs = stmt.executeQuery("select 42 idx, 0 idy from dual;");
-    rs.next();
-    Assert.assertEquals(true, rs.getBoolean(1));
-    Assert.assertEquals(false, rs.getBoolean(2));
+    // cast from BOOLEAN, STRING, DOUBLE, BIGINT
+    ResultSet rs = stmt.executeQuery("select true c1, false c2, '42' c3, '0' c4, "
+                                     + "3.14 c5, 0.0 c6, 95 c7, 0 c8 from dual;");
+    {
+      rs.next();
+      Assert.assertEquals(true, rs.getBoolean(1));
+      Assert.assertEquals(false, rs.getBoolean(2));
+      Assert.assertEquals(true, rs.getBoolean(3));
+      Assert.assertEquals(false, rs.getBoolean(4));
+      Assert.assertEquals(true, rs.getBoolean(5));
+      Assert.assertEquals(false, rs.getBoolean(6));
+      Assert.assertEquals(true, rs.getBoolean(7));
+      Assert.assertEquals(false, rs.getBoolean(8));
+    }
     rs.close();
   }
 
   @Test
   public void testGetByte() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from BIGINT
-    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((byte) Long.MAX_VALUE, rs.getByte(1));
-    Assert.assertEquals((byte) Long.MAX_VALUE, rs.getByte("id"));
-    rs.close();
-
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
-    rs.next();
-    Assert.assertEquals((byte) 3.1415926, rs.getByte(1));
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect.byteValue(), rs.getByte(1));
+    // cast from BIGINT, DOUBLE, DECIMAL
+    ResultSet rs = stmt.executeQuery(
+        String.format("select 1943 c1, 3.1415926 c2, %s c3 from dual;", odpsDecimalStr));
+    {
+      rs.next();
+      Assert.assertEquals((byte) 1943, rs.getByte(1));
+      Assert.assertEquals((byte) 3.1415926, rs.getByte(2));
+      Assert.assertEquals(bigDecimal.byteValue(), rs.getByte(3));
+    }
     rs.close();
   }
 
   @Test
-  public void testGetInt() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+  public void testGetInteger() throws Exception {
+    // cast from BIGINT, DOUBLE, DECIMAL, STRING
+    ResultSet rs = stmt.executeQuery(
+        String.format("select 1943 c1, 3.1415926 c2, %s c3, '1234' c4 from dual;", odpsDecimalStr));
+    {
+      rs.next();
+      Assert.assertEquals(1943, rs.getInt(1));
+      Assert.assertEquals((int) 3.1415926, rs.getInt(2));
+      Assert.assertEquals(bigDecimal.intValue(), rs.getInt(3));
+      Assert.assertEquals(1234, rs.getInt(4));
 
-    // cast from BIGINT
-    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
-    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt("id"));
-    rs.close();
+      Assert.assertEquals((short) 1943, rs.getShort(1));
+      Assert.assertEquals((short) 3.1415926, rs.getShort(2));
+      Assert.assertEquals(bigDecimal.shortValue(), rs.getShort(3));
+      Assert.assertEquals((short) 1234, rs.getShort(4));
 
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
-    rs.next();
-    Assert.assertEquals((int) 3.1415926, rs.getInt(1));
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
-    rs.next();
-    Assert.assertEquals((int) Long.MAX_VALUE, rs.getInt(1));
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect.intValue(), rs.getInt(1));
+      Assert.assertEquals((long) 1943, rs.getLong(1));
+      Assert.assertEquals((long) 3.1415926, rs.getLong(2));
+      Assert.assertEquals(bigDecimal.longValue(), rs.getLong(3));
+      Assert.assertEquals((long) 1234, rs.getLong(4));
+    }
     rs.close();
   }
 
   @Test
-  public void testGetShort() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+  public void testGetFloatPoint() throws Exception {
+    // cast from BIGINT, DOUBLE, DECIMAL, STRING
+    ResultSet rs = stmt.executeQuery(
+        String.format("select 1943 c1, 3.1415926 c2, %s c3, '3.1415926' c4 from dual;",
+                      odpsDecimalStr));
+    {
+      rs.next();
+      Assert.assertEquals((double) 1943, rs.getDouble(1), 0);
+      Assert.assertEquals(3.1415926, rs.getDouble(2), 0);
+      Assert.assertEquals(bigDecimal.doubleValue(), rs.getDouble(3), 0);
+      Assert.assertEquals(3.1415926, rs.getDouble(4), 0);
 
-    // cast from BIGINT
-    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((short) Long.MAX_VALUE, rs.getShort(1));
-    Assert.assertEquals((short) Long.MAX_VALUE, rs.getShort("id"));
-    rs.close();
-
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
-    rs.next();
-    Assert.assertEquals((short) 3.1415926, rs.getShort(1));
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
-    rs.next();
-    Assert.assertEquals((short) Long.MAX_VALUE, rs.getShort(1));
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect.shortValue(), rs.getShort(1));
-    rs.close();
-  }
-
-  @Test
-  public void testGetLong() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from BIGINT
-    ResultSet rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals(Long.MAX_VALUE, rs.getLong(1));
-    Assert.assertEquals(Long.MAX_VALUE, rs.getLong("id"));
-    rs.close();
-
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select " + 3.1415926  + " id from dual;");
-    rs.next();
-    Assert.assertEquals((long) 3.1415926, rs.getLong(1));
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + Long.MAX_VALUE + "' name from dual;");
-    rs.next();
-    Assert.assertEquals(Long.MAX_VALUE, rs.getLong(1));
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect.longValue(), rs.getLong(1));
-    rs.close();
-  }
-
-  @Test
-  public void testGetDouble() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from DOUBLE
-    ResultSet rs = stmt.executeQuery("select " + Double.MAX_VALUE + " weight from dual;");
-    rs.next();
-    Assert.assertEquals(Double.MAX_VALUE, rs.getDouble(1), 0);
-    Assert.assertEquals(Double.MAX_VALUE, rs.getDouble("weight"), 0);
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + Double.MAX_VALUE + "' name from dual;");
-    rs.next();
-    Assert.assertEquals(Double.MAX_VALUE, rs.getDouble(1), 0);
-    rs.close();
-
-    // Cast from BIGINT
-    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((double) Long.MAX_VALUE, rs.getDouble(1), 0);
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect.doubleValue(), rs.getDouble(1), 0);
-    rs.close();
-  }
-
-  @Test
-  public void testGetFloat() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from DOUBLE
-    ResultSet rs = stmt.executeQuery("select " + Double.MAX_VALUE + " weight from dual;");
-    rs.next();
-    Assert.assertEquals((float) Double.MAX_VALUE, rs.getFloat(1), 0);
-    Assert.assertEquals((float) Double.MAX_VALUE, rs.getFloat("weight"), 0);
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + Double.MAX_VALUE + "' name from dual;");
-    rs.next();
-    Assert.assertEquals((float) Double.MAX_VALUE, rs.getFloat(1), 0);
-    rs.close();
-
-    // Cast from BIGINT
-    rs = stmt.executeQuery("select " + Long.MAX_VALUE + " id from dual;");
-    rs.next();
-    Assert.assertEquals((float) Long.MAX_VALUE, rs.getFloat(1), 0);
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs = stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect.floatValue(), rs.getFloat(1), 0);
+      Assert.assertEquals((float) 1943, rs.getFloat(1), 0);
+      Assert.assertEquals((float) 3.1415926, rs.getFloat(2), 0);
+      Assert.assertEquals(bigDecimal.floatValue(), rs.getFloat(3), 0);
+      Assert.assertEquals((float) 3.1415926, rs.getFloat(4), 0);
+    }
     rs.close();
   }
 
   @Test
   public void testGetBigDecimal() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    ResultSet rs =
-        stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    BigDecimal expect = new BigDecimal(decimalStr);
-    Assert.assertEquals(expect, rs.getBigDecimal(1));
-    Assert.assertEquals(expect, rs.getBigDecimal("weight"));
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + decimalStr + "' name from dual;");
-    rs.next();
-    Assert.assertEquals(expect, rs.getBigDecimal(1));
-    rs.close();
-  }
-
-  @Test
-  public void testGetDate() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from DATETIME
+    // cast from STRING, DECIMAL
     ResultSet rs = stmt.executeQuery(
-        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
-
-    rs.next();
-    Date expect = new Date(unixTimeNow);
-    Assert.assertEquals(expect.toString(), rs.getDate(1).toString());
-    Assert.assertEquals(expect.toString(), rs.getDate("day").toString());
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + odpsDatetimeNow + "' name from dual;");
-    rs.next();
-    Assert.assertEquals(expect.toString(), rs.getDate(1).toString());
+        String.format("select '%s' c1, %s c2 from dual;", decimalStr, odpsDecimalStr));
+    {
+      rs.next();
+      Assert.assertEquals(bigDecimal, rs.getBigDecimal(1));
+      Assert.assertEquals(bigDecimal, rs.getBigDecimal(2));
+    }
     rs.close();
   }
 
   @Test
-  public void testGetTime() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from DATETIME
+  public void testGetTimeFormat() throws Exception {
+    // cast from STRING, DATETIME
     ResultSet rs = stmt.executeQuery(
-        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
+        String.format("select '%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
+    {
+      rs.next();
+      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
+      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(2).toString());
 
-    rs.next();
-    Time expect = new Time(unixTimeNow);
-    Assert.assertEquals(expect.toString(), rs.getTime(1).toString());
-    Assert.assertEquals(expect.toString(), rs.getTime("day").toString());
+      Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(1).toString());
+      Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(2).toString());
+
+      Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
+                          formatter.format(rs.getTimestamp(1)));
+      Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
+                          formatter.format(rs.getTimestamp(2)));
+    }
     rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + odpsDatetimeNow + "' name from dual;");
-    rs.next();
-    Assert.assertEquals(expect.toString(), rs.getTime(1).toString());
-    rs.close();
-  }
-
-  @Test
-  public void testGetTimeStamp() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from DATETIME
-    ResultSet rs = stmt.executeQuery(
-        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
-
-    rs.next();
-    Timestamp expect = new Timestamp(unixTimeNow);
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    Assert.assertEquals(formatter.format(expect), formatter.format(rs.getTimestamp(1)));
-    Assert.assertEquals(formatter.format(expect), formatter.format(rs.getTimestamp("day")));
-    rs.close();
-
-    // cast from STRING
-    rs = stmt.executeQuery("select '" + odpsDatetimeNow + "' name from dual;");
-    rs.next();
-    Assert.assertEquals(formatter.format(expect), formatter.format(rs.getTimestamp(1)));
-    rs.close();
-  }
-
-  // Do not forget to modify the charset and run this test
-  @Test
-  public void testGetNonUTFString() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from STRING
-    ResultSet rs = stmt.executeQuery("select '你好' name from dual;");
-    rs.next();
-    System.out.println(rs.getString(1));
-    rs.close();
-
-    stmt.close();
   }
 
   @Test
   public void testGetString() throws Exception {
-    Statement stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    // cast from STRING
-    ResultSet rs = stmt.executeQuery("select 'alibaba' name from dual;");
-    rs.next();
-    Assert.assertEquals("alibaba", rs.getString(1));
-    Assert.assertEquals("alibaba", rs.getString("name"));
-    rs.close();
-
-    // cast from DOUBLE
-    rs = stmt.executeQuery("select 0.5 weight from dual;");
-    rs.next();
-    Assert.assertEquals("0.5", rs.getString(1));
-    rs.close();
-
-    // cast from BIGINT
-    rs = stmt.executeQuery("select 1 id from dual;");
-    rs.next();
-    Assert.assertEquals("1", rs.getString(1));
-    rs.close();
-
-    // cast from DATETIME
-    rs = stmt.executeQuery(
-        "select cast('" + odpsDatetimeNow + "' as datetime) day from dual;");
-    rs.next();
-    Assert.assertEquals(odpsDatetimeNow, rs.getString(1));
-    rs.close();
-
-    // cast from DECIMAL
-    String decimalStr = "55.123456789012345";
-    rs =
-        stmt.executeQuery("select cast('" + decimalStr + "' as decimal) weight from dual;");
-    rs.next();
-    Assert.assertEquals(decimalStr, rs.getString(1));
-    rs.close();
-
-    // cast from BOOLEAN
-    rs = stmt.executeQuery("select " + Boolean.TRUE + " male from dual;");
-    rs.next();
-    Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(1));
+    // cast from STRING, DOUBLE, BIGINT, DATETIME, DECIMAL
+    ResultSet rs = stmt.executeQuery(
+        String.format("select 'alibaba' c1, 0.5 c2, 1 c3, %s c4, %s c5, true c6 from dual;",
+                      odpsNowStr, odpsDecimalStr));
+    {
+      rs.next();
+      Assert.assertEquals("alibaba", rs.getString(1));
+      Assert.assertEquals("alibaba", rs.getString("c1"));
+      Assert.assertEquals("0.5", rs.getString(2));
+      Assert.assertEquals("1", rs.getString(3));
+      Assert.assertEquals(nowStr, rs.getString(4));
+      Assert.assertEquals(decimalStr, rs.getString(5));
+      Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
+    }
     rs.close();
   }
 }
