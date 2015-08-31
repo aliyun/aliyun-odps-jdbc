@@ -488,7 +488,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    */
   protected void runSilentSQL(String sql) throws SQLException {
     try {
+      long begin = System.currentTimeMillis();
       SQLTask.run(odps, sql).waitForSuccess();
+      long end = System.currentTimeMillis();
+      log.debug("It took me " + (end - begin) + " ms to run SQL: " + sql);
     } catch (OdpsException e) {
       throw new SQLException(e);
     }

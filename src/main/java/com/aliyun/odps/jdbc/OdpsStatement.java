@@ -58,6 +58,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isCancelled = false;
 
   private static final int POOLING_INTERVAL = 1000;
+  private static final int TEMP_TABLE_LIFECYCLE = 3;
 
   /**
    * The attributes of result set produced by this statement
@@ -190,6 +191,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // If we arrive here, the temp table must be effective
     tempTable = tempTempTable;
+
+    // Set the lifecyle for tmp table
+    connHanlde.runSilentSQL(String.format("alter table %s set lifecycle %d;", tempTable, TEMP_TABLE_LIFECYCLE));
 
     // Read schema
     List<String> columnNames = new ArrayList<String>();
