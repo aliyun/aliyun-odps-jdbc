@@ -191,6 +191,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // If we arrive here, the temp table must be effective
     tempTable = tempTempTable;
 
+    // Set the lifecycle for tmp table
+    connHanlde.runSilentSQL(String.format("alter table %s set lifecycle %d;", tempTable, connHanlde.lifecycle));
+
     // Read schema
     List<String> columnNames = new ArrayList<String>();
     List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
