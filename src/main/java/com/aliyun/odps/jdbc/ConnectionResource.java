@@ -26,7 +26,6 @@ import java.util.Properties;
 
 public class ConnectionResource {
 
-  private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
 
   /**
@@ -37,15 +36,19 @@ public class ConnectionResource {
   private static final String PROJECT_URL_KEY = "project";
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
+  private static final String LIFECYCLE_URL_KEY = "lifecycle";
 
   /**
    * Keys to retrieve properties from info.
+   *
+   * public since they are accessed in getPropInfo()
    */
   public static final String ACCESS_ID_PROP_KEY = "access_id";
   public static final String ACCESS_KEY_PROP_KEY = "access_key";
   public static final String PROJECT_PROP_KEY = "project_name";
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
+  public static final String LIFECYCLE_PROP_KEY = "lifecycle";
 
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
@@ -57,8 +60,9 @@ public class ConnectionResource {
   private String accessId;
   private String accessKey;
   private String project;
-  private String charset = CHARSET_DEFAULT_VALUE;
+  private String charset = "UTF-8";
   private String logview;
+  private String lifecycle = "3";
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -88,7 +92,7 @@ public class ConnectionResource {
       charset = paramsInURL.get(CHARSET_URL_KEY);
       project = paramsInURL.get(PROJECT_URL_KEY);
       logview = paramsInURL.get(LOGVIEW_URL_KEY);
-
+      lifecycle = paramsInURL.get(LIFECYCLE_URL_KEY);
     }
 
     if (info == null) return;
@@ -124,6 +128,11 @@ public class ConnectionResource {
       String value = info.getProperty(LOGVIEW_HOST_PROP_KEY);
       logview = (value == null) ? logview : value;
     }
+
+    {
+      String value = info.getProperty(LIFECYCLE_PROP_KEY);
+      lifecycle = (value == null) ? lifecycle : value;
+    }
   }
 
   public String getEndpoint() {
@@ -148,5 +157,9 @@ public class ConnectionResource {
 
   public String getLogview() {
     return logview;
+  }
+
+  public int getLifecycle() {
+    return Integer.parseInt(lifecycle);
   }
 }

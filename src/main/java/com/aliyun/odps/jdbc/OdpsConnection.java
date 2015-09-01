@@ -68,6 +68,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private final String logviewHost;
 
+  /**
+   * The lifecycle of the temp table created when execute query
+   */
+  protected final int lifecycle;
+
   private boolean isClosed = false;
 
   private static Log log = LogFactory.getLog(OdpsConnection.class);
@@ -84,9 +89,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String project = connRes.getProject();
     String endpoint = connRes.getEndpoint();
     String logviewHost = connRes.getLogview();
+    int lifecycle = connRes.getLifecycle();
 
-    log.info(String.format("OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s]",
-                           endpoint, project, charset, logviewHost));
+    log.info(String.format("OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d]",
+                           endpoint, project, charset, logviewHost, lifecycle));
 
     Account account = new AliyunAccount(accessId, accessKey);
     odps = new Odps(account);
@@ -96,6 +102,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.info = info;
     this.charset = charset;
     this.logviewHost = logviewHost;
+    this.lifecycle = lifecycle;
     this.stmtHandles = new ArrayList<Statement>();
   }
 
