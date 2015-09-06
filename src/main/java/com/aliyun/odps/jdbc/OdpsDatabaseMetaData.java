@@ -681,10 +681,27 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     List<Object[]> rows = new ArrayList<Object[]>();
     for (Table t : conn.getOdps().tables()) {
+
       Object[] rowVals = {conn.getOdps().getEndpoint(), t.getProject(), t.getName(),
                           t.isVirtualView() ? "VIEW" : "TABLE", t.getComment(), null, null, null,
                           null, "USER"};
-      rows.add(rowVals);
+
+      if (tableNamePattern != null) {
+        if (!tableNamePattern.equals(t.getName())) {
+          continue;
+        }
+      }
+
+      if (types != null) {
+        for (String type : types) {
+          if (type.equals(t.isVirtualView() ? "VIEW" : "TABLE")) {
+            rows.add(rowVals);
+            break;
+          }
+        }
+      } else {
+        rows.add(rowVals);
+      }
     }
 
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
@@ -759,7 +776,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
         Object[] rowVals = {
             jdbcCol.getTableCatalog(), null, jdbcCol.getTableName(), jdbcCol.getColumnName(),
-            (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null, (long) jdbcCol.getDecimalDigits(),
+            (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
+            (long) jdbcCol.getDecimalDigits(),
             (long) jdbcCol.getNumPercRaidx(), (long) jdbcCol.getIsNullable(), jdbcCol.getComment(),
             null, null, null, null, (long) jdbcCol.getOrdinalPos(), jdbcCol.getIsNullableString(),
             null, null, null, null};

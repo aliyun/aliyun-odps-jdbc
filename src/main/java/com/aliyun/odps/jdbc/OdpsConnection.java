@@ -98,6 +98,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
+    odps.setUserAgent("odps-jdbc-1.0-beta");
 
     this.info = info;
     this.charset = charset;
