@@ -53,7 +53,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   /**
    * The maximum retry time we allow to tolerate the network problem
    */
-  private static final int READER_REOPEN_TIME_MAX = 5;
+  private static final int READER_REOPEN_TIME_MAX = 3;
 
   private static Log log = LogFactory.getLog(OdpsForwardResultSet.class);
 
@@ -174,6 +174,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     try {
       long count = totalRows - fetchedRows;
       reader = sessionHandle.openRecordReader(fetchedRows, count);
+      retry = 0;
       log.debug(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
       throw new SQLException(e);
