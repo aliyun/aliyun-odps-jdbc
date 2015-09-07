@@ -34,24 +34,22 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
-  private DownloadSession sessionHandle = null;
+  private DownloadSession sessionHandle;
+
   private int fetchSize;
-  private boolean isScrollable;
+
   private boolean isFetchForward;
+
+  private final long totalRows;
 
   /**
    * Keeps in the memory a frame of rows which are likely be accessed in the near future.
    */
   private Object[][] rowsCache;
 
-  private final long totalRows;
-
   /**
-   * The range of cursorRow is from -1 to totalRows
-   *
-   * [0, totalRows] indicated an effective row
-   * cursorRow == -1 indicates a beforeFirst row
-   * cursorRow == totalRows indicated an afterLast row
+   * The range of cursorRow is from -1 to totalRows. -1 indicates a beforeFirst row
+   * while totalRows indicates an afterLast row.
    */
   private long cursorRow;
 
@@ -72,7 +70,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     sessionHandle = session;
     fetchSize = stmt.resultSetFetchSize;
     isFetchForward = stmt.isResultSetFetchForward;
-    isScrollable = stmt.isResultSetScrollable;
     int maxRows = stmt.resultSetMaxRows;
 
     long recordCount = sessionHandle.getRecordCount();
@@ -84,9 +81,6 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       totalRows = recordCount;
     }
     cachedUpperRow = totalRows;
-
-    // For a FETCH_FORWARD resultset, the cursor will be -1 initially.
-    // For a FETEH_REVERSE resultset, the cursor will be initialized to `totalRows`.
     cursorRow = isFetchForward ? -1 : totalRows;
     rowsCache = new Object[fetchSize][];
   }
@@ -158,11 +152,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public int getType() throws SQLException {
-    if (isScrollable) {
-      return ResultSet.TYPE_SCROLL_INSENSITIVE;
-    } else {
-      return ResultSet.TYPE_FORWARD_ONLY;
-    }
+    return TYPE_SCROLL_INSENSITIVE;
   }
 
   @Override
@@ -243,6 +233,9 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public void close() throws SQLException {
+    if (isClosed) {
+      return;
+    }
     isClosed = true;
     sessionHandle = null;
     rowsCache = null;
@@ -281,7 +274,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   }
 
   /**
-   * Fetch into buffer from the session a frame of records in where cursorRow appears.
+   * Fetch into buffer from the session a frame of records where cursorRow locates.
    */
   private void fetchRows() throws SQLException {
     // determines the frame id to be cached
@@ -294,6 +287,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     }
 
     try {
+      long start = System.currentTimeMillis();
       Record reuseRecord = null;
       TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count);
       for (int i = 0; i < count; i++) {
@@ -304,8 +298,10 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
           rowsCache[i][j] = reuseRecord.get(j);
         }
       }
-      log.debug(String.format("read record, start=%d, cnt=%d, %dKB", cachedUpperRow, count,
-                              reader.getTotalBytes() / 1024));
+      long duration = System.currentTimeMillis() - start;
+      long totalKBytes = reader.getTotalBytes() / 1024;
+      log.debug(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
+                              count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException e) {
       throw new SQLException(e);
