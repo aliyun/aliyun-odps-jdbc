@@ -21,14 +21,11 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.text.SimpleDateFormat;
 
 import org.junit.AfterClass;
@@ -40,11 +37,14 @@ public class OdpsPreparedStatementTest {
 
   static PreparedStatement pstmt;
   static long unixtime;
+  static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
 
   @BeforeClass
   public static void setUp() throws Exception {
     pstmt = OdpsConnectionFactory.getInstance().conn.prepareStatement(
-        "select ? whatever from dual;");
+        "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
+        + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
     unixtime = new java.util.Date().getTime();
   }
 
@@ -55,222 +55,40 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testSetBigDecimal() throws Exception {
-    BigDecimal x = BigDecimal.TEN;
-    pstmt.setBigDecimal(1, x);
+  public void testSetAll() throws Exception {
+    pstmt.setBigDecimal(1, BigDecimal.TEN);
+    pstmt.setBoolean(2, Boolean.TRUE);
+    pstmt.setByte(3, Byte.MAX_VALUE);
+    pstmt.setDate(4, new Date(unixtime));
+    pstmt.setDouble(5, Double.MAX_VALUE);
+    pstmt.setFloat(6, Float.MAX_VALUE);
+    pstmt.setInt(7, Integer.MAX_VALUE);
+    pstmt.setObject(8, 0.314);
+    pstmt.setLong(9, Long.MAX_VALUE);
+    pstmt.setShort(10, Short.MAX_VALUE);
+    pstmt.setString(11, "hello");
+    pstmt.setTime(12, new Time(unixtime));
+    pstmt.setTimestamp(13, new Timestamp(unixtime));
 
-    ResultSet rs = pstmt.executeQuery();
+    {
+      ResultSet rs = pstmt.executeQuery();
+      rs.next();
+      Assert.assertEquals(BigDecimal.TEN, rs.getBigDecimal(1));
+      Assert.assertEquals(Boolean.TRUE, rs.getBoolean(2));
+      Assert.assertEquals(Byte.MAX_VALUE, rs.getByte(3));
+      Assert.assertEquals(new Date(unixtime).toString(), rs.getDate(4).toString());
+      Assert.assertEquals(Double.MAX_VALUE, rs.getDouble(5), 0);
+      Assert.assertEquals(Float.MAX_VALUE, rs.getFloat(6), 0);
+      Assert.assertEquals(Integer.MAX_VALUE, rs.getInt(7));
+      Assert.assertEquals(0.314, rs.getDouble(8), 0);
+      Assert.assertEquals(Long.MAX_VALUE, rs.getLong(9));
+      Assert.assertEquals(Short.MAX_VALUE, rs.getShort(10));
+      Assert.assertEquals("hello", rs.getString(11));
+      Assert.assertEquals(new Time(unixtime).toString(), rs.getTime(12).toString());
+      Assert.assertEquals(formatter.format(new Timestamp(unixtime)),
+                          formatter.format(rs.getTimestamp(13)));
 
-    BigDecimal y = BigDecimal.ONE;
-    while (rs.next()) {
-      y = rs.getBigDecimal(1);
+      rs.close();
     }
-    Assert.assertEquals(x, y);
-  }
-
-  @Test
-  public void testSetBoolean() throws Exception {
-    pstmt.setBoolean(1, Boolean.TRUE);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    Boolean y = Boolean.FALSE;
-    while (rs.next()) {
-      y = rs.getBoolean(1);
-    }
-    Assert.assertEquals(Boolean.TRUE, y);
-  }
-
-  @Test
-  public void testSetByte() throws Exception {
-    byte x = Byte.MAX_VALUE;
-    pstmt.setByte(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    byte y = 0;
-    while (rs.next()) {
-      y = rs.getByte(1);
-    }
-    Assert.assertEquals(x, y);
-  }
-
-  @Test
-  public void testSetDate() throws Exception {
-    Date x = new Date(unixtime);
-    pstmt.setDate(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    Date y = new Date(0);
-    while (rs.next()) {
-      y = rs.getDate(1);
-    }
-
-    Assert.assertEquals(x.toString(), y.toString());
-  }
-
-  @Test
-  public void testSetDouble() throws Exception {
-    double x = Double.MAX_VALUE;
-    pstmt.setDouble(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    double y = 0.0E00;
-    while (rs.next()) {
-      y = rs.getDouble(1);
-    }
-    Assert.assertEquals(x, y, 0);
-  }
-
-  @Test
-  public void testSetFloat() throws Exception {
-    float x = Float.MAX_VALUE;
-    pstmt.setFloat(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    float y = 0;
-    while (rs.next()) {
-      y = rs.getFloat(1);
-    }
-    Assert.assertEquals(x, y, 0);
-  }
-
-  @Test
-  public void testSetInt() throws Exception {
-    int x = Integer.MAX_VALUE;
-    pstmt.setInt(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    int y = 0;
-    while (rs.next()) {
-      y = rs.getInt(1);
-    }
-    Assert.assertEquals(x, y);
-  }
-
-  @Test
-  public void testSetNull() throws Exception {
-    PreparedStatement pstmt2 = OdpsConnectionFactory.getInstance().conn.prepareStatement(
-        "select * from (select 1 id from dual) x where id = ?;");
-
-    pstmt2.setInt(1, 1);
-    ResultSet rs = pstmt2.executeQuery();
-
-    while (rs.next()) {
-      Assert.assertEquals(1, rs.getInt(1));
-    }
-
-    // Set it to null
-    pstmt2.setNull(1, Types.BIGINT);
-    rs = pstmt2.executeQuery();
-
-    // The value of null integer has a literal value of 0
-    // But the invocation to wasNull() will return true.
-    while (rs.next()) {
-      Assert.assertEquals(0, rs.getInt(1));
-      Assert.assertTrue(rs.wasNull());
-    }
-    pstmt2.close();
-  }
-
-  @Test
-  public void testSetObject() throws Exception {
-    Double x = 0.314;
-    pstmt.setObject(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    double y = 0;
-    while (rs.next()) {
-      y = rs.getDouble(1);
-    }
-    Assert.assertEquals(x.doubleValue(), y, 0);
-  }
-
-  @Test(expected = SQLException.class)
-  public void testSetUndefinedObject() throws Exception {
-    BigInteger x = new BigInteger("123");
-    pstmt.setObject(1, x);
-  }
-
-  @Test
-  public void testSetLong() throws Exception {
-    long x = Long.MAX_VALUE;
-    pstmt.setLong(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    long y = 0;
-    while (rs.next()) {
-      y = rs.getLong(1);
-    }
-    Assert.assertEquals(x, y);
-  }
-
-  @Test
-  public void testSetShort() throws Exception {
-    short x = Short.MAX_VALUE;
-    pstmt.setShort(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    short y = 0;
-    while (rs.next()) {
-      y = rs.getShort(1);
-    }
-    Assert.assertEquals(x, y);
-  }
-
-  @Test
-  public void testSetString() throws Exception {
-    String x = "hello";
-    pstmt.setString(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    String y = "";
-    while (rs.next()) {
-      y = rs.getString(1);
-    }
-    Assert.assertEquals(x, y);
-  }
-
-  @Test
-  public void testSetTime() throws Exception {
-    Time x = new Time(unixtime);
-    pstmt.setTime(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    Time y = new Time(0);
-    while (rs.next()) {
-      y = rs.getTime(1);
-    }
-    Assert.assertEquals(x.toString(), y.toString());
-  }
-
-  @Test
-  public void testSetTimestamp() throws Exception {
-    Timestamp x = new Timestamp(unixtime);
-    pstmt.setTimestamp(1, x);
-
-    ResultSet rs = pstmt.executeQuery();
-
-    Timestamp y = new Timestamp(0);
-    while (rs.next()) {
-      y = rs.getTimestamp(1);
-    }
-
-    // Walk around the precision problem
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    String ys = formatter.format(y);
-    String xs = formatter.format(x);
-
-    Assert.assertEquals(xs, ys);
   }
 }
-
