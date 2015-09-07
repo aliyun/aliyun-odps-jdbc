@@ -231,11 +231,14 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     switch (direction) {
       case FETCH_FORWARD:
         isFetchForward = true;
+        break;
       case FETCH_REVERSE:
         isFetchForward = false;
+        break;
       default:
         throw new SQLException("Only FETCH_FORWARD and FETCH_REVERSE is valid");
     }
+    cursorRow = isFetchForward ? -1 : totalRows;
   }
 
   @Override
