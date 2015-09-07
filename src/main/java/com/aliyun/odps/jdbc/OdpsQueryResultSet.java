@@ -197,7 +197,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public boolean last() throws SQLException {
     checkClosed();
-    cursorRow = totalRows;
+    cursorRow = totalRows - 1;
     return totalRows > 0;
   }
 
