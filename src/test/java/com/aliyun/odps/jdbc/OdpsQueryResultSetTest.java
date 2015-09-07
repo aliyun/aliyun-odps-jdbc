@@ -80,6 +80,12 @@ public class OdpsQueryResultSetTest {
     rs.beforeFirst();
     Assert.assertEquals(true, rs.isBeforeFirst());
 
+    rs.first();
+    Assert.assertEquals(true, rs.isFirst());
+
+    rs.last();
+    Assert.assertEquals(true, rs.isLast());
+
     rs.setFetchDirection(ResultSet.FETCH_REVERSE);
     Assert.assertEquals(true, rs.isAfterLast());
 
