@@ -67,14 +67,28 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetTables() throws Exception {
     {
-      ResultSet rs = databaseMetaData.getTables(null, null, "bad_folder_test", null);
+      ResultSet rs = databaseMetaData.getTables(null, null, "bad/_folder/_test", null);
       Assert.assertNotNull(rs);
       printRs(rs);
       rs.close();
     }
 
     {
-      ResultSet rs = databaseMetaData.getTables(null, null, null, null);
+      ResultSet rs = databaseMetaData.getTables(null, null, "b_d/_folder/_test", null);
+      Assert.assertNotNull(rs);
+      printRs(rs);
+      rs.close();
+    }
+
+    {
+      ResultSet rs = databaseMetaData.getTables(null, null, "bad/_%/_test", null);
+      Assert.assertNotNull(rs);
+      printRs(rs);
+      rs.close();
+    }
+
+    {
+      ResultSet rs = databaseMetaData.getTables(null, null, "%test", null);
       Assert.assertNotNull(rs);
       printRs(rs);
       rs.close();
