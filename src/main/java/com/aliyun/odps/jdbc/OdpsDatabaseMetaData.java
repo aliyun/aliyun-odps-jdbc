@@ -687,12 +687,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                           null, "USER"};
 
       if (tableNamePattern != null) {
-        if (!tableNamePattern.equals(t.getName())) {
+        if (!Utils.matchPattern(t.getName(), tableNamePattern)) {
           continue;
         }
       }
 
-      if (types != null) {
+      if (types != null && types.length != 0) {
         for (String type : types) {
           if (type.equals(t.isVirtualView() ? "VIEW" : "TABLE")) {
             rows.add(rowVals);
