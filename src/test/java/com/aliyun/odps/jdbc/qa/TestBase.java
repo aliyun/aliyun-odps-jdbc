@@ -49,9 +49,9 @@ public class TestBase {
         String username = properties.getProperty("access_id");
         String password = properties.getProperty("access_key");
 
-        String url = "jdbc:odps:" + endpoint + "?defaultProject=" + project;
+        String url = "jdbc:odps:" + endpoint + "?project=" + project + "&lifecycle=3";
         System.out.print("----url-----" + url);
-        conn = DriverManager.getConnection("jdbc:odps:" + endpoint, properties);
+        conn = DriverManager.getConnection(url, username, password);
         return conn;
     }
 
