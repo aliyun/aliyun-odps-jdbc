@@ -89,7 +89,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String project = connRes.getProject();
     String endpoint = connRes.getEndpoint();
     String logviewHost = connRes.getLogview();
-    int lifecycle = connRes.getLifecycle();
+
+    int lifecycle;
+    try {
+      lifecycle = Integer.parseInt(connRes.getLifecycle());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("lifecycle is expected to be an integer");
+    }
 
     log.info(String.format("OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d]",
                            endpoint, project, charset, logviewHost, lifecycle));

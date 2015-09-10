@@ -27,6 +27,8 @@ import java.util.Properties;
 public class ConnectionResource {
 
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
+  public static final String CHARSET_DEFAULT_VALUE = "UTF-8";
+  public static final String LIFECYCLE_DEFAULT_VALUE = "3";
 
   /**
    * keys to retrieve properties from url.
@@ -60,9 +62,9 @@ public class ConnectionResource {
   private String accessId;
   private String accessKey;
   private String project;
-  private String charset = "UTF-8";
+  private String charset;
   private String logview;
-  private String lifecycle = "3";
+  private String lifecycle;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -89,10 +91,19 @@ public class ConnectionResource {
 
       accessId = paramsInURL.get(ACCESS_ID_URL_KEY);
       accessKey = paramsInURL.get(ACCESS_KEY_URL_KEY);
+
       charset = paramsInURL.get(CHARSET_URL_KEY);
+      if (charset == null) {
+        charset = CHARSET_DEFAULT_VALUE;
+      }
+
       project = paramsInURL.get(PROJECT_URL_KEY);
       logview = paramsInURL.get(LOGVIEW_URL_KEY);
+
       lifecycle = paramsInURL.get(LIFECYCLE_URL_KEY);
+      if (lifecycle == null) {
+        lifecycle = LIFECYCLE_DEFAULT_VALUE;
+      }
     }
 
     if (info == null) return;
@@ -159,7 +170,5 @@ public class ConnectionResource {
     return logview;
   }
 
-  public int getLifecycle() {
-    return Integer.parseInt(lifecycle);
-  }
+  public String getLifecycle() { return lifecycle; }
 }

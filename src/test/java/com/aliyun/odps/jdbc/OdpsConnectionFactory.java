@@ -57,13 +57,13 @@ public class OdpsConnectionFactory {
       String username = odpsConfig.getProperty("access_id");
       String password = odpsConfig.getProperty("access_key");
 
-      String url = String.format("jdbc:odps:%s?defaultProject=%s", endpoint, project);
+      String url = String.format("jdbc:odps:%s?project=%s&lifecycle=1", endpoint, project);
 
       // pass project name via url
-      // conn = DriverManager.getConnection(url, username, password);
+       conn = DriverManager.getConnection(url, username, password);
 
       // pass everything (except endpoint) via info
-      conn = DriverManager.getConnection("jdbc:odps:" + endpoint, odpsConfig);
+//      conn = DriverManager.getConnection("jdbc:odps:" + endpoint, odpsConfig);
 
       Assert.assertNotNull(conn);
       Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());
