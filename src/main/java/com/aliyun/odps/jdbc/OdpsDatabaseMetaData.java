@@ -692,7 +692,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         }
       }
 
-      if (types != null) {
+      if (types != null && types.length != 0) {
         for (String type : types) {
           if (type.equals(t.isVirtualView() ? "VIEW" : "TABLE")) {
             rows.add(rowVals);
