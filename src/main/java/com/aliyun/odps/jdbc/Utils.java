@@ -26,10 +26,10 @@ public class Utils {
 
     if (pattern.contains("%") || pattern.contains("_")) {
       // (?<!a)  looks 1 char behind and ensure not equal
-      String wildcard = pattern.replaceAll("(?<!\\/)%", "\\\\w*").replaceAll("(?<!\\/)_", "\\\\w");
+      String wildcard = pattern.replaceAll("(?<!\\\\)%", "\\\\w*").replaceAll("(?<!\\\\)_", "\\\\w");
 
       // escape / and %
-      wildcard = wildcard.replace("/%", "%").replace("/_", "_");
+      wildcard = wildcard.replace("\\%", "%").replace("\\_", "_");
 
       if (!s.matches(wildcard)) {
         return false;

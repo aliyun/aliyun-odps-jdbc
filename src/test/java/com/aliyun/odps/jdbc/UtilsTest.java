@@ -43,9 +43,9 @@ public class UtilsTest {
     Assert.assertFalse(Utils.matchPattern("abcdefg", "z%"));
 
     // escape
-    Assert.assertFalse(Utils.matchPattern("abc_efg", "c/_efg"));
-    Assert.assertTrue(Utils.matchPattern("abc_efg", "%c/_efg"));
-    Assert.assertFalse(Utils.matchPattern("abc_efg", "%ab/_efg"));
-    Assert.assertTrue(Utils.matchPattern("ab%efg", "%ab/%efg"));
+    Assert.assertFalse(Utils.matchPattern("abc_efg", "c\\_efg"));
+    Assert.assertTrue(Utils.matchPattern("abc_efg", "%c\\_efg"));
+    Assert.assertFalse(Utils.matchPattern("abc_efg", "%ab\\_efg"));
+    Assert.assertTrue(Utils.matchPattern("ab%efg", "%ab\\%efg"));
   }
 }
