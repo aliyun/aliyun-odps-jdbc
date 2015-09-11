@@ -38,7 +38,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   private int fetchSize;
 
-  private boolean isFetchForward;
+  private OdpsStatement.FetchDirection fetchDirection;
 
   private final long totalRows;
 
@@ -69,7 +69,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     super(stmt, meta);
     sessionHandle = session;
     fetchSize = stmt.resultSetFetchSize;
-    isFetchForward = stmt.isResultSetFetchForward;
+    fetchDirection = stmt.resultSetFetchDirection;
     int maxRows = stmt.resultSetMaxRows;
 
     long recordCount = sessionHandle.getRecordCount();
@@ -81,7 +81,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       totalRows = recordCount;
     }
     cachedUpperRow = totalRows;
-    cursorRow = isFetchForward ? -1 : totalRows;
+    cursorRow = -1;
     rowsCache = new Object[fetchSize][];
   }
 
@@ -129,7 +129,18 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public int getFetchDirection() throws SQLException {
-    return isFetchForward ? FETCH_FORWARD : FETCH_REVERSE;
+    int direction;
+    switch (fetchDirection) {
+      case FORWARD:
+        direction = ResultSet.FETCH_FORWARD;
+        break;
+      case REVERSE:
+        direction = ResultSet.FETCH_REVERSE;
+        break;
+      default:
+        direction = ResultSet.FETCH_UNKNOWN;
+    }
+    return direction;
   }
 
   @Override
@@ -218,17 +229,21 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   @Override
   public void setFetchDirection(int direction) throws SQLException {
+
     switch (direction) {
-      case FETCH_FORWARD:
-        isFetchForward = true;
+      case ResultSet.FETCH_FORWARD:
+        fetchDirection = OdpsStatement.FetchDirection.FORWARD;
         break;
-      case FETCH_REVERSE:
-        isFetchForward = false;
+      case ResultSet.FETCH_REVERSE:
+        fetchDirection = OdpsStatement.FetchDirection.REVERSE;
+        break;
+      case ResultSet.FETCH_UNKNOWN:
+        fetchDirection = OdpsStatement.FetchDirection.UNKNOWN;
         break;
       default:
-        throw new SQLException("Only FETCH_FORWARD and FETCH_REVERSE is valid");
+        throw new SQLException("invalid argument for setFetchDirection()");
     }
-    cursorRow = isFetchForward ? -1 : totalRows;
+    log.info("setFetchDirection has not been utilized");
   }
 
   @Override

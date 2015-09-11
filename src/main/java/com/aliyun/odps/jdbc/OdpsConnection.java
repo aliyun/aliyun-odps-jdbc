@@ -97,8 +97,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
-    log.info(String.format("OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d]",
-                           endpoint, project, charset, logviewHost, lifecycle));
+    log.info(String.format(
+        "OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d]",
+        endpoint, project, charset, logviewHost, lifecycle));
 
     Account account = new AliyunAccount(accessId, accessKey);
     odps = new Odps(account);
@@ -350,17 +351,28 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throws SQLException {
     checkClosed();
 
-    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
-      throw new SQLFeatureNotSupportedException(
-          "Statement with resultset type: " + resultSetType + " is not supported");
+    boolean isResultSetScrollable;
+
+    switch (resultSetType) {
+      case ResultSet.TYPE_FORWARD_ONLY:
+        isResultSetScrollable = false;
+        break;
+      case ResultSet.TYPE_SCROLL_INSENSITIVE:
+        isResultSetScrollable = true;
+        break;
+      default:
+        throw new SQLFeatureNotSupportedException(
+            "only support statement with ResultSet type: TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_FORWARD_ONLY");
     }
 
-    if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
-      throw new SQLFeatureNotSupportedException(
-          "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
+    switch (resultSetConcurrency) {
+      case ResultSet.CONCUR_READ_ONLY:
+        break;
+      default:
+        throw new SQLFeatureNotSupportedException(
+            "only support statement with ResultSet concurrency: CONCUR_READ_ONLY");
     }
 
-    boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
     OdpsStatement stmt = new OdpsStatement(this, isResultSetScrollable);
     stmtHandles.add(stmt);
     return stmt;

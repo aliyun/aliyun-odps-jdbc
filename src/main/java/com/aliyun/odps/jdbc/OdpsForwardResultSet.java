@@ -79,11 +79,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   }
 
   @Override
-  public int getFetchDirection() throws SQLException {
-    return FETCH_FORWARD;
-  }
-
-  @Override
   public int getRow() throws SQLException {
     checkClosed();
     return (int) fetchedRows;
