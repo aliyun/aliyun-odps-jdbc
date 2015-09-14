@@ -43,6 +43,7 @@ public class OdpsQueryResultSetTest {
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     rs = stmt.executeQuery(SQL);
+    Assert.assertEquals(ResultSet.FETCH_UNKNOWN, rs.getFetchDirection());
   }
 
   @AfterClass
@@ -55,6 +56,19 @@ public class OdpsQueryResultSetTest {
   @Test
   public void testGetType() throws Exception {
     Assert.assertEquals(ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
+  }
+
+  @Test
+  public void testSetFetchDirection() throws Exception {
+
+    rs.setFetchDirection(ResultSet.FETCH_FORWARD);
+    Assert.assertEquals(ResultSet.FETCH_FORWARD, rs.getFetchDirection());
+
+    rs.setFetchDirection(ResultSet.FETCH_REVERSE);
+    Assert.assertEquals(ResultSet.FETCH_REVERSE, rs.getFetchDirection());
+
+    rs.setFetchDirection(ResultSet.FETCH_UNKNOWN);
+    Assert.assertEquals(ResultSet.FETCH_UNKNOWN, rs.getFetchDirection());
   }
 
   @Test
@@ -85,12 +99,6 @@ public class OdpsQueryResultSetTest {
 
     rs.last();
     Assert.assertEquals(true, rs.isLast());
-
-    rs.setFetchDirection(ResultSet.FETCH_REVERSE);
-    Assert.assertEquals(true, rs.isAfterLast());
-
-    rs.setFetchDirection(ResultSet.FETCH_FORWARD);
-    Assert.assertEquals(true, rs.isBeforeFirst());
   }
 
   @Test

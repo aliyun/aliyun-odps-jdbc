@@ -49,6 +49,7 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
+
   private OdpsConnection connHanlde;
   private Instance executeInstance = null;
   private ResultSet resultSet = null;
@@ -63,7 +64,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    * The attributes of result set produced by this statement
    */
   protected boolean isResultSetScrollable = false;
-  protected boolean isResultSetFetchForward = true;
+
+
+  /**
+   * The suggestion of fetch direction which might be ignored by the resultSet generated
+   */
+  enum FetchDirection {
+    FORWARD, REVERSE, UNKNOWN
+  }
+  protected FetchDirection resultSetFetchDirection = FetchDirection.UNKNOWN;
+
   protected int resultSetMaxRows = 0;
   protected int resultSetFetchSize = 10000;
 
@@ -194,7 +204,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     tempTable = tempTempTable;
 
     // Set the lifecycle for tmp table
-    connHanlde.runSilentSQL(String.format("alter table %s set lifecycle %d;", tempTable, connHanlde.lifecycle));
+    connHanlde.runSilentSQL(
+        String.format("alter table %s set lifecycle %d;", tempTable, connHanlde.lifecycle));
 
     // Read schema
     List<String> columnNames = new ArrayList<String>();
@@ -350,7 +361,19 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public int getFetchDirection() throws SQLException {
     checkClosed();
-    return isResultSetFetchForward ? ResultSet.FETCH_FORWARD : ResultSet.FETCH_REVERSE;
+
+    int direction;
+    switch (resultSetFetchDirection) {
+      case FORWARD:
+        direction = ResultSet.FETCH_FORWARD;
+        break;
+      case REVERSE:
+        direction = ResultSet.FETCH_REVERSE;
+        break;
+      default:
+        direction = ResultSet.FETCH_UNKNOWN;
+    }
+    return direction;
   }
 
   @Override
@@ -467,11 +490,21 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
-  // TODO
   @Override
   public void setFetchDirection(int direction) throws SQLException {
-    if (direction != ResultSet.FETCH_FORWARD) {
-      throw new SQLException("Not supported direction: " + direction);
+
+    switch (direction) {
+      case ResultSet.FETCH_FORWARD:
+        resultSetFetchDirection = FetchDirection.FORWARD;
+        break;
+      case ResultSet.FETCH_REVERSE:
+        resultSetFetchDirection = FetchDirection.REVERSE;
+        break;
+      case ResultSet.FETCH_UNKNOWN:
+        resultSetFetchDirection = FetchDirection.UNKNOWN;
+        break;
+      default:
+        throw new SQLException("invalid argument for setFetchDirection()");
     }
   }
 

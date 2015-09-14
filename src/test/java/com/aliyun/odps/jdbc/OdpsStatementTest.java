@@ -57,7 +57,6 @@ public class OdpsStatementTest {
     Statement stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("select * from yichao_test_table_input;");
     Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
-    Assert.assertEquals(ResultSet.FETCH_FORWARD, rs.getFetchDirection());
 
     long start = System.currentTimeMillis();
     {
@@ -72,7 +71,9 @@ public class OdpsStatementTest {
     long end = System.currentTimeMillis();
     System.out.printf("step\tmillis\t%d\n", end - start);
     rs.close();
+    Assert.assertTrue(rs.isClosed());
     stmt.close();
+    Assert.assertTrue(stmt.isClosed());
   }
 
   @Test
