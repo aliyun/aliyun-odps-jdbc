@@ -49,11 +49,8 @@ public class OdpsQueryResultSetTest {
   @AfterClass
   public static void tearDown() throws Exception {
     rs.close();
-    Assert.assertTrue(rs.isClosed());
     stmt.close();
-    Assert.assertTrue(stmt.isClosed());
     conn.close();
-    Assert.assertTrue(conn.isClosed());
   }
 
   @Test
