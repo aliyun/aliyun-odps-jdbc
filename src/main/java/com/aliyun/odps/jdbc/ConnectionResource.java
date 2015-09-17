@@ -27,8 +27,8 @@ import java.util.Properties;
 public class ConnectionResource {
 
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
-  public static final String CHARSET_DEFAULT_VALUE = "UTF-8";
-  public static final String LIFECYCLE_DEFAULT_VALUE = "3";
+  private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
+  private static final String LIFECYCLE_DEFAULT_VALUE = "3";
 
   /**
    * keys to retrieve properties from url.
@@ -62,9 +62,9 @@ public class ConnectionResource {
   private String accessId;
   private String accessKey;
   private String project;
-  private String charset;
+  private String charset = CHARSET_DEFAULT_VALUE;
   private String logview;
-  private String lifecycle;
+  private String lifecycle = LIFECYCLE_DEFAULT_VALUE;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -89,61 +89,65 @@ public class ConnectionResource {
         paramsInURL.put(keyvalue[0], keyvalue[1]);
       }
 
-      accessId = paramsInURL.get(ACCESS_ID_URL_KEY);
-      accessKey = paramsInURL.get(ACCESS_KEY_URL_KEY);
-
-      charset = paramsInURL.get(CHARSET_URL_KEY);
-      if (charset == null) {
-        charset = CHARSET_DEFAULT_VALUE;
+      if (paramsInURL.get(ACCESS_ID_URL_KEY) != null) {
+        accessId = paramsInURL.get(ACCESS_ID_URL_KEY);
       }
 
-      project = paramsInURL.get(PROJECT_URL_KEY);
-      logview = paramsInURL.get(LOGVIEW_URL_KEY);
+      if (paramsInURL.get(ACCESS_KEY_URL_KEY) != null) {
+        accessKey = paramsInURL.get(ACCESS_KEY_URL_KEY);
+      }
 
-      lifecycle = paramsInURL.get(LIFECYCLE_URL_KEY);
-      if (lifecycle == null) {
-        lifecycle = LIFECYCLE_DEFAULT_VALUE;
+      if (paramsInURL.get(CHARSET_URL_KEY) != null) {
+        charset = paramsInURL.get(CHARSET_URL_KEY);
+      }
+
+      if (paramsInURL.get(PROJECT_URL_KEY) != null) {
+        project = paramsInURL.get(PROJECT_URL_KEY);
+      }
+
+      if (paramsInURL.get(LOGVIEW_URL_KEY) != null) {
+        logview = paramsInURL.get(LOGVIEW_URL_KEY);
+      }
+
+      if (paramsInURL.get(LIFECYCLE_URL_KEY) != null) {
+        lifecycle = paramsInURL.get(LIFECYCLE_URL_KEY);
       }
     }
 
-    if (info == null) return;
+    if (info != null) {
+      if (info.getProperty(ACCESS_ID_PROP_KEY) != null) {
+        accessId = info.getProperty(ACCESS_ID_PROP_KEY);
+      } else {
+        if (info.getProperty(ACCESS_ID_PROP_KEY_ALT) != null) {
+          accessId = info.getProperty(ACCESS_ID_PROP_KEY_ALT);
+        }
+      }
 
-    {
-      String value = info.getProperty(ACCESS_ID_PROP_KEY);
-      accessId = (value == null) ? accessId : value;
+      if (info.getProperty(ACCESS_KEY_PROP_KEY) != null) {
+        accessKey = info.getProperty(ACCESS_KEY_PROP_KEY);
+      } else {
+        if (info.getProperty(ACCESS_KEY_PROP_KEY_ALT) != null) {
+          accessKey = info.getProperty(ACCESS_KEY_PROP_KEY_ALT);
+        }
+      }
 
-      String alt = info.getProperty(ACCESS_ID_PROP_KEY_ALT);
-      accessId = (alt == null) ? accessId : alt;
+      if (info.getProperty(PROJECT_PROP_KEY) != null) {
+        project = info.getProperty(PROJECT_PROP_KEY);
+      }
+
+      if (info.getProperty(CHARSET_PROP_KEY) != null) {
+        charset = info.getProperty(CHARSET_PROP_KEY);
+      }
+
+      if (info.getProperty(LOGVIEW_HOST_PROP_KEY) != null) {
+        logview = info.getProperty(LOGVIEW_HOST_PROP_KEY);
+      }
+
+      if (info.getProperty(LIFECYCLE_PROP_KEY) != null) {
+        lifecycle = info.getProperty(LIFECYCLE_PROP_KEY);
+      }
     }
 
-    {
-      String value = info.getProperty(ACCESS_KEY_PROP_KEY);
-      accessKey = (value == null) ? accessKey : value;
-
-      String alt = info.getProperty(ACCESS_KEY_PROP_KEY_ALT);
-      accessKey = (alt == null) ? accessKey : alt;
-    }
-
-    {
-      String value = info.getProperty(PROJECT_PROP_KEY);
-      project = (value == null) ? project : value;
-    }
-
-    {
-      String value = info.getProperty(CHARSET_PROP_KEY);
-      charset = (value == null) ? charset : value;
-    }
-
-    {
-      // Logview host can only be get from props
-      String value = info.getProperty(LOGVIEW_HOST_PROP_KEY);
-      logview = (value == null) ? logview : value;
-    }
-
-    {
-      String value = info.getProperty(LIFECYCLE_PROP_KEY);
-      lifecycle = (value == null) ? lifecycle : value;
-    }
   }
 
   public String getEndpoint() {
