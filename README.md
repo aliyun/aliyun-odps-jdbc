@@ -56,6 +56,77 @@ For example
  
 
 
+## Example 
+
+
+### JDBC Client Sample Code
+
+    import java.sql.SQLException;
+    import java.sql.Connection;
+    import java.sql.ResultSet;
+    import java.sql.Statement;
+    import java.sql.DriverManager;
+     
+    public class OdpsJdbcClient {
+      private static String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
+     
+      /**
+       * @param args
+       * @throws SQLException
+       */
+      public static void main(String[] args) throws SQLException {
+        try {
+          Class.forName(driverName);
+        } catch (ClassNotFoundException e) {
+          e.printStackTrace();
+          System.exit(1);
+        }
+    
+        // fill in the information here
+        String accessId = "63wd3dpztlmb5ocdkj94pxmm";
+        String accessKey = "oRd30z7sV4hBX9aYtJgii5qnyhg=";
+        String project = "odps_test_sqltask_finance";
+        Connection con = DriverManager.getConnection("jdbc:odps:http://10.97.180.53:8001/odps_dailyrun?project=" + project, accessId, accessKey);
+        Statement stmt = con.createStatement();
+        String tableName = "testOdpsDriverTable";
+        stmt.execute("drop table if exists " + tableName);
+        stmt.execute("create table " + tableName + " (key int, value string)");
+    
+        String sql;
+        ResultSet res;
+    
+        // insert a record
+        sql = "insert into table " + tableName + " select 24 key,  'hours' value from dual";
+        System.out.println("Running: " + sql);
+        int count = stmt.executeUpdate(sql);
+        System.out.println("updated records: " + count);
+        
+        // select * query
+        sql = "select * from " + tableName;
+        System.out.println("Running: " + sql);
+        res = stmt.executeQuery(sql);
+        while (res.next()) {
+          System.out.println(String.valueOf(res.getInt(1)) + "\t" + res.getString(2));
+        }
+     
+        // regular query
+        sql = "select count(1) from " + tableName;
+        System.out.println("Running: " + sql);
+        res = stmt.executeQuery(sql);
+        while (res.next()) {
+          System.out.println(res.getString(1));
+        }
+      }
+    }
+
+### Running the JDBC Sample Code
+
+    # compile the client code
+    javac OdpsJdbcClient.java
+    
+    # run the program with specifying the class path
+    java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
+
 
 ## Provided APIs
 
