@@ -85,7 +85,7 @@ For example
         // fill in the information here
         String accessId = "your_access_id";
         String accessKey = "your_access_key";
-        Connection con = DriverManager.getConnection("jdbc:odps:<odps_endpoint>?project=<your_project_name>", accessId, accessKey);
+        Connection con = DriverManager.getConnection("jdbc:odps:http://service-corp.odps.aliyun-inc.com/api?project=<your_project_name>", accessId, accessKey);
         Statement stmt = con.createStatement();
         String tableName = "testOdpsDriverTable";
         stmt.execute("drop table if exists " + tableName);
@@ -266,6 +266,3 @@ For example
 | isSearchable(int column)         | 指示是否可以在 where 子句中使用指定的列。                                                 | true           |      |
 | isSigned(int column)             | 指示指定列中的值是否带正负号。                                                            |                |      |
 | isWritable(int column)           | 指示在指定的列上进行写操作是否可以获得成功。                                              | false          |      |
-
-
-
