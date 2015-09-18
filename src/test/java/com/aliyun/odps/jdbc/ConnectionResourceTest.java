@@ -36,8 +36,8 @@ public class ConnectionResourceTest {
     Assert.assertEquals(null, cr.getAccessId());
     Assert.assertEquals(null, cr.getAccessKey());
     Assert.assertEquals(null, cr.getLogview());
-    Assert.assertEquals(ConnectionResource.CHARSET_DEFAULT_VALUE, cr.getCharset());
-    Assert.assertEquals(ConnectionResource.LIFECYCLE_DEFAULT_VALUE, cr.getLifecycle());
+    Assert.assertEquals("UTF-8", cr.getCharset());
+    Assert.assertEquals("3", cr.getLifecycle());
   }
 
   @Test
