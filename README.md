@@ -95,7 +95,7 @@ For example
         ResultSet res;
     
         // insert a record
-        sql = "insert into table " + tableName + " select 24 key,  'hours' value from dual";
+        sql = String.format("insert into table %s select 24 key, 'hours' value from (select count(1) from %s) a", tableName, tableName);
         System.out.println("Running: " + sql);
         int count = stmt.executeUpdate(sql);
         System.out.println("updated records: " + count);
