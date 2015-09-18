@@ -83,10 +83,9 @@ For example
         }
     
         // fill in the information here
-        String accessId = "63wd3dpztlmb5ocdkj94pxmm";
-        String accessKey = "oRd30z7sV4hBX9aYtJgii5qnyhg=";
-        String project = "odps_test_sqltask_finance";
-        Connection con = DriverManager.getConnection("jdbc:odps:http://10.97.180.53:8001/odps_dailyrun?project=" + project, accessId, accessKey);
+        String accessId = "your_access_id";
+        String accessKey = "your_access_key";
+        Connection con = DriverManager.getConnection("jdbc:odps:<odps_endpoint>?project=<your_project_name>", accessId, accessKey);
         Statement stmt = con.createStatement();
         String tableName = "testOdpsDriverTable";
         stmt.execute("drop table if exists " + tableName);
