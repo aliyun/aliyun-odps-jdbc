@@ -56,6 +56,76 @@ For example
  
 
 
+## Example 
+
+
+### JDBC Client Sample Code
+
+    import java.sql.SQLException;
+    import java.sql.Connection;
+    import java.sql.ResultSet;
+    import java.sql.Statement;
+    import java.sql.DriverManager;
+     
+    public class OdpsJdbcClient {
+      private static String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
+     
+      /**
+       * @param args
+       * @throws SQLException
+       */
+      public static void main(String[] args) throws SQLException {
+        try {
+          Class.forName(driverName);
+        } catch (ClassNotFoundException e) {
+          e.printStackTrace();
+          System.exit(1);
+        }
+    
+        // fill in the information here
+        String accessId = "your_access_id";
+        String accessKey = "your_access_key";
+        Connection con = DriverManager.getConnection("jdbc:odps:http://service-corp.odps.aliyun-inc.com/api?project=<your_project_name>", accessId, accessKey);
+        Statement stmt = con.createStatement();
+        String tableName = "testOdpsDriverTable";
+        stmt.execute("drop table if exists " + tableName);
+        stmt.execute("create table " + tableName + " (key int, value string)");
+    
+        String sql;
+        ResultSet res;
+    
+        // insert a record
+        sql = String.format("insert into table %s select 24 key, 'hours' value from (select count(1) from %s) a", tableName, tableName);
+        System.out.println("Running: " + sql);
+        int count = stmt.executeUpdate(sql);
+        System.out.println("updated records: " + count);
+        
+        // select * query
+        sql = "select * from " + tableName;
+        System.out.println("Running: " + sql);
+        res = stmt.executeQuery(sql);
+        while (res.next()) {
+          System.out.println(String.valueOf(res.getInt(1)) + "\t" + res.getString(2));
+        }
+     
+        // regular query
+        sql = "select count(1) from " + tableName;
+        System.out.println("Running: " + sql);
+        res = stmt.executeQuery(sql);
+        while (res.next()) {
+          System.out.println(res.getString(1));
+        }
+      }
+    }
+
+### Running the JDBC Sample Code
+
+    # compile the client code
+    javac OdpsJdbcClient.java
+    
+    # run the program with specifying the class path
+    java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
+
 
 ## Provided APIs
 
@@ -196,6 +266,3 @@ For example
 | isSearchable(int column)         | 指示是否可以在 where 子句中使用指定的列。                                                 | true           |      |
 | isSigned(int column)             | 指示指定列中的值是否带正负号。                                                            |                |      |
 | isWritable(int column)           | 指示在指定的列上进行写操作是否可以获得成功。                                              | false          |      |
-
-
-
