@@ -109,10 +109,10 @@ public class OdpsResultSetTest {
     MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals(1943, rs.getInt(1));
+      Assert.assertEquals(1943L, rs.getInt(1));
       Assert.assertEquals((int) 3.1415926, rs.getInt(2));
       Assert.assertEquals(new BigDecimal(decimalStr).intValue(), rs.getInt(3));
-      Assert.assertEquals(1234, rs.getInt(4));
+      Assert.assertEquals(1234L, rs.getInt(4));
     }
     rs.close();
   }
@@ -143,10 +143,10 @@ public class OdpsResultSetTest {
     MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals((long) 1943, rs.getLong(1));
+      Assert.assertEquals(1943L, rs.getLong(1));
       Assert.assertEquals((long) 3.1415926, rs.getLong(2));
       Assert.assertEquals(new BigDecimal(decimalStr).longValue(), rs.getLong(3));
-      Assert.assertEquals((long) 1234, rs.getLong(4));
+      Assert.assertEquals(1234L, rs.getLong(4));
     }
     rs.close();
   }
@@ -159,7 +159,7 @@ public class OdpsResultSetTest {
     MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals((double) 1943, rs.getDouble(1), 0);
+      Assert.assertEquals(1943D, rs.getDouble(1), 0);
       Assert.assertEquals(3.1415926D, rs.getDouble(2), 0);
       Assert.assertEquals(new BigDecimal(decimalStr).doubleValue(), rs.getDouble(3), 0);
       Assert.assertEquals(5.12345D, rs.getDouble(4), 0);
