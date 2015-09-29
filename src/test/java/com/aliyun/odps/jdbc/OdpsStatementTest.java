@@ -242,56 +242,18 @@ public class OdpsStatementTest {
   }
 
   @Test
-  public void testExecuteSimple() throws Exception {
-    Statement stmt = conn.createStatement();
-    {
-      boolean rs_generated = stmt.execute("select 1 id, 1.5 weight from dual;");
-      Assert.assertEquals(true, rs_generated);
-      ResultSet rs = stmt.getResultSet();
-      Assert.assertNotNull(rs); // Assure the result set can be generated
-      {
-        rs.next();
-        Assert.assertEquals(1.5, rs.getDouble(2), 0);
-        Assert.assertEquals(1, rs.getInt(1));
-      }
-      rs.close();
-    }
-    stmt.close();
-  }
-
-  @Test
-  public void testExecuteComplex() throws Exception {
-    Statement stmt = conn.createStatement();
-    {
-      Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
-      ResultSet rs = stmt.getResultSet();
-      {
-        rs.next();
-        Assert.assertEquals(1, rs.getInt(1));
-      }
-      rs.close();
-    }
-
-    {
-      Assert.assertEquals(false, stmt.execute(
-          "insert into table yichao_test_table_output select 1 id from dual;"));
-      Assert.assertEquals(1, stmt.getUpdateCount());
-      Assert.assertEquals(false, stmt.execute(
-          "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
-      Assert.assertEquals(1, stmt.getUpdateCount());
-    }
-
-    // do not check result
-    Assert.assertEquals(true, stmt.execute(" select 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute("\nselect 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute("\t\r\nselect 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute("SELECT 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute(" SELECT 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute(" SELECT 1 id--xixi\n from dual;"));
-    Assert.assertEquals(true, stmt.execute("--abcd\nSELECT 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\nSELECT 1 id from dual;"));
-    Assert.assertEquals(true, stmt.execute("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
-
-    stmt.close();
+  public void testQueryOrUpdate() throws Exception {
+    Assert.assertTrue(OdpsStatement.isQuery("select 1 id, 1.5 weight from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery(" select 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery("\nselect 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery("\t\r\nselect 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery("SELECT 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery(" SELECT 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery(" SELECT 1 id--xixi\n from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery("--abcd\nSELECT 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\nSELECT 1 id from dual;"));
+    Assert.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
+    Assert.assertFalse(OdpsStatement.isQuery("insert into table yichao_test_table_output select 1 id from dual;"));
+    Assert.assertFalse(OdpsStatement.isQuery("insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
   }
 }

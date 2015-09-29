@@ -317,6 +317,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean execute(String sql) throws SQLException {
+    if (isQuery(sql)) {
+      executeQuery(sql);
+      return true;
+    }
+    executeUpdate(sql);
+    return false;
+  }
+
+  public static boolean isQuery(String sql) throws SQLException {
     BufferedReader reader = new BufferedReader(new StringReader(sql));
     try {
       String line;
@@ -329,7 +338,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
         // The first none-comment line start with "select"
         if (line.matches("(?i)^(\\s*)(SELECT).*$")) {
-          executeQuery(sql);
           return true;
         } else {
           break;
@@ -338,8 +346,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     } catch (IOException e) {
       throw new SQLException(e);
     }
-
-    executeUpdate(sql);
     return false;
   }
 
