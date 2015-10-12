@@ -290,7 +290,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     }
 
     throw new SQLException(
-        "Illegal to cast column " + columnIndex + "to byte: " + obj.toString());
+        "Illegal to cast column " + columnIndex + " to byte: " + obj.toString());
   }
 
   @Override

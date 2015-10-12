@@ -21,58 +21,31 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Date;
-import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.util.Formatter;
+import java.util.Arrays;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
+import com.aliyun.odps.OdpsType;
+
 public class OdpsResultSetTest {
 
-  static Statement stmt;
-
-  static long unixTimeNow;
-  static SimpleDateFormat formatter;
-  static String nowStr;
-  static String odpsNowStr;
-
-  static String decimalStr;
-  static String odpsDecimalStr;
-  static BigDecimal bigDecimal;
-
-  @BeforeClass
-  public static void setUp() throws Exception {
-    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
-
-    formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    unixTimeNow = new java.util.Date().getTime();
-    nowStr = formatter.format(unixTimeNow);
-    odpsNowStr = "cast('" + nowStr + "' as datetime)";
-
-    decimalStr = "55.123456789012345";
-    odpsDecimalStr = "cast('" + decimalStr + "' as decimal)";
-    bigDecimal = new BigDecimal(decimalStr);
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    stmt.close();
-    OdpsConnectionFactory.getInstance().conn.close();
-  }
+  static long unixTimeNow = new java.util.Date().getTime();
+  static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  static String nowStr = formatter.format(unixTimeNow);
+  static String decimalStr = "55.123456789012345";
 
   @Test
   public void testGetObject() throws Exception {
-    ResultSet
-        rs = stmt.executeQuery("select * from (select 1 id, 1.5 weight from dual" +
-                               " union all select 2 id, 2.9 weight from dual) x;");
+    Object[][] rows = new Object[2][];
+    rows[0] = new Object[]{Long.valueOf(1L), Double.valueOf(1.5D)};
+    rows[1] = new Object[]{Long.valueOf(2L), Double.valueOf(2.9D)};
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(Arrays.asList("id", "weight"),
+                                                       Arrays.asList(OdpsType.BIGINT, OdpsType.DOUBLE));
+    MockResultSet rs = new MockResultSet(rows, meta);
     {
       rs.next();
       Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
@@ -94,9 +67,11 @@ public class OdpsResultSetTest {
 
   @Test
   public void testGetBoolean() throws Exception {
-    // cast from BOOLEAN, STRING, DOUBLE, BIGINT
-    ResultSet rs = stmt.executeQuery("select true c1, false c2, '42' c3, '0' c4, "
-                                     + "3.14 c5, 0.0 c6, 95 c7, 0 c8 from dual;");
+    // cast from BOOLEAN, DOUBLE, BIGINT, STRING
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {Boolean.TRUE, Boolean.FALSE, Long.valueOf(42L), Long.valueOf(0L),
+                            Double.valueOf(3.14D), Double.valueOf(0.0D), "95", "0"};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
       Assert.assertEquals(true, rs.getBoolean(1));
@@ -114,59 +89,96 @@ public class OdpsResultSetTest {
   @Test
   public void testGetByte() throws Exception {
     // cast from BIGINT, DOUBLE, DECIMAL
-    ResultSet rs = stmt.executeQuery(
-        String.format("select 1943 c1, 3.1415926 c2, %s c3 from dual;", odpsDecimalStr));
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {Long.valueOf(1943L), Double.valueOf(3.1415926D), new BigDecimal(decimalStr)};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
       Assert.assertEquals((byte) 1943, rs.getByte(1));
       Assert.assertEquals((byte) 3.1415926, rs.getByte(2));
-      Assert.assertEquals(bigDecimal.byteValue(), rs.getByte(3));
+      Assert.assertEquals(new BigDecimal("55.123456789012345").byteValue(), rs.getByte(3));
     }
     rs.close();
   }
 
   @Test
-  public void testGetInteger() throws Exception {
+  public void testGetInt() throws Exception {
     // cast from BIGINT, DOUBLE, DECIMAL, STRING
-    ResultSet rs = stmt.executeQuery(
-        String.format("select 1943 c1, 3.1415926 c2, %s c3, '1234' c4 from dual;", odpsDecimalStr));
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {Long.valueOf(1943L), Double.valueOf(3.1415926D), new BigDecimal(decimalStr), "1234"};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals(1943, rs.getInt(1));
+      Assert.assertEquals(1943L, rs.getInt(1));
       Assert.assertEquals((int) 3.1415926, rs.getInt(2));
-      Assert.assertEquals(bigDecimal.intValue(), rs.getInt(3));
-      Assert.assertEquals(1234, rs.getInt(4));
+      Assert.assertEquals(new BigDecimal(decimalStr).intValue(), rs.getInt(3));
+      Assert.assertEquals(1234L, rs.getInt(4));
+    }
+    rs.close();
+  }
 
+  @Test
+  public void testGetShort() throws Exception {
+    // cast from BIGINT, DOUBLE, DECIMAL, STRING
+    Object[][] rows = new Object[1][];
+    rows[0] =
+        new Object[]{Long.valueOf(1943L), Double.valueOf(3.1415926D), new BigDecimal(decimalStr),
+                     "1234"};
+    MockResultSet rs = new MockResultSet(rows, null);
+    {
+      rs.next();
       Assert.assertEquals((short) 1943, rs.getShort(1));
       Assert.assertEquals((short) 3.1415926, rs.getShort(2));
-      Assert.assertEquals(bigDecimal.shortValue(), rs.getShort(3));
+      Assert.assertEquals(new BigDecimal(decimalStr).shortValue(), rs.getShort(3));
       Assert.assertEquals((short) 1234, rs.getShort(4));
+      rs.close();
+    }
+  }
 
-      Assert.assertEquals((long) 1943, rs.getLong(1));
+  @Test
+  public void testGetLong() throws Exception {
+    // cast from BIGINT, DOUBLE, DECIMAL, STRING
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {Long.valueOf(1943L), Double.valueOf(3.1415926D), new BigDecimal(decimalStr), "1234"};
+    MockResultSet rs = new MockResultSet(rows, null);
+    {
+      rs.next();
+      Assert.assertEquals(1943L, rs.getLong(1));
       Assert.assertEquals((long) 3.1415926, rs.getLong(2));
-      Assert.assertEquals(bigDecimal.longValue(), rs.getLong(3));
-      Assert.assertEquals((long) 1234, rs.getLong(4));
+      Assert.assertEquals(new BigDecimal(decimalStr).longValue(), rs.getLong(3));
+      Assert.assertEquals(1234L, rs.getLong(4));
     }
     rs.close();
   }
 
   @Test
-  public void testGetFloatPoint() throws Exception {
+  public void testGetDouble() throws Exception {
     // cast from BIGINT, DOUBLE, DECIMAL, STRING
-    ResultSet rs = stmt.executeQuery(
-        String.format("select 1943 c1, 3.1415926 c2, %s c3, '3.1415926' c4 from dual;",
-                      odpsDecimalStr));
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {Long.valueOf(1943L), Double.valueOf(3.1415926D), new BigDecimal(decimalStr), "5.12345"};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals((double) 1943, rs.getDouble(1), 0);
-      Assert.assertEquals(3.1415926, rs.getDouble(2), 0);
-      Assert.assertEquals(bigDecimal.doubleValue(), rs.getDouble(3), 0);
-      Assert.assertEquals(3.1415926, rs.getDouble(4), 0);
+      Assert.assertEquals(1943D, rs.getDouble(1), 0);
+      Assert.assertEquals(3.1415926D, rs.getDouble(2), 0);
+      Assert.assertEquals(new BigDecimal(decimalStr).doubleValue(), rs.getDouble(3), 0);
+      Assert.assertEquals(5.12345D, rs.getDouble(4), 0);
+    }
+    rs.close();
+  }
 
+  @Test
+  public void testGetFloat() throws Exception {
+    // cast from BIGINT, DOUBLE, DECIMAL, STRING
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {Long.valueOf(1943L), Double.valueOf(3.1415926D), new BigDecimal(decimalStr), "5.12345"};
+    MockResultSet rs = new MockResultSet(rows, null);
+    {
+      rs.next();
       Assert.assertEquals((float) 1943, rs.getFloat(1), 0);
-      Assert.assertEquals((float) 3.1415926, rs.getFloat(2), 0);
-      Assert.assertEquals(bigDecimal.floatValue(), rs.getFloat(3), 0);
-      Assert.assertEquals((float) 3.1415926, rs.getFloat(4), 0);
+      Assert.assertEquals(3.1415926F, rs.getFloat(2), 0);
+      Assert.assertEquals(new BigDecimal(decimalStr).floatValue(), rs.getFloat(3), 0);
+      Assert.assertEquals(5.12345F, rs.getFloat(4), 0);
     }
     rs.close();
   }
@@ -174,29 +186,53 @@ public class OdpsResultSetTest {
   @Test
   public void testGetBigDecimal() throws Exception {
     // cast from STRING, DECIMAL
-    ResultSet rs = stmt.executeQuery(
-        String.format("select '%s' c1, %s c2 from dual;", decimalStr, odpsDecimalStr));
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {decimalStr, new BigDecimal(decimalStr)};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals(bigDecimal, rs.getBigDecimal(1));
-      Assert.assertEquals(bigDecimal, rs.getBigDecimal(2));
+      Assert.assertEquals(new BigDecimal(decimalStr), rs.getBigDecimal(1));
+      Assert.assertEquals(new BigDecimal(decimalStr), rs.getBigDecimal(2));
     }
     rs.close();
   }
 
   @Test
-  public void testGetTimeFormat() throws Exception {
+  public void testGetDate() throws Exception {
     // cast from STRING, DATETIME
-    ResultSet rs = stmt.executeQuery(
-        String.format("select '%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {nowStr, new java.util.Date(unixTimeNow)};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
-      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
-      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(2).toString());
+      Assert.assertEquals(new java.sql.Date(unixTimeNow).toString(), rs.getDate(1).toString());
+      Assert.assertEquals(new java.sql.Date(unixTimeNow).toString(), rs.getDate(2).toString());
+    }
+    rs.close();
+  }
 
+  @Test
+  public void testGetTime() throws Exception {
+    // cast from STRING, DATETIME
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {nowStr, new java.util.Date(unixTimeNow)};
+    MockResultSet rs = new MockResultSet(rows, null);
+    {
+      rs.next();
       Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(1).toString());
       Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(2).toString());
+     }
+    rs.close();
+  }
 
+  @Test
+  public void testGetTimestamp() throws Exception {
+    // cast from STRING, DATETIME
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {nowStr, new java.util.Date(unixTimeNow)};
+    MockResultSet rs = new MockResultSet(rows, null);
+    {
+      rs.next();
       Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
                           formatter.format(rs.getTimestamp(1)));
       Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
@@ -207,19 +243,19 @@ public class OdpsResultSetTest {
 
   @Test
   public void testGetString() throws Exception {
-    // cast from STRING, DOUBLE, BIGINT, DATETIME, DECIMAL
-    ResultSet rs = stmt.executeQuery(
-        String.format("select 'alibaba' c1, 0.5 c2, 1 c3, %s c4, %s c5, true c6 from dual;",
-                      odpsNowStr, odpsDecimalStr));
+    // cast from STRING, DOUBLE, BIGINT, DATETIME, DECIMAL, BOOLEAN
+    Object[][] rows = new Object[1][];
+    rows[0] = new Object[] {"alibaba", Double.valueOf(0.5D), Long.valueOf(1L), new java.util.Date(unixTimeNow),
+                            new BigDecimal(decimalStr), Boolean.TRUE};
+    MockResultSet rs = new MockResultSet(rows, null);
     {
       rs.next();
       Assert.assertEquals("alibaba", rs.getString(1));
-      Assert.assertEquals("alibaba", rs.getString("c1"));
       Assert.assertEquals("0.5", rs.getString(2));
       Assert.assertEquals("1", rs.getString(3));
       Assert.assertEquals(nowStr, rs.getString(4));
       Assert.assertEquals(decimalStr, rs.getString(5));
-      Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
+      Assert.assertEquals("true", rs.getString(6));
     }
     rs.close();
   }
