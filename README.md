@@ -1,20 +1,38 @@
 # JDBC Driver for ODPS
 
+## Installation
 
-## Dependenies
+
+1.Use the standalone library:
+
+[odps-jdbc-1.0-public-jar-with-dependencies.jar.zip](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.0-public-jar-with-dependencies.jar.zip)
+
+2.Build from source:
+
+```
+git clone ....
+cd odps-jdbc
+mvn install -DskipTests
+```
+
+3.Configure and manage it through Maven:
+
+```
+<dependency>
+  <groupId>com.aliyun.odps</groupId>
+  <artifactId>odps-jdbc</artifactId>
+  <version>1.0-public</version>
+</dependency>
+```
+
+
+## Dependencies
 
 ```
 jre >= 1.6
 odps-sdk-core >= 0.18.3-public
 fastjson >= 1.2.6
 ```
-
-## Installation
-
-	git clone ....
-	cd odps-jdbc
-	mvn install -Dmaven.test.skip=true
-
 
 ## Getting Started
 
