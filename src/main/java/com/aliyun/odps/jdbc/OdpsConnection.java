@@ -97,6 +97,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
+    log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
     log.info(String.format(
         "OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d]",
         endpoint, project, charset, logviewHost, lifecycle));
@@ -105,13 +106,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
-    odps.setUserAgent("odps-jdbc-1.0-beta");
+    odps.setUserAgent("odps-jdbc" + Utils.retrieveVersion());
 
     this.info = info;
     this.charset = charset;
     this.logviewHost = logviewHost;
     this.lifecycle = lifecycle;
     this.stmtHandles = new ArrayList<Statement>();
+
+
+
+
   }
 
   @Override

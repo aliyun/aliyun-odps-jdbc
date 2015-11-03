@@ -22,6 +22,12 @@ package com.aliyun.odps.jdbc;
 
 public class Utils {
 
+  public static String retrieveVersion() {
+    // TODO: remove the hard code later
+    // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
+    return "1.0-public";
+  }
+
   public static boolean matchPattern(String s, String pattern) {
 
     if (pattern.contains("%") || pattern.contains("_")) {
