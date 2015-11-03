@@ -29,6 +29,7 @@ public class ConnectionResource {
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
   private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
   private static final String LIFECYCLE_DEFAULT_VALUE = "3";
+  private static final String LOGLEVEL_DEFAULT_VALUE = "INFO";
 
   /**
    * keys to retrieve properties from url.
@@ -39,6 +40,7 @@ public class ConnectionResource {
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String LIFECYCLE_URL_KEY = "lifecycle";
+  private static final String LOGLEVEL_URL_KEY = "loglevel";
 
   /**
    * Keys to retrieve properties from info.
@@ -51,6 +53,7 @@ public class ConnectionResource {
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
   public static final String LIFECYCLE_PROP_KEY = "lifecycle";
+  public static final String LOGLEVEL_PROP_KEY = "log_level";
 
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
@@ -65,6 +68,7 @@ public class ConnectionResource {
   private String charset = CHARSET_DEFAULT_VALUE;
   private String logview;
   private String lifecycle = LIFECYCLE_DEFAULT_VALUE;
+  private String logLevel = LOGLEVEL_DEFAULT_VALUE;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -112,6 +116,10 @@ public class ConnectionResource {
       if (paramsInURL.get(LIFECYCLE_URL_KEY) != null) {
         lifecycle = paramsInURL.get(LIFECYCLE_URL_KEY);
       }
+
+      if (paramsInURL.get(LOGLEVEL_URL_KEY) != null) {
+        logLevel = paramsInURL.get(LOGLEVEL_URL_KEY);
+      }
     }
 
     if (info != null) {
@@ -146,8 +154,11 @@ public class ConnectionResource {
       if (info.getProperty(LIFECYCLE_PROP_KEY) != null) {
         lifecycle = info.getProperty(LIFECYCLE_PROP_KEY);
       }
-    }
 
+      if (info.getProperty(LOGLEVEL_PROP_KEY) != null) {
+        logLevel = info.getProperty(LOGLEVEL_PROP_KEY);
+      }
+    }
   }
 
   public String getEndpoint() {
@@ -175,4 +186,6 @@ public class ConnectionResource {
   }
 
   public String getLifecycle() { return lifecycle; }
+
+  public String getLogLevel() { return logLevel; }
 }
