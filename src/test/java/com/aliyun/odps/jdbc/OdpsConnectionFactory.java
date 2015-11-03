@@ -47,7 +47,7 @@ public class OdpsConnectionFactory {
       Properties odpsConfig = new Properties();
 
       InputStream is =
-          Thread.currentThread().getContextClassLoader().getResourceAsStream("bvt_conf.properties");
+          Thread.currentThread().getContextClassLoader().getResourceAsStream("conf.properties");
       odpsConfig.load(is);
 
       Class.forName("com.aliyun.odps.jdbc.OdpsDriver");

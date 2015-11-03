@@ -15,7 +15,7 @@ cd odps-jdbc
 mvn install -DskipTests
 ```
 
-3.Configure and manage it through Maven:
+3.Configure and manage the dependency through Maven:
 
 ```
 <dependency>
@@ -23,15 +23,6 @@ mvn install -DskipTests
   <artifactId>odps-jdbc</artifactId>
   <version>1.0-public</version>
 </dependency>
-```
-
-
-## Dependencies
-
-```
-jre >= 1.6
-odps-sdk-core >= 0.18.3-public
-fastjson >= 1.2.6
 ```
 
 ## Getting Started
@@ -152,6 +143,34 @@ For example
     # run the program with specifying the class path
     java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
 
+
+
+
+## How to Do Test？
+
+
+1.Copy out a configuration file:
+
+```
+cp ./src/test/resources/conf.properties.example ./src/test/resources/conf.properties
+```
+
+2.Fill in your connection strings:
+
+```
+access_id=...
+access_key=...
+end_point=...
+project_name=...
+logview_host=...
+character_set=UTF-8
+```
+
+3.Run maven test command (or just test it in IntelliJ IDEA):
+
+```
+mvn test
+```
 
 ## Authors && Contributors
 
