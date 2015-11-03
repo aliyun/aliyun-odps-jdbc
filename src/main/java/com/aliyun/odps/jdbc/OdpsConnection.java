@@ -43,14 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.LogView;
@@ -80,7 +76,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean isClosed = false;
 
-  private static Log log = LogFactory.getLog(OdpsConnection.class);
+  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsConnection");
 
   private SQLWarning warningChain = null;
 
@@ -103,27 +99,26 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
-    // log4j
-    ConsoleAppender console = new ConsoleAppender();
-    String PATTERN = "%d [%p|%c|%C{1}] %m%n";
-    console.setLayout(new PatternLayout(PATTERN));
-    if (logLevel.equalsIgnoreCase("debug")) {
-      console.setThreshold(Level.DEBUG);
-    } else if (logLevel.equalsIgnoreCase("info")) {
-      console.setThreshold(Level.INFO);
-    } else if (logLevel.equalsIgnoreCase("fatal")) {
-      console.setThreshold(Level.FATAL);
+    ConsoleHandler consoleHandler =new ConsoleHandler();
+    consoleHandler.setLevel(Level.ALL);
+    Logger rootLogger = Logger.getLogger("com.aliyun.odps.jdbc");
+    if (logLevel.equalsIgnoreCase("fatal") || logLevel.equalsIgnoreCase("severe")) {
+      rootLogger.setLevel(Level.SEVERE);
+    } else if (logLevel.equalsIgnoreCase("warning")) {
+      rootLogger.setLevel(Level.WARNING);
+    } else if (logLevel.equalsIgnoreCase("debug") || logLevel.equalsIgnoreCase("fine")) {
+      rootLogger.setLevel(Level.FINEST);
     } else {
-      throw new IllegalArgumentException("loglevel is expected to be: INFO/DEBUG/FATAL");
+      rootLogger.setLevel(Level.INFO);
     }
-    console.activateOptions();
-    Logger.getRootLogger().addAppender(console);
+    consoleHandler.setFormatter(new SimpleFormatter());
+    rootLogger.setUseParentHandlers(false);
+    rootLogger.addHandler(consoleHandler);
 
     log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
     log.info(String.format(
         "OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d, loglevel=%s]",
         endpoint, project, charset, logviewHost, lifecycle, logLevel));
-
     Account account = new AliyunAccount(accessId, accessKey);
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
@@ -522,7 +517,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       log.info("Run SQL: " + sql + " => Log View: " + logViewUrl);
 
     } catch (OdpsException e) {
-      log.fatal("fail to run sql: " + sql);
+      log.severe("fail to run sql: " + sql);
       throw new SQLException(e);
     }
     return instance;
@@ -540,7 +535,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       long begin = System.currentTimeMillis();
       SQLTask.run(odps, sql).waitForSuccess();
       long end = System.currentTimeMillis();
-      log.debug("It took me " + (end - begin) + " ms to run SQL: " + sql);
+      log.fine("It took me " + (end - begin) + " ms to run SQL: " + sql);
     } catch (OdpsException e) {
       throw new SQLException(e);
     }
