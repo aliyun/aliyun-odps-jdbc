@@ -60,13 +60,8 @@ public class OdpsConnectionFactory {
       String url = String.format("jdbc:odps:%s?project=%s&lifecycle=1", endpoint, project);
 
       // pass project name via url
-       conn = DriverManager.getConnection(url, username, password);
-
-      // pass everything (except endpoint) via info
-//      conn = DriverManager.getConnection("jdbc:odps:" + endpoint, odpsConfig);
-
+      conn = DriverManager.getConnection(url, username, password);
       Assert.assertNotNull(conn);
-      Assert.assertEquals(odpsConfig.getProperty("end_point"), conn.getCatalog());
 
       // Print info
       Driver driver = DriverManager.getDriver(url);
@@ -74,13 +69,6 @@ public class OdpsConnectionFactory {
       for (DriverPropertyInfo dpi : dpis) {
         System.out.printf("%s\t%s\t%s\t%s\n", dpi.name, dpi.required, dpi.description, dpi.value);
       }
-
-      // change to funny names
-      conn.setCatalog("xixi");
-
-      // change back
-      conn.setCatalog(odpsConfig.getProperty("end_point"));
-
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {
