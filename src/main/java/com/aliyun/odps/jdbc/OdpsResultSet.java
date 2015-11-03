@@ -41,12 +41,8 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.IllegalFormatCodePointException;
 import java.util.Map;
 import java.util.logging.Logger;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
