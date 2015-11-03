@@ -44,7 +44,7 @@ public class ConnectionResourceTest {
   public void connectionURLFullTest() {
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5", null);
+                                                   + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL", null);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("idid", cr.getAccessId());
@@ -52,6 +52,7 @@ public class ConnectionResourceTest {
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
     Assert.assertEquals("5", cr.getLifecycle());
+    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 
   @Test
@@ -63,6 +64,7 @@ public class ConnectionResourceTest {
     info.put("logview_host", "loglog");
     info.put("charset", "setset");
     info.put("lifecycle", "5");
+    info.put("log_level", "FATAL");
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", info);
 
@@ -73,6 +75,7 @@ public class ConnectionResourceTest {
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
     Assert.assertEquals("5", cr.getLifecycle());
+    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 
   @Test
@@ -84,9 +87,10 @@ public class ConnectionResourceTest {
     info.put("logview_host", "log");
     info.put("charset", "set");
     info.put("lifecycle", "100");
+    info.put("log_level", "FATAL");
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5", info);
+                                                   + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO", info);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("id", cr.getAccessId());
@@ -94,6 +98,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("log", cr.getLogview());
     Assert.assertEquals("set", cr.getCharset());
     Assert.assertEquals("100", cr.getLifecycle());
+    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
-
 }

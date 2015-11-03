@@ -46,6 +46,11 @@ import java.util.concurrent.Executor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.LogView;
@@ -89,6 +94,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String project = connRes.getProject();
     String endpoint = connRes.getEndpoint();
     String logviewHost = connRes.getLogview();
+    String logLevel = connRes.getLogLevel();
 
     int lifecycle;
     try {
@@ -97,10 +103,26 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
+    // log4j
+    ConsoleAppender console = new ConsoleAppender();
+    String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+    console.setLayout(new PatternLayout(PATTERN));
+    if (logLevel.equalsIgnoreCase("debug")) {
+      console.setThreshold(Level.DEBUG);
+    } else if (logLevel.equalsIgnoreCase("info")) {
+      console.setThreshold(Level.INFO);
+    } else if (logLevel.equalsIgnoreCase("fatal")) {
+      console.setThreshold(Level.FATAL);
+    } else {
+      throw new IllegalArgumentException("loglevel is expected to be: INFO/DEBUG/FATAL");
+    }
+    console.activateOptions();
+    Logger.getRootLogger().addAppender(console);
+
     log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
     log.info(String.format(
-        "OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d]",
-        endpoint, project, charset, logviewHost, lifecycle));
+        "OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d, loglevel=%s]",
+        endpoint, project, charset, logviewHost, lifecycle, logLevel));
 
     Account account = new AliyunAccount(accessId, accessKey);
     odps = new Odps(account);
@@ -113,10 +135,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.logviewHost = logviewHost;
     this.lifecycle = lifecycle;
     this.stmtHandles = new ArrayList<Statement>();
-
-
-
-
   }
 
   @Override

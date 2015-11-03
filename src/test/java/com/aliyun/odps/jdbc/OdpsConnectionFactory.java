@@ -42,8 +42,6 @@ public class OdpsConnectionFactory {
 
   private OdpsConnectionFactory() {
     try {
-      org.apache.log4j.BasicConfigurator.configure();
-
       Properties odpsConfig = new Properties();
 
       InputStream is =
@@ -56,19 +54,14 @@ public class OdpsConnectionFactory {
       String project = odpsConfig.getProperty("project_name");
       String username = odpsConfig.getProperty("access_id");
       String password = odpsConfig.getProperty("access_key");
-
-      String url = String.format("jdbc:odps:%s?project=%s&lifecycle=1", endpoint, project);
+      String loglevel = odpsConfig.getProperty("log_level");
+      String logview = odpsConfig.getProperty("logview_host");
+      String url = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s", endpoint, project, loglevel, logview);
 
       // pass project name via url
       conn = DriverManager.getConnection(url, username, password);
       Assert.assertNotNull(conn);
 
-      // Print info
-      Driver driver = DriverManager.getDriver(url);
-      DriverPropertyInfo[] dpis = driver.getPropertyInfo(url, odpsConfig);
-      for (DriverPropertyInfo dpi : dpis) {
-        System.out.printf("%s\t%s\t%s\t%s\n", dpi.name, dpi.required, dpi.description, dpi.value);
-      }
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {
