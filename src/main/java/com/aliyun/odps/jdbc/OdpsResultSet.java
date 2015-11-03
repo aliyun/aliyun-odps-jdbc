@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.IllegalFormatCodePointException;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,7 +56,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   private SQLWarning warningChain = null;
 
-  private static Log log = LogFactory.getLog(OdpsResultSet.class);
+  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsResultSet");
 
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;

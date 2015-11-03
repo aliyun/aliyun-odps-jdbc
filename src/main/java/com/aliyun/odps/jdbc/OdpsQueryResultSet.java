@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,7 +63,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   private boolean isClosed = false;
 
-  private static Log log = LogFactory.getLog(OdpsQueryResultSet.class);
+  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsQueryResultSet");
 
   OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
@@ -315,7 +316,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
       }
       long duration = System.currentTimeMillis() - start;
       long totalKBytes = reader.getTotalBytes() / 1024;
-      log.debug(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
+      log.fine(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
                               count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException e) {
