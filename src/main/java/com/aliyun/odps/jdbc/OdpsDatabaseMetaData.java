@@ -782,7 +782,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                                             null, col.getType(),
                                             col.getComment(), i + 1);
         Object[] rowVals = {
-            jdbcCol.getTableCatalog(), null, jdbcCol.getTableName(), jdbcCol.getColumnName(),
+            null, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
             (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
             (long) jdbcCol.getDecimalDigits(),
             (long) jdbcCol.getNumPercRaidx(), (long) jdbcCol.getIsNullable(), jdbcCol.getComment(),

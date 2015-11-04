@@ -491,10 +491,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return this.odps;
   }
 
-  public String getUrl() {
-    return this.odps.getEndpoint();
-  }
-
   /**
    * Kick-offer
    *

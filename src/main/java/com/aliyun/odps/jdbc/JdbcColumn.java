@@ -39,16 +39,16 @@ public class JdbcColumn {
 
   private final String columnName;
   private final String tableName;
-  private final String tableCatalog;
+  private final String tableSchema;
   private final OdpsType type;
   private final String comment;
   private final int ordinalPos;
 
-  JdbcColumn(String columnName, String tableName, String tableCatalog
+  JdbcColumn(String columnName, String tableName, String tableSchema
       , OdpsType type, String comment, int ordinalPos) {
     this.columnName = columnName;
     this.tableName = tableName;
-    this.tableCatalog = tableCatalog;
+    this.tableSchema = tableSchema;
     this.type = type;
     this.comment = comment;
     this.ordinalPos = ordinalPos;
@@ -186,8 +186,8 @@ public class JdbcColumn {
     return tableName;
   }
 
-  public String getTableCatalog() {
-    return tableCatalog;
+  public String getTableSchema() {
+    return tableSchema;
   }
 
   public int getType() throws SQLException {
