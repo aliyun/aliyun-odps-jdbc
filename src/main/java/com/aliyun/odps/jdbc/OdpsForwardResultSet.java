@@ -123,7 +123,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
     if (fetchedRows == totalRows) {
       long end = System.currentTimeMillis();
-      log.info("It took me " + (end - startTime) + " ms to fetch all records");
+      log.fine("It took me " + (end - startTime) + " ms to fetch all records");
       // For forward result set, we implicitly close it after fetching all records
       close();
       return false;
