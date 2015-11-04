@@ -158,6 +158,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     checkClosed();
     beforeExecute();
 
+    log.fine("execute query...");
+
     long begin = System.currentTimeMillis();
 
     // Create a temp table for querying ResultSet and ensure its creation.
@@ -249,6 +251,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     checkClosed();
     beforeExecute();
 
+    log.fine("execute update...");
+
+    long begin = System.currentTimeMillis();
+
     try {
       executeInstance = connHanlde.runClientSQL(sql);
 
@@ -276,6 +282,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             break;
         }
       }
+
+      long end = System.currentTimeMillis();
+      log.fine("It took me " + (end - begin) + " ms to execute update");
 
       // extract update count
       Instance.TaskSummary taskSummary = executeInstance.getTaskSummary("SQL");
@@ -497,7 +506,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setEscapeProcessing(boolean enable) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+
   }
 
   @Override
