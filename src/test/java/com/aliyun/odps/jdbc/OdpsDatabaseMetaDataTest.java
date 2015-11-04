@@ -88,7 +88,8 @@ public class OdpsDatabaseMetaDataTest {
       ResultSet rs = databaseMetaData.getTables(null, null, "bad\\_%\\_test", null);
       Assert.assertNotNull(rs);
       while (rs.next()) {
-        Assert.assertTrue(rs.getString("TABLE_NAME").equals("bad_folder_test"));
+        Assert.assertTrue(rs.getString("TABLE_NAME").startsWith("bad"));
+        Assert.assertTrue(rs.getString("TABLE_NAME").endsWith("test"));
       }
       rs.close();
     }
@@ -98,6 +99,15 @@ public class OdpsDatabaseMetaDataTest {
       Assert.assertNotNull(rs);
       while (rs.next()) {
         Assert.assertTrue(rs.getString("TABLE_NAME").endsWith("test"));
+      }
+      rs.close();
+    }
+
+    {
+      ResultSet rs = databaseMetaData.getTables(null, null, null, new String[] {"TABLE"});
+      Assert.assertNotNull(rs);
+      while (rs.next()) {
+        Assert.assertTrue(rs.getString("TABLE_TYPE").equals("TABLE"));
       }
       rs.close();
     }
