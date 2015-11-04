@@ -28,6 +28,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
@@ -51,6 +52,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   private static final String PROCEDURE_TERM = "UDF";
 
   private OdpsConnection conn;
+
+  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsDatabaseMetaData");
 
   OdpsDatabaseMetaData(OdpsConnection conn) {
     this.conn = conn;
@@ -679,10 +682,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern,
                              String[] types) throws SQLException {
 
+    long begin = System.currentTimeMillis();
+
     List<Object[]> rows = new ArrayList<Object[]>();
     for (Table t : conn.getOdps().tables()) {
 
-      Object[] rowVals = {conn.getOdps().getEndpoint(), t.getProject(), t.getName(),
+      Object[] rowVals = {null, t.getProject(), t.getName(),
                           t.isVirtualView() ? "VIEW" : "TABLE", t.getComment(), null, null, null,
                           null, "USER"};
 
@@ -703,6 +708,9 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         rows.add(rowVals);
       }
     }
+
+    long end = System.currentTimeMillis();
+    log.fine("It took me " + (end - begin) + " ms to get " + rows.size() + " Tables");
 
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
         Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS", "TYPE_CAT",
@@ -762,6 +770,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                               String tableNamePattern, String columnNamePattern)
       throws SQLException {
 
+    long begin = System.currentTimeMillis();
+
     List<Object[]> rows = new ArrayList<Object[]>();
     try {
       Table table = conn.getOdps().tables().get(tableNamePattern);
@@ -787,6 +797,9 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     } catch (OdpsException e) {
       throw new SQLException(e);
     }
+
+    long end = System.currentTimeMillis();
+    log.fine("It took me " + (end - begin) + " ms to get " + rows.size() + " columns");
 
     // Build result set meta data
     OdpsResultSetMetaData
@@ -1080,11 +1093,16 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   public ResultSet getFunctions(String catalog, String schemaPattern,
                                 String functionNamePattern) throws SQLException {
 
+    long begin = System.currentTimeMillis();
+
     List<Object[]> rows = new ArrayList<Object[]>();
     for (Function f : conn.getOdps().functions()) {
       Object[] rowVals = {null, null, f.getName(), 0, (long) functionResultUnknown, null};
       rows.add(rowVals);
     }
+
+    long end = System.currentTimeMillis();
+    log.fine("It took me " + (end - begin) + " ms to get " + rows.size() + " functions");
 
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
         Arrays.asList("FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME", "REMARKS",

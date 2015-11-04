@@ -46,7 +46,6 @@ import java.util.concurrent.Executor;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.LogView;
@@ -99,6 +98,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
+    // Set up logger attributes
     ConsoleHandler consoleHandler =new ConsoleHandler();
     consoleHandler.setLevel(Level.ALL);
     Logger rootLogger = Logger.getLogger("com.aliyun.odps.jdbc");
@@ -111,15 +111,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     } else {
       rootLogger.setLevel(Level.INFO);
     }
-    consoleHandler.setFormatter(new SimpleFormatter());
+    consoleHandler.setFormatter(new LogFormatter());
     rootLogger.setUseParentHandlers(false);
     rootLogger.addHandler(consoleHandler);
 
     log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
-    log.info(String.format(
-        "OdpsConnection[endpoint=%s, project=%s, charset=%s, logview=%s, lifecycle=%d, loglevel=%s]",
-        endpoint, project, charset, logviewHost, lifecycle, logLevel));
+    log.info(String.format("OdpsConnection[endpoint=%s, project=%s]", endpoint, project));
+    log.info(String.format("OdpsConnection[charset=%s, logview=%s, lifecycle=%d, loglevel=%s]",
+        charset, logviewHost, lifecycle, logLevel));
+
     Account account = new AliyunAccount(accessId, accessKey);
+    log.fine("debug mode on");
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
@@ -279,16 +281,22 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return false;
   }
 
+  /**
+   * ODPS doesn't support the concept of catalog
+   * Each connection is associated with one endpoint (embedded in the connection url).
+   * Each endpoint has a couple of projects (schema)
+   *
+   * @param catalog
+   * @throws SQLException
+   */
   @Override
   public void setCatalog(String catalog) throws SQLException {
-    checkClosed();
-    odps.setEndpoint(catalog);
+
   }
 
   @Override
   public String getCatalog() throws SQLException {
-    checkClosed();
-    return odps.getEndpoint();
+    return null;
   }
 
   @Override
