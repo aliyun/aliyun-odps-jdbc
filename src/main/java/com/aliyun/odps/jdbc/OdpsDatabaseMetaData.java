@@ -41,9 +41,9 @@ import com.aliyun.odps.account.AliyunAccount;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
-  private static final String PRODUCT_NAME = "ODPS JDBC";
+  private static final String PRODUCT_NAME = "ODPS";
   private static final String PRODUCT_VERSION = "0.0.1";
-  private static final String DRIVER_NAME = "ODPS-JDBC";
+  private static final String DRIVER_NAME = "ODPS";
   private static final int DRIVER_MAJOR_VERSION = 1;
   private static final int DRIVER_MINOR_VERSION = 0;
 
