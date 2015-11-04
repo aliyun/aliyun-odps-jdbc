@@ -158,6 +158,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     checkClosed();
     beforeExecute();
 
+    long begin = System.currentTimeMillis();
+
     // Create a temp table for querying ResultSet and ensure its creation.
     // If the table can not be created (CANCELLED/FAIL), an exception will be caused.
     // Once the table has been created, it will last until the Statement is closed,
@@ -178,7 +180,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         switch (executeInstance.getTaskStatus().get("SQL").getStatus()) {
           case SUCCESS:
             complete = true;
-            log.fine("successfully create temp table for '" + sql + "': " + tempTempTable);
             break;
           case FAILED:
             String reason = executeInstance.getTaskResults().get("SQL");
@@ -200,12 +201,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // If we arrive here, the temp table must be effective
     tempTable = tempTempTable;
+    long end = System.currentTimeMillis();
+    log.fine("It took me " + (end - begin) + " ms to create " + tempTable);
 
     // Set the lifecycle for tmp table
     connHanlde.runSilentSQL(
         String.format("alter table %s set lifecycle %d;", tempTable, connHanlde.lifecycle));
 
     // Read schema
+    begin = System.currentTimeMillis();
     List<String> columnNames = new ArrayList<String>();
     List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
     try {
@@ -219,6 +223,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException(e);
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+    end = System.currentTimeMillis();
+    log.fine("It took me " + (end - begin) + " ms to read the table schema");
 
     // Create a download session through tunnel
     DownloadSession session;
@@ -226,7 +232,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       TableTunnel tunnel = new TableTunnel(connHanlde.getOdps());
       String project_name = connHanlde.getOdps().getDefaultProject();
       session = tunnel.createDownloadSession(project_name, tempTable);
-      log.fine("create download session id=" + session.getId());
+      log.info("create download session id=" + session.getId());
     } catch (TunnelException e) {
       throw new SQLException(e);
     }
