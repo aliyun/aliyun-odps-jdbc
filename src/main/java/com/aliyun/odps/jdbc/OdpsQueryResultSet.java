@@ -302,7 +302,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
     try {
       long start = System.currentTimeMillis();
       Record reuseRecord = null;
-      TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count);
+      TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count, true);
       for (int i = 0; i < count; i++) {
         reuseRecord = reader.read(reuseRecord);
         int columns = reuseRecord.getColumnCount();

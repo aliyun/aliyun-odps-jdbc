@@ -175,7 +175,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   private void rebuildReader() throws SQLException {
     try {
       long count = totalRows - fetchedRows;
-      reader = sessionHandle.openRecordReader(fetchedRows, count);
+      reader = sessionHandle.openRecordReader(fetchedRows, count, true);
       log.fine(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
       throw new SQLException(e);
