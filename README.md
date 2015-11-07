@@ -1,4 +1,4 @@
-# JDBC Driver for ODPS
+# ODPS JDBC (v1.1-SNAPSHOT)
 
 ## Installation
 
@@ -39,12 +39,12 @@ For example:
     
     Connection conn = DriverManager.getConnection(url, accessId, accessKey);
 
-The ODPS server works with HTTP (HTTPS recommended) service, so the url looks like:
+The ODPS server works with RESTful API, so the url looks like:
 
     String url = "jdbc:odps:https://your.endpoint.domain/subdomain?project=PROJECT_NAME&charset=UTF-8"
 
 
-`project`, `accessId`, `accessKey` and other information (e.g. `logview`) can also be passed through `Properties`. 
+The connection properties can also be passed through `Properties`. 
 
 For example:
     
@@ -54,7 +54,7 @@ For example:
     config.put("project_name", "...");
     config.put("charset", "...");
     Connection conn = DriverManager.getConnection("jdbc:odps:<endpoint>", config);
-       
+
 
 3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method.
 
@@ -65,7 +65,7 @@ For example:
 
 4\. Process the result set.
 
-For example
+For example:
     
     while (rs.next()) {
         ...

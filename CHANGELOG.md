@@ -1,4 +1,5 @@
-v1.1-SNAPSHOT
+### v1.1-SNAPSHOT (2015-11-07)
+
 1. Compress data when downloading the result set.
 2. No longer use log4j.
 3. More debug logs for profiling.
