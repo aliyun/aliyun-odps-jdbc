@@ -1,21 +1,15 @@
 # ODPS JDBC (v1.1-SNAPSHOT)
 
-## Installation
+## How to use?
 
+Generally, there are two ways to use ODPS JDBC driver in your project.
 
-1.Use the standalone library:
+1.The first one is to use the standalone library:
 
-[odps-jdbc-1.0-public-jar-with-dependencies.jar.zip](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.0-public-jar-with-dependencies.jar.zip)
+* **RELEASE**: [1.0](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.0-public-jar-with-dependencies.jar.zip)
+* **SNAPSHOT**: 1.1
 
-2.Build from source:
-
-```
-git clone ....
-cd odps-jdbc
-mvn install -DskipTests
-```
-
-3.Configure and manage the dependency through Maven:
+2.The second the one is to rely on maven to resolve the dependencies:
 
 ```
 <dependency>
@@ -27,9 +21,9 @@ mvn install -DskipTests
 
 ## Getting Started
 
-1\. Explictly load the ODPS JDBC driver using `Class.forName()`.
-    
-For example:
+Using ODPS JDBC driver is just as using other JDBC drivers. It contains the following few steps:
+
+1\. Explictly load the ODPS JDBC driver using `Class.forName()`:
     
     Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
@@ -41,12 +35,12 @@ For example:
 
 The ODPS server works with RESTful API, so the url looks like:
 
-    String url = "jdbc:odps:https://your.endpoint.domain/subdomain?project=PROJECT_NAME&charset=UTF-8"
+    String url = "jdbc:odps:ENDPOINT?project=PROJECT_NAME&charset=UTF-8"
 
 
-The connection properties can also be passed through `Properties`. 
 
-For example:
+
+The connection properties can also be passed through `Properties`. For example:
     
     Properties config = new Properties();
     config.put("access_id", "...");
@@ -56,9 +50,7 @@ For example:
     Connection conn = DriverManager.getConnection("jdbc:odps:<endpoint>", config);
 
 
-3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method.
-
-For example:
+3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method:
 
     Statement stmt = cnct.createStatement();
     ResultSet rset = stmt.executeQuery("SELECT foo FROM bar");
@@ -71,7 +63,6 @@ For example:
         ...
     }
  
-
 
 ## Example 
 
@@ -144,9 +135,33 @@ For example:
     java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
 
 
+## Connection Information
 
 
-## How to Do Test？
+|  URL key  | Property Key |                         Description                         |
+|:---------:|:------------:|:-----------------------------------------------------------|
+|  `endpoint` |   `end_point`  | the endpoint of the ODPS cluster                            |
+|  `project`  | `project_name` | the current ODPS project                                    |
+|  `accessId` |   `access_id`  | the key to access the ODPS service                          |
+| `accessKey` |  `access_key`  | the authentication key                                      |
+|  `logview`  | `logview_host` | the host domain of the log view appeared in the log history |
+| `lifecycle` |   `lifecycle`  | the lifecycle of the temp table using in query              |
+|  `charset`  |    `charset`   | the charset of the string                                   |
+|  `loglevel` |   `log_level`  | the level of debug infomartion debug/info/fatal             |
+
+
+## How to Contribute?
+
+
+### Build from source
+
+```
+git clone ....
+cd odps-jdbc
+mvn install -DskipTests
+```
+
+### Unitest
 
 
 1.Copy out a configuration file:
@@ -163,7 +178,7 @@ access_key=...
 end_point=...
 project_name=...
 logview_host=...
-character_set=UTF-8
+charset=UTF-8
 ```
 
 3.Run maven test command (or just test it in IntelliJ IDEA):
