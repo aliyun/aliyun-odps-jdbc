@@ -1,23 +1,28 @@
-# ODPS JDBC (v1.1-SNAPSHOT)
+# ODPS JDBC (v1.1)
 
 [![Build Status](https://travis-ci.org/aliyun/aliyun-odps-jdbc.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-odps-jdbc)
 
-## How to use?
+
+## Getting Involved
+
+The project is under construction (and not fully JDBC-compliant). If you dicover any good features which have not been implemented, please fire me an [Email](yichao.cheng@alibaba-inc.com) or just pull a request.
+
+## Installation
 
 Generally, there are two ways to use ODPS JDBC driver in your project.
 
 1.The first one is to use the standalone library:
 
-* **RELEASE**: [1.0](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.0-public-jar-with-dependencies.jar.zip)
-* **SNAPSHOT**: 1.1
+* [1.1](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.1-jar-with-dependencies.jar.zip) (latest release version, see [changelog](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md#v11-2015-11-17))
+* [1.0-public](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.0-public-jar-with-dependencies.jar.zip) 
 
-2.The second the one is to rely on maven to resolve the dependencies:
+2.The second is to rely on maven to resolve the dependencies for you:
 
 ```
 <dependency>
   <groupId>com.aliyun.odps</groupId>
   <artifactId>odps-jdbc</artifactId>
-  <version>1.0-public</version>
+  <version>VERSION</version>
 </dependency>
 ```
 
@@ -38,9 +43,6 @@ Using ODPS JDBC driver is just as using other JDBC drivers. It contains the foll
 The ODPS server works with RESTful API, so the url looks like:
 
     String url = "jdbc:odps:ENDPOINT?project=PROJECT_NAME&charset=UTF-8"
-
-
-
 
 The connection properties can also be passed through `Properties`. For example:
 
@@ -67,7 +69,6 @@ For example:
 
 
 ## Example
-
 
 ### JDBC Client Sample Code
 
@@ -141,7 +142,16 @@ For example:
     java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
 
 
-## Connection Information
+
+## Third-party Database Visualizer
+
+It is also recommended to use ODPS by using other third-party tools that supports JDBC. For example:
+
+* [SQLWorkbench/J]()
+* [Squrriel SQL]()
+
+
+## Connection String
 
 
 |  URL key  | Property Key |                         Description                         |
@@ -156,18 +166,50 @@ For example:
 |  `loglevel` |   `log_level`  | the level of debug infomartion debug/info/fatal             |
 
 
-## How to Contribute?
 
-The project is still under construction. If you dicover any useful features which have been implemented, please fire me an [Email](yichao.cheng@alibaba-inc.com)
 
-### TODO
 
-* Better functional test (continuouse intergration)
+## Data Type Mapping
 
+Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC. They can be accessed by the getters of `ResultSet` like `getInt()` and `getTime()`. The following table reflects the mapping between JDBC data type and ODPS data type:
+
+
+| ODPS Type   | Java Type   | JDBC Interface               | JDBC            |  
+| :-------: | :-------- | :-------------------- | :-----------: |
+| BIGINT      | Long         | int, short, long              | BIGINT        |
+| DOUBLE      | Double       | double, float                 | DOUBLE         |
+| BOOLEAN     | Boolean     | boolean                        | BOOLEAN       |
+| DATETIME    | util.Date    | sql.Date, sql.Time, sql.Timestamp    | TIMESTAMP     |
+| STRING      | byte[]       | String                        | VARCHAR       |
+| DECIMAL     | math.BigDecimal  | math.BigDecimal       | DECIMAL        |
+
+
+### Type Conversion
+
+The implicit type conversion follows the rule:
+
+
+| ODPS        | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
+| :-------: | :----: | :-----: | :-----: |:-------: |:-----: |:------: |
+| boolean     | Y | Y | Y |   | Y |   |
+| byte         | Y | Y |   |   |   | Y |
+| int          | Y | Y |   |   | Y | Y |
+| short        | Y | Y |   |   | Y | Y |
+| long         | Y | Y |   |   | Y | Y |
+| double       | Y | Y |   |   | Y | Y |
+| float        | Y | Y |   |   | Y | Y |
+| BigDecimal  |   |   |   |   | Y | Y |
+| String       | Y | Y | Y | Y | Y | Y |
+| Date         |   |   |   | Y | Y |   |
+| Time         |   |   |   | Y | Y |   |
+| Timestamp   |   |   |   | Y | Y |   |
+
+
+## For Developers
 
 ### Build and run unitest
 
-1.Build from source
+1.Build from source locally:
 
 ```
 git clone ....
@@ -197,6 +239,12 @@ charset=UTF-8
 ```
 mvn test
 ```
+
+
+### TODO
+
+* Better functional test (continuous intergration maybe)
+
 
 ## Authors && Contributors
 
