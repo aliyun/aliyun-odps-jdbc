@@ -24,13 +24,13 @@ Generally, there are two ways to use ODPS JDBC driver in your project.
 Using ODPS JDBC driver is just as using other JDBC drivers. It contains the following few steps:
 
 1\. Explictly load the ODPS JDBC driver using `Class.forName()`:
-    
+
     Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
 
 2\. Connect to the ODPS by creating a `Connection` object with the JDBC driver:
 
-    
+
     Connection conn = DriverManager.getConnection(url, accessId, accessKey);
 
 The ODPS server works with RESTful API, so the url looks like:
@@ -41,7 +41,7 @@ The ODPS server works with RESTful API, so the url looks like:
 
 
 The connection properties can also be passed through `Properties`. For example:
-    
+
     Properties config = new Properties();
     config.put("access_id", "...");
     config.put("access_key", "...");
@@ -52,19 +52,19 @@ The connection properties can also be passed through `Properties`. For example:
 
 3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method:
 
-    Statement stmt = cnct.createStatement();
-    ResultSet rset = stmt.executeQuery("SELECT foo FROM bar");
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT foo FROM bar");
 
 4\. Process the result set.
 
 For example:
-    
+
     while (rs.next()) {
         ...
     }
- 
 
-## Example 
+
+## Example
 
 
 ### JDBC Client Sample Code
@@ -74,10 +74,10 @@ For example:
     import java.sql.ResultSet;
     import java.sql.Statement;
     import java.sql.DriverManager;
-     
+
     public class OdpsJdbcClient {
       private static String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
-     
+
       /**
        * @param args
        * @throws SQLException
@@ -89,40 +89,44 @@ For example:
           e.printStackTrace();
           System.exit(1);
         }
-    
+
         // fill in the information here
         String accessId = "your_access_id";
         String accessKey = "your_access_key";
-        Connection con = DriverManager.getConnection("jdbc:odps:https://service-corp.odps.aliyun-inc.com/api?project=<your_project_name>", accessId, accessKey);
-        Statement stmt = con.createStatement();
+        Connection conn = DriverManager.getConnection("jdbc:odps:https://service-corp.odps.aliyun-inc.com/api?project=<your_project_name>", accessId, accessKey);
+        Statement stmt = conn.createStatement();
         String tableName = "testOdpsDriverTable";
         stmt.execute("drop table if exists " + tableName);
         stmt.execute("create table " + tableName + " (key int, value string)");
-    
+
         String sql;
-        ResultSet res;
-    
+        ResultSet rs;
+
         // insert a record
         sql = String.format("insert into table %s select 24 key, 'hours' value from (select count(1) from %s) a", tableName, tableName);
         System.out.println("Running: " + sql);
         int count = stmt.executeUpdate(sql);
         System.out.println("updated records: " + count);
-        
+
         // select * query
         sql = "select * from " + tableName;
         System.out.println("Running: " + sql);
-        res = stmt.executeQuery(sql);
-        while (res.next()) {
-          System.out.println(String.valueOf(res.getInt(1)) + "\t" + res.getString(2));
+        rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+          System.out.println(String.valueOf(rs.getInt(1)) + "\t" + rs.getString(2));
         }
-     
+
         // regular query
         sql = "select count(1) from " + tableName;
         System.out.println("Running: " + sql);
-        res = stmt.executeQuery(sql);
-        while (res.next()) {
-          System.out.println(res.getString(1));
+        rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+          System.out.println(rs.getString(1));
         }
+
+        // do not forget to close
+        stmt.close();
+        conn.close();
       }
     }
 
@@ -130,7 +134,7 @@ For example:
 
     # compile the client code
     javac OdpsJdbcClient.java
-    
+
     # run the program with specifying the class path
     java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
 
@@ -196,4 +200,3 @@ mvn test
 ## License
 
 licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
-
