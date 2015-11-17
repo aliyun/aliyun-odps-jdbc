@@ -35,6 +35,7 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
+  private Logger log;
   private DownloadSession sessionHandle;
   private TunnelRecordReader reader = null;
   private Record reuseRecord = null;
@@ -58,11 +59,10 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
    */
   private static final int READER_REOPEN_TIME_MAX = 5;
 
-  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsForwardResultSet");
-
   OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
     super(stmt, meta);
+    log = stmt.getParentLogger();
     sessionHandle = session;
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();

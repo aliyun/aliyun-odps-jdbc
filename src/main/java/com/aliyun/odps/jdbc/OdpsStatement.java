@@ -47,7 +47,7 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-
+  private final Logger log;
   private OdpsConnection connHanlde;
   private Instance executeInstance = null;
   private ResultSet resultSet = null;
@@ -77,8 +77,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private SQLWarning warningChain = null;
 
-  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsStatement");
-
   OdpsStatement(OdpsConnection conn) {
     this(conn, false);
   }
@@ -86,6 +84,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHanlde = conn;
     this.isResultSetScrollable = isResultSetScrollable;
+    this.log = connHanlde.log;
   }
 
   @Override
@@ -554,6 +553,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     isClosed = false;
     isCancelled = false;
     updateCount = -1;
+  }
+
+  protected Logger getParentLogger() {
+    return log;
   }
 
   protected void checkClosed() throws SQLException {

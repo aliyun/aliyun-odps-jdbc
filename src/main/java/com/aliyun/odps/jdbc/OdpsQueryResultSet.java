@@ -32,12 +32,10 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
 public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
+  private Logger log;
   private DownloadSession sessionHandle;
-
   private int fetchSize;
-
   private OdpsStatement.FetchDirection fetchDirection;
-
   private final long totalRows;
 
   /**
@@ -60,11 +58,10 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   private boolean isClosed = false;
 
-  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsQueryResultSet");
-
   OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
     super(stmt, meta);
+    log = stmt.getParentLogger();
     sessionHandle = session;
     fetchSize = stmt.resultSetFetchSize;
     fetchDirection = stmt.resultSetFetchDirection;

@@ -46,17 +46,17 @@ import java.util.logging.Logger;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
+  private final Logger log;
   private OdpsResultSetMetaData meta;
   private OdpsStatement stmt;
   private boolean wasNull = false;
 
   private SQLWarning warningChain = null;
 
-  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsResultSet");
-
   OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
     this.meta = meta;
+    this.log = stmt.getParentLogger();
   }
 
   @Override

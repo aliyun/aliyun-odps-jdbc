@@ -119,6 +119,6 @@ public class OdpsDriver implements Driver {
   }
 
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-    throw new SQLFeatureNotSupportedException();
+    return Logger.getLogger("com.aliyun.odps.jdbc");
   }
 }

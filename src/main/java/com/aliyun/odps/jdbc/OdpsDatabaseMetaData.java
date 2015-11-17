@@ -41,11 +41,12 @@ import com.aliyun.odps.account.AliyunAccount;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
+  private final Logger log;
   private static final String PRODUCT_NAME = "ODPS";
-  private static final String PRODUCT_VERSION = "0.0.1";
+  private static final String PRODUCT_VERSION = "v1.1";
   private static final String DRIVER_NAME = "ODPS";
   private static final int DRIVER_MAJOR_VERSION = 1;
-  private static final int DRIVER_MINOR_VERSION = 0;
+  private static final int DRIVER_MINOR_VERSION = 1;
 
   private static final String SCHEMA_TERM = "project";
   private static final String CATALOG_TERM = "endpoint";
@@ -53,10 +54,10 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   private OdpsConnection conn;
 
-  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsDatabaseMetaData");
 
   OdpsDatabaseMetaData(OdpsConnection conn) {
     this.conn = conn;
+    this.log = conn.log;
   }
 
   @Override

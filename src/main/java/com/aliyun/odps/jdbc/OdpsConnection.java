@@ -75,7 +75,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean isClosed = false;
 
-  private static Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsConnection");
+  /**
+   * Per-connection logger. All its statements produced by this connection will share this logger
+   */
+  protected final Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsConnection");
 
   private SQLWarning warningChain = null;
 
@@ -98,27 +101,29 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
-    // Set up logger attributes
-    ConsoleHandler consoleHandler =new ConsoleHandler();
+    // Set up the handler's attributes
+    // TODO(onesuper): support file logger later
+    ConsoleHandler consoleHandler = new ConsoleHandler();
     consoleHandler.setLevel(Level.ALL);
-    Logger rootLogger = Logger.getLogger("com.aliyun.odps.jdbc");
-    if (logLevel.equalsIgnoreCase("fatal") || logLevel.equalsIgnoreCase("severe")) {
-      rootLogger.setLevel(Level.SEVERE);
-    } else if (logLevel.equalsIgnoreCase("warning")) {
-      rootLogger.setLevel(Level.WARNING);
-    } else if (logLevel.equalsIgnoreCase("debug") || logLevel.equalsIgnoreCase("fine")) {
-      rootLogger.setLevel(Level.FINEST);
-    } else {
-      rootLogger.setLevel(Level.INFO);
-    }
     consoleHandler.setFormatter(new LogFormatter());
-    rootLogger.setUseParentHandlers(false);
-    rootLogger.addHandler(consoleHandler);
+
+    // Change the state of the root logger
+    if (logLevel.equalsIgnoreCase("fatal") || logLevel.equalsIgnoreCase("severe")) {
+      log.setLevel(Level.SEVERE);
+    } else if (logLevel.equalsIgnoreCase("warning")) {
+      log.setLevel(Level.WARNING);
+    } else if (logLevel.equalsIgnoreCase("debug") || logLevel.equalsIgnoreCase("fine")) {
+      log.setLevel(Level.FINEST);
+    } else {
+      log.setLevel(Level.INFO);
+    }
+    log.setUseParentHandlers(false);
+    log.addHandler(consoleHandler);
 
     log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.fine(String.format("charset=%s, logview=%s, lifecycle=%d, loglevel=%s",
-        charset, logviewHost, lifecycle, logLevel));
+                           charset, logviewHost, lifecycle, logLevel));
 
     Account account = new AliyunAccount(accessId, accessKey);
     log.fine("debug mode on");
