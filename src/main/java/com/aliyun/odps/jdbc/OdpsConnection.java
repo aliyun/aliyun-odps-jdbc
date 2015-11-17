@@ -116,8 +116,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     rootLogger.addHandler(consoleHandler);
 
     log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
-    log.info(String.format("OdpsConnection[endpoint=%s, project=%s]", endpoint, project));
-    log.info(String.format("OdpsConnection[charset=%s, logview=%s, lifecycle=%d, loglevel=%s]",
+    log.info(String.format("endpoint=%s, project=%s", endpoint, project));
+    log.fine(String.format("charset=%s, logview=%s, lifecycle=%d, loglevel=%s",
         charset, logviewHost, lifecycle, logLevel));
 
     Account account = new AliyunAccount(accessId, accessKey);
