@@ -13,7 +13,7 @@ Generally, there are two ways to use ODPS JDBC driver in your project.
 
 1.The first one is to use the standalone library:
 
-* [1.1](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.1-jar-with-dependencies.jar.zip) (latest release version, see [changelog](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md#v11-2015-11-17))
+* [1.1](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.1-jar-with-dependencies.jar.zip)  - latest release version, see [changelog](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md#v11-2015-11-17)
 * [1.0-public](https://github.com/aliyun/aliyun-odps-jdbc/raw/master/standalone/odps-jdbc-1.0-public-jar-with-dependencies.jar.zip) 
 
 2.The second is to rely on maven to resolve the dependencies for you:
