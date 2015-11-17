@@ -49,7 +49,6 @@
         <junit.version>4.11</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>1.6</jdk.version>
-        <javadoc.opts>-Xdoclint:none</javadoc.opts>
         <gpg.skip>true</gpg.skip>
         <javadoc.skip>true</javadoc.skip>
     </properties>
