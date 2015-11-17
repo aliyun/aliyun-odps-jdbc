@@ -1,5 +1,7 @@
 # ODPS JDBC (v1.1-SNAPSHOT)
 
+[![Build Status](https://travis-ci.org/aliyun/aliyun-odps-jdbc.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-odps-jdbc)
+
 ## How to use?
 
 Generally, there are two ways to use ODPS JDBC driver in your project.
@@ -146,7 +148,7 @@ For example:
 |:---------:|:------------:|:-----------------------------------------------------------|
 |  `endpoint` |   `end_point`  | the endpoint of the ODPS cluster                            |
 |  `project`  | `project_name` | the current ODPS project                                    |
-|  `accessId` |   `access_id`  | the key to access the ODPS service                          |
+|  `accessId` |   `access_id`  | the id to access the ODPS service                          |
 | `accessKey` |  `access_key`  | the authentication key                                      |
 |  `logview`  | `logview_host` | the host domain of the log view appeared in the log history |
 | `lifecycle` |   `lifecycle`  | the lifecycle of the temp table using in query              |
@@ -156,8 +158,16 @@ For example:
 
 ## How to Contribute?
 
+The project is still under construction. If you dicover any useful features which have been implemented, please fire me an [Email](yichao.cheng@alibaba-inc.com)
 
-### Build from source
+### TODO
+
+* Better functional test (continuouse intergration)
+
+
+### Build and run unitest
+
+1.Build from source
 
 ```
 git clone ....
@@ -165,16 +175,13 @@ cd odps-jdbc
 mvn install -DskipTests
 ```
 
-### Unitest
-
-
-1.Copy out a configuration file:
+2.Copy out a configuration file:
 
 ```
 cp ./src/test/resources/conf.properties.example ./src/test/resources/conf.properties
 ```
 
-2.Fill in your connection strings:
+3.Fill in your connection strings:
 
 ```
 access_id=...
@@ -185,7 +192,7 @@ logview_host=...
 charset=UTF-8
 ```
 
-3.Run maven test command (or just test it in IntelliJ IDEA):
+4.Run maven test command (or just test it in IntelliJ IDEA):
 
 ```
 mvn test
