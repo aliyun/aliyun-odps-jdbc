@@ -518,7 +518,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       }
 
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      log.info("Run SQL: " + sql + " => Log View: " + logViewUrl);
+      log.fine("Run SQL: " + sql);
+      log.info(logViewUrl);
 
     } catch (OdpsException e) {
       log.severe("fail to run sql: " + sql);
