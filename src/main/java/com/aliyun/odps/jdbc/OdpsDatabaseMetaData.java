@@ -43,7 +43,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   private final Logger log;
   private static final String PRODUCT_NAME = "ODPS";
-  private static final String PRODUCT_VERSION = "v1.1";
+  private static final String PRODUCT_VERSION = "1.1";
   private static final String DRIVER_NAME = "ODPS";
   private static final int DRIVER_MAJOR_VERSION = 1;
   private static final int DRIVER_MINOR_VERSION = 1;
