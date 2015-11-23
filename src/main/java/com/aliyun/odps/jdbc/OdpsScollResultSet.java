@@ -30,7 +30,7 @@ import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
-public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
+public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
 
   private Logger log;
   private DownloadSession sessionHandle;
@@ -58,7 +58,7 @@ public class OdpsQueryResultSet extends OdpsResultSet implements ResultSet {
 
   private boolean isClosed = false;
 
-  OdpsQueryResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
+  OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
     super(stmt, meta);
     log = stmt.getParentLogger();

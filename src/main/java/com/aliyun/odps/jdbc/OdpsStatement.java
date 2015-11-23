@@ -239,7 +239,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     resultSet =
-        isResultSetScrollable ? new OdpsQueryResultSet(this, meta, session)
+        isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
                               : new OdpsForwardResultSet(this, meta, session);
 
     return resultSet;

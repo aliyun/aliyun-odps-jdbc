@@ -29,7 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class OdpsQueryResultSetTest {
+public class OdpsScollResultSetTest {
 
   private static Connection conn;
   private static Statement stmt;
