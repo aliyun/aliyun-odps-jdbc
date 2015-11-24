@@ -21,9 +21,11 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -35,27 +37,20 @@ import org.junit.Assert;
 
 public class OdpsPreparedStatementTest {
 
-  static PreparedStatement pstmt;
-  static long unixtime;
-  static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-
-  @BeforeClass
-  public static void setUp() throws Exception {
-    pstmt = OdpsConnectionFactory.getInstance().conn.prepareStatement(
-        "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
-        + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
-    unixtime = new java.util.Date().getTime();
-  }
-
   @AfterClass
   public static void tearDown() throws Exception {
-    pstmt.close();
     OdpsConnectionFactory.getInstance().conn.close();
   }
 
   @Test
   public void testSetAll() throws Exception {
+    PreparedStatement pstmt;
+    pstmt = OdpsConnectionFactory.getInstance().conn.prepareStatement(
+        "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
+        + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
+    long unixtime = new java.util.Date().getTime();
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     pstmt.setBigDecimal(1, BigDecimal.TEN);
     pstmt.setBoolean(2, Boolean.TRUE);
     pstmt.setByte(3, Byte.MAX_VALUE);
@@ -87,8 +82,47 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals(new Time(unixtime).toString(), rs.getTime(12).toString());
       Assert.assertEquals(formatter.format(new Timestamp(unixtime)),
                           formatter.format(rs.getTimestamp(13)));
-
       rs.close();
     }
+    pstmt.close();
+  }
+
+
+  @Test
+  public void batchInsert() throws Exception {
+    Connection conn = OdpsConnectionFactory.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.executeUpdate("drop table if exists employee_test;");
+    ddl.executeUpdate("create table employee_test(id bigint, name string);");
+    ddl.close();
+
+    PreparedStatement ps = conn.prepareStatement(
+        "insert into employee_test values (?, ?)");
+
+    final int batchSize = 20000;
+    int count = 0;
+
+    for (int i = 0; i < 100000; i++) {
+      ps.setInt(1, i);
+      ps.setString(2, "name" + i);
+      ps.addBatch();
+      if(++count % batchSize == 0) {
+        ps.executeBatch();
+      }
+    }
+    ps.executeBatch(); // insert remaining records
+    ps.close();
+
+//    Statement query =  conn.createStatement();
+//    ResultSet rs = query.executeQuery("select * from employee_test");
+//    System.out.printf("%d columns\n", rs.getMetaData().getColumnCount());
+//
+//    while (rs.next()) {
+//      System.out.printf("%d\t%d\t%s\n", rs.getRow(), rs.getInt(1), rs.getString(2));
+//    }
+//
+//    rs.close();
+//    query.close();
+    conn.close();
   }
 }
