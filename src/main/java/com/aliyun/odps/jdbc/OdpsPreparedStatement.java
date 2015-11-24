@@ -207,59 +207,65 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       TunnelRecordWriter recordWriter = (TunnelRecordWriter) session.openRecordWriter(0, true);
       for (int i = 0; i < batchedSize; i++) {
         Object[] row = batchedRows.get(i);
-        for (int j = 0; j < colNum; j++) {
-          OdpsType odpsType = schema.getColumn(j).getType();
-          Object value = row[j];
+        for (int col = 0; col < colNum; col++) {
+          OdpsType odpsType = schema.getColumn(col).getType();
+          Object value = row[col];
+
+          // a null column
+          if (row[col] == null) {
+            record.set(col, null);
+            continue;
+          }
 
           // Set record values with type validation
           switch (odpsType) {
             case BIGINT:
               if (!(value instanceof Long)) {
                 throw new BatchUpdateException(
-                    j + " col expected to be Long, but: " + value.getClass().getName(),
+                    col + " col expected to be Long, but: " + value.getClass().getName(),
                     updateCounts);
               }
-              record.setBigint(j, (Long) value);
+              record.setBigint(col, (Long) value);
               break;
             case BOOLEAN:
               if (!(value instanceof Boolean)) {
                 throw new BatchUpdateException(
-                    j + " col expected to be Boolean, but: " + value.getClass().getName(),
+                    col + " col expected to be Boolean, but: " + value.getClass().getName(),
                     updateCounts);
               }
-              record.setBoolean(j, (Boolean) value);
+              record.setBoolean(col, (Boolean) value);
               break;
             case DATETIME:
               if (!(value instanceof java.util.Date)) {
                 throw new BatchUpdateException(
-                    j + " col expected to be java.util.Date, but: " + value.getClass().getName(),
+                    col + " col expected to be java.util.Date, but: " + value.getClass().getName(),
                     updateCounts);
               }
-              record.setDatetime(j, (java.util.Date) value);
+              record.setDatetime(col, (java.util.Date) value);
               break;
             case DOUBLE:
               if (!(value instanceof Double)) {
                 throw new BatchUpdateException(
-                    j + " col expected to be Double, but: " + value.getClass().getName(),
+                    col + " col expected to be Double, but: " + value.getClass().getName(),
                     updateCounts);
               }
-              record.setDouble(j, (Double) value);
+              record.setDouble(col, (Double) value);
               break;
             case STRING:
               if (!(value instanceof byte[])) {
                 throw new BatchUpdateException(
-                    j + " col expected to be byte[], but: " + value.getClass().getName(),
+                    col + " col expected to be byte[], but: " + value.getClass().getName(),
                     updateCounts);
               }
-              record.setString(j, (byte[]) value);
+              record.setString(col, (byte[]) value);
               break;
             case DECIMAL:
               if (!(value instanceof BigDecimal)) {
                 throw new BatchUpdateException(
-                    j + " col expected to be BigDecimal, but: " + value.getClass().getName(),
+                    col + " col expected to be BigDecimal, but: " + value.getClass().getName(),
                     updateCounts);
               }
-              record.setDecimal(j, (BigDecimal) value);
+              record.setDecimal(col, (BigDecimal) value);
               break;
             default:
               throw new RuntimeException("Batch insert do not support data type: " + odpsType);
@@ -548,16 +554,28 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
+    if (x == null) {
+      parameters.put(parameterIndex, null);
+      return;
+    }
     parameters.put(parameterIndex, x.getBytes());
   }
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
+    if (x == null) {
+      parameters.put(parameterIndex, null);
+      return;
+    }
     parameters.put(parameterIndex, new java.util.Date(x.getTime()));
   }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+    if (x == null) {
+      parameters.put(parameterIndex, null);
+      return;
+    }
     parameters.put(parameterIndex, new java.util.Date(x.getTime()));
   }
 

@@ -93,7 +93,8 @@ public class OdpsPreparedStatementTest {
     Connection conn = OdpsConnectionFactory.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
-    ddl.executeUpdate("create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
+    ddl.executeUpdate(
+        "create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
     ddl.close();
 
     PreparedStatement ps = conn.prepareStatement(
@@ -139,4 +140,71 @@ public class OdpsPreparedStatementTest {
     query.close();
     conn.close();
   }
+
+
+  @Test
+  public void batchInsertNullAndFetch() throws Exception {
+    Connection conn = OdpsConnectionFactory.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.executeUpdate("drop table if exists employee_test;");
+    ddl.executeUpdate("create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
+    ddl.close();
+
+    PreparedStatement ps = conn.prepareStatement(
+        "insert into employee_test values (?, ?, ?, ?, ?, ?);");
+
+    final int batchSize = 20;
+    int count = 0;
+
+
+    for (int i = 0; i < 120; i++) {
+      ps.setNull(1, -1);
+      ps.setNull(2, -1);
+      ps.setNull(3, -1);
+      ps.setNull(4, -1);
+      ps.setNull(5, -1);
+      ps.setNull(6, -1);
+
+      ps.addBatch();
+      if(++count % batchSize == 0) {
+        ps.executeBatch();
+      }
+    }
+    ps.executeBatch(); // insert remaining records
+    ps.close();
+
+    Statement query =  conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from employee_test");
+
+    while (rs.next()) {
+      Assert.assertEquals(0, rs.getInt(1));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(null, rs.getString(2));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(null, rs.getTime(3));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(false, rs.getBoolean(4));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(0.0f, rs.getFloat(5), 0);
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(null, rs.getBigDecimal(6));
+      Assert.assertTrue(rs.wasNull());
+
+      count--;
+    }
+
+    Assert.assertEquals(count, 0);
+
+    rs.close();
+    query.close();
+    conn.close();
+  }
+
+
+
 }
