@@ -248,10 +248,18 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
             case STRING:
               if (!(value instanceof byte[])) {
                 throw new BatchUpdateException(
-                    j + " col expected to be Double, but: " + value.getClass().getName(),
+                    j + " col expected to be byte[], but: " + value.getClass().getName(),
                     updateCounts);
               }
               record.setString(j, (byte[]) value);
+              break;
+            case DECIMAL:
+              if (!(value instanceof BigDecimal)) {
+                throw new BatchUpdateException(
+                    j + " col expected to be BigDecimal, but: " + value.getClass().getName(),
+                    updateCounts);
+              }
+              record.setDecimal(j, (BigDecimal) value);
               break;
             default:
               throw new RuntimeException("Batch insert do not support data type: " + odpsType);

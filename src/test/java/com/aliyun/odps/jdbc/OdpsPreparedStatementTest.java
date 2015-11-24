@@ -93,18 +93,25 @@ public class OdpsPreparedStatementTest {
     Connection conn = OdpsConnectionFactory.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
-    ddl.executeUpdate("create table employee_test(id bigint, name string);");
+    ddl.executeUpdate("create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
     ddl.close();
 
     PreparedStatement ps = conn.prepareStatement(
-        "insert into employee_test values (?, ?)");
+        "insert into employee_test values (?, ?, ?, ?, ?, ?);");
 
-    final int batchSize = 20000;
+    final int batchSize = 20;
     int count = 0;
 
-    for (int i = 0; i < 100000; i++) {
-      ps.setInt(1, i);
-      ps.setString(2, "name" + i);
+    long unixtime = new java.util.Date().getTime();
+
+
+    for (int i = 0; i < 120; i++) {
+      ps.setInt(1, 9999);
+      ps.setString(2, "hello");
+      ps.setTime(3, new Time(unixtime));
+      ps.setBoolean(4, true);
+      ps.setFloat(5, 3.141590261234F);
+      ps.setBigDecimal(6, BigDecimal.TEN);
       ps.addBatch();
       if(++count % batchSize == 0) {
         ps.executeBatch();
@@ -113,16 +120,23 @@ public class OdpsPreparedStatementTest {
     ps.executeBatch(); // insert remaining records
     ps.close();
 
-//    Statement query =  conn.createStatement();
-//    ResultSet rs = query.executeQuery("select * from employee_test");
-//    System.out.printf("%d columns\n", rs.getMetaData().getColumnCount());
-//
-//    while (rs.next()) {
-//      System.out.printf("%d\t%d\t%s\n", rs.getRow(), rs.getInt(1), rs.getString(2));
-//    }
-//
-//    rs.close();
-//    query.close();
+    Statement query =  conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from employee_test");
+
+    while (rs.next()) {
+      Assert.assertEquals(rs.getInt(1), 9999);
+      Assert.assertEquals(rs.getString(2), "hello");
+      Assert.assertEquals(rs.getTime(3), new Time(unixtime));
+      Assert.assertEquals(rs.getBoolean(4), true);
+      Assert.assertEquals(rs.getFloat(5), 3.141590261234F, 0);
+      Assert.assertEquals(rs.getBigDecimal(6), BigDecimal.TEN);
+      count--;
+    }
+
+    Assert.assertEquals(count, 0);
+
+    rs.close();
+    query.close();
     conn.close();
   }
 }
