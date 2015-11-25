@@ -78,7 +78,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Per-connection logger. All its statements produced by this connection will share this logger
    */
-  protected final Logger log = Logger.getLogger("com.aliyun.odps.jdbc.OdpsConnection");
+  protected Logger log;
 
   private SQLWarning warningChain = null;
 
@@ -106,6 +106,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     ConsoleHandler consoleHandler = new ConsoleHandler();
     consoleHandler.setLevel(Level.ALL);
     consoleHandler.setFormatter(new LogFormatter());
+
+    // Use the project name to name the logger
+    log = Logger.getLogger(project);
 
     // Change the state of the root logger
     if (logLevel.equalsIgnoreCase("fatal") || logLevel.equalsIgnoreCase("severe")) {
