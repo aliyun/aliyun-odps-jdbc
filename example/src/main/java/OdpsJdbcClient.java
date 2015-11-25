@@ -22,7 +22,7 @@ public class OdpsJdbcClient {
     // fill in the information here
     String accessId = "";
     String accessKey = "";
-    Connection con = DriverManager.getConnection("jdbc:odps:https://service-corp.odps.aliyun-inc.com/api?project=meta_dev", accessId, accessKey);
+    Connection con = DriverManager.getConnection("", accessId, accessKey);
     Statement stmt = con.createStatement();
     String tableName = "testOdpsDriverTable";
     stmt.execute("drop table if exists " + tableName);
