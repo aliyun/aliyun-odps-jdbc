@@ -192,7 +192,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
         String project_name = getConnection().getOdps().getDefaultProject();
         session = tunnel.createUploadSession(project_name, tableBatchInsertTo);
       }
-      log.info("create upload session id=" + session.getId());
+      log.fine("create upload session id=" + session.getId());
 
       TableSchema schema = session.getSchema();
       Record record = session.newRecord();
