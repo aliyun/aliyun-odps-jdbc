@@ -138,7 +138,6 @@ public class OdpsPreparedStatementTest {
 
     rs.close();
     query.close();
-    conn.close();
   }
 
 
@@ -202,9 +201,5 @@ public class OdpsPreparedStatementTest {
 
     rs.close();
     query.close();
-    conn.close();
   }
-
-
-
 }
