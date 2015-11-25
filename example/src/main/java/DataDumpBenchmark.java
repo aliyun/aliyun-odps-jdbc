@@ -1,3 +1,5 @@
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -7,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.Time;
+import java.util.Properties;
 
 public class DataDumpBenchmark {
   private static String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
@@ -33,10 +36,19 @@ public class DataDumpBenchmark {
     }
     System.out.println("batch size: " + batchSize);
 
-    // fill in the information here
-    String accessId = "";
-    String accessKey = "";
-    Connection conn = DriverManager.getConnection("", accessId, accessKey);
+    // fill in the information string
+    Properties odpsConfig = new Properties();
+    InputStream is =
+        Thread.currentThread().getContextClassLoader().getResourceAsStream("conf.properties");
+    try {
+      odpsConfig.load(is);
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
+    String accessId = odpsConfig.getProperty("access_id");
+    String accessKey = odpsConfig.getProperty("access_key");
+    Connection conn = DriverManager.getConnection(odpsConfig.getProperty("connection_string"), accessId, accessKey);
 
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists m_instance_one_day;");
@@ -74,7 +86,8 @@ public class DataDumpBenchmark {
     }
 
     ps.executeBatch(); // insert remaining records
-    System.out.printf("total: %.2f minutes\n", (float) (System.currentTimeMillis() - start) / 1000 / 60);
+    System.out.printf("total: %.2f minutes\n",
+                      (float) (System.currentTimeMillis() - start) / 1000 / 60);
 
     ddl.close();
     ps.close();
