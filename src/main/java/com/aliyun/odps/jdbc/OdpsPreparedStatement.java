@@ -175,8 +175,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       return new int[0];
     }
 
-    log.fine(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
-             + " in batch");
+    getConnection().log.fine(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
+                  + " in batch");
 
     int[] updateCounts = new int[batchedSize];
     Arrays.fill(updateCounts, -1);
@@ -192,7 +192,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
         String project_name = getConnection().getOdps().getDefaultProject();
         session = tunnel.createUploadSession(project_name, tableBatchInsertTo);
       }
-      log.fine("create upload session id=" + session.getId());
+
+      getConnection().log.fine("create upload session id=" + session.getId());
 
       TableSchema schema = session.getSchema();
       Record record = session.newRecord();
@@ -281,7 +282,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       long duration = System.currentTimeMillis() - startTime;
       float megaBytesPerSec = (float) recordWriter.getTotalBytes() / 1024 / 1024 / duration * 1000;
       recordWriter.close();
-      log.info(
+      getConnection().log.info(
           String.format("It took me %d ms to insert %d records, %.2f MiB/s", duration, batchedSize,
                         megaBytesPerSec));
       Long[] blocks = new Long[] { Long.valueOf(0) };
