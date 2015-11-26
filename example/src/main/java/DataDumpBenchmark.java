@@ -58,7 +58,7 @@ public class DataDumpBenchmark {
     PreparedStatement ps = conn.prepareStatement(
         "insert into m_instance_one_day values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
     Statement query =  conn.createStatement();
-    ResultSet rs = query.executeQuery("select * from meta.m_instance where ds = '20151120';");
+    ResultSet rs = query.executeQuery("select * from meta.m_instance where ds = '20151120' limit 1000000;");
 
     long start = System.currentTimeMillis();
     long now = start;

@@ -9,6 +9,8 @@
 *.iml
 *.class
 
+
+/example/target
 /example/src/main/resources/*
 !/example/src/main/resources/conf.properties.example
 
