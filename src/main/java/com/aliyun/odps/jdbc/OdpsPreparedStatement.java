@@ -476,6 +476,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       setNull(parameterIndex, Types.NULL);
     } else if (x instanceof String) {
       setString(parameterIndex, (String) x);
+    } else if (x instanceof byte[]) {
+      parameters.put(parameterIndex, x);
     } else if (x instanceof Short) {
       setShort(parameterIndex, (Short) x);
     } else if (x instanceof Integer) {
