@@ -47,7 +47,6 @@ import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-  private final Logger log;
   private OdpsConnection connHanlde;
   private Instance executeInstance = null;
   private ResultSet resultSet = null;
@@ -84,7 +83,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHanlde = conn;
     this.isResultSetScrollable = isResultSetScrollable;
-    this.log = connHanlde.log;
   }
 
   @Override
@@ -101,7 +99,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     try {
       executeInstance.stop();
-      log.fine("submit cancel to instance id=" + executeInstance.getId());
+      connHanlde.log.fine("submit cancel to instance id=" + executeInstance.getId());
     } catch (OdpsException e) {
       throw new SQLException(e);
     }
@@ -132,11 +130,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     if (tempTable != null) {
       connHanlde.runSilentSQL("drop table " + tempTable + ";");
-      log.fine("silently drop temp table: " + tempTable);
+      connHanlde.log.fine("silently drop temp table: " + tempTable);
       tempTable = null;
     }
 
-    log.fine("the statement has been closed");
+    connHanlde.log.fine("the statement has been closed");
 
     connHanlde = null;
     executeInstance = null;
@@ -156,8 +154,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public ResultSet executeQuery(String sql) throws SQLException {
     checkClosed();
     beforeExecute();
-
-    log.fine("execute query...");
 
     long begin = System.currentTimeMillis();
 
@@ -184,10 +180,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             break;
           case FAILED:
             String reason = executeInstance.getTaskResults().get("SQL");
-            log.fine("create temp table failed: " + reason);
+            connHanlde.log.fine("create temp table failed: " + reason);
             throw new SQLException("create temp table failed: " + reason, "FAILED");
           case CANCELLED:
-            log.fine("create temp table cancelled");
+            connHanlde.log.info("create temp table cancelled");
             throw new SQLException("create temp table cancelled", "CANCELLED");
           case WAITING:
           case RUNNING:
@@ -196,14 +192,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (OdpsException e) {
-      log.fine("create temp table failed: " + e.getMessage());
+      connHanlde.log.fine("create temp table failed: " + e.getMessage());
       throw new SQLException(e);
     }
 
     // If we arrive here, the temp table must be effective
     tempTable = tempTempTable;
     long end = System.currentTimeMillis();
-    log.fine("It took me " + (end - begin) + " ms to create " + tempTable);
+    connHanlde.log.fine("It took me " + (end - begin) + " ms to create " + tempTable);
 
     // Set the lifecycle for tmp table
     connHanlde.runSilentSQL(
@@ -225,7 +221,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
     end = System.currentTimeMillis();
-    log.fine("It took me " + (end - begin) + " ms to read the table schema");
+    connHanlde.log.fine("It took me " + (end - begin) + " ms to read the table schema");
 
     // Create a download session through tunnel
     DownloadSession session;
@@ -233,7 +229,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       TableTunnel tunnel = new TableTunnel(connHanlde.getOdps());
       String project_name = connHanlde.getOdps().getDefaultProject();
       session = tunnel.createDownloadSession(project_name, tempTable);
-      log.info("create download session id=" + session.getId());
+      connHanlde.log.info("create download session id=" + session.getId());
     } catch (TunnelException e) {
       throw new SQLException(e);
     }
@@ -249,8 +245,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public int executeUpdate(String sql) throws SQLException {
     checkClosed();
     beforeExecute();
-
-    log.fine("execute update...");
 
     long begin = System.currentTimeMillis();
 
@@ -270,10 +264,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             complete = true;
             break;
           case FAILED:
-            log.fine("update failed");
+            connHanlde.log.fine("update failed");
             throw new SQLException(executeInstance.getTaskResults().get("SQL"), "FAILED");
           case CANCELLED:
-            log.fine("update cancelled");
+            connHanlde.log.info("update cancelled");
             throw new SQLException("update cancelled", "CANCELLED");
           case WAITING:
           case RUNNING:
@@ -283,7 +277,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
 
       long end = System.currentTimeMillis();
-      log.fine("It took me " + (end - begin) + " ms to execute update");
+      connHanlde.log.fine("It took me " + (end - begin) + " ms to execute update");
 
       // extract update count
       Instance.TaskSummary taskSummary = executeInstance.getTaskSummary("SQL");
@@ -303,7 +297,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException(e);
     }
 
-    log.fine("successfully updated " + updateCount + " records");
+    connHanlde.log.fine("successfully updated " + updateCount + " records");
     return updateCount;
   }
 
@@ -545,7 +539,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     if (tempTable != null) {
       connHanlde.runSilentSQL("drop table if exists " + tempTable + ";");
-      log.fine("silently drop temp table: " + tempTable);
+      connHanlde.log.fine("silently drop temp table: " + tempTable);
       tempTable = null;
     }
 
@@ -556,7 +550,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   protected Logger getParentLogger() {
-    return log;
+    return connHanlde.log;
   }
 
   protected void checkClosed() throws SQLException {

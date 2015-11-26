@@ -32,7 +32,6 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
 public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
 
-  private Logger log;
   private DownloadSession sessionHandle;
   private int fetchSize;
   private OdpsStatement.FetchDirection fetchDirection;
@@ -60,8 +59,7 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
-    super(stmt, meta);
-    log = stmt.getParentLogger();
+    super(stmt.getConnection(), stmt, meta);
     sessionHandle = session;
     fetchSize = stmt.resultSetFetchSize;
     fetchDirection = stmt.resultSetFetchDirection;
@@ -238,7 +236,7 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
       default:
         throw new SQLException("invalid argument for setFetchDirection()");
     }
-    log.info("setFetchDirection has not been utilized");
+    conn.log.info("setFetchDirection has not been utilized");
   }
 
   @Override
@@ -310,7 +308,7 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
       }
       long duration = System.currentTimeMillis() - start;
       long totalKBytes = reader.getTotalBytes() / 1024;
-      log.fine(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
+      conn.log.fine(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
                               count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException e) {
