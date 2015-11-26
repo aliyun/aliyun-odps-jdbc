@@ -2,3 +2,15 @@ language: java
 install: mvn install -DskipTests=true -Dgpg.skip=true -Djavadoc.skip=true
 script: mvn package -DskipTests=true -Dgpg.skip=true -Djavadoc.skip=true
 
+before_deploy:
+  - export RELEASE_JARS=$(ls target/odps-jdbc-*.jar)
+  - echo "deploying RELEASE_JARS to GitHub releases"
+
+deploy:
+  provider: releases
+  api_key: "135d704bac422c21ff63b27f48aa8a88c9b6c020"
+  file_glob: true
+  file: "${RELEASE_JARS}"
+  skip_cleanup: true
+  on:
+    tags: true
