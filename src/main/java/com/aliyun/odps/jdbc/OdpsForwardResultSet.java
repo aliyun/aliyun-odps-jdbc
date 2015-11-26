@@ -35,7 +35,6 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
-  private Logger log;
   private DownloadSession sessionHandle;
   private TunnelRecordReader reader = null;
   private Record reuseRecord = null;
@@ -61,8 +60,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
-    super(stmt, meta);
-    log = stmt.getParentLogger();
+    super(stmt.getConnection(), stmt, meta);
     sessionHandle = session;
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();
@@ -114,7 +112,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     } catch (IOException e) {
       throw new SQLException(e);
     }
-    log.fine("the result set has been closed");
+    conn.log.fine("the result set has been closed");
   }
 
   @Override
@@ -123,7 +121,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
     if (fetchedRows == totalRows) {
       long end = System.currentTimeMillis();
-      log.fine("It took me " + (end - startTime) + " ms to fetch all records");
+      conn.log.fine("It took me " + (end - startTime) + " ms to fetch all records");
       // For forward result set, we implicitly close it after fetching all records
       close();
       return false;
@@ -150,7 +148,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
           long delta = reader.getTotalBytes() / 1024 - accumKBytes;
           long duration = System.currentTimeMillis() - accumTime;
-          log.fine(String.format("fetched %d rows, %d KB, %.2f KB/s", ACCUM_FETCHED_ROWS,
+          conn.log.fine(String.format("fetched %d rows, %d KB, %.2f KB/s", ACCUM_FETCHED_ROWS,
                                   delta, (float) delta / duration * 1000));
 
           accumKBytes = reader.getTotalBytes() / 1024;
@@ -158,7 +156,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         }
         return true;
       } catch (IOException e) {
-        log.info("read from a bad file, retry=" + retry);
+        conn.log.info("read from a bad file, retry=" + retry);
         if (++retry == READER_REOPEN_TIME_MAX) {
           throw new SQLException("to much retries because: " + e.getMessage());
         }
@@ -176,7 +174,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     try {
       long count = totalRows - fetchedRows;
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
-      log.fine(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
+      conn.log.fine(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
       throw new SQLException(e);
     } catch (TunnelException e) {
