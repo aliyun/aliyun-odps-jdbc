@@ -42,8 +42,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Executor;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,14 +101,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
-    // Set up the handler's attributes
-    // TODO(onesuper): support file logger later
-    ConsoleHandler consoleHandler = new ConsoleHandler();
-    consoleHandler.setLevel(Level.ALL);
-    consoleHandler.setFormatter(new LogFormatter());
-
-    // Use the project name to name the logger
-    log = Logger.getLogger(project);
+    log = Logger.getLogger(UUID.randomUUID().toString().substring(24));
 
     // Change the state of the root logger
     if (logLevel.equalsIgnoreCase("fatal") || logLevel.equalsIgnoreCase("severe")) {
@@ -120,8 +113,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     } else {
       log.setLevel(Level.INFO);
     }
+
+    // TODO(onesuper): support file logger later
     log.setUseParentHandlers(false);
-    log.addHandler(consoleHandler);
+    log.addHandler(LogConsoleHandler.getInstance());
 
     log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
@@ -266,6 +261,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       }
     }
     isClosed = true;
+    log.info("connection closed");
   }
 
   @Override
