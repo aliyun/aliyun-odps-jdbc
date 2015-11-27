@@ -55,6 +55,7 @@ import java.util.regex.Pattern;
 
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.TableSchema;
+import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -208,72 +209,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       TunnelRecordWriter recordWriter = (TunnelRecordWriter) session.openRecordWriter(0, true);
       for (int i = 0; i < batchedSize; i++) {
         Object[] row = batchedRows.get(i);
-        for (int col = 0; col < colNum; col++) {
-          OdpsType odpsType = schema.getColumn(col).getType();
-          Object value = row[col];
-
-          // a null column
-          if (row[col] == null) {
-            record.set(col, null);
-            continue;
-          }
-
-          // Set record values with type validation
-          switch (odpsType) {
-            case BIGINT:
-              if (!(value instanceof Long)) {
-                throw new BatchUpdateException(
-                    col + " col expected to be Long, but: " + value.getClass().getName(),
-                    updateCounts);
-              }
-              record.setBigint(col, (Long) value);
-              break;
-            case BOOLEAN:
-              if (!(value instanceof Boolean)) {
-                throw new BatchUpdateException(
-                    col + " col expected to be Boolean, but: " + value.getClass().getName(),
-                    updateCounts);
-              }
-              record.setBoolean(col, (Boolean) value);
-              break;
-            case DATETIME:
-              if (!(value instanceof java.util.Date)) {
-                throw new BatchUpdateException(
-                    col + " col expected to be java.util.Date, but: " + value.getClass().getName(),
-                    updateCounts);
-              }
-              record.setDatetime(col, (java.util.Date) value);
-              break;
-            case DOUBLE:
-              if (!(value instanceof Double)) {
-                throw new BatchUpdateException(
-                    col + " col expected to be Double, but: " + value.getClass().getName(),
-                    updateCounts);
-              }
-              record.setDouble(col, (Double) value);
-              break;
-            case STRING:
-              if (!(value instanceof byte[])) {
-                throw new BatchUpdateException(
-                    col + " col expected to be byte[], but: " + value.getClass().getName(),
-                    updateCounts);
-              }
-              record.setString(col, (byte[]) value);
-              break;
-            case DECIMAL:
-              if (!(value instanceof BigDecimal)) {
-                throw new BatchUpdateException(
-                    col + " col expected to be BigDecimal, but: " + value.getClass().getName(),
-                    updateCounts);
-              }
-              record.setDecimal(col, (BigDecimal) value);
-              break;
-            default:
-              throw new RuntimeException("Batch insert do not support data type: " + odpsType);
-          }
-//          record.set(j, value);   do not check
-        }
-
+        record.set(row);
         recordWriter.write(record);
         updateCounts[i] = 1;
       }
