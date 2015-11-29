@@ -664,7 +664,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                       OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.BIGINT,
                       OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -676,7 +676,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
         Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -686,7 +686,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     long begin = System.currentTimeMillis();
 
     List<Object[]> rows = new ArrayList<Object[]>();
-
     for (Table t : conn.getOdps().tables()) {
 
       String tableName = t.getName();
@@ -718,7 +717,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                       OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
                       OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta, rows.iterator());
+    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   // TODO
@@ -729,7 +728,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
         Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   // TODO
@@ -741,7 +740,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
         Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -751,7 +750,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
         Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -761,7 +760,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
         Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -773,7 +772,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     List<Object[]> rows = new ArrayList<Object[]>();
     try {
-      Table table = conn.getOdps().tables().get(tableNamePattern);
+      Table table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
       table.reload();
       // Read column information from table schema
       List<Column> columns = table.getSchema().getColumns();
@@ -816,7 +815,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                           OdpsType.BIGINT, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
                           OdpsType.STRING, OdpsType.BIGINT));
 
-    return new OdpsStaticResultSet(meta, rows.iterator());
+    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   @Override
@@ -854,7 +853,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
                       OdpsType.BIGINT, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -871,7 +870,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                       OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.BIGINT, OdpsType.STRING,
                       OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -895,7 +894,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
         Arrays.asList(OdpsType.STRING, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -976,7 +975,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
                       OdpsType.BIGINT, OdpsType.STRING, OdpsType.BIGINT));
 
-    return new OdpsStaticResultSet(meta);
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
@@ -1108,7 +1107,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList(OdpsType.STRING, OdpsType.STRING, OdpsType.STRING, OdpsType.STRING,
                       OdpsType.BIGINT, OdpsType.STRING));
 
-    return new OdpsStaticResultSet(meta, rows.iterator());
+    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   @Override

@@ -21,9 +21,11 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -35,27 +37,20 @@ import org.junit.Assert;
 
 public class OdpsPreparedStatementTest {
 
-  static PreparedStatement pstmt;
-  static long unixtime;
-  static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-
-  @BeforeClass
-  public static void setUp() throws Exception {
-    pstmt = OdpsConnectionFactory.getInstance().conn.prepareStatement(
-        "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
-        + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
-    unixtime = new java.util.Date().getTime();
-  }
-
   @AfterClass
   public static void tearDown() throws Exception {
-    pstmt.close();
     OdpsConnectionFactory.getInstance().conn.close();
   }
 
   @Test
   public void testSetAll() throws Exception {
+    PreparedStatement pstmt;
+    pstmt = OdpsConnectionFactory.getInstance().conn.prepareStatement(
+        "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
+        + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
+    long unixtime = new java.util.Date().getTime();
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     pstmt.setBigDecimal(1, BigDecimal.TEN);
     pstmt.setBoolean(2, Boolean.TRUE);
     pstmt.setByte(3, Byte.MAX_VALUE);
@@ -87,8 +82,124 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals(new Time(unixtime).toString(), rs.getTime(12).toString());
       Assert.assertEquals(formatter.format(new Timestamp(unixtime)),
                           formatter.format(rs.getTimestamp(13)));
-
       rs.close();
     }
+    pstmt.close();
+  }
+
+
+  @Test
+  public void batchInsert() throws Exception {
+    Connection conn = OdpsConnectionFactory.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.executeUpdate("drop table if exists employee_test;");
+    ddl.executeUpdate(
+        "create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
+    ddl.close();
+
+    PreparedStatement ps = conn.prepareStatement(
+        "insert into employee_test values (?, ?, ?, ?, ?, ?);");
+
+    final int batchSize = 20;
+    int count = 0;
+
+    long unixtime = new java.util.Date().getTime();
+
+
+    for (int i = 0; i < 120; i++) {
+      ps.setInt(1, 9999);
+      ps.setString(2, "hello");
+      ps.setTime(3, new Time(unixtime));
+      ps.setBoolean(4, true);
+      ps.setFloat(5, 3.141590261234F);
+      ps.setBigDecimal(6, BigDecimal.TEN);
+      ps.addBatch();
+      if(++count % batchSize == 0) {
+        ps.executeBatch();
+      }
+    }
+    ps.executeBatch(); // insert remaining records
+    ps.close();
+
+    Statement query =  conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from employee_test");
+
+    while (rs.next()) {
+      Assert.assertEquals(rs.getInt(1), 9999);
+      Assert.assertEquals(rs.getString(2), "hello");
+      Assert.assertEquals(rs.getTime(3), new Time(unixtime));
+      Assert.assertEquals(rs.getBoolean(4), true);
+      Assert.assertEquals(rs.getFloat(5), 3.141590261234F, 0);
+      Assert.assertEquals(rs.getBigDecimal(6), BigDecimal.TEN);
+      count--;
+    }
+
+    Assert.assertEquals(count, 0);
+
+    rs.close();
+    query.close();
+  }
+
+
+  @Test
+  public void batchInsertNullAndFetch() throws Exception {
+    Connection conn = OdpsConnectionFactory.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.executeUpdate("drop table if exists employee_test;");
+    ddl.executeUpdate("create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
+    ddl.close();
+
+    PreparedStatement ps = conn.prepareStatement(
+        "insert into employee_test values (?, ?, ?, ?, ?, ?);");
+
+    final int batchSize = 20;
+    int count = 0;
+
+
+    for (int i = 0; i < 120; i++) {
+      ps.setNull(1, -1);
+      ps.setNull(2, -1);
+      ps.setNull(3, -1);
+      ps.setNull(4, -1);
+      ps.setNull(5, -1);
+      ps.setNull(6, -1);
+
+      ps.addBatch();
+      if(++count % batchSize == 0) {
+        ps.executeBatch();
+      }
+    }
+    ps.executeBatch(); // insert remaining records
+    ps.close();
+
+    Statement query =  conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from employee_test");
+
+    while (rs.next()) {
+      Assert.assertEquals(0, rs.getInt(1));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(null, rs.getString(2));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(null, rs.getTime(3));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(false, rs.getBoolean(4));
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(0.0f, rs.getFloat(5), 0);
+      Assert.assertTrue(rs.wasNull());
+
+      Assert.assertEquals(null, rs.getBigDecimal(6));
+      Assert.assertTrue(rs.wasNull());
+
+      count--;
+    }
+
+    Assert.assertEquals(count, 0);
+
+    rs.close();
+    query.close();
   }
 }

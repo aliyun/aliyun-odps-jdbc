@@ -42,21 +42,20 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
-  private final Logger log;
   private OdpsResultSetMetaData meta;
   private OdpsStatement stmt;
+  protected OdpsConnection conn;
   private boolean wasNull = false;
 
   private SQLWarning warningChain = null;
 
-  OdpsResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
+  OdpsResultSet(OdpsConnection conn, OdpsStatement stmt, OdpsResultSetMetaData meta) throws SQLException {
     this.stmt = stmt;
     this.meta = meta;
-    this.log = stmt.getParentLogger();
+    this.conn = conn;
   }
 
   @Override
@@ -571,7 +570,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       } catch (UnsupportedEncodingException e) {
         throw new SQLException(e);
       }
-      log.info("no specified charset found, using system default charset decoder");
+      conn.log.info("no specified charset found, using system default charset decoder");
       // Use the java.nio.charset.CharsetDecoder to decode the byte[]
       return new String((byte[]) obj);
     } else if (obj instanceof java.util.Date) {

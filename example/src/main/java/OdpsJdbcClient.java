@@ -1,8 +1,11 @@
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.DriverManager;
+import java.util.Properties;
 
 public class OdpsJdbcClient {
   private static String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
@@ -19,11 +22,22 @@ public class OdpsJdbcClient {
       System.exit(1);
     }
 
-    // fill in the information here
-    String accessId = "your_access_id";
-    String accessKey = "your_access_key";
-    Connection con = DriverManager.getConnection("jdbc:odps:https://service-corp.odps.aliyun-inc.com/api?project=<your_project_name>", accessId, accessKey);
-    Statement stmt = con.createStatement();
+    // fill in the information string
+    Properties odpsConfig = new Properties();
+    InputStream is =
+        Thread.currentThread().getContextClassLoader().getResourceAsStream("conf.properties");
+    try {
+      odpsConfig.load(is);
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
+
+    String accessId = odpsConfig.getProperty("access_id");
+    String accessKey = odpsConfig.getProperty("access_key");
+    Connection conn = DriverManager.getConnection(odpsConfig.getProperty("connection_string"), accessId, accessKey);
+
+    Statement stmt = conn.createStatement();
     String tableName = "testOdpsDriverTable";
     stmt.execute("drop table if exists " + tableName);
     stmt.execute("create table " + tableName + " (key int, value string)");

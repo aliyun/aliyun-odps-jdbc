@@ -1,9 +1,23 @@
+### v1.2 (SNAPSHOT)
+
+1. Support batch insert in PreparedStatement.
+2. Add an example to migrate data using batch functionality. The example splits the source and uses more than 1 thread to upload.
+2. `DatabaseMetaData.getColumns()` Support accoss schema query.
+3. Per-connection logger bug fixed.
+4. Display uuid in loggers' console handler.
+4. Use travis to deploy.
+5. `user_agent` looks like odps-jdbc-1.1.
+6. Rename OdpsQueryResultSet to ScollResultSet.
+7. Use project name in log string.
+
+
+
 ### v1.1 (2015-11-17)
 
 1. SQLWorkbench's wbcopy command supported.
 1. Compress data when downloading the result set.
 1. No longer use log4j.
-1. Driver.getParentLogger() supported. 
+1. `Driver.getParentLogger()` supported. 
 1. Per-connection logger (support two connections with different log level.) 
 1. More debug logs for profiling.
 1. Change the driver name to 'ODPS'.

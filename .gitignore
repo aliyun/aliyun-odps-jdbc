@@ -7,6 +7,12 @@
 # Intellij Idea
 .idea
 *.iml
+*.class
+
+
+/example/target
+/example/src/main/resources/*
+!/example/src/main/resources/conf.properties.example
 
 /src/test/resources/*
 !/src/test/resources/conf.properties.example
