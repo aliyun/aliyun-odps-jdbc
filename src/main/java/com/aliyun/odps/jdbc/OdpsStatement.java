@@ -174,6 +174,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           break;
         }
 
+        if (executeInstance.getTaskStatus() == null) {
+          throw new SQLException("getTaskStatus fail");
+        }
         switch (executeInstance.getTaskStatus().get("SQL").getStatus()) {
           case SUCCESS:
             complete = true;
@@ -259,6 +262,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           break;
         }
 
+        if (executeInstance.getTaskStatus() == null) {
+          throw new SQLException("getTaskStatus fail");
+        }
         switch (executeInstance.getTaskStatus().get("SQL").getStatus()) {
           case SUCCESS:
             complete = true;

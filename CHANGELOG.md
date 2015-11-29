@@ -1,15 +1,15 @@
-### v1.2 (SNAPSHOT)
+### v1.2 (2015-11-29)
 
 1. Support batch insert in PreparedStatement.
-2. Add an example to migrate data using batch functionality. The example splits the source and uses more than 1 thread to upload.
-2. `DatabaseMetaData.getColumns()` Support accoss schema query.
-3. Per-connection logger bug fixed.
-4. Display uuid in loggers' console handler.
-4. Use travis to deploy.
-5. `user_agent` looks like odps-jdbc-1.1.
-6. Rename OdpsQueryResultSet to ScollResultSet.
-7. Use project name in log string.
-
+1. Add an example to migrate data using batch functionality. The example splits the source and uses more than 1 thread to upload.
+1. `DatabaseMetaData.getColumns()` Support accoss schema query.
+1. Per-connection logger bug fixed.
+1. Display uuid in loggers' console handler.
+1. Use travis to deploy.
+1. `user_agent` looks like odps-jdbc-1.1.
+1. Rename OdpsQueryResultSet to ScollResultSet.
+1. Use project name in log string.
+1. Throw NPE if `instance.getStatus() == null`.
 
 
 ### v1.1 (2015-11-17)

@@ -1,16 +1,15 @@
 language: java
 install: mvn install -DskipTests=true -Dgpg.skip=true -Djavadoc.skip=true
 script: mvn package -DskipTests=true -Dgpg.skip=true -Djavadoc.skip=true
-
 before_deploy:
-  - export RELEASE_JARS=$(ls target/odps-jdbc-*.jar)
-  - echo "deploying RELEASE_JARS to GitHub releases"
-
+- export RELEASE_JARS=$(ls target/odps-jdbc-*.jar)
+- echo "deploying RELEASE_JARS to GitHub releases"
 deploy:
   provider: releases
-  api_key: "135d704bac422c21ff63b27f48aa8a88c9b6c020"
+  api_key:
+    secure: OKoCacW3NwbaOoL3ZNSkzgvWF2b4n+qwHxAqROjC6OvOilYPmLovxbGxWYYeGCOxOeS2k2sDkIA5X2kqn7Q5yXPtoYuIjCjq6HJBmcayOSrw6wIISsa+c5nw7tLswZjbq4A96SLgevWUEi0AD87H6buWB2EN9ro0uqmDDSMWeqX2ogbxWJKcNQKTLSOWoZFNlkChupLeZ2hce0Nc2qcpNCklb+vW40JnEq9CPLYZyUy8m2ZMHUxcGK3ywvRIAQ+uyaFkbOuyBWHxcz+UfBUdupZWmkqxmZ9HsibGs8tW3KcwdFSRg8S46U7No3bUh9dc51qVarYy3er4UOta2L/0Wry8bh+MbY16c/lS77l4Br+uC3z6hXx2D6O/V7qXvxcbigPXLxA1rHzhXuV/Umqa+6AmVrtOn5vS4c/claOFpPnpEl1+daHppNdPyLTHb7YklVN2awVGaJgZCKOQCVwIZBgQW2z3/eBiNfVICnxt7Sm5q/flMCwMYCVGXOx/BBfzBWh56ZB+6fLx7KO9eRgrqRI/XhdnXorK4WlJlnD3jSG8veBz912fLOt3+/VGaZ1xQ4x9nGKkgBtgc5PeO/qA64298Ey+OU+cFE4pMJBdOEfoxWBr0yzbbyKNuJXIDK1PqqabzemPl/BX6padkIp75WMCTE7ZOi8Y5/ByXR96HWM=
   file_glob: true
-  file: "${RELEASE_JARS}"
+  file: "target/odps-jdbc-*.jar"
   skip_cleanup: true
   on:
     tags: true
