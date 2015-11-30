@@ -1,3 +1,8 @@
+### v1.3 (SNAPSHOT)
+
+1. Support `supportsResultSetType()` to adapt Pentaho.
+1. Support `PreparedStatement.setBytes()`.
+
 ### v1.2 (2015-11-29)
 
 1. Support batch insert in PreparedStatement.

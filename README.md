@@ -240,6 +240,7 @@ The implicit type conversion follows the rule:
 | float        | Y | Y |   |   | Y | Y |
 | BigDecimal  |   |   |   |   | Y | Y |
 | String       | Y | Y | Y | Y | Y | Y |
+| byte\[\]     | Y | Y | Y | Y | Y | Y |
 | Date         |   |   |   | Y | Y |   |
 | Time         |   |   |   | Y | Y |   |
 | Timestamp   |   |   |   | Y | Y |   |
