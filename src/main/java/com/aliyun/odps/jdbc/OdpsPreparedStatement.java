@@ -27,7 +27,6 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
-import java.sql.BatchUpdateException;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
@@ -53,9 +52,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.TableSchema;
-import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -315,7 +312,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    parameters.put(parameterIndex, x);
   }
 
   @Override
@@ -413,7 +410,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (x instanceof String) {
       setString(parameterIndex, (String) x);
     } else if (x instanceof byte[]) {
-      parameters.put(parameterIndex, x);
+      setBytes(parameterIndex, (byte[]) x);
     } else if (x instanceof Short) {
       setShort(parameterIndex, (Short) x);
     } else if (x instanceof Integer) {
