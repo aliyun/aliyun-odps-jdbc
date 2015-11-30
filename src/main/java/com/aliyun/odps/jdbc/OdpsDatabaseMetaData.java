@@ -905,7 +905,11 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsResultSetType(int type) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (type == ResultSet.TYPE_FORWARD_ONLY || type == ResultSet.TYPE_SCROLL_INSENSITIVE) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override
