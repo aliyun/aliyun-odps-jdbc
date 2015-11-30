@@ -1,17 +1,17 @@
+
 # ODPS JDBC
 
 [![Build Status](https://travis-ci.org/aliyun/aliyun-odps-jdbc.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-odps-jdbc)
 
 
-## Getting Involved
-
-The project is under construction (and not fully JDBC-compliant). If you dicover any good features which have not been implemented, please fire me an [Email](mailto:yichao.cheng@alibaba-inc.com) or just pull a request.
-
 ## Installation
 
 Generally, there are two ways to use ODPS JDBC driver in your project.
 
-1.The first one is to use the standalone library (with-dependencies-jar). Download it from [release page](https://github.com/aliyun/aliyun-odps-jdbc/releases).
+1.The first one is to use the standalone library: 
+
+* Download the with-dependencies-jar from [release page](https://github.com/aliyun/aliyun-odps-jdbc/releases).
+* Checkout the [CHANGELOG](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md).
 
 2.The second is to rely on maven to resolve the dependencies for you:
 
@@ -64,6 +64,21 @@ For example:
         ...
     }
 
+
+
+### Connection String
+
+
+|  URL key  | Property Key |                         Description                         |
+|:---------:|:------------:|:-----------------------------------------------------------|
+|  `endpoint` |   `end_point`  | the endpoint of the ODPS cluster                            |
+|  `project`  | `project_name` | the current ODPS project                                    |
+|  `accessId` |   `access_id`  | the id to access the ODPS service                          |
+| `accessKey` |  `access_key`  | the authentication key                                      |
+|  `logview`  | `logview_host` | the host domain of the log view appeared in the log history |
+| `lifecycle` |   `lifecycle`  | the lifecycle of the temp table using in query              |
+|  `charset`  |    `charset`   | the charset of the string                                   |
+|  `loglevel` |   `log_level`  | the level of debug infomartion debug/info/fatal             |
 
 ## Example
 
@@ -140,33 +155,61 @@ For example:
 
 
 
-## Third-party Database Visualizer
+## Third-party Integration
 
-It is also recommended to use ODPS by using other third-party tools that supports JDBC. For example:
+It is also recommended to use ODPS by using other third-party BI tools or DB visualizer that supports JDBC.
+
+For example:
 
 * [SQLWorkbench/J]()
 * [Squrriel SQL]()
+* [Pentaho]()
 
 
-## Connection String
+## Getting Involved
+
+The project is under construction (and not fully JDBC-compliant). If you dicover any good features which have not been implemented, please fire me an [Email](mailto:yichao.cheng@alibaba-inc.com) or just pull a request.
 
 
-|  URL key  | Property Key |                         Description                         |
-|:---------:|:------------:|:-----------------------------------------------------------|
-|  `endpoint` |   `end_point`  | the endpoint of the ODPS cluster                            |
-|  `project`  | `project_name` | the current ODPS project                                    |
-|  `accessId` |   `access_id`  | the id to access the ODPS service                          |
-| `accessKey` |  `access_key`  | the authentication key                                      |
-|  `logview`  | `logview_host` | the host domain of the log view appeared in the log history |
-| `lifecycle` |   `lifecycle`  | the lifecycle of the temp table using in query              |
-|  `charset`  |    `charset`   | the charset of the string                                   |
-|  `loglevel` |   `log_level`  | the level of debug infomartion debug/info/fatal             |
+### TODO
+
+* Better functional test (continuous intergration)
 
 
+### Build and run unitest
 
+1.Build from source locally:
 
+```
+git clone ....
+cd odps-jdbc
+mvn install -DskipTests
+```
 
-## Data Type Mapping
+2.Copy out a configuration file:
+
+```
+cp ./src/test/resources/conf.properties.example ./src/test/resources/conf.properties
+```
+
+3.Fill in your connection strings:
+
+```
+access_id=...
+access_key=...
+end_point=...
+project_name=...
+logview_host=...
+charset=UTF-8
+```
+
+4.Run maven test command (or just test it in IntelliJ IDEA):
+
+```
+mvn test
+```
+
+### Data Type Mapping
 
 Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC. They can be accessed by the getters of `ResultSet` like `getInt()` and `getTime()`. The following table reflects the mapping between JDBC data type and ODPS data type:
 
@@ -202,45 +245,6 @@ The implicit type conversion follows the rule:
 | Timestamp   |   |   |   | Y | Y |   |
 
 
-## For Developers
-
-### Build and run unitest
-
-1.Build from source locally:
-
-```
-git clone ....
-cd odps-jdbc
-mvn install -DskipTests
-```
-
-2.Copy out a configuration file:
-
-```
-cp ./src/test/resources/conf.properties.example ./src/test/resources/conf.properties
-```
-
-3.Fill in your connection strings:
-
-```
-access_id=...
-access_key=...
-end_point=...
-project_name=...
-logview_host=...
-charset=UTF-8
-```
-
-4.Run maven test command (or just test it in IntelliJ IDEA):
-
-```
-mvn test
-```
-
-
-### TODO
-
-* Better functional test (continuous intergration maybe)
 
 
 ## Authors && Contributors
