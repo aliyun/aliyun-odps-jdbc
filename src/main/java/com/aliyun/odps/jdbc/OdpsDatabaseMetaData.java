@@ -52,6 +52,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   private static final String CATALOG_TERM = "endpoint";
   private static final String PROCEDURE_TERM = "UDF";
 
+  private static final int TABLE_NAME_LENGTH = 128;
+
   private OdpsConnection conn;
 
 
@@ -188,7 +190,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getIdentifierQuoteString() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return " ";
   }
 
   @Override
@@ -383,7 +385,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getCatalogSeparator() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return ".";
   }
 
   @Override
@@ -603,7 +605,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getMaxTableNameLength() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return TABLE_NAME_LENGTH;
   }
 
   @Override
@@ -755,12 +757,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public ResultSet getTableTypes() throws SQLException {
-    // Return an empty result set
-    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
-        Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
-        Arrays.asList(OdpsType.STRING, OdpsType.STRING));
+    List<Object[]> rows = new ArrayList<Object[]>();
+    String[] row = {"TABLE", "VIEW"};
+    rows.add(row);
 
-    return new OdpsStaticResultSet(getConnection(), meta);
+    // Build result set meta data
+    OdpsResultSetMetaData
+        meta =
+        new OdpsResultSetMetaData(
+            Arrays.asList("TABLE_TYPE"),
+            Arrays.asList(OdpsType.STRING));
+
+    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
+
   }
 
   @Override
