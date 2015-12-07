@@ -25,7 +25,7 @@ public class Utils {
   public static String retrieveVersion() {
     // TODO: remove the hard code later
     // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
-    return "1.1";
+    return "1.3";
   }
 
   public static boolean matchPattern(String s, String pattern) {

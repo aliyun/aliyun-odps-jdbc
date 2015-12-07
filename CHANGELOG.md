@@ -1,9 +1,10 @@
-### v1.3 (SNAPSHOT)
+### v1.3 (2015-12-07)
 
 1. Support `supportsResultSetType()` to adapt to Pentaho.
 1. Support `PreparedStatement.setBytes()`.
 1. Support `getMaxTableNameLength()` to adapt to SQL Workbench/J.
 1. Support `getIdentifierQuoteString()` to adapt to SQL Workbench/J.
+1. Fix the `getUpdateCount()` bug. Issue \#15.
 
 
 ### v1.2 (2015-11-29)

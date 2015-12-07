@@ -52,6 +52,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private ResultSet resultSet = null;
   private String tempTable = null;
   private int updateCount = -1;
+
+  // when the update count is feteched by the client, set this true
+  // Then the next call the getUpdateCount() will return -1, indicating there's no more results.
+  // see Issue #15
+  boolean updateCountFeteched = false;
+
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
@@ -477,7 +483,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getUpdateCount() throws SQLException {
-    return updateCount;
+    if (updateCountFeteched) {
+      return -1;
+    } else {
+      updateCountFeteched = true;
+      return updateCount;
+    }
   }
 
   @Override
