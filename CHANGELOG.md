@@ -1,3 +1,8 @@
+### v1.4
+
+1. Support `isValid()` to adpat to HikariCP.
+1. Add an example to use HikariCP.
+
 ### v1.3 (2015-12-07)
 
 1. Support `supportsResultSetType()` to adapt to Pentaho.

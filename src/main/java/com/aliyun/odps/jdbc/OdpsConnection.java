@@ -436,7 +436,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public boolean isValid(int timeout) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (timeout < 0) {
+      throw new SQLException("timeout value was negative");
+    }
+    try {
+      boolean exists = odps.projects().exists("123");
+      return true;
+    } catch (OdpsException e) {
+      return false;
+    }
   }
 
   @Override

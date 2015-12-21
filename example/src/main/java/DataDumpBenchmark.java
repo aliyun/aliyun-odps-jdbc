@@ -145,7 +145,6 @@ public class DataDumpBenchmark {
 
       final String selectSql2 = selectSql;
       Callable<Long> call = new Callable<Long>() {
-        @Override
         public Long call() throws Exception {
           final Connection connSource = DriverManager.getConnection(
               "jdbc:odps:" + odpsConfig.getProperty("endpoint_1")

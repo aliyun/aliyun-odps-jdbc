@@ -35,7 +35,7 @@ public class OdpsJdbcClient {
 
     String accessId = odpsConfig.getProperty("access_id");
     String accessKey = odpsConfig.getProperty("access_key");
-    Connection conn = DriverManager.getConnection(odpsConfig.getProperty("connection_string"), accessId, accessKey);
+    Connection conn = DriverManager.getConnection(odpsConfig.getProperty("endpoint"), accessId, accessKey);
 
     Statement stmt = conn.createStatement();
     String tableName = "testOdpsDriverTable";
