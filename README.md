@@ -108,7 +108,7 @@ For example:
         // fill in the information here
         String accessId = "your_access_id";
         String accessKey = "your_access_key";
-        Connection conn = DriverManager.getConnection("jdbc:odps:https://service-corp.odps.aliyun-inc.com/api?project=<your_project_name>", accessId, accessKey);
+        Connection conn = DriverManager.getConnection("jdbc:odps:https://service.odps.aliyun.com/api?project=<your_project_name>", accessId, accessKey);
         Statement stmt = conn.createStatement();
         String tableName = "testOdpsDriverTable";
         stmt.execute("drop table if exists " + tableName);
