@@ -1,15 +1,16 @@
-### v1.4
+### v1.4 (2015-12-22)
 
-1. Support `isValid()` to adpat to HikariCP.
-1. Add an example to use HikariCP.
+1. Support `isValid()` to adpat to **HikariCP**.
+1. Support `setReadOnly()` to adapt to **HikariCP** (only allow for setting it to false).
+1. Add an example to use **HikariCP**.
 
 ### v1.3 (2015-12-07)
 
-1. Support `supportsResultSetType()` to adapt to Pentaho.
+1. Support `supportsResultSetType()` to adapt to **Pentaho**.
 1. Support `PreparedStatement.setBytes()`.
-1. Support `getMaxTableNameLength()` to adapt to SQL Workbench/J.
-1. Support `getIdentifierQuoteString()` to adapt to SQL Workbench/J.
-1. Fix the `getUpdateCount()` bug. Issue \#15.
+1. Support `getMaxTableNameLength()` to adapt to **SQL Workbench/J**.
+1. Support `getIdentifierQuoteString()` to adapt to **SQL Workbench/J**.
+1. Fix the `getUpdateCount()` bug. See Issue \#15.
 
 
 ### v1.2 (2015-11-29)

@@ -277,7 +277,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (readOnly) {
+      throw new SQLFeatureNotSupportedException("enabling read-only is not supported");
+    }
   }
 
   @Override

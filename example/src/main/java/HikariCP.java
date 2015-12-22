@@ -47,6 +47,9 @@ public class HikariCP {
       ds.setUsername(odpsConfig.getProperty("username"));
       ds.setPassword(odpsConfig.getProperty("password"));
       ds.setMaximumPoolSize(5);
+      ds.setAutoCommit(false);
+      ds.setReadOnly(false);
+
 
       Connection conn = ds.getConnection();
       Statement stmt = conn.createStatement();
@@ -81,6 +84,8 @@ public class HikariCP {
       while (res.next()) {
         System.out.println(res.getString(1));
       }
+
+      ds.close();
 
     } catch (Exception e) {
       e.printStackTrace();
