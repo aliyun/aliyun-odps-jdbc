@@ -1,3 +1,8 @@
+### v1.5
+
+1. Set temp table lifecycle in create SQL (eliminate the round trip cost).
+1. Accepts 'VALUES(?, ?, ?)' in prepareStatement.
+
 ### v1.4 (2015-12-22)
 
 1. Support `isValid()` to adpat to **HikariCP**.

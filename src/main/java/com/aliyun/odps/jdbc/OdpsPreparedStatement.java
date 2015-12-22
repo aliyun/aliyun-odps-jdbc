@@ -65,15 +65,17 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   private final String SPEC_COLS = "\\([\\w+,?\\s*]+\\)";  // "(name1, name2, name3)"
 
   private final String PREP_INSERT_WITH_SPEC_COLS =
-      "(?i)^\\s*insert\\s+into\\s+" + TABLE_NAME + "\\s+" + SPEC_COLS + "\\s+values\\s+"
-      + PREP_VALUES + "\\s*;?\\s*$";
+      "(?i)^" + "\\s*" + "insert" + "\\s+" + "into" + "\\s+" + TABLE_NAME + "\\s+" +
+      SPEC_COLS + "\\s+" + "values" + "\\s*" + PREP_VALUES + "\\s*" + ";?\\s*$";
+
   private final String PREP_INSERT_WITH_SPEC_COLS_EXAMPLE =
       "INSERT INTO table (field1, field2) VALUES (?, ?);";
 
   private final String PREP_INSERT_WITHOUT_SPEC_COLS =
-      "(?i)^\\s*insert\\s+into\\s+" + TABLE_NAME + "\\s+values\\s+" + PREP_VALUES + "\\s*;?\\s*$";
-  private final String
-      PREP_INSERT_WITHOUT_SPEC_COLS_EXAMPLE =
+      "(?i)^" + "\\s*" + "insert" + "\\s+" + "into" + "\\s+" + TABLE_NAME + "\\s+" +
+      "values" + "\\s*" + PREP_VALUES + "\\s*" + ";?\\s*$";
+
+  private final String PREP_INSERT_WITHOUT_SPEC_COLS_EXAMPLE =
       "INSERT INTO table VALUES (?, ?, ?);";
 
   /**
@@ -108,6 +110,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       }
     }
     this.parametersNum = counter;
+
+    conn.log.fine("create prepared statements: " + sql);
   }
 
   OdpsPreparedStatement(OdpsConnection conn, String sql, boolean isResultSetScrollable) {

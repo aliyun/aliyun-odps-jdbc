@@ -47,6 +47,7 @@ public class HikariCP {
       ds.setUsername(odpsConfig.getProperty("username"));
       ds.setPassword(odpsConfig.getProperty("password"));
       ds.setMaximumPoolSize(5);
+      ds.setConnectionTimeout(3000);
       ds.setAutoCommit(false);
       ds.setReadOnly(false);
 
