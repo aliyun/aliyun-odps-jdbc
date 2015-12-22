@@ -170,7 +170,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     String tempTempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
     try {
-      executeInstance = connHanlde.runClientSQL("create table " + tempTempTable + " as " + sql);
+      executeInstance = connHanlde.runClientSQL("create table " + tempTempTable + " lifecycle "
+                                                + connHanlde.lifecycle +  " as " + sql);
 
       boolean complete = false;
       while (!complete) {
@@ -209,10 +210,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     tempTable = tempTempTable;
     long end = System.currentTimeMillis();
     connHanlde.log.fine("It took me " + (end - begin) + " ms to create " + tempTable);
-
-    // Set the lifecycle for tmp table
-    connHanlde.runSilentSQL(
-        String.format("alter table %s set lifecycle %d;", tempTable, connHanlde.lifecycle));
 
     // Read schema
     begin = System.currentTimeMillis();
