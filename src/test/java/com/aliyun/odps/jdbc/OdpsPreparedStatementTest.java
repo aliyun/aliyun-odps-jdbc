@@ -100,13 +100,13 @@ public class OdpsPreparedStatementTest {
     PreparedStatement ps = conn.prepareStatement(
         "insert into employee_test values (?, ?, ?, ?, ?, ?);");
 
-    final int batchSize = 20;
+    final int batchSize = 10000;
     int count = 0;
 
     long unixtime = new java.util.Date().getTime();
 
 
-    for (int i = 0; i < 120; i++) {
+    for (int i = 0; i < 100000; i++) {
       ps.setInt(1, 9999);
       ps.setString(2, "hello");
       ps.setTime(3, new Time(unixtime));

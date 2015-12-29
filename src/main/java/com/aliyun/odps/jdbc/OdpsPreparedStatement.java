@@ -89,6 +89,10 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   private int parametersNum;
 
+  TableTunnel.UploadSession session;
+  Record reuseRecord;
+  int blocks;
+
   /**
    * The parameters for the prepared sql (index=>parameter).
    * The parameter is stored as Java objects and lazily casted into String when submitting sql.
@@ -154,7 +158,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
    */
   @Override
   public int[] executeBatch() throws SQLException {
-
     if (!verified) {
       if (!sql.matches(PREP_INSERT_WITHOUT_SPEC_COLS)) {
         throw new SQLException("batched statement only support following syntax: " +
@@ -168,6 +171,30 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
         throw new SQLException("cannot extract table name in SQL: " + sql);
       }
 
+
+      TableTunnel tunnel = new TableTunnel(getConnection().getOdps());
+      try {
+        if (tableBatchInsertTo.contains(".")) {
+          String[] splited = tableBatchInsertTo.split("\\.");
+          session = tunnel.createUploadSession(splited[0], splited[1]);
+        } else {
+          String defaultProject = getConnection().getOdps().getDefaultProject();
+          session = tunnel.createUploadSession(defaultProject, tableBatchInsertTo);
+        }
+      } catch (TunnelException e) {
+        throw new SQLException(e);
+      }
+      getConnection().log.fine("create upload session id=" + session.getId());
+      TableSchema schema = session.getSchema();
+      reuseRecord = session.newRecord();
+      int colNum = schema.getColumns().size();
+      int valNum = batchedRows.get(0).length;
+      if (valNum != colNum) {
+        throw new SQLException(
+            "the table has " + colNum + " columns, but insert " + valNum + " values");
+      }
+
+      blocks = 0;
       verified = true;
     }
 
@@ -184,46 +211,22 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     Arrays.fill(updateCounts, -1);
 
     try {
-      TableTunnel.UploadSession session;
-      TableTunnel tunnel = new TableTunnel(getConnection().getOdps());
-
-      if (tableBatchInsertTo.contains(".")) {
-        String[] splited = tableBatchInsertTo.split("\\.");
-        session = tunnel.createUploadSession(splited[0], splited[1]);
-      } else {
-        String project_name = getConnection().getOdps().getDefaultProject();
-        session = tunnel.createUploadSession(project_name, tableBatchInsertTo);
-      }
-
-      getConnection().log.fine("create upload session id=" + session.getId());
-
-      TableSchema schema = session.getSchema();
-      Record record = session.newRecord();
-      int colNum = schema.getColumns().size();
-      int valNum = batchedRows.get(0).length;
-      if (valNum != colNum) {
-        throw new SQLException(
-            "the table has " + colNum + " columns, but insert " + valNum + " values");
-      }
-
       long startTime = System.currentTimeMillis();
-      TunnelRecordWriter recordWriter = (TunnelRecordWriter) session.openRecordWriter(0, true);
+      TunnelRecordWriter recordWriter = (TunnelRecordWriter) session.openRecordWriter(blocks, true);
       for (int i = 0; i < batchedSize; i++) {
         Object[] row = batchedRows.get(i);
-        record.set(row);
-        recordWriter.write(record);
+        reuseRecord.set(row);
+        recordWriter.write(reuseRecord);
         updateCounts[i] = 1;
       }
 
-      recordWriter.flush();
       long duration = System.currentTimeMillis() - startTime;
       float megaBytesPerSec = (float) recordWriter.getTotalBytes() / 1024 / 1024 / duration * 1000;
       recordWriter.close();
       getConnection().log.info(
-          String.format("It took me %d ms to insert %d records, %.2f MiB/s", duration, batchedSize,
-                        megaBytesPerSec));
-      Long[] blocks = new Long[] { Long.valueOf(0) };
-      session.commit(blocks);
+          String.format("It took me %d ms to insert %d records [%d], %.2f MiB/s", duration, batchedSize,
+                        blocks, megaBytesPerSec));
+      blocks += 1;
     } catch (TunnelException e) {
       throw new SQLException(e);
     } catch (IOException e) {
@@ -232,6 +235,24 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
     clearBatch();
     return updateCounts;
+  }
+
+  // Commit on close
+  @Override
+  public void close() throws SQLException {
+    Long[] blockList = new Long[blocks];
+    getConnection().log.info("commit session: " + blocks + " blocks");
+    for (int i = 0; i < blocks; i++) {
+      blockList[i] = Long.valueOf(i);
+    }
+    try {
+      session.commit(blockList);
+    } catch (TunnelException e) {
+      throw new SQLException(e);
+    } catch (IOException e) {
+      throw new SQLException(e);
+    }
+    super.close();
   }
 
   @Override
