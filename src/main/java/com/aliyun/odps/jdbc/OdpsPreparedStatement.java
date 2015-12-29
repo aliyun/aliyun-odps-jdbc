@@ -240,17 +240,20 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   // Commit on close
   @Override
   public void close() throws SQLException {
-    Long[] blockList = new Long[blocks];
-    getConnection().log.info("commit session: " + blocks + " blocks");
-    for (int i = 0; i < blocks; i++) {
-      blockList[i] = Long.valueOf(i);
-    }
-    try {
-      session.commit(blockList);
-    } catch (TunnelException e) {
-      throw new SQLException(e);
-    } catch (IOException e) {
-      throw new SQLException(e);
+
+    if (session != null && blocks > 0) {
+      Long[] blockList = new Long[blocks];
+      getConnection().log.info("commit session: " + blocks + " blocks");
+      for (int i = 0; i < blocks; i++) {
+        blockList[i] = Long.valueOf(i);
+      }
+      try {
+        session.commit(blockList);
+      } catch (TunnelException e) {
+        throw new SQLException(e);
+      } catch (IOException e) {
+        throw new SQLException(e);
+      }
     }
     super.close();
   }

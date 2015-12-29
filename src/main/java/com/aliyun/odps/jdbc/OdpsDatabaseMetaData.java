@@ -400,7 +400,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSchemasInTableDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return true;
   }
 
   @Override
