@@ -1,7 +1,9 @@
 ### v1.5
 
 1. Set temp table lifecycle in create SQL (eliminate the round trip cost).
-1. Accepts 'VALUES(?, ?, ?)' in prepareStatement.
+1. Accepts `VALUES(?, ?, ?)` in prepareStatement.
+1. Reuse one tunnel upload session in `PrepareStatement.executeBatch()`. Commit the session on the close of the PrepareStatement.
+1. Catch the NPE of `instance.getTaskStatus().get("SQL")`.
 
 ### v1.4 (2015-12-22)
 
