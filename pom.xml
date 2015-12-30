@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.aliyun.odps</groupId>
     <artifactId>odps-jdbc</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
     <name>odps-jdbc</name>
     <description>Aliyun ODPS JDBC driver</description>
     <url>http://odps.aliyun.com</url>
@@ -86,7 +86,6 @@
                     <docencoding>UTF-8</docencoding>
                     <author>false</author>
                     <show>public</show>
-                    <additionalparam>${javadoc.opts}</additionalparam>
                 </configuration>
                 <executions>
                     <execution>

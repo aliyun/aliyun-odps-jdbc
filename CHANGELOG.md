@@ -1,4 +1,4 @@
-### v1.5
+### v1.5 (2015-12-30)
 
 1. Set temp table lifecycle in create SQL (eliminate the round trip cost).
 1. Accept `VALUES(?, ?, ?)` in prepareStatement.
