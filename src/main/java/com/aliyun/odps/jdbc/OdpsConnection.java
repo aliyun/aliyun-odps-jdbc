@@ -88,7 +88,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   OdpsConnection(String url, Properties info) {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
-
     String accessId = connRes.getAccessId();
     String accessKey = connRes.getAccessKey();
     String charset = connRes.getCharset();
@@ -509,61 +508,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return this.odps;
   }
 
-  /**
-   * Kick-offer
-   *
-   * @param sql
-   *     sql string
-   * @return an intance
-   * @throws SQLException
-   */
-  protected Instance runClientSQL(String sql) throws SQLException {
-    Instance instance;
-    try {
-      Map<String, String> hints = new HashMap<String, String>();
-      Map<String, String> aliases = new HashMap<String, String>();
-
-      // If the client forget to end with a semi-colon, append it.
-      if (!sql.contains(";")) {
-        sql += ";";
-      }
-
-      instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
-      LogView logView = new LogView(odps);
-
-      if (logviewHost != null) {
-        logView.setLogViewHost(logviewHost);
-      }
-
-      String logViewUrl = logView.generateLogView(instance, 7 * 24);
-      log.fine("Run SQL: " + sql);
-      log.info(logViewUrl);
-
-    } catch (OdpsException e) {
-      log.severe("fail to run sql: " + sql);
-      throw new SQLException(e);
-    }
-    return instance;
-  }
-
-  /**
-   * Blocked SQL runner, do not print any log information
-   *
-   * @param sql
-   *     sql string
-   * @throws SQLException
-   */
-  protected void runSilentSQL(String sql) throws SQLException {
-    try {
-      long begin = System.currentTimeMillis();
-      SQLTask.run(odps, sql).waitForSuccess();
-      long end = System.currentTimeMillis();
-      log.fine("It took me " + (end - begin) + " ms to run SQL: " + sql);
-    } catch (OdpsException e) {
-      throw new SQLException(e);
-    }
-  }
-
   private void checkClosed() throws SQLException {
     if (isClosed) {
       throw new SQLException("the connection has already been closed");
@@ -572,5 +516,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   protected String getCharset() {
     return charset;
+  }
+  protected String getLogviewHost() {
+    return logviewHost;
   }
 }

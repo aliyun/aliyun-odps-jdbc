@@ -29,7 +29,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -38,9 +40,12 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
+import com.aliyun.odps.LogView;
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
+import com.aliyun.odps.task.SQLTask;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -135,7 +140,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     if (tempTable != null) {
-      connHanlde.runSilentSQL("drop table " + tempTable + ";");
+      runSilentSQL("drop table " + tempTable + ";");
       connHanlde.log.fine("silently drop temp table: " + tempTable);
       tempTable = null;
     }
@@ -170,8 +175,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     String tempTempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
 
     try {
-      executeInstance = connHanlde.runClientSQL("create table " + tempTempTable + " lifecycle "
-                                                + connHanlde.lifecycle +  " as " + sql);
+      executeInstance = runClientSQL("create table " + tempTempTable + " lifecycle " + connHanlde.lifecycle +  " as " + sql);
 
       boolean complete = false;
       while (!complete) {
@@ -258,7 +262,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     long begin = System.currentTimeMillis();
 
     try {
-      executeInstance = connHanlde.runClientSQL(sql);
+      executeInstance = runClientSQL(sql);
 
       boolean complete = false;
       while (!complete) {
@@ -558,7 +562,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     if (tempTable != null) {
-      connHanlde.runSilentSQL("drop table if exists " + tempTable + ";");
+      runSilentSQL("drop table if exists " + tempTable + ";");
       connHanlde.log.fine("silently drop temp table: " + tempTable);
       tempTable = null;
     }
@@ -576,6 +580,62 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected void checkClosed() throws SQLException {
     if (isClosed) {
       throw new SQLException("The statement has been closed");
+    }
+  }
+
+  /**
+   * Kick-offer
+   *
+   * @param sql
+   *     sql string
+   * @return an intance
+   * @throws SQLException
+   */
+  private Instance runClientSQL(String sql) throws SQLException {
+    Instance instance;
+    try {
+      Map<String, String> hints = new HashMap<String, String>();
+      Map<String, String> aliases = new HashMap<String, String>();
+
+      // If the client forget to end with a semi-colon, append it.
+      if (!sql.contains(";")) {
+        sql += ";";
+      }
+
+      Odps odps = connHanlde.getOdps();
+      instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
+      LogView logView = new LogView(odps);
+      if (connHanlde.getLogviewHost() != null) {
+        logView.setLogViewHost(connHanlde.getLogviewHost());
+      }
+
+      String logViewUrl = logView.generateLogView(instance, 7 * 24);
+      connHanlde.log.fine("Run SQL: " + sql);
+      connHanlde.log.info(logViewUrl);
+
+    } catch (OdpsException e) {
+      connHanlde.log.severe("fail to run sql: " + sql);
+      throw new SQLException(e);
+    }
+    return instance;
+  }
+
+  /**
+   * Blocked SQL runner, do not print any log information
+   *
+   * @param sql
+   *     sql string
+   * @throws SQLException
+   */
+  private void runSilentSQL(String sql) throws SQLException {
+    try {
+      long begin = System.currentTimeMillis();
+      Odps odps = connHanlde.getOdps();
+      SQLTask.run(odps, sql).waitForSuccess();
+      long end = System.currentTimeMillis();
+      connHanlde.log.fine("It took me " + (end - begin) + " ms to run SQL: " + sql);
+    } catch (OdpsException e) {
+      throw new SQLException(e);
     }
   }
 }
