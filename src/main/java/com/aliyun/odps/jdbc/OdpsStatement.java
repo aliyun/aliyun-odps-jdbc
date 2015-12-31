@@ -612,7 +612,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       String logViewUrl = logView.generateLogView(instance, 7 * 24);
       connHanlde.log.fine("Run SQL: " + sql);
       connHanlde.log.info(logViewUrl);
-
+      warningChain = new SQLWarning(logViewUrl);
     } catch (OdpsException e) {
       connHanlde.log.severe("fail to run sql: " + sql);
       throw new SQLException(e);
