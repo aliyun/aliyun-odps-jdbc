@@ -155,7 +155,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
    *
    * Considering performance issue, We check it lazily in executeBatch() instead of addBatch().
    *
-   * @throws SQLException
+   * @throws SQLException when 1) wrong syntax 2) columns not match
    */
   @Override
   public int[] executeBatch() throws SQLException {
@@ -422,15 +422,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     parameters.put(parameterIndex, null);
   }
 
-  /**
-   * Set an object by inferring the type of the object.
-   *
-   * @param parameterIndex
-   *     the index of parameter
-   * @param x
-   *     the object to set
-   * @throws SQLException
-   */
   @Override
   public void setObject(int parameterIndex, Object x) throws SQLException {
     if (x == null) {

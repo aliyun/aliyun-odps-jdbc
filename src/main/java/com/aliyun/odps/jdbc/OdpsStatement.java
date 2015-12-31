@@ -442,12 +442,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     this.resultSetMaxRows = max;
   }
 
-  /**
-   * This implementation do not support multiple open results.
-   *
-   * @return whether has more results
-   * @throws SQLException
-   */
   @Override
   public boolean getMoreResults() throws SQLException {
     return false;

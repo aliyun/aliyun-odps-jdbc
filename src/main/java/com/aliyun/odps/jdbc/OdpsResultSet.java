@@ -161,7 +161,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
    * @param columnLabel
    *     the name of the column
    * @return the column index
-   * @throws SQLException
+   * @throws SQLException invalid label
    */
   @Override
   public int findColumn(String columnLabel) throws SQLException {

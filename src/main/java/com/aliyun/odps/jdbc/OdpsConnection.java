@@ -175,7 +175,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    * @param resultSetConcurrency
    *     CONCUR_READ_ONLY
    * @return OdpsPreparedStatement
-   * @throws SQLException
+   * @throws SQLException wrong type
    */
   @Override
   public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
@@ -294,9 +294,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    * ODPS doesn't support the concept of catalog
    * Each connection is associated with one endpoint (embedded in the connection url).
    * Each endpoint has a couple of projects (schema)
-   *
-   * @param catalog
-   * @throws SQLException
    */
   @Override
   public void setCatalog(String catalog) throws SQLException {
@@ -379,7 +376,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    * @param resultSetConcurrency
    *     CONCUR_READ_ONLY
    * @return OdpsStatement object
-   * @throws SQLException
+   * @throws SQLException wrong type
    */
   @Override
   public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency)
