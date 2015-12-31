@@ -185,13 +185,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           throw new SQLException("getTaskStatus fail");
         }
 
-        Instance.TaskStatus status;
+        Instance.TaskStatus.Status status;
         try {
-          status = executeInstance.getTaskStatus().get("SQL");
+          status = executeInstance.getTaskStatus().get("SQL").getStatus();
         } catch (NullPointerException e) {
           throw new SQLException("fail to get the sql task status");
         }
-        switch (status.getStatus()) {
+        switch (status) {
           case SUCCESS:
             complete = true;
             break;
@@ -272,13 +272,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           break;
         }
 
-        Instance.TaskStatus status;
+        Instance.TaskStatus.Status status;
         try {
-          status = executeInstance.getTaskStatus().get("SQL");
+          status = executeInstance.getTaskStatus().get("SQL").getStatus();
         } catch (NullPointerException e) {
           throw new SQLException("fail to get the sql task status");
         }
-        switch (status.getStatus()) {
+        switch (status) {
           case SUCCESS:
             complete = true;
             break;

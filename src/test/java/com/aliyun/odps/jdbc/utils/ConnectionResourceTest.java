@@ -18,12 +18,14 @@
  *
  */
 
-package com.aliyun.odps.jdbc;
+package com.aliyun.odps.jdbc.utils;
 
 import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.aliyun.odps.jdbc.utils.ConnectionResource;
 
 public class ConnectionResourceTest {
 

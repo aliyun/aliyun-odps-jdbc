@@ -18,7 +18,7 @@
  *
  */
 
-package com.aliyun.odps.jdbc;
+package com.aliyun.odps.jdbc.utils;
 
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;

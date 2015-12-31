@@ -1,4 +1,4 @@
-package com.aliyun.odps.jdbc;
+package com.aliyun.odps.jdbc.utils;
 
 
 import java.util.logging.ConsoleHandler;
