@@ -121,7 +121,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.setUseParentHandlers(false);
     log.addHandler(LogConsoleHandler.getInstance());
 
-    log.info("ODPS JDBC driver, Version " + Utils.retrieveVersion());
+    String version = Utils.retrieveVersion();
+    log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.fine(String.format("charset=%s, logview=%s, lifecycle=%d, loglevel=%s",
                            charset, logviewHost, lifecycle, logLevel));
@@ -131,7 +132,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
-    odps.setUserAgent("odps-jdbc-" + Utils.retrieveVersion());
+    odps.setUserAgent("odps-jdbc-" + version);
 
     this.info = info;
     this.charset = charset;

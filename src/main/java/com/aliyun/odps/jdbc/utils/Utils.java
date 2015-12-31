@@ -20,12 +20,20 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import java.io.IOException;
+import java.util.Properties;
+
 public class Utils {
 
+  // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
   public static String retrieveVersion() {
-    // TODO: remove the hard code later
-    // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
-    return "1.5";
+    Properties prop = new Properties();
+    try {
+      prop.load(Utils.class.getResourceAsStream("/version.properties"));
+      return prop.getProperty("foo.bar");
+    } catch (IOException e) {
+      return "unknown";
+    }
   }
 
   public static boolean matchPattern(String s, String pattern) {

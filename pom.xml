@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.aliyun.odps</groupId>
     <artifactId>odps-jdbc</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <name>odps-jdbc</name>
     <description>Aliyun ODPS JDBC driver</description>
     <url>http://odps.aliyun.com</url>
@@ -52,6 +52,12 @@
     </properties>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
