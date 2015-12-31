@@ -1,3 +1,10 @@
+### v1.6 (2015-12-31)
+
+1. Put logview in the warning chain to let be captured in **SQLWorkbench/j**.
+1. Remove the hardcode when retrieve version
+1. Clear javadoc warnings.
+1. Put all the utils to `/utils` folder.
+
 ### v1.5 (2015-12-30)
 
 1. Set temp table lifecycle in create SQL (eliminate the round trip cost).
@@ -19,7 +26,6 @@
 1. Support `getMaxTableNameLength()` to adapt to **SQL Workbench/J**.
 1. Support `getIdentifierQuoteString()` to adapt to **SQL Workbench/J**.
 1. Fix the `getUpdateCount()` bug. See Issue \#15.
-
 
 ### v1.2 (2015-11-29)
 
