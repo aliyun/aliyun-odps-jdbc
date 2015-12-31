@@ -38,6 +38,8 @@ import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.Table;
 
 import com.aliyun.odps.account.AliyunAccount;
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 

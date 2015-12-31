@@ -29,6 +29,8 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import com.aliyun.odps.jdbc.utils.ConnectionResource;
+
 public class OdpsDriver implements Driver {
 
   static {

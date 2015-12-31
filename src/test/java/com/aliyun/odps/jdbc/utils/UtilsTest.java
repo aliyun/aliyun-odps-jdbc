@@ -23,8 +23,6 @@ package com.aliyun.odps.jdbc.utils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.aliyun.odps.jdbc.utils.Utils;
-
 public class UtilsTest {
 
 

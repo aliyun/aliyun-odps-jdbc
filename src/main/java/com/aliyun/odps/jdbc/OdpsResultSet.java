@@ -43,6 +43,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
 
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
+
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 
   private OdpsResultSetMetaData meta;

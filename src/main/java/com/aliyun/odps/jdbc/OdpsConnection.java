@@ -53,6 +53,9 @@ import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
+import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.LogConsoleHandler;
+import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.task.SQLTask;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {

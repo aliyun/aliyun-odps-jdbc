@@ -74,7 +74,7 @@ public class ConnectionResource {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
   }
 
-  ConnectionResource(String url, Properties info) {
+  public ConnectionResource(String url, Properties info) {
 
     // extract the params from the url
     Map<String, String> paramsInURL = new HashMap<String, String>();

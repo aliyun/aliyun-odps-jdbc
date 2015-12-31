@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordWriter;
@@ -170,7 +171,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       } else {
         throw new SQLException("cannot extract table name in SQL: " + sql);
       }
-
 
       TableTunnel tunnel = new TableTunnel(getConnection().getOdps());
       try {

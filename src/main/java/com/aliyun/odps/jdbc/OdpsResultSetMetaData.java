@@ -21,6 +21,7 @@
 package com.aliyun.odps.jdbc;
 
 import com.aliyun.odps.OdpsType;
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
