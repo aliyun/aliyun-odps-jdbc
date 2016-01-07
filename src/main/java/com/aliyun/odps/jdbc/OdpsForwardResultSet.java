@@ -23,10 +23,6 @@ package com.aliyun.odps.jdbc;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Logger;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
