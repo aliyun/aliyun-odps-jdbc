@@ -29,19 +29,39 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
+
 public class OdpsScollResultSetTest {
 
   private static Connection conn;
   private static Statement stmt;
   private static ResultSet rs;
-  private static final String SQL = "select * from yichao_test_table_input;";
-  private static final int ROWS = 1000000;
+  private static String INPUT_TABLE_NAME = "statement_test_table_input";
+  private static final String SQL = "select * from " + INPUT_TABLE_NAME;
+  private static final int ROWS = 100000;
 
   @BeforeClass
   public static void setUp() throws Exception {
-    conn = OdpsConnectionFactory.getInstance().conn;
+    conn = TestManager.getInstance().conn;
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
+    stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
+    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
+
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
+
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    for (int i = 0; i < ROWS; i++) {
+      r.setBigint(0, (long) i);
+      writer.write(r);
+    }
+    writer.close();
+    upload.commit(new Long[]{0L});
+
     rs = stmt.executeQuery(SQL);
     Assert.assertEquals(ResultSet.FETCH_UNKNOWN, rs.getFetchDirection());
   }
@@ -50,7 +70,6 @@ public class OdpsScollResultSetTest {
   public static void tearDown() throws Exception {
     rs.close();
     stmt.close();
-    conn.close();
   }
 
   @Test

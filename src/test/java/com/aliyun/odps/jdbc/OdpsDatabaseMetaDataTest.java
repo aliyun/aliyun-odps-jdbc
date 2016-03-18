@@ -23,11 +23,12 @@ package com.aliyun.odps.jdbc;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert;
 
 public class OdpsDatabaseMetaDataTest {
 
@@ -35,7 +36,7 @@ public class OdpsDatabaseMetaDataTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    databaseMetaData = OdpsConnectionFactory.getInstance().conn.getMetaData();
+    databaseMetaData = TestManager.getInstance().conn.getMetaData();
     System.out.println(databaseMetaData.getCatalogTerm());
     System.out.println(databaseMetaData.getProcedureTerm());
     System.out.println(databaseMetaData.getSchemaTerm());
@@ -43,7 +44,6 @@ public class OdpsDatabaseMetaDataTest {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    OdpsConnectionFactory.getInstance().conn.close();
   }
 
   private void printRs(ResultSet rs) throws Exception {
@@ -64,50 +64,15 @@ public class OdpsDatabaseMetaDataTest {
     }
   }
 
-  @Test
+  //@Test
   public void testGetTables() throws Exception {
-    {
-      ResultSet rs = databaseMetaData.getTables(null, null, "bad\\_folder\\_test", null);
-      Assert.assertNotNull(rs);
-      while (rs.next()) {
-        Assert.assertTrue(rs.getString("TABLE_NAME").equals("bad_folder_test"));
-      }
-      rs.close();
-    }
-
-    {
-      ResultSet rs = databaseMetaData.getTables(null, null, "b_d\\_folder\\_test", null);
-      Assert.assertNotNull(rs);
-      while (rs.next()) {
-        Assert.assertTrue(rs.getString("TABLE_NAME").equals("bad_folder_test"));
-      }
-      rs.close();
-    }
-
-    {
-      ResultSet rs = databaseMetaData.getTables(null, null, "bad\\_%\\_test", null);
-      Assert.assertNotNull(rs);
-      while (rs.next()) {
-        Assert.assertTrue(rs.getString("TABLE_NAME").startsWith("bad"));
-        Assert.assertTrue(rs.getString("TABLE_NAME").endsWith("test"));
-      }
-      rs.close();
-    }
-
     {
       ResultSet rs = databaseMetaData.getTables(null, null, "%test", null);
       Assert.assertNotNull(rs);
       while (rs.next()) {
         Assert.assertTrue(rs.getString("TABLE_NAME").endsWith("test"));
-      }
-      rs.close();
-    }
-
-    {
-      ResultSet rs = databaseMetaData.getTables(null, null, null, new String[] {"TABLE"});
-      Assert.assertNotNull(rs);
-      while (rs.next()) {
         Assert.assertTrue(rs.getString("TABLE_TYPE").equals("TABLE"));
+
       }
       rs.close();
     }
@@ -132,7 +97,12 @@ public class OdpsDatabaseMetaDataTest {
 
   @Test
   public void testGetColumns() throws Exception {
-    ResultSet rs = databaseMetaData.getColumns(null, null, "zhemin_test", null);
+    Statement stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(id bigint);");
+    stmt.close();
+
+    ResultSet rs = databaseMetaData.getColumns(null, null, "dual", null);
     Assert.assertNotNull(rs);
     printRs(rs);
     rs.close();

@@ -23,24 +23,29 @@ package com.aliyun.odps.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
 import java.util.Properties;
 
 import org.junit.Assert;
+
+import com.aliyun.odps.Odps;
+import com.aliyun.odps.account.Account;
+import com.aliyun.odps.account.AliyunAccount;
+import com.aliyun.odps.tunnel.TableTunnel;
 
 /**
  * This class manage a global JDBC connection and multiple testing instances
  * can access it simultaneously. It will also close the connection automatically.
  */
-public class OdpsConnectionFactory {
+public class TestManager {
 
   public Connection conn;
+  public Odps odps;
+  public TableTunnel tunnel;
 
-  private static final OdpsConnectionFactory cf = new OdpsConnectionFactory();
+  private static final TestManager cf = new TestManager();
 
-  private OdpsConnectionFactory() {
+  private TestManager() {
     try {
       Properties odpsConfig = new Properties();
 
@@ -62,6 +67,14 @@ public class OdpsConnectionFactory {
       conn = DriverManager.getConnection(url, username, password);
       Assert.assertNotNull(conn);
 
+      Account account = new AliyunAccount(username, password);
+      odps = new Odps(account);
+      odps.setEndpoint(endpoint);
+      odps.setDefaultProject(project);
+      Assert.assertNotNull(odps);
+
+      tunnel = new TableTunnel(odps);
+      Assert.assertNotNull(tunnel);
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {
@@ -71,7 +84,7 @@ public class OdpsConnectionFactory {
     }
   }
 
-  public static OdpsConnectionFactory getInstance() {
+  public static TestManager getInstance() {
     return cf;
   }
 }

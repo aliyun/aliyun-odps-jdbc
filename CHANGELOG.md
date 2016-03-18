@@ -1,3 +1,7 @@
+### v1.7 (2016-03-18)
+1. Log for SQLFeatureNotSupportedException on the critical path.
+1. Refactor the unitest
+
 ### v1.6 (2015-12-31)
 
 1. Put logview in the warning chain to let be captured in **SQLWorkbench/j**.

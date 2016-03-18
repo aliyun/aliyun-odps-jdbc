@@ -27,35 +27,56 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert;
+
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsStatementTest {
 
-  private static Connection conn = OdpsConnectionFactory.getInstance().conn;
-  private static final int ROWS = 1000000;
+  private static Connection conn = TestManager.getInstance().conn;
+  private static final int ROWS = 100000;
+
+  private static String OUTPUT_TABLE_NAME = "statement_test_table_output";
+  private static String INPUT_TABLE_NAME = "statement_test_table_input";
 
   @BeforeClass
   public static void setUp() throws Exception {
     Statement stmt = conn.createStatement();
-    stmt.executeUpdate(
-        "create table if not exists yichao_test_table_output(id bigint);");
+    stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
+    stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
+    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
+    stmt.executeUpdate("create table if not exists "+ OUTPUT_TABLE_NAME +"(id bigint);");
     stmt.close();
+
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
+
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    for (int i = 0; i < ROWS; i++) {
+      r.setBigint(0, (long) i);
+      writer.write(r);
+    }
+    writer.close();
+    upload.commit(new Long[]{0L});
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
     Statement stmt = conn.createStatement();
-    stmt.executeUpdate("drop table if exists yichao_test_table_output;");
+    stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
+    stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
     stmt.close();
-    conn.close();
   }
 
   @Test
   public void testExecuteQuery() throws Exception {
     Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("select * from yichao_test_table_input;");
+    ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
     Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
 
     long start = System.currentTimeMillis();
@@ -81,7 +102,7 @@ public class OdpsStatementTest {
     Statement stmt = conn.createStatement();
     stmt.setMaxRows(45678);
     Assert.assertEquals(45678, stmt.getMaxRows());
-    ResultSet rs = stmt.executeQuery("select * from yichao_test_table_input;");
+    ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
     {
       int i = 0;
       while (rs.next()) {
@@ -99,7 +120,7 @@ public class OdpsStatementTest {
   public void testExecuteUpdate() throws Exception {
     Statement stmt = conn.createStatement();
     String sql =
-        "insert into table yichao_test_table_output select * from yichao_test_table_input;";
+        "insert into table " + OUTPUT_TABLE_NAME + " select * from " + INPUT_TABLE_NAME;
     int updateCount = stmt.executeUpdate(sql);
     Assert.assertEquals(ROWS, updateCount);
     stmt.close();
@@ -159,7 +180,7 @@ public class OdpsStatementTest {
   @Test
   public void testCancelQuery() throws Exception {
     Statement stmt = conn.createStatement();
-    String sql = "select * from yichao_test_table_input limit 10000;";
+    String sql = "select * from " + INPUT_TABLE_NAME + " limit 10000;";
     ExecuteSQL updateIt = new ExecuteSQL(stmt, sql);
     CancelSQL cancelIt = new CancelSQL(stmt);
 
@@ -178,7 +199,8 @@ public class OdpsStatementTest {
     Statement stmt = conn.createStatement();
     String
         sql =
-        "insert into table yichao_test_table_output select * from yichao_test_table_input limit 10000;";
+        "insert into table " + OUTPUT_TABLE_NAME + " select * from " + INPUT_TABLE_NAME
+        + " limit 10000;";
     ExecuteSQL updateIt = new ExecuteSQL(stmt, sql);
     CancelSQL cancelIt = new CancelSQL(stmt);
 
@@ -195,7 +217,7 @@ public class OdpsStatementTest {
   @Test
   public void testExecuteQueryEmpty() throws Exception {
     Statement stmt = conn.createStatement();
-    String sql = "select * from yichao_test_table_input where id < 0;";
+    String sql = "select * from " + INPUT_TABLE_NAME + " where id < 0;";
     ResultSet rs = stmt.executeQuery(sql);
 
     Assert.assertNotNull(rs);
@@ -209,28 +231,28 @@ public class OdpsStatementTest {
   public void testExecuteMissingSemiColon() throws Exception {
     Statement stmt = conn.createStatement();
 
-    Assert.assertEquals(true, stmt.execute("select 1 id from dual;"));
+    Assert.assertEquals(true, stmt.execute("select 1 id from " + INPUT_TABLE_NAME + " limit 1;"));
     ResultSet rs = stmt.getResultSet();
     {
       rs.next();
       Assert.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom dual;"));
+    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1;"));
     rs = stmt.getResultSet();
     {
       rs.next();
       Assert.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute("select 1 id from dual"));
+    Assert.assertEquals(true, stmt.execute("select 1 id from " + INPUT_TABLE_NAME + " limit 1"));
     rs = stmt.getResultSet();
     {
       rs.next();
       Assert.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom dual"));
+    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1"));
     rs = stmt.getResultSet();
     {
       rs.next();

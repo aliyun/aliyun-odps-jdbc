@@ -30,6 +30,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
+
 public class OdpsResultSetMetaDataTest {
 
   static Statement stmt;
@@ -38,7 +42,19 @@ public class OdpsResultSetMetaDataTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+    stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(id bigint);");
+
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), "dual");
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    r.setBigint(0, 42L);
+    writer.write(r);
+    writer.close();
+    upload.commit(new Long[]{0L});
+
     String sql = "select 'yichao' name, true male, 25 age, 173.5 height, "
                  + "cast('2015-07-09 11:11:11' as datetime) day, "
                  + "cast('2.1234567890123' as decimal) volume from dual;";
@@ -50,7 +66,6 @@ public class OdpsResultSetMetaDataTest {
   public static void tearDown() throws Exception {
     rs.close();
     stmt.close();
-    OdpsConnectionFactory.getInstance().conn.close();
   }
 
   @Test

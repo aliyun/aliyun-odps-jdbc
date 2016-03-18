@@ -21,19 +21,21 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Date;
-import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.util.Formatter;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert;
+
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsResultSetTest {
 
@@ -50,7 +52,18 @@ public class OdpsResultSetTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+    stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(id bigint);");
+
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), "dual");
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    r.setBigint(0, 42L);
+    writer.write(r);
+    writer.close();
+    upload.commit(new Long[]{0L});
 
     formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     unixTimeNow = new java.util.Date().getTime();
@@ -60,12 +73,12 @@ public class OdpsResultSetTest {
     decimalStr = "55.123456789012345";
     odpsDecimalStr = "cast('" + decimalStr + "' as decimal)";
     bigDecimal = new BigDecimal(decimalStr);
+
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
     stmt.close();
-    OdpsConnectionFactory.getInstance().conn.close();
   }
 
   @Test

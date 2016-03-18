@@ -30,26 +30,37 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
+
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsPreparedStatementTest {
 
-  @AfterClass
-  public static void tearDown() throws Exception {
-    OdpsConnectionFactory.getInstance().conn.close();
-  }
-
   @Test
   public void testSetAll() throws Exception {
+    Statement stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(id bigint);");
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), "dual");
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    r.setBigint(0, 42L);
+    writer.write(r);
+    writer.close();
+    upload.commit(new Long[]{0L});
+
     PreparedStatement pstmt;
-    pstmt = OdpsConnectionFactory.getInstance().conn.prepareStatement(
+    pstmt = TestManager.getInstance().conn.prepareStatement(
         "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
         + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
     long unixtime = new java.util.Date().getTime();
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+
 
     pstmt.setBigDecimal(1, BigDecimal.TEN);
     pstmt.setBoolean(2, Boolean.TRUE);
@@ -90,7 +101,7 @@ public class OdpsPreparedStatementTest {
 
   @Test
   public void batchInsert() throws Exception {
-    Connection conn = OdpsConnectionFactory.getInstance().conn;
+    Connection conn = TestManager.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
     ddl.executeUpdate(
@@ -143,7 +154,7 @@ public class OdpsPreparedStatementTest {
 
   @Test
   public void batchInsertNullAndFetch() throws Exception {
-    Connection conn = OdpsConnectionFactory.getInstance().conn;
+    Connection conn = TestManager.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
     ddl.executeUpdate("create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");

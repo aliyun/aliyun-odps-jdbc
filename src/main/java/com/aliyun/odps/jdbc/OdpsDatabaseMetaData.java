@@ -66,6 +66,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean allProceduresAreCallable() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -87,26 +88,31 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean isReadOnly() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean nullsAreSortedHigh() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean nullsAreSortedLow() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean nullsAreSortedAtStart() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean nullsAreSortedAtEnd() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -142,51 +148,61 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean usesLocalFiles() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean usesLocalFilePerTable() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsMixedCaseIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean storesUpperCaseIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean storesLowerCaseIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean storesMixedCaseIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -222,11 +238,13 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSearchStringEscape() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getExtraNameCharacters() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -247,36 +265,43 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean nullPlusNonNullIsNull() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsConvert() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsConvert(int fromType, int toType) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsTableCorrelationNames() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsDifferentTableCorrelationNames() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsExpressionsInOrderBy() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsOrderByUnrelated() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -287,16 +312,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsGroupByUnrelated() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsGroupByBeyondSelect() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsLikeEscapeClause() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -307,6 +335,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsMultipleTransactions() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -317,31 +346,37 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsMinimumSQLGrammar() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsCoreSQLGrammar() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsExtendedSQLGrammar() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsANSI92EntryLevelSQL() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsANSI92IntermediateSQL() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsANSI92FullSQL() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -382,6 +417,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean isCatalogAtStart() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -397,6 +433,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSchemasInProcedureCalls() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -407,11 +444,13 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSchemasInIndexDefinitions() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -442,16 +481,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsPositionedDelete() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsPositionedUpdate() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsSelectForUpdate() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -462,11 +504,13 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSubqueriesInComparisons() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsSubqueriesInExists() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -477,11 +521,13 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSubqueriesInQuantifieds() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsCorrelatedSubqueries() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -497,111 +543,133 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxBinaryLiteralLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxCharLiteralLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxColumnNameLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxColumnsInGroupBy() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxColumnsInIndex() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxColumnsInOrderBy() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxColumnsInSelect() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxColumnsInTable() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxConnections() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxCursorNameLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxIndexLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxSchemaNameLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxProcedureNameLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxCatalogNameLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxRowSize() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxStatementLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxStatements() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -612,47 +680,56 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getMaxTablesInSelect() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxUserNameLength() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getDefaultTransactionIsolation() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsTransactions() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsDataDefinitionAndDataManipulationTransactions()
       throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsDataManipulationTransactionsOnly() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -781,9 +858,13 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     long begin = System.currentTimeMillis();
 
+    if (tableNamePattern == null) {
+      throw new SQLException("Table name must be given when getColumns");
+    }
+
     List<Object[]> rows = new ArrayList<Object[]>();
     try {
-      Table table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
+      Table table = conn.getOdps().tables().get(tableNamePattern);
       table.reload();
       // Read column information from table schema
       List<Column> columns = table.getSchema().getColumns();
@@ -832,24 +913,28 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getColumnPrivileges(String catalog, String schema, String table,
                                        String columnNamePattern) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public ResultSet getTablePrivileges(String catalog, String schemaPattern,
                                       String tableNamePattern) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope,
                                         boolean nullable) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public ResultSet getVersionColumns(String catalog, String schema, String table)
       throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -887,6 +972,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getExportedKeys(String catalog, String schema, String table)
       throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -895,6 +981,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                                      String parentTable, String foreignCatalog,
                                      String foreignSchema, String foreignTable)
       throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -911,6 +998,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique,
                                 boolean approximate) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -926,51 +1014,61 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public boolean supportsResultSetConcurrency(int type, int concurrency)
       throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean ownUpdatesAreVisible(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean ownDeletesAreVisible(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean ownInsertsAreVisible(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean othersUpdatesAreVisible(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean othersDeletesAreVisible(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean othersInsertsAreVisible(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean updatesAreDetected(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean deletesAreDetected(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean insertsAreDetected(int type) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -1005,16 +1103,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsNamedParameters() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsMultipleOpenResults() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsGetGeneratedKeys() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -1043,6 +1144,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getResultSetHoldability() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -1068,36 +1170,43 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getSQLStateType() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean locatorsUpdateCopy() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsStatementPooling() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public RowIdLifetime getRowIdLifetime() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public ResultSet getClientInfoProperties() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -1129,15 +1238,18 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   public ResultSet getFunctionColumns(String catalog, String schemaPattern,
                                       String functionNamePattern, String columnNamePattern)
       throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern,
                                     String columnNamePattern) throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   public boolean generatedKeyAlwaysReturned() throws SQLException {
+    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 }
