@@ -1,3 +1,7 @@
+### v1.8 (2016-03-25)
+
+1. AutoCommit default true, and always true.
+
 ### v1.7 (2016-03-18)
 1. Log for SQLFeatureNotSupportedException on the critical path.
 1. Refactor the unitest

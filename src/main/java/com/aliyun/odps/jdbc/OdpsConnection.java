@@ -232,15 +232,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
-    if (autoCommit) {
-      log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    if (!autoCommit) {
+      log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" to false is not supported!!!");
       throw new SQLFeatureNotSupportedException("enabling autocommit is not supported");
     }
   }
 
   @Override
   public boolean getAutoCommit() throws SQLException {
-    return false;
+    return true;
   }
 
   @Override
