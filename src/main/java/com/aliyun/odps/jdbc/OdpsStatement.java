@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import com.alibaba.fastjson.JSON;
@@ -44,10 +43,9 @@ import com.aliyun.odps.LogView;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
-import com.aliyun.odps.Table;
 import com.aliyun.odps.task.SQLTask;
-import com.aliyun.odps.tunnel.TableTunnel;
-import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
+import com.aliyun.odps.tunnel.InstanceTunnel;
+import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
@@ -55,7 +53,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private OdpsConnection connHanlde;
   private Instance executeInstance = null;
   private ResultSet resultSet = null;
-  private String tempTable = null;
   private int updateCount = -1;
 
   // when the update count is feteched by the client, set this true
@@ -66,13 +63,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
-  private static final int POOLING_INTERVAL = 1000;
+  private static final int POLLING_INTERVAL = 1000;
 
   /**
    * The attributes of result set produced by this statement
    */
   protected boolean isResultSetScrollable = false;
-
 
   /**
    * The suggestion of fetch direction which might be ignored by the resultSet generated
@@ -139,12 +135,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       resultSet = null;
     }
 
-    if (tempTable != null) {
-      runSilentSQL("drop table " + tempTable + ";");
-      connHanlde.log.fine("silently drop temp table: " + tempTable);
-      tempTable = null;
-    }
-
     connHanlde.log.fine("the statement has been closed");
 
     connHanlde = null;
@@ -166,89 +156,28 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     checkClosed();
     beforeExecute();
 
-    long begin = System.currentTimeMillis();
-
-    // Create a temp table for querying ResultSet and ensure its creation.
-    // If the table can not be created (CANCELLED/FAIL), an exception will be caused.
-    // Once the table has been created, it will last until the Statement is closed,
-    // or another query is started.
-    String tempTempTable = "jdbc_temp_tbl_" + UUID.randomUUID().toString().replaceAll("-", "_");
-
-    try {
-      executeInstance = runClientSQL("create table " + tempTempTable + " lifecycle " + connHanlde.lifecycle +  " as " + sql);
-
-      boolean complete = false;
-      while (!complete) {
-        try {
-          Thread.sleep(POOLING_INTERVAL);
-        } catch (InterruptedException e) {
-          break;
-        }
-
-        Instance.TaskStatus.Status status;
-        try {
-          status = executeInstance.getTaskStatus().get("SQL").getStatus();
-        } catch (NullPointerException e) {
-          continue;
-        }
-        switch (status) {
-          case SUCCESS:
-            complete = true;
-            break;
-          case FAILED:
-            String reason = executeInstance.getTaskResults().get("SQL");
-            connHanlde.log.fine("create temp table failed: " + reason);
-            throw new SQLException("create temp table failed: " + reason, "FAILED");
-          case CANCELLED:
-            connHanlde.log.info("create temp table cancelled");
-            throw new SQLException("create temp table cancelled", "CANCELLED");
-          case WAITING:
-          case RUNNING:
-          case SUSPENDED:
-            break;
-        }
-      }
-    } catch (OdpsException e) {
-      connHanlde.log.fine("create temp table failed: " + e.getMessage());
-      throw new SQLException(e);
-    }
-
-    // If we arrive here, the temp table must be effective
-    tempTable = tempTempTable;
-    long end = System.currentTimeMillis();
-    connHanlde.log.fine("It took me " + (end - begin) + " ms to create " + tempTable);
-
-    // Read schema
-    begin = System.currentTimeMillis();
-    List<String> columnNames = new ArrayList<String>();
-    List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
-    try {
-      Table table = connHanlde.getOdps().tables().get(tempTable);
-      table.reload();
-      for (Column col : table.getSchema().getColumns()) {
-        columnNames.add(col.getName());
-        columnSqlTypes.add(col.getType());
-      }
-    } catch (OdpsException e) {
-      throw new SQLException(e);
-    }
-    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
-    end = System.currentTimeMillis();
-    connHanlde.log.fine("It took me " + (end - begin) + " ms to read the table schema");
+    runSQL(sql);
 
     // Create a download session through tunnel
     DownloadSession session;
     try {
-      TableTunnel tunnel = new TableTunnel(connHanlde.getOdps());
-      String project_name = connHanlde.getOdps().getDefaultProject();
-      session = tunnel.createDownloadSession(project_name, tempTable);
+      InstanceTunnel tunnel = new InstanceTunnel(connHanlde.getOdps());
+      session = tunnel.createDownloadSession(connHanlde.getOdps().getDefaultProject(), executeInstance.getId());
       connHanlde.log.info("create download session id=" + session.getId());
     } catch (TunnelException e) {
-      throw new SQLException(e);
+      throw new SQLException("create download session failed: instance id=" + executeInstance.getId(), e);
     }
 
-    resultSet =
-        isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
+    // Read schema
+    List<String> columnNames = new ArrayList<String>();
+    List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
+    for (Column col : session.getSchema().getColumns()) {
+      columnNames.add(col.getName());
+      columnSqlTypes.add(col.getType());
+    }
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+
+    resultSet = isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
                               : new OdpsForwardResultSet(this, meta, session);
 
     return resultSet;
@@ -259,64 +188,29 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     checkClosed();
     beforeExecute();
 
-    long begin = System.currentTimeMillis();
+    runSQL(sql);
 
+    // extract update count
+    Instance.TaskSummary taskSummary;
     try {
-      executeInstance = runClientSQL(sql);
-
-      boolean complete = false;
-      while (!complete) {
-        try {
-          Thread.sleep(POOLING_INTERVAL);
-        } catch (InterruptedException e) {
-          break;
-        }
-
-        Instance.TaskStatus.Status status;
-        try {
-          status = executeInstance.getTaskStatus().get("SQL").getStatus();
-        } catch (NullPointerException e) {
-          continue;
-        }
-        switch (status) {
-          case SUCCESS:
-            complete = true;
-            break;
-          case FAILED:
-            connHanlde.log.fine("update failed");
-            throw new SQLException(executeInstance.getTaskResults().get("SQL"), "FAILED");
-          case CANCELLED:
-            connHanlde.log.info("update cancelled");
-            throw new SQLException("update cancelled", "CANCELLED");
-          case WAITING:
-          case RUNNING:
-          case SUSPENDED:
-            break;
-        }
-      }
-
-      long end = System.currentTimeMillis();
-      connHanlde.log.fine("It took me " + (end - begin) + " ms to execute update");
-
-      // extract update count
-      Instance.TaskSummary taskSummary = executeInstance.getTaskSummary("SQL");
-      if (taskSummary != null) {
-        JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
-        JSONObject outputs = jsonSummary.getJSONObject("Outputs");
-
-        if (outputs.size() > 0) {
-          updateCount = 0;
-          for (Object item : outputs.values()) {
-            JSONArray array = (JSONArray) item;
-            updateCount += array.getInteger(0);
-          }
-        }
-      }
+      taskSummary = executeInstance.getTaskSummary("SQL");
     } catch (OdpsException e) {
-      throw new SQLException(e);
+      throw new SQLException("Fail to get the task summary", e);
     }
 
-    connHanlde.log.fine("successfully updated " + updateCount + " records");
+    if (taskSummary != null) {
+      JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
+      JSONObject outputs = jsonSummary.getJSONObject("Outputs");
+
+      if (outputs.size() > 0) {
+        updateCount = 0;
+        for (Object item : outputs.values()) {
+          JSONArray array = (JSONArray) item;
+          updateCount += array.getInteger(0);
+        }
+      }
+    }
+    connHanlde.log.info("successfully updated " + updateCount + " records");
     return updateCount;
   }
 
@@ -555,12 +449,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       resultSet = null;
     }
 
-    if (tempTable != null) {
-      runSilentSQL("drop table if exists " + tempTable + ";");
-      connHanlde.log.fine("silently drop temp table: " + tempTable);
-      tempTable = null;
-    }
-
     executeInstance = null;
     isClosed = false;
     isCancelled = false;
@@ -585,8 +473,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    * @return an intance
    * @throws SQLException
    */
-  private Instance runClientSQL(String sql) throws SQLException {
-    Instance instance;
+  private void runSQL(String sql) throws SQLException {
     try {
       Map<String, String> hints = new HashMap<String, String>();
       Map<String, String> aliases = new HashMap<String, String>();
@@ -596,40 +483,73 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         sql += ";";
       }
 
+      long begin = System.currentTimeMillis();
+
       Odps odps = connHanlde.getOdps();
-      instance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
+      executeInstance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
       LogView logView = new LogView(odps);
       if (connHanlde.getLogviewHost() != null) {
         logView.setLogViewHost(connHanlde.getLogviewHost());
       }
 
-      String logViewUrl = logView.generateLogView(instance, 7 * 24);
+      String logViewUrl = logView.generateLogView(executeInstance, 7 * 24);
       connHanlde.log.fine("Run SQL: " + sql);
       connHanlde.log.info(logViewUrl);
       warningChain = new SQLWarning(logViewUrl);
-    } catch (OdpsException e) {
-      connHanlde.log.severe("fail to run sql: " + sql);
-      throw new SQLException(e);
-    }
-    return instance;
-  }
 
-  /**
-   * Blocked SQL runner, do not print any log information
-   *
-   * @param sql
-   *     sql string
-   * @throws SQLException
-   */
-  private void runSilentSQL(String sql) throws SQLException {
-    try {
-      long begin = System.currentTimeMillis();
-      Odps odps = connHanlde.getOdps();
-      SQLTask.run(odps, sql).waitForSuccess();
+      boolean complete = false;
+      while (!complete) {
+        try {
+          Thread.sleep(POLLING_INTERVAL);
+        } catch (InterruptedException e) {
+          break;
+        }
+
+        Instance.TaskStatus.Status status;
+        try {
+          executeInstance.waitForSuccess();
+          status = executeInstance.getTaskStatus().get("SQL").getStatus();
+        } catch (NullPointerException e) {
+          connHanlde.log.warning("NullPointer when get task status: " + e);
+          // NOTE: keng!!
+          continue;
+        } catch (OdpsException e) {
+          connHanlde.log.severe("Fail to get task status: " + e);
+          throw new SQLException("Fail to get task status", e);
+        }
+
+        switch (status) {
+          case SUCCESS:
+            complete = true;
+            connHanlde.log.fine("sql status: " + status);
+            break;
+          case FAILED:
+            try {
+              String reason = executeInstance.getTaskResults().get("SQL");
+              connHanlde.log.severe("execute instance failed: " + reason);
+              throw new SQLException("execute instance failed: " + reason, "FAILED");
+            } catch (OdpsException e) {
+              connHanlde.log.severe("Fail to get task status: " + e);
+              throw new SQLException("Fail to get task status", e);
+            }
+          case CANCELLED:
+            connHanlde.log.info("execute instance cancelled");
+            throw new SQLException("execute instance cancelled", "CANCELLED");
+          case WAITING:
+          case RUNNING:
+          case SUSPENDED:
+            connHanlde.log.fine("sql status: " + status);
+            break;
+        }
+      }
+      // 等待 instance 结束
+      executeInstance.waitForSuccess(POLLING_INTERVAL);
+
       long end = System.currentTimeMillis();
-      connHanlde.log.fine("It took me " + (end - begin) + " ms to run SQL: " + sql);
+      connHanlde.log.fine("It took me " + (end - begin) + " ms to run sql");
     } catch (OdpsException e) {
-      throw new SQLException(e);
+      connHanlde.log.severe("Fail to run sql: " + sql);
+      throw new SQLException("Fail to run sql", e);
     }
   }
 }
