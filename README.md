@@ -4,6 +4,9 @@
 [![Build Status](https://travis-ci.org/aliyun/aliyun-odps-jdbc.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-odps-jdbc)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc)
 
+## Chinese Docs
+
+[使用 odps-jdbc 接入 ODPS，不再从零开始](https://yq.aliyun.com/articles/5588)
 
 ## Installation
 
@@ -187,11 +190,9 @@ For example:
 
 The project is under construction (and not fully JDBC-compliant). If you dicover any good features which have not been implemented, please fire me an [Email](mailto:yichao.cheng@alibaba-inc.com) or just pull a request.
 
+### Architecture
 
-### TODO
-
-* Better functional test (continuous intergration)
-
+[![](mindmap-thumb.png)](mindmap.pdf)
 
 ### Build and run unitest
 
