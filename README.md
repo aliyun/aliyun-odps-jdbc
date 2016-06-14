@@ -173,7 +173,12 @@ javac OdpsJdbcClient.java
 java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
 ```
 
+### Setting SQL task properties
 
+```java
+stmt.execute("set biz_id=xxxxxx");
+stmt.execute("set odps.sql.mapper.split.size=512");
+```
 
 ## Third-party Integration
 
