@@ -25,7 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.aliyun.odps.data.Record;
-import com.aliyun.odps.tunnel.TableTunnel.DownloadSession;
+import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 

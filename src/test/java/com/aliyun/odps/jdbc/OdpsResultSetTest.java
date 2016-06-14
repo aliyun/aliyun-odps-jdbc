@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -33,6 +34,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.tunnel.TableTunnel;
@@ -78,7 +80,77 @@ public class OdpsResultSetTest {
 
   @AfterClass
   public static void tearDown() throws Exception {
+    stmt.executeUpdate("drop table if exists dual;");
     stmt.close();
+  }
+
+  @Test
+  public void testSelectFromPartition() throws Exception {
+    stmt.executeUpdate("drop table if exists select_from_partition");
+    stmt.executeUpdate("create table if not exists select_from_partition(id bigint) partitioned by (par_col string)");
+    stmt.executeUpdate("alter table select_from_partition add partition (par_col='a')");
+
+    PartitionSpec ps = new PartitionSpec("par_col='a'");
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), "select_from_partition", ps);
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    r.setBigint(0, 42L);
+    writer.write(r);
+    writer.close();
+    upload.commit(new Long[]{0L});
+
+    ResultSet rs = stmt.executeQuery("select * from select_from_partition where par_col='a'");
+    rs.next();
+    Assert.assertEquals(42L, rs.getInt(1));
+    rs.close();
+    stmt.executeUpdate("drop table if exists select_from_partition");
+  }
+
+  @Test
+  public void testGetSelectStar() throws Exception {
+    ResultSet
+        rs = stmt.executeQuery("select * from dual;");
+    rs.next();
+    Assert.assertEquals(42L, rs.getInt(1));
+    rs.close();
+  }
+
+  @Test
+  public void testGetSelectCountStar() throws Exception {
+    ResultSet
+        rs = stmt.executeQuery("select count(*) from dual;");
+    rs.next();
+    Assert.assertEquals(1, rs.getInt(1));
+    rs.close();
+  }
+
+  @Test
+  public void testGetSelectEmbedded() throws Exception {
+    ResultSet
+        rs = stmt.executeQuery("select 1 c1, 2.2 c2, null c3, 'haha' c4 from dual;");
+
+    ResultSetMetaData meta = rs.getMetaData();
+
+    Assert.assertEquals("c1", meta.getColumnName(1));
+    Assert.assertEquals("c2", meta.getColumnName(2));
+    Assert.assertEquals("c3", meta.getColumnName(3));
+    Assert.assertEquals("c4", meta.getColumnName(4));
+
+    Assert.assertEquals("BIGINT", meta.getColumnTypeName(1));
+    Assert.assertEquals("DOUBLE", meta.getColumnTypeName(2));
+    // TODO: SDK treats com.aliyun.odps.OdpsType.VOID as string?
+    Assert.assertEquals("STRING", meta.getColumnTypeName(3));
+    Assert.assertEquals("STRING", meta.getColumnTypeName(4));
+
+    rs.next();
+    Assert.assertEquals(1, rs.getInt(1));
+    Assert.assertEquals(2.2, rs.getDouble(2), 0);
+    Assert.assertEquals(0, rs.getInt(3));
+    Assert.assertTrue(rs.wasNull());
+    Assert.assertEquals("haha", rs.getInt(4));
+
+    rs.close();
   }
 
   @Test
