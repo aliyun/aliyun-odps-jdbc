@@ -29,9 +29,8 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import com.alibaba.fastjson.JSON;
@@ -63,7 +62,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isClosed = false;
   private boolean isCancelled = false;
 
-  private static final int POLLING_INTERVAL = 1000;
+  private static final int POLLING_INTERVAL = 3000;
+  private static final String JDBC_SQL_TASK_NAME = "jdbc_sqk_task";
+
+  private final Properties sqlTaskProperties = new Properties();
 
   /**
    * The attributes of result set produced by this statement
@@ -193,7 +195,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // extract update count
     Instance.TaskSummary taskSummary;
     try {
-      taskSummary = executeInstance.getTaskSummary("SQL");
+      taskSummary = executeInstance.getTaskSummary(JDBC_SQL_TASK_NAME);
     } catch (OdpsException e) {
       throw new SQLException("Fail to get the task summary", e);
     }
@@ -209,6 +211,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           updateCount += array.getInteger(0);
         }
       }
+    } else {
+      connHanlde.log.warning("fail to get task summary");
     }
     connHanlde.log.info("successfully updated " + updateCount + " records");
     return updateCount;
@@ -236,6 +240,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean execute(String sql) throws SQLException {
+    // short cut for SET clause
+    if (processSetClause(sql)) {
+      return false;
+    }
+
     if (isQuery(sql)) {
       executeQuery(sql);
       return true;
@@ -244,6 +253,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return false;
   }
 
+  /**
+   *
+   * @param sql
+   * @return
+   * @throws SQLException
+   */
   public static boolean isQuery(String sql) throws SQLException {
     BufferedReader reader = new BufferedReader(new StringReader(sql));
     try {
@@ -264,6 +279,21 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     } catch (IOException e) {
       throw new SQLException(e);
+    }
+    return false;
+  }
+
+  private boolean processSetClause(String sql) {
+    if (sql.matches("(?i)^(\\s*)(SET).*$")) {
+      if (sql.contains(";")) {
+        sql = sql.replace(';', ' ');
+      }
+      int i = sql.toLowerCase().indexOf("set");
+      String pairstring = sql.substring(i + 3);
+      String[] pair = pairstring.split("=");
+      connHanlde.log.fine("set sql task property: " + pair[0].trim() + "=" + pair[1].trim());
+      sqlTaskProperties.setProperty(pair[0].trim(), pair[1].trim());
+      return true;
     }
     return false;
   }
@@ -465,18 +495,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  /**
-   * Kick-offer
-   *
-   * @param sql
-   *     sql string
-   * @return an intance
-   * @throws SQLException
-   */
   private void runSQL(String sql) throws SQLException {
     try {
-      Map<String, String> hints = new HashMap<String, String>();
-      Map<String, String> aliases = new HashMap<String, String>();
 
       // If the client forget to end with a semi-colon, append it.
       if (!sql.contains(";")) {
@@ -486,18 +506,31 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       long begin = System.currentTimeMillis();
 
       Odps odps = connHanlde.getOdps();
-      executeInstance = SQLTask.run(odps, odps.getDefaultProject(), sql, "SQL", hints, aliases);
+      SQLTask sqlTask = new SQLTask();
+      sqlTask.setName(JDBC_SQL_TASK_NAME);
+      sqlTask.setQuery(sql);
+      for (String key : sqlTaskProperties.stringPropertyNames()) {
+        sqlTask.setProperty(key, sqlTaskProperties.getProperty(key));
+      }
+      if (!sqlTaskProperties.isEmpty()) {
+        connHanlde.log.fine("Enabled SQL task properties: " + sqlTaskProperties);
+      }
+
+      executeInstance = odps.instances().create(sqlTask);
+
       LogView logView = new LogView(odps);
       if (connHanlde.getLogviewHost() != null) {
         logView.setLogViewHost(connHanlde.getLogviewHost());
       }
-
       String logViewUrl = logView.generateLogView(executeInstance, 7 * 24);
       connHanlde.log.fine("Run SQL: " + sql);
       connHanlde.log.info(logViewUrl);
       warningChain = new SQLWarning(logViewUrl);
 
+      // Poll the task status within the instance
       boolean complete = false;
+      Instance.TaskStatus taskstatus;
+
       while (!complete) {
         try {
           Thread.sleep(POLLING_INTERVAL);
@@ -505,27 +538,26 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           break;
         }
 
-        Instance.TaskStatus.Status status;
         try {
-          executeInstance.waitForSuccess();
-          status = executeInstance.getTaskStatus().get("SQL").getStatus();
-        } catch (NullPointerException e) {
-          connHanlde.log.warning("NullPointer when get task status: " + e);
-          // NOTE: keng!!
-          continue;
+          taskstatus = executeInstance.getTaskStatus().get(JDBC_SQL_TASK_NAME);
+          if (taskstatus == null) {
+            connHanlde.log.warning("NullPointer when get task status");
+            // NOTE: keng!!
+            continue;
+          }
         } catch (OdpsException e) {
           connHanlde.log.severe("Fail to get task status: " + e);
           throw new SQLException("Fail to get task status", e);
         }
 
-        switch (status) {
+        switch (taskstatus.getStatus()) {
           case SUCCESS:
             complete = true;
-            connHanlde.log.fine("sql status: " + status);
+            connHanlde.log.fine("sql status: success");
             break;
           case FAILED:
             try {
-              String reason = executeInstance.getTaskResults().get("SQL");
+              String reason = executeInstance.getTaskResults().get(JDBC_SQL_TASK_NAME);
               connHanlde.log.severe("execute instance failed: " + reason);
               throw new SQLException("execute instance failed: " + reason, "FAILED");
             } catch (OdpsException e) {
@@ -538,13 +570,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           case WAITING:
           case RUNNING:
           case SUSPENDED:
-            connHanlde.log.fine("sql status: " + status);
+            connHanlde.log.fine("sql status: " + taskstatus.getStatus());
             break;
         }
       }
+
       // 等待 instance 结束
       executeInstance.waitForSuccess(POLLING_INTERVAL);
-
       long end = System.currentTimeMillis();
       connHanlde.log.fine("It took me " + (end - begin) + " ms to run sql");
     } catch (OdpsException e) {

@@ -74,6 +74,16 @@ public class OdpsStatementTest {
   }
 
   @Test
+  public void testExecuteSet() throws Exception {
+    Statement stmt = conn.createStatement();
+    Assert.assertFalse(stmt.execute("   set  sql.x.y = 123 ;"));
+    Assert.assertFalse(stmt.execute("   set  sql.a.b=  1111"));
+    Assert.assertFalse(stmt.execute("SET  sql.c.d =abcdefgh"));
+    ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
+    stmt.close();
+  }
+
+  @Test
   public void testExecuteQuery() throws Exception {
     Statement stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
@@ -238,7 +248,8 @@ public class OdpsStatementTest {
       Assert.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1;"));
+    Assert.assertEquals(true, stmt.execute(
+        "select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1;"));
     rs = stmt.getResultSet();
     {
       rs.next();
@@ -252,7 +263,8 @@ public class OdpsStatementTest {
       Assert.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute("select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1"));
+    Assert.assertEquals(true, stmt.execute(
+        "select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1"));
     rs = stmt.getResultSet();
     {
       rs.next();
@@ -275,7 +287,9 @@ public class OdpsStatementTest {
     Assert.assertTrue(OdpsStatement.isQuery("--abcd\nSELECT 1 id from dual;"));
     Assert.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\nSELECT 1 id from dual;"));
     Assert.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
-    Assert.assertFalse(OdpsStatement.isQuery("insert into table yichao_test_table_output select 1 id from dual;"));
-    Assert.assertFalse(OdpsStatement.isQuery("insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
+    Assert.assertFalse(
+        OdpsStatement.isQuery("insert into table yichao_test_table_output select 1 id from dual;"));
+    Assert.assertFalse(OdpsStatement.isQuery(
+        "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
   }
 }
