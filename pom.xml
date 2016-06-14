@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.aliyun.odps</groupId>
     <artifactId>odps-jdbc</artifactId>
-    <version>1.8</version>
+    <version>1.9</version>
     <name>odps-jdbc</name>
     <description>Aliyun ODPS JDBC driver</description>
     <url>http://odps.aliyun.com</url>
@@ -170,7 +170,7 @@
         <dependency>
             <groupId>com.aliyun.odps</groupId>
             <artifactId>odps-sdk-core</artifactId>
-            <version>0.21.2</version>
+            <version>0.21.3-public</version>
         </dependency>
 
         <dependency>

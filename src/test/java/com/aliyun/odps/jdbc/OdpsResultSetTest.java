@@ -148,7 +148,7 @@ public class OdpsResultSetTest {
     Assert.assertEquals(2.2, rs.getDouble(2), 0);
     Assert.assertEquals(0, rs.getInt(3));
     Assert.assertTrue(rs.wasNull());
-    Assert.assertEquals("haha", rs.getInt(4));
+    Assert.assertEquals("haha", rs.getString(4));
 
     rs.close();
   }

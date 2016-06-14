@@ -1,6 +1,10 @@
+### v.1.9 (2016-06-14)
+
+1. Replace table tunnel with instance tunnel (JDBC driver will no longer create temporary table). 
+
 ### v1.8 (2016-03-25)
 
-1. AutoCommit default true, and always true.
+1. AutoCommit default is true, and always is true.
 
 ### v1.7 (2016-03-18)
 1. Log for SQLFeatureNotSupportedException on the critical path.
