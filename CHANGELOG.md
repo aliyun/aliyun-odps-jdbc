@@ -1,6 +1,7 @@
-### v.1.9 (2016-06-14)
 
-1. Replace table tunnel with instance tunnel (JDBC driver will no longer create temporary table). 
+
+### v1.9 (2016-06-14)
+1. Support set sql properties in `statement.execute()`.
 
 ### v1.8 (2016-03-25)
 
