@@ -160,18 +160,18 @@ public class OdpsResultSetTest {
                                " union all select 2 id, 2.9 weight from dual) x;");
     {
       rs.next();
-      Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
-      Assert.assertEquals(1, ((Long) rs.getObject("id")).longValue());
-      Assert.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
-      Assert.assertEquals(1.5, ((Double) rs.getObject("weight")).doubleValue(), 0);
-    }
-
-    {
-      rs.next();
       Assert.assertEquals(2, ((Long) rs.getObject(1)).longValue());
       Assert.assertEquals(2, ((Long) rs.getObject("id")).longValue());
       Assert.assertEquals(2.9, ((Double) rs.getObject(2)).doubleValue(), 0);
       Assert.assertEquals(2.9, ((Double) rs.getObject("weight")).doubleValue(), 0);
+    }
+
+    {
+      rs.next();
+      Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
+      Assert.assertEquals(1, ((Long) rs.getObject("id")).longValue());
+      Assert.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
+      Assert.assertEquals(1.5, ((Double) rs.getObject("weight")).doubleValue(), 0);
     }
 
     rs.close();
