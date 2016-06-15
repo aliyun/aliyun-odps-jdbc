@@ -1,6 +1,9 @@
+### v2.0beta (2016-06-15)
 
+1. Use instance tunnel instead of table tunnel, so that temporary table is no longer created. 
 
 ### v1.9 (2016-06-14)
+
 1. Support set sql properties in `statement.execute()`.
 
 ### v1.8 (2016-03-25)
@@ -8,6 +11,7 @@
 1. AutoCommit default is true, and always is true.
 
 ### v1.7 (2016-03-18)
+
 1. Log for SQLFeatureNotSupportedException on the critical path.
 1. Refactor the unitest
 
