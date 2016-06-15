@@ -392,7 +392,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   private boolean processSetClause(String sql) {
-    if (sql.matches("(?i)^(\\s*)(SET).*$")) {
+    if (sql.matches("(?i)^(\\s*)(SET)(\\s+)(.*)=(.*);?(\\s*)$")) {
       if (sql.contains(";")) {
         sql = sql.replace(';', ' ');
       }
