@@ -116,7 +116,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     }
     this.parametersNum = counter;
 
-    conn.log.fine("create prepared statements: " + sql);
+    conn.log.debug("create prepared statements: " + sql);
   }
 
   OdpsPreparedStatement(OdpsConnection conn, String sql, boolean isResultSetScrollable) {
@@ -184,7 +184,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       } catch (TunnelException e) {
         throw new SQLException(e);
       }
-      getConnection().log.fine("create upload session id=" + session.getId());
+      getConnection().log.debug("create upload session id=" + session.getId());
       TableSchema schema = session.getSchema();
       reuseRecord = session.newRecord();
       int colNum = schema.getColumns().size();
@@ -204,7 +204,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       return new int[0];
     }
 
-    getConnection().log.fine(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
+    getConnection().log.debug(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
                   + " in batch");
 
     int[] updateCounts = new int[batchedSize];
