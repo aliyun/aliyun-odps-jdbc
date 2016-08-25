@@ -1,25 +1,22 @@
 /*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- *
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.aliyun.odps.jdbc;
 
+import java.io.File;
+import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -43,15 +40,19 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
-import com.aliyun.odps.jdbc.utils.LogConsoleHandler;
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -81,6 +82,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private SQLWarning warningChain = null;
 
+  private String connectionId;
+
   OdpsConnection(String url, Properties info) {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -90,7 +93,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String project = connRes.getProject();
     String endpoint = connRes.getEndpoint();
     String logviewHost = connRes.getLogview();
-    String logLevel = connRes.getLogLevel();
+    String logConfFile = connRes.getLogConfFile();
 
     int lifecycle;
     try {
@@ -98,32 +101,24 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
+    
+    connectionId = UUID.randomUUID().toString().substring(24);
+    MDC.put("connectionId", connectionId);
 
-    log = Logger.getLogger(UUID.randomUUID().toString().substring(24));
+    log = getLogger(logConfFile);
 
-    // Change the state of the root logger
-    if (logLevel.equalsIgnoreCase("fatal") || logLevel.equalsIgnoreCase("severe")) {
-      log.setLevel(Level.SEVERE);
-    } else if (logLevel.equalsIgnoreCase("warning")) {
-      log.setLevel(Level.WARNING);
-    } else if (logLevel.equalsIgnoreCase("debug") || logLevel.equalsIgnoreCase("fine")) {
-      log.setLevel(Level.FINEST);
-    } else {
-      log.setLevel(Level.INFO);
+    if (connRes.getLogLevel() != null) {
+      log.warn("The logLevel is deprecated, please set log level in log conf file!");
     }
-
-    // TODO(onesuper): support file logger later
-    log.setUseParentHandlers(false);
-    log.addHandler(LogConsoleHandler.getInstance());
 
     String version = Utils.retrieveVersion();
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
-    log.fine(String.format("charset=%s, logview=%s, lifecycle=%d, loglevel=%s",
-                           charset, logviewHost, lifecycle, logLevel));
+    log.debug(String.format("charset=%s, logview=%s, lifecycle=%d, loglevel=%s", charset,
+        logviewHost, lifecycle, log.getEffectiveLevel()));
 
     Account account = new AliyunAccount(accessId, accessKey);
-    log.fine("debug mode on");
+    log.debug("debug mode on");
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
@@ -136,6 +131,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.stmtHandles = new ArrayList<Statement>();
   }
 
+  private Logger getLogger(String logConfFile) {
+    if (logConfFile != null) {
+      try {
+        LoggerContext loggerContext = new LoggerContext();
+        URL url = new File(logConfFile).toURI().toURL();
+        new ContextInitializer(loggerContext).configureByResource(url);
+        LoggerFactory.getLogger(getClass()).debug("Configure logConf Successfully : {}", url);
+        return loggerContext.getLogger(getClass());
+      } catch (Exception e) {
+        LoggerFactory.getLogger(getClass()).error(
+            "Configure logConf failed: " + logConfFile + " , replace with default conf ~ ", e);
+        return (Logger) LoggerFactory.getLogger(getClass());
+      }
+    }
+    return (Logger) LoggerFactory.getLogger(getClass());
+  }
+
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
     OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql);
@@ -144,51 +156,45 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
-  public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys)
-      throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+  public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public PreparedStatement prepareStatement(String sql, int[] columnIndexes)
-      throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+  public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public PreparedStatement prepareStatement(String sql, String[] columnNames)
-      throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+  public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   /**
    * Only support the following type
    *
-   * @param sql
-   *     the prepared sql
-   * @param resultSetType
-   *     TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
-   * @param resultSetConcurrency
-   *     CONCUR_READ_ONLY
+   * @param sql the prepared sql
+   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency CONCUR_READ_ONLY
    * @return OdpsPreparedStatement
    * @throws SQLException wrong type
    */
   @Override
   public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
-                                                int resultSetConcurrency) throws SQLException {
+      int resultSetConcurrency) throws SQLException {
     checkClosed();
 
     if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
-      throw new SQLFeatureNotSupportedException(
-          "Statement with resultset type: " + resultSetType + " is not supported");
+      throw new SQLFeatureNotSupportedException("Statement with resultset type: " + resultSetType
+          + " is not supported");
     }
 
     if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
-      throw new SQLFeatureNotSupportedException(
-          "Statement with resultset concurrency: " + resultSetConcurrency + " is not supported");
+      throw new SQLFeatureNotSupportedException("Statement with resultset concurrency: "
+          + resultSetConcurrency + " is not supported");
     }
 
     boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
@@ -199,15 +205,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public PreparedStatement prepareStatement(String sql, int resultSetType,
-                                            int resultSetConcurrency, int resultSetHoldability)
-      throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+      int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public CallableStatement prepareCall(String sql) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -219,21 +224,22 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
-                                       int resultSetHoldability) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+      int resultSetHoldability) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String nativeSQL(String sql) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
     if (!autoCommit) {
-      log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" to false is not supported!!!");
+      log.error(Thread.currentThread().getStackTrace()[1].getMethodName()
+          + " to false is not supported!!!");
       throw new SQLFeatureNotSupportedException("enabling autocommit is not supported");
     }
   }
@@ -245,24 +251,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void commit() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void rollback() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void rollback(Savepoint savepoint) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void close() throws SQLException {
+    MDC.remove("connectionId");
     if (!isClosed) {
       for (Statement stmt : stmtHandles) {
         if (stmt != null) {
@@ -288,7 +295,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
     if (readOnly) {
-      log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+      log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
       throw new SQLFeatureNotSupportedException("enabling read-only is not supported");
     }
   }
@@ -299,9 +306,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   /**
-   * ODPS doesn't support the concept of catalog
-   * Each connection is associated with one endpoint (embedded in the connection url).
-   * Each endpoint has a couple of projects (schema)
+   * ODPS doesn't support the concept of catalog Each connection is associated with one endpoint
+   * (embedded in the connection url). Each endpoint has a couple of projects (schema)
    */
   @Override
   public void setCatalog(String catalog) throws SQLException {
@@ -315,7 +321,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void setTransactionIsolation(int level) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -336,43 +342,43 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public Map<String, Class<?>> getTypeMap() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setHoldability(int holdability) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getHoldability() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Savepoint setSavepoint() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Savepoint setSavepoint(String name) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -387,10 +393,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Only support the following type:
    *
-   * @param resultSetType
-   *     TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
-   * @param resultSetConcurrency
-   *     CONCUR_READ_ONLY
+   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetConcurrency CONCUR_READ_ONLY
    * @return OdpsStatement object
    * @throws SQLException wrong type
    */
@@ -428,32 +432,32 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency,
-                                   int resultSetHoldability) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+      int resultSetHoldability) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Clob createClob() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Blob createBlob() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public NClob createNClob() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public SQLXML createSQLXML() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -463,7 +467,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new SQLException("timeout value was negative");
     }
     try {
-      boolean exists = odps.projects().exists("123");
+      odps.projects().exists("123");
       return true;
     } catch (OdpsException e) {
       return false;
@@ -492,13 +496,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -513,17 +517,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   public void abort(Executor executor) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   public int getNetworkTimeout() throws SQLException {
-    log.severe(Thread.currentThread().getStackTrace()[1].getMethodName() +" is not supported!!!");
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -540,6 +544,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   protected String getCharset() {
     return charset;
   }
+
   protected String getLogviewHost() {
     return logviewHost;
   }

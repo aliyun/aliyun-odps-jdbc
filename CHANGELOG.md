@@ -1,3 +1,12 @@
+### v2.0beta (2016-08-25)
+
+1. Support passing `logconffile` to customize logging
+2. Add `logback` dependency to pom.xml.
+3. Support passing `odps_config` with a file to specify JDBC configuration in order to avoid encoding/decoding the params which contains special characters. If `odps_config` is passed , neither `URL` nor `PROP` config will be ignored.
+4. Unify the configuration effects of both `URL_KEY` and `PROP_KEY`.`PROP_KEY`'s priority would be greater than `URL_KEY`'s when they both exist.
+5. `executeUpdate` will return non-negative value.
+6. Add `synchronized` to some methods to protect the safety of concurrent calling.
+
 ### v2.0beta (2016-06-15)
 
 1. Use instance tunnel instead of table tunnel, so that temporary table is no longer created. 

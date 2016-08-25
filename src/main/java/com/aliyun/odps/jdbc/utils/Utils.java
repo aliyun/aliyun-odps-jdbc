@@ -37,6 +37,10 @@ public class Utils {
   }
 
   public static boolean matchPattern(String s, String pattern) {
+    
+    if (pattern == null) {
+      return true;
+    }
 
     if (pattern.contains("%") || pattern.contains("_")) {
       // (?<!a)  looks 1 char behind and ensure not equal
