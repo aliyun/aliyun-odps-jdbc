@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import ch.qos.logback.classic.Logger;
+import org.slf4j.Logger;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
