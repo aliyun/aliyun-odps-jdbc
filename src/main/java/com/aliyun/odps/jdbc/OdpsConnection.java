@@ -15,8 +15,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import java.io.File;
-import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -41,18 +39,15 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.slf4j.MDC;
-
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.util.ContextInitializer;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.LoggerFactory;
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -101,11 +96,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
-    
+
     connectionId = UUID.randomUUID().toString().substring(24);
     MDC.put("connectionId", connectionId);
 
-    log = getLogger(logConfFile);
+    log = LoggerFactory.getLogger(logConfFile, getClass().getName());
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
@@ -114,8 +109,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String version = Utils.retrieveVersion();
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
-    log.debug(String.format("charset=%s, logview=%s, lifecycle=%d, loglevel=%s", charset,
-        logviewHost, lifecycle, log.getEffectiveLevel()));
+    log.debug(String
+        .format("charset=%s, logview=%s, lifecycle=%d", charset, logviewHost, lifecycle));
 
     Account account = new AliyunAccount(accessId, accessKey);
     log.debug("debug mode on");
@@ -131,22 +126,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.stmtHandles = new ArrayList<Statement>();
   }
 
-  private Logger getLogger(String logConfFile) {
-    if (logConfFile != null) {
-      try {
-        LoggerContext loggerContext = new LoggerContext();
-        URL url = new File(logConfFile).toURI().toURL();
-        new ContextInitializer(loggerContext).configureByResource(url);
-        LoggerFactory.getLogger(getClass()).debug("Configure logConf Successfully : {}", url);
-        return loggerContext.getLogger(getClass());
-      } catch (Exception e) {
-        LoggerFactory.getLogger(getClass()).error(
-            "Configure logConf failed: " + logConfFile + " , replace with default conf ~ ", e);
-        return (Logger) LoggerFactory.getLogger(getClass());
-      }
-    }
-    return (Logger) LoggerFactory.getLogger(getClass());
-  }
+
 
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
