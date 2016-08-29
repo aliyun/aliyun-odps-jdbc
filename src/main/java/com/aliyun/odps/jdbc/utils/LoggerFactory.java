@@ -45,9 +45,9 @@ public class LoggerFactory {
             contextInitializerClazz.getMethod("configureByResource", URL.class);
         URL url = new File(logConfFile).toURI().toURL();
         configureByResourceMethod.invoke(contextInitializer, url);
-        Method getLoggerMethod = loggerContextClazz.getMethod("getLogger", Class.class);
+        Method getLoggerMethod = loggerContextClazz.getMethod("getLogger", String.class);
         logger = (Logger) getLoggerMethod.invoke(loggerContext, name);
-        org.slf4j.LoggerFactory.getLogger(name).debug("Configure logConf Successfully : {}", url);
+        logger.debug("Configure logConf Successfully : {}", url);
       } catch (Throwable e) {
         org.slf4j.LoggerFactory.getLogger(name).error(
             "Configure logConf failed: " + logConfFile
