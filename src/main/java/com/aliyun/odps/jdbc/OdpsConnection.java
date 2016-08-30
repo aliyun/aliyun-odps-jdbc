@@ -78,6 +78,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private SQLWarning warningChain = null;
 
   private String connectionId;
+  
+  private final Properties sqlTaskProperties = new Properties();
 
   OdpsConnection(String url, Properties info) {
 
@@ -528,4 +530,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   protected String getLogviewHost() {
     return logviewHost;
   }
+
+  public Properties getSqlTaskProperties() {
+    return sqlTaskProperties;
+  }
+    
 }

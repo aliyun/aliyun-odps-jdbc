@@ -61,12 +61,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private static final int POLLING_INTERVAL = 3000;
   private static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
 
-  private final Properties sqlTaskProperties = new Properties();
-
   /**
    * The attributes of result set produced by this statement
    */
   protected boolean isResultSetScrollable = false;
+  
+  private Properties sqlTaskProperties;
 
   /**
    * The suggestion of fetch direction which might be ignored by the resultSet generated
@@ -88,6 +88,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHandle = conn;
+    sqlTaskProperties = (Properties) conn.getSqlTaskProperties().clone();
     this.isResultSetScrollable = isResultSetScrollable;
   }
 
@@ -152,9 +153,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public synchronized ResultSet executeQuery(String sql) throws SQLException {
+    
     checkClosed();
     beforeExecute();
-
     runSQL(sql);
 
     // Create a download session through tunnel
@@ -297,6 +298,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       String pairstring = sql.substring(i + 3);
       String[] pair = pairstring.split("=");
       connHandle.log.debug("set sql task property: " + pair[0].trim() + "=" + pair[1].trim());
+      connHandle.getSqlTaskProperties().setProperty(pair[0].trim(), pair[1].trim());
       sqlTaskProperties.setProperty(pair[0].trim(), pair[1].trim());
       return true;
     }
@@ -490,6 +492,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     executeInstance = null;
     isClosed = false;
     isCancelled = false;
+    updateCount = -1;
+    updateCountFetched = false;
   }
 
   protected Logger getParentLogger() {
