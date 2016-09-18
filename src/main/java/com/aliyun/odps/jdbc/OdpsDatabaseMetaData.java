@@ -856,28 +856,33 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     List<Object[]> rows = new ArrayList<Object[]>();
-    try {
-      Table table = conn.getOdps().tables().get(tableNamePattern);
-      table.reload();
-      // Read column information from table schema
-      List<Column> columns = table.getSchema().getColumns();
-      for (int i = 0; i < columns.size(); i++) {
-        Column col = columns.get(i);
-        JdbcColumn jdbcCol =
-            new JdbcColumn(col.getName(), table.getName(), null, col.getType(), col.getComment(),
-                i + 1);
-        Object[] rowVals =
-            {null, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
-                (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
-                (long) jdbcCol.getDecimalDigits(), (long) jdbcCol.getNumPercRaidx(),
-                (long) jdbcCol.getIsNullable(), jdbcCol.getComment(), null, null, null, null,
-                (long) jdbcCol.getOrdinalPos(), jdbcCol.getIsNullableString(), null, null, null,
-                null};
+    
+    if (tableNamePattern != null && !tableNamePattern.trim().isEmpty()
+        && !tableNamePattern.trim().equals("%") && !tableNamePattern.trim().equals("*")) {
+      try {
+        Table table = conn.getOdps().tables().get(tableNamePattern);
+        table.reload();
+        // Read column information from table schema
+        List<Column> columns = table.getSchema().getColumns();
+        for (int i = 0; i < columns.size(); i++) {
+          Column col = columns.get(i);
+          JdbcColumn jdbcCol =
+              new JdbcColumn(col.getName(), table.getName(), null, col.getType(), col.getComment(),
+                  i + 1);
+          Object[] rowVals =
+              {null, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
+                  (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
+                  (long) jdbcCol.getDecimalDigits(), (long) jdbcCol.getNumPercRaidx(),
+                  (long) jdbcCol.getIsNullable(), jdbcCol.getComment(), null, null, null, null,
+                  (long) jdbcCol.getOrdinalPos(), jdbcCol.getIsNullableString(), null, null, null,
+                  null};
 
-        rows.add(rowVals);
+          rows.add(rowVals);
+        }
+      } catch (OdpsException e) {
+        throw new SQLException("catalog=" + catalog + ",schemaPattern=" + schemaPattern
+            + ",tableNamePattern=" + tableNamePattern + ",columnNamePattern" + columnNamePattern, e);
       }
-    } catch (OdpsException e) {
-      throw new SQLException(e);
     }
 
     long end = System.currentTimeMillis();
