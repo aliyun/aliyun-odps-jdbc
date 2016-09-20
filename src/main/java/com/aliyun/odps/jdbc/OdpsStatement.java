@@ -595,4 +595,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("Fail to run sql:" + sql, e);
     }
   }
+
+  public Instance getExecuteInstance() {
+    return executeInstance;
+  }
+  
 }
