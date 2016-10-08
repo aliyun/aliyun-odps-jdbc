@@ -68,7 +68,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private static final int POLLING_INTERVAL = 3000;
   private static final String JDBC_SQL_TASK_NAME = "jdbc_sqk_task";
 
-  private final Properties sqlTaskProperties = new Properties();
+  private Properties sqlTaskProperties;
 
   /**
    * The attributes of result set produced by this statement
@@ -96,6 +96,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHanlde = conn;
+    sqlTaskProperties = (Properties) conn.getSqlTaskProperties().clone();
     this.isResultSetScrollable = isResultSetScrollable;
   }
 
@@ -705,5 +706,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       connHanlde.log.severe("Fail to run sql: " + sql);
       throw new SQLException("Fail to run sql", e);
     }
+  }
+  
+  public Instance getExecuteInstance() {
+    return executeInstance;
   }
 }
