@@ -24,7 +24,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -60,6 +62,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private static final int POLLING_INTERVAL = 3000;
   private static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
+  private static final String SETTINGS = "settings";
 
   /**
    * The attributes of result set produced by this statement
@@ -520,8 +523,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       SQLTask sqlTask = new SQLTask();
       sqlTask.setName(JDBC_SQL_TASK_NAME);
       sqlTask.setQuery(sql);
+      Map<String,String> settings = new HashMap<String,String>();
       for (String key : sqlTaskProperties.stringPropertyNames()) {
-        sqlTask.setProperty(key, sqlTaskProperties.getProperty(key));
+        settings.put(key, sqlTaskProperties.getProperty(key));
+      }
+      if (!settings.isEmpty()) {
+        sqlTask.setProperty(SETTINGS, JSON.toJSONString(settings));
       }
       if (!sqlTaskProperties.isEmpty()) {
         connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
