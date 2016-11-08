@@ -29,7 +29,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -66,7 +68,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private boolean isCancelled = false;
 
   private static final int POLLING_INTERVAL = 3000;
-  private static final String JDBC_SQL_TASK_NAME = "jdbc_sqk_task";
+  private static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
+  private static final String SETTINGS = "settings";
 
   private Properties sqlTaskProperties;
 
@@ -632,8 +635,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       SQLTask sqlTask = new SQLTask();
       sqlTask.setName(JDBC_SQL_TASK_NAME);
       sqlTask.setQuery(sql);
+      Map<String,String> settings = new HashMap<String,String>();
       for (String key : sqlTaskProperties.stringPropertyNames()) {
-        sqlTask.setProperty(key, sqlTaskProperties.getProperty(key));
+        settings.put(key, sqlTaskProperties.getProperty(key));
+      }
+      if (!settings.isEmpty()) {
+        sqlTask.setProperty(SETTINGS, JSON.toJSONString(settings));
       }
       if (!sqlTaskProperties.isEmpty()) {
         connHanlde.log.fine("Enabled SQL task properties: " + sqlTaskProperties);
