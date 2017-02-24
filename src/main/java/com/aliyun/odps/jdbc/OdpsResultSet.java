@@ -138,15 +138,13 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    if (obj == null) {
-      return null;
-    } else if (obj instanceof BigDecimal) {
-      return (BigDecimal) obj;
-    } else if (obj instanceof byte[]) {
-      return new BigDecimal(encodeBytes((byte[]) obj));
+    Object val = getObject(columnIndex);
+
+    if (val == null || val instanceof BigDecimal) {
+      return (BigDecimal)val;
     }
-    throw new SQLException("Illegal to cast column " + columnIndex + " to BigDecimal: " + obj);
+
+    throw new SQLException("Illegal conversion");
   }
 
   @Override
@@ -258,19 +256,17 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public boolean getBoolean(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    if (obj == null) {
-      return false;
-    } else if (obj instanceof Boolean) {
+    Object obj = getObject(columnIndex);
+    if (Boolean.class.isInstance(obj)) {
       return (Boolean) obj;
-    } else if (obj instanceof Long) {
-      return (Long) obj != 0;
-    } else if (obj instanceof Double) {
-      return (Double) obj != 0;
-    } else if (obj instanceof byte[]) {
-      return !(encodeBytes((byte[]) obj)).equals("0");
+    } else if (obj == null) {
+      return false;
+    } else if (Number.class.isInstance(obj)) {
+      return ((Number) obj).intValue() != 0;
+    } else if (String.class.isInstance(obj)) {
+      return !((String) obj).equals("0");
     }
-    throw new SQLException("Illegal to cast column " + columnIndex + " to boolean: " + obj);
+    throw new SQLException("Cannot convert column " + columnIndex + " to boolean");
   }
 
   @Override
@@ -281,7 +277,13 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public byte getByte(int columnIndex) throws SQLException {
-    return (byte) getLong(columnIndex);
+    Object obj = getObject(columnIndex);
+    if (Number.class.isInstance(obj)) {
+      return ((Number) obj).byteValue();
+    } else if (obj == null) {
+      return 0;
+    }
+    throw new SQLException("Cannot convert column " + columnIndex + " to byte");
   }
 
   @Override
@@ -357,7 +359,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         throw new SQLException("can not parse to Date: " + obj, e);
       }
     }
-    throw new SQLException("Illegal to cast column " + columnIndex + " to Date: " + obj);
+    throw new SQLException("Cannot convert column " + columnIndex
+        + " to date: Illegal conversion");
   }
 
   @Override
@@ -378,23 +381,20 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public double getDouble(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    if (obj == null) {
-      return 0;
-    } else if (obj instanceof Double) {
-      return (Double) obj;
-    } else if (obj instanceof Long) {
-      return ((Long) obj).doubleValue();
-    } else if (obj instanceof BigDecimal) {
-      return ((BigDecimal) obj).doubleValue();
-    } else if (obj instanceof byte[]) {
-      try {
-        return Double.valueOf(encodeBytes((byte[]) obj));
-      } catch (java.lang.NumberFormatException e) {
-        throw new SQLException("can not parse to Double: " + obj, e);
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).doubleValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Double.parseDouble((String) obj);
       }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException(
+          "Cannot convert column " + columnIndex + " to double: " + e.toString(), e);
     }
-    throw new SQLException("Illegal to cast column " + columnIndex + " to Double: " + obj);
   }
 
   @Override
@@ -421,7 +421,20 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public int getInt(int columnIndex) throws SQLException {
-    return (int) getLong(columnIndex);
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).intValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Integer.parseInt((String) obj);
+      }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to integer" + e.toString(),
+          e);
+    }
   }
 
   @Override
@@ -432,23 +445,20 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public long getLong(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    if (obj == null) {
-      return 0;
-    } else if (obj instanceof Long) {
-      return (Long) obj;
-    } else if (obj instanceof Double) {
-      return ((Double) obj).longValue();
-    } else if (obj instanceof BigDecimal) {
-      return ((BigDecimal) obj).longValue();
-    } else if (obj instanceof byte[]) {
-      try {
-        return Long.valueOf(encodeBytes((byte[]) obj));
-      } catch (java.lang.NumberFormatException e) {
-        throw new SQLException("can not parse to Long: " + obj, e);
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).longValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Long.parseLong((String) obj);
       }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to integer" + e.toString(),
+          e);
     }
-    throw new SQLException("Illegal to cast column " + columnIndex + " to Long: " + obj);
   }
 
   @Override
@@ -580,20 +590,24 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Time getTime(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    if (obj == null) {
-      return null;
-    } else if (obj instanceof java.util.Date) {
-      return new Time(((java.util.Date) obj).getTime());
-    } else if (obj instanceof byte[]) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      try {
-        return new Time(dateFormat.parse(encodeBytes((byte[]) obj)).getTime());
-      } catch (ParseException e) {
-        throw new SQLException("can not parse to Time: " + obj, e);
+    try {
+      Object obj = getInnerObject(columnIndex);
+      if (obj == null) {
+        return null;
+      } else if (obj instanceof java.util.Date) {
+        return new Time(((java.util.Date) obj).getTime());
+      } else if (obj instanceof byte[]) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+        try {
+          return new Time(dateFormat.parse(encodeBytes((byte[]) obj)).getTime());
+        } catch (ParseException e) {
+          throw new SQLException("can not parse to Time: " + obj, e);
+        }
       }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to Time" + e.toString(), e);
     }
-    throw new SQLException("Illegal to cast column " + columnIndex + " to Time: " + obj);
   }
 
   @Override
@@ -614,20 +628,24 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    if (obj == null) {
-      return null;
-    } else if (obj instanceof java.util.Date) {
-      return new Timestamp(((java.util.Date) obj).getTime());
-    } else if (obj instanceof byte[]) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      try {
-        return new Timestamp(dateFormat.parse(encodeBytes((byte[]) obj)).getTime());
-      } catch (ParseException e) {
-        throw new SQLException("can not parse to Timestamp: " + obj, e);
+    try {
+      Object obj = getInnerObject(columnIndex);
+      if (obj == null) {
+        return null;
+      } else if (obj instanceof java.util.Date) {
+        return new Timestamp(((java.util.Date) obj).getTime());
+      } else if (obj instanceof byte[]) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+        try {
+          return new Timestamp(dateFormat.parse(encodeBytes((byte[]) obj)).getTime());
+        } catch (ParseException e) {
+          throw new SQLException("can not parse to Timestamp: " + obj, e);
+        }
       }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to Timestamp" + e.toString(), e);
     }
-    throw new SQLException("Illegal cast column " + columnIndex + " to Timestamp: " + obj);
   }
 
   @Override

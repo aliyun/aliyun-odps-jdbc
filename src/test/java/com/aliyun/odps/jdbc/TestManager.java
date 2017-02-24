@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Properties;
 
 import org.junit.Assert;
@@ -66,6 +67,15 @@ public class TestManager {
       // pass project name via url
       conn = DriverManager.getConnection(url, username, password);
       Assert.assertNotNull(conn);
+      Statement stmt = conn.createStatement();
+      stmt.execute("set odps.sql.hive.compatible=true;");
+      stmt.execute("set odps.sql.preparse.odps2=lot;");
+      stmt.execute("set odps.sql.planner.mode=lot;");
+      stmt.execute("set odps.sql.planner.parser.odps2=true;");
+      stmt.execute("set odps.sql.ddl.odps2=true;");
+      stmt.execute("set odps.sql.runtime.mode=executionengine;");
+      stmt.execute("set odps.compiler.verify=true;");
+      stmt.execute("set odps.compiler.output.format=lot,pot;");
 
       Account account = new AliyunAccount(username, password);
       odps = new Odps(account);

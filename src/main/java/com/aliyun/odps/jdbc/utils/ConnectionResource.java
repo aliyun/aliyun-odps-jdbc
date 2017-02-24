@@ -18,6 +18,7 @@ package com.aliyun.odps.jdbc.utils;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,6 +110,15 @@ public class ConnectionResource {
     accessKey =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, ACCESS_KEY_PROP_KEY_ALT,
             ACCESS_KEY_PROP_KEY, ACCESS_KEY_URL_KEY);
+    
+    if (accessKey != null) {
+      try {
+        accessKey = URLDecoder.decode(accessKey, CHARSET_DEFAULT_VALUE);
+      } catch (UnsupportedEncodingException e) {
+        accessKey = URLDecoder.decode(accessKey);
+      }
+    }
+    
     charset =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CHARSET_DEFAULT_VALUE, CHARSET_PROP_KEY,
             CHARSET_URL_KEY);
@@ -140,11 +150,12 @@ public class ConnectionResource {
       String[] pairs = query.split("&");
 
       for (String pair : pairs) {
-        String[] keyvalue = pair.split("=");
-        if (keyvalue.length > 1) {
-          paramsInURL.put(URLDecoder.decode(keyvalue[0]), URLDecoder.decode(keyvalue[1]));
+        int pos = pair.indexOf("=");
+        if (pos > 0) {
+          paramsInURL.put(URLDecoder.decode(pair.substring(0, pos)),
+              URLDecoder.decode(pair.substring(pos + 1)));
         } else {
-          paramsInURL.put(URLDecoder.decode(keyvalue[0]), null);
+          paramsInURL.put(URLDecoder.decode(pair), null);
         }
       }
     }

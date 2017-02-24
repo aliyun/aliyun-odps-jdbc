@@ -39,11 +39,11 @@ import com.aliyun.odps.Instance;
 import com.aliyun.odps.LogView;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.task.SQLTask;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
+import com.aliyun.odps.type.TypeInfo;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
@@ -176,10 +176,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // Read schema
     List<String> columnNames = new ArrayList<String>();
-    List<OdpsType> columnSqlTypes = new ArrayList<OdpsType>();
+    List<TypeInfo> columnSqlTypes = new ArrayList<TypeInfo>();
     for (Column col : session.getSchema().getColumns()) {
       columnNames.add(col.getName());
-      columnSqlTypes.add(col.getType());
+      columnSqlTypes.add(col.getTypeInfo());
     }
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
 
@@ -253,6 +253,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (processSetClause(sql)) {
       return false;
     }
+    
+    if (processUseClause(sql)) {
+      return false;
+    }
 
     if (isQuery(sql)) {
       executeQuery(sql);
@@ -303,6 +307,22 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       connHandle.log.debug("set sql task property: " + pair[0].trim() + "=" + pair[1].trim());
       connHandle.getSqlTaskProperties().setProperty(pair[0].trim(), pair[1].trim());
       sqlTaskProperties.setProperty(pair[0].trim(), pair[1].trim());
+      return true;
+    }
+    return false;
+  }
+  
+  private boolean processUseClause(String sql) {
+    if (sql.matches("(?i)^(\\s*)(USE)(\\s+)(.*);?(\\s*)$")) {
+      if (sql.contains(";")) {
+        sql = sql.replace(';', ' ');
+      }
+      int i = sql.toLowerCase().indexOf("use");
+      String project = sql.substring(i + 3).trim();
+      if (project.length() > 0) {
+        connHandle.getOdps().setDefaultProject(project);
+        connHandle.log.debug("set project to " + project);
+      }
       return true;
     }
     return false;

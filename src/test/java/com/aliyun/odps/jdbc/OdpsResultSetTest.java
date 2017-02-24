@@ -42,7 +42,7 @@ public class OdpsResultSetTest {
   static SimpleDateFormat formatter;
   static String nowStr;
   static String odpsNowStr;
-
+  static String decimalValue;
   static String decimalStr;
   static String odpsDecimalStr;
   static BigDecimal bigDecimal;
@@ -68,9 +68,10 @@ public class OdpsResultSetTest {
     nowStr = formatter.format(unixTimeNow);
     odpsNowStr = "cast('" + nowStr + "' as datetime)";
 
-    decimalStr = "55.123456789012345";
-    odpsDecimalStr = "cast('" + decimalStr + "' as decimal)";
-    bigDecimal = new BigDecimal(decimalStr);
+    decimalValue = "55.123456789012345";
+    decimalStr = decimalValue + "BD";
+    odpsDecimalStr = "cast('" + decimalValue + "' as decimal)";
+    bigDecimal = new BigDecimal(decimalValue);
 
   }
 
@@ -133,7 +134,7 @@ public class OdpsResultSetTest {
     Assert.assertEquals("c3", meta.getColumnName(3));
     // Assert.assertEquals("c4", meta.getColumnName(4));
 
-    Assert.assertEquals("BIGINT", meta.getColumnTypeName(1));
+    Assert.assertEquals("INT", meta.getColumnTypeName(1));
     Assert.assertEquals("DOUBLE", meta.getColumnTypeName(2));
     // TODO: SDK treats com.aliyun.odps.OdpsType.VOID as string?
     Assert.assertEquals("STRING", meta.getColumnTypeName(3));
@@ -152,7 +153,7 @@ public class OdpsResultSetTest {
   @Test
   public void testGetObject() throws Exception {
     ResultSet rs =
-        stmt.executeQuery("select * from (select 1 id, 1.5 weight from dual"
+        stmt.executeQuery("select * from (select 1L id, 1.5 weight from dual"
             + " union all select 2 id, 2.9 weight from dual) x order by id desc limit 2;");
     {
       rs.next();
@@ -259,7 +260,7 @@ public class OdpsResultSetTest {
   public void testGetBigDecimal() throws Exception {
     // cast from STRING, DECIMAL
     ResultSet rs =
-        stmt.executeQuery(String.format("select '%s' c1, %s c2 from dual;", decimalStr,
+        stmt.executeQuery(String.format("select %s c1, %s c2 from dual;", decimalStr,
             odpsDecimalStr));
     {
       rs.next();
@@ -273,7 +274,7 @@ public class OdpsResultSetTest {
   public void testGetTimeFormat() throws Exception {
     // cast from STRING, DATETIME
     ResultSet rs =
-        stmt.executeQuery(String.format("select '%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
+        stmt.executeQuery(String.format("select DATETIME'%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
     {
       rs.next();
       Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
@@ -304,7 +305,7 @@ public class OdpsResultSetTest {
       Assert.assertEquals("0.5", rs.getString(2));
       Assert.assertEquals("1", rs.getString(3));
       Assert.assertEquals(nowStr, rs.getString(4));
-      Assert.assertEquals(decimalStr, rs.getString(5));
+      Assert.assertEquals(decimalValue, rs.getString(5));
       Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
     }
     rs.close();

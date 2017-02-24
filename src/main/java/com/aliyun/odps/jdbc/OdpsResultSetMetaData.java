@@ -20,28 +20,37 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.OdpsType;
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
-
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.aliyun.odps.OdpsType;
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.type.TypeInfo;
 
 public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMetaData {
 
   private final List<String> columnNames;
   private final List<OdpsType> columnTypes;
+  private final List<? extends TypeInfo> typeInfos;
   private Map<String, Integer> nameIndexMap;
 
   private String catalogName = " ";
   private String schemeName = " ";
   private String tableName = " ";
 
-  OdpsResultSetMetaData(List<String> columnNames, List<OdpsType> columnTypes) {
+  OdpsResultSetMetaData(List<String> columnNames, List<? extends TypeInfo> typeInfos) {
     this.columnNames = columnNames;
-    this.columnTypes = columnTypes;
+    this.typeInfos = typeInfos;
+    this.columnTypes = new ArrayList<OdpsType>();
+    if (columnNames != null) {
+      for (int i = 0; i < columnNames.size(); i++) {
+        columnTypes.add(typeInfos.get(i).getOdpsType());
+      }
+    }
   }
 
   @Override
@@ -62,8 +71,8 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
 
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-    return JdbcColumn.columnDisplaySize(type);
+    TypeInfo typeInfo = typeInfos.get(toZeroIndex(column));
+    return JdbcColumn.columnDisplaySize(typeInfo);
   }
 
   @Override
@@ -79,25 +88,26 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
   @Override
   public int getColumnType(int column) throws SQLException {
     OdpsType type = columnTypes.get(toZeroIndex(column));
-    return JdbcColumn.OdpsTypeToSqlType(type);
+    return JdbcColumn.odpsTypeToSqlType(type);
   }
 
   @Override
   public String getColumnTypeName(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-    return OdpsType.getFullTypeString(type, null);
+    TypeInfo typeInfo = typeInfos.get(toZeroIndex(column));
+    return typeInfo.getTypeName();
   }
 
   @Override
   public int getPrecision(int column) throws SQLException {
-    OdpsType type = columnTypes.get(toZeroIndex(column));
-    return JdbcColumn.columnPrecision(type);
+    TypeInfo typeInfo = typeInfos.get(toZeroIndex(column));
+    return JdbcColumn.columnPrecision(typeInfo);
   }
 
   @Override
   public int getScale(int column) throws SQLException {
     OdpsType type = columnTypes.get(toZeroIndex(column));
-    return JdbcColumn.columnScale(type);
+    TypeInfo typeInfo = typeInfos.get(toZeroIndex(column));
+    return JdbcColumn.columnScale(type, typeInfo);
   }
 
   @Override
