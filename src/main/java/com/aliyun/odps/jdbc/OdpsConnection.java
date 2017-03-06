@@ -80,6 +80,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String connectionId;
   
   private final Properties sqlTaskProperties = new Properties();
+  
+  private String tunnelEndpoint;
 
   OdpsConnection(String url, Properties info) {
 
@@ -89,6 +91,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String charset = connRes.getCharset();
     String project = connRes.getProject();
     String endpoint = connRes.getEndpoint();
+    String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
 
@@ -125,6 +128,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.charset = charset;
     this.logviewHost = logviewHost;
     this.lifecycle = lifecycle;
+    this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<Statement>();
   }
 
@@ -534,5 +538,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public Properties getSqlTaskProperties() {
     return sqlTaskProperties;
   }
-    
+
+  public String getTunnelEndpoint() {
+    return tunnelEndpoint;
+  }
+      
 }

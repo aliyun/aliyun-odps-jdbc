@@ -165,6 +165,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     DownloadSession session;
     try {
       InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
+      if (connHandle.getTunnelEndpoint() != null) {
+        tunnel.setEndpoint(connHandle.getTunnelEndpoint());
+      }
       session =
           tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
               executeInstance.getId());

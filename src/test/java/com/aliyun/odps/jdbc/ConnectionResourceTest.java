@@ -14,7 +14,7 @@ public class ConnectionResourceTest {
   public void testConnectionResourceTest() throws Exception {
     String odpsConfigFile = getClass().getClassLoader().getResource("odps_config.ini").getPath();
     String url1 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logconffile=/Users/emerson/logback.xml&odps_config="
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logconffile=/Users/emerson/logback.xml&odps_config="
             + odpsConfigFile;
     ConnectionResource resource = new ConnectionResource(url1, null);
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
@@ -26,12 +26,13 @@ public class ConnectionResourceTest {
     Assert.assertEquals("UTF-8", resource.getCharset());
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals(null, resource.getLogview());
+    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
 
 
     String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
     String url2 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&logconffile="
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnel_endpoint=http://1.1.1.1:8066&logconffile="
             + logConfigFile;
     resource = new ConnectionResource(url2, null);
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
@@ -44,7 +45,7 @@ public class ConnectionResourceTest {
     Assert.assertEquals("UTF-8", resource.getCharset());
     Assert.assertEquals(logConfigFile, resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
-
+    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
     Properties info = new Properties();
     info.load(new FileInputStream(odpsConfigFile));
@@ -58,6 +59,7 @@ public class ConnectionResourceTest {
     Assert.assertEquals("UTF-8", resource.getCharset());
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
+    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
   }
 

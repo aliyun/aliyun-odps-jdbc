@@ -43,6 +43,7 @@ public class ConnectionResource {
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String LIFECYCLE_URL_KEY = "lifecycle";
   private static final String LOGLEVEL_URL_KEY = "loglevel";
+  private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnel_endpoint";
   private static final String LOGCONFFILE_URL_KEY = "logconffile";
 
   /**
@@ -57,6 +58,7 @@ public class ConnectionResource {
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
   public static final String LIFECYCLE_PROP_KEY = "lifecycle";
   public static final String LOGLEVEL_PROP_KEY = "log_level";
+  public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
   public static final String LOGCONFFILE_PROP_KEY = "log_conf_file";
 
 
@@ -74,6 +76,7 @@ public class ConnectionResource {
   private String logview;
   private String lifecycle;
   private String logLevel;
+  private String tunnelEndpoint;
   private String logConfFile;
 
   public static boolean acceptURL(String url) {
@@ -131,6 +134,10 @@ public class ConnectionResource {
             LIFECYCLE_URL_KEY);
     logLevel =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGLEVEL_PROP_KEY, LOGLEVEL_URL_KEY);
+    
+    tunnelEndpoint =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
+    
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGCONFFILE_PROP_KEY,
             LOGCONFFILE_URL_KEY);
@@ -192,6 +199,10 @@ public class ConnectionResource {
 
   public String getLogLevel() {
     return logLevel;
+  }
+  
+  public String getTunnelEndpoint() {
+    return tunnelEndpoint;
   }
 
   public String getLogConfFile() {
