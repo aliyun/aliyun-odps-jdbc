@@ -106,6 +106,31 @@ public class OdpsStatementTest {
     stmt.close();
     Assert.assertTrue(stmt.isClosed());
   }
+  
+  @Test
+  public void testSelectNullQuery() throws Exception {
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("select null from " + INPUT_TABLE_NAME);
+    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
+
+    long start = System.currentTimeMillis();
+    {
+      int i = 0;
+      while (rs.next()) {
+        Assert.assertEquals(i + 1, rs.getRow());
+        Assert.assertEquals(null, rs.getObject(1));
+        Assert.assertEquals(null, rs.getString(1));
+        i++;
+      }
+      Assert.assertTrue(rs.isClosed());
+    }
+    long end = System.currentTimeMillis();
+    System.out.printf("step\tmillis\t%d\n", end - start);
+    rs.close();
+    Assert.assertTrue(rs.isClosed());
+    stmt.close();
+    Assert.assertTrue(stmt.isClosed());
+  }
 
   @Test
   public void testSetMaxRows() throws Exception {

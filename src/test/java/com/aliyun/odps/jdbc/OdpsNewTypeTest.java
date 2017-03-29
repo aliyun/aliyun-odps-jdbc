@@ -80,7 +80,7 @@ public class OdpsNewTypeTest {
       rs.close();
     if (stmt != null)
       stmt.close();
-    //odps.tables().delete(table, true);
+    // odps.tables().delete(table, true);
   }
 
   @Test
@@ -128,10 +128,13 @@ public class OdpsNewTypeTest {
       System.out.println(rs.getString(13));
       Assert.assertEquals(v13.toString(), rs.getString(13));
       Assert.assertEquals(v13, rs.getObject(13));
-      System.out.println(v14);
+      System.out.println("v14:" + v14);
+      System.out.println("v14 length:" + v14.length());
       System.out.println(rs.getString(14));
-      Assert.assertEquals(v14.toString(), rs.getString(14));
-      Assert.assertEquals(v14, rs.getObject(14));
+      System.out.println(rs.getString(14).length());
+      Assert.assertNotEquals(v14.toString(), rs.getString(14));
+      Assert.assertEquals(v14.toString().trim(), rs.getString(14).trim());
+      Assert.assertEquals(2, rs.getString(14).length());
       System.out.println(v15);
       System.out.println(rs.getString(15));
       Assert.assertEquals(v15.toString(), rs.getString(15));
@@ -158,8 +161,14 @@ public class OdpsNewTypeTest {
         } else if (fields.get(i) instanceof Float) {
           Assert.assertEquals((Float) v18.getFieldValues().get(i), (Float) fields.get(i), 0.00001);
         } else if (fields.get(i) instanceof Map) {
-          Assert.assertEquals(v18.getFieldValues().get(i).toString(),
-              new TreeMap((Map) fields.get(i)).toString());
+          Map m1 = (Map) v18.getFieldValues().get(i);
+          Map m2 = new TreeMap((Map) fields.get(i));
+          Assert.assertNotEquals(m1.toString(), m2.toString());
+          for (Object k : m1.keySet()) {
+            String v1 = m1.get(k).toString().trim();
+            String v2 = m2.get(k).toString().trim();
+            Assert.assertEquals(v1, v2);
+          }
         } else {
           Assert.assertEquals(v18.getFieldValues().get(i), fields.get(i));
         }
@@ -199,7 +208,7 @@ public class OdpsNewTypeTest {
     r.setTimestamp(11, v12);
     v13 = new Varchar(TestUtils.randomString(1), 1);
     r.setVarchar(12, v13);
-    v14 = new Char(TestUtils.randomString(2), 1);
+    v14 = new Char(TestUtils.randomString(1), 2);
     r.setChar(13, v14);
     v15 = new Binary(TestUtils.randomBytes());
     r.setBinary(14, v15);
@@ -267,6 +276,7 @@ public class OdpsNewTypeTest {
   private static void createTableWithHints(Odps odps, String tableName, TableSchema schema)
       throws OdpsException, SQLException {
     String sql = getSQLString(odps.getDefaultProject(), tableName, schema, null, false, null);
+    System.out.println(sql);
     stmt.execute(sql);
   }
 
