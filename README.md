@@ -206,7 +206,7 @@ The project is under construction (and not fully JDBC-compliant). If you dicover
 ```
 git clone ....
 cd odps-jdbc
-mvn install -DskipTests
+mvn package -DskipTests
 ```
 
 2.Copy out a configuration file:
