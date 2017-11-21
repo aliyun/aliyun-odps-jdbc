@@ -1,3 +1,11 @@
+### v2.2 (2017-02-24)
+
+1. Support Hive data type.
+
+### v1.9.1 (2016-11-11)
+
+1. Minor update to support hive proxy.
+
 ### v2.0beta (2016-08-25)
 
 1. Support passing `logconffile` to customize logging
@@ -8,7 +16,7 @@
 
 ### v2.0beta (2016-06-15)
 
-1. Use instance tunnel instead of table tunnel, so that temporary table is no longer created. 
+1. Use instance tunnel instead of table tunnel, so that temporary table is no longer created. Demands MaxCompute service >= Sprint27.
 
 ### v1.9 (2016-06-14)
 
@@ -71,8 +79,8 @@
 1. SQLWorkbench's wbcopy command supported.
 1. Compress data when downloading the result set.
 1. No longer use log4j.
-1. `Driver.getParentLogger()` supported. 
-1. Per-connection logger (support two connections with different log level.) 
+1. `Driver.getParentLogger()` supported.
+1. Per-connection logger (support two connections with different log level.)
 1. More debug logs for profiling.
 1. Change the driver name to 'ODPS'.
 1. Optimize the performance of getting tables.

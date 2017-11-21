@@ -12,7 +12,7 @@
 
 Generally, there are two ways to use ODPS JDBC driver in your project.
 
-1.The first one is to use the standalone library: 
+1.The first one is to use the standalone library:
 
 * Download the with-dependencies-jar from [release page](https://github.com/aliyun/aliyun-odps-jdbc/releases).
 * Checkout the [CHANGELOG](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md).
@@ -269,12 +269,18 @@ The implicit type conversion follows the rule:
 | Timestamp  |        |        |         |    Y     |   Y    |         |
 
 
+## MaxCompute Service Compatibility and Recommended JDBC version
 
+| MaxCompute | JDBC |
+| :--------: | :--: |
+| Public Service | 2.2 |
+| <= Sprint27 | 1.9.1 |
 
 ## Authors && Contributors
 
 - [Cheng Yichao](https://github.com/onesuper)
 - [Li Ruibo](https://github.com/lyman)
+- [Zhao Zhenyi](https://github.com/emerson-zhao)
 - [Wen Shaojin](https://github.com/wenshao)
 
 ## License
