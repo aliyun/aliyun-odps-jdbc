@@ -43,7 +43,7 @@ public class ConnectionResource {
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String LIFECYCLE_URL_KEY = "lifecycle";
   private static final String LOGLEVEL_URL_KEY = "loglevel";
-  private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnel_endpoint";
+  private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
   private static final String LOGCONFFILE_URL_KEY = "logconffile";
 
   /**

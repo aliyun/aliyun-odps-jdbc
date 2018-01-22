@@ -32,7 +32,7 @@ public class ConnectionResourceTest {
 
     String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
     String url2 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnel_endpoint=http://1.1.1.1:8066&logconffile="
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnelEndpoint=http://1.1.1.1:8066&logconffile="
             + logConfigFile;
     resource = new ConnectionResource(url2, null);
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());

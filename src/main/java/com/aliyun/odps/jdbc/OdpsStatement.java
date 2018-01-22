@@ -44,6 +44,7 @@ import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.type.TypeInfo;
+import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
@@ -165,8 +166,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     DownloadSession session;
     try {
       InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
-      if (connHandle.getTunnelEndpoint() != null) {
-        tunnel.setEndpoint(connHandle.getTunnelEndpoint());
+      String te = connHandle.getTunnelEndpoint();
+      if (!StringUtils.isNullOrEmpty(te)) {
+        connHandle.log.info("using tunnel endpoint: " + te);
+        tunnel.setEndpoint(te);
       }
       session =
           tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
