@@ -16,3 +16,6 @@
 
 /src/test/resources/*
 !/src/test/resources/conf.properties.example
+
+logback/jdbc.log
+test.sh

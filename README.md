@@ -167,10 +167,14 @@ public class OdpsJdbcClient {
 
 ```shell
 # compile the client code
-javac OdpsJdbcClient.java
+mvn clean package -DskipTests
 
 # run the program with specifying the class path
-java -cp odps-jdbc-*-with-dependencies.jar:. OdpsJdbcClient
+# using prepared shell script (linux)
+./jdbc_test.sh 'jdbc:odps:http://service.odps.aliyun.com/api?project=odpsdemo&accessId=...&accessKey=...&charset=UTF-8&logconffile=logback/logback.xml' 'select * from dual'
+
+# using java command
+java -cp "target/odps-jdbc-2.2-jar-with-dependencies.jar:logback/logback-core-1.2.3.jar:logback/logback-classic-1.2.3.jar" com.aliyun.odps.jdbc.JdbcTest "jdbc:odps:http://service.odps.aliyun.com/api?project=odpsdemo&accessId=...&accessKey=...&charset=UTF-8&logconffile=logback/logback.xml" "select * from dual"
 ```
 
 ### Setting SQL task properties
