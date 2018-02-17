@@ -277,8 +277,8 @@ The implicit type conversion follows the rule:
 
 | MaxCompute | JDBC |
 | :--------: | :--: |
-| Public Service | 2.3 |
-| <= Sprint27 | 1.9.1 |
+| Public Service | 2.3.1 |
+| <= Sprint27 | 1.9.2 |
 
 ## Authors && Contributors
 
