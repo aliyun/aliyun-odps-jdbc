@@ -539,7 +539,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     try {
 
       // If the client forget to end with a semi-colon, append it.
-      if (!sql.contains(";")) {
+      if (!sql.endsWith(";")) {
         sql += ";";
       }
 
