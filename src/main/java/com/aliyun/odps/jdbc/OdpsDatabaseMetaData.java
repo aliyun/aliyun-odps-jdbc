@@ -34,6 +34,7 @@ import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.type.TypeInfoFactory;
+import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
@@ -861,7 +862,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     if (tableNamePattern != null && !tableNamePattern.trim().isEmpty()
         && !tableNamePattern.trim().equals("%") && !tableNamePattern.trim().equals("*")) {
       try {
-        Table table = conn.getOdps().tables().get(tableNamePattern);
+        Table table;
+        if (StringUtils.isNullOrEmpty(schemaPattern)) {
+          table = conn.getOdps().tables().get(tableNamePattern);
+        } else {
+          table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
+        }
         table.reload();
         // Read column information from table schema
         List<Column> columns = table.getSchema().getColumns();
