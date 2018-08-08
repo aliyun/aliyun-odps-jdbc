@@ -95,6 +95,7 @@ while (rs.next()) {
 | `lifecycle` |  `lifecycle`   | the lifecycle of the temp table using in query |
 |  `charset`  |   `charset`    | the charset of the string                |
 | `loglevel`  |  `log_level`   | the level of debug infomartion debug/info/fatal |
+| `tunnelEndpoint` | `tunnel_endpoint` | the endpoint of ODPS Tunnel service |
 
 ## Example
 
