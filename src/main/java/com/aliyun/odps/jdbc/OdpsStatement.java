@@ -171,13 +171,22 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.log.info("using tunnel endpoint: " + te);
         tunnel.setEndpoint(te);
       }
-      session =
-          tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-              executeInstance.getId());
+      try {
+        session =
+            tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                         executeInstance.getId());
+      } catch (TunnelException e1) {
+        connHandle.log.info("create download session failed: " + e1.getMessage());
+        connHandle.log.info("fallback to limit mode");
+        session =
+            tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                         executeInstance.getId(), true);
+      }
+
       connHandle.log.info("create download session id=" + session.getId());
     } catch (TunnelException e) {
       throw new SQLException("create download session failed: instance id="
-          + executeInstance.getId(), e);
+                             + executeInstance.getId(), e);
     }
 
     // Read schema

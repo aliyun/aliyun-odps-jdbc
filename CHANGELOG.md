@@ -1,3 +1,23 @@
+### v2.4
+
+1. fallback to limited mode instance tunnel if project is protection
+1. fix bug when sql statement contains semi-colon
+1. fix bug of no column info when accessing table from other project
+
+### v2.3.1 (2018-02-17)
+
+1. update odps sdk and fastjson for security reason
+
+### v1.9.2 (2018-02-17)
+
+1. update odps sdk and fastjson for security reason
+1. add test tool `jdbc_test.sh`
+
+### v2.3 (2018-01-22)
+
+1. support customizing tunnel endpoint
+1. add test tool `jdbc_test.sh` with log conf sample
+
 ### v2.2 (2017-02-24)
 
 1. Support Hive data type.
