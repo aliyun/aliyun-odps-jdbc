@@ -454,12 +454,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public synchronized int getUpdateCount() throws SQLException {
     checkClosed();
-    if(updateCountFetched){
+    if (updateCountFetched){
       return -1;
     }
     updateCountFetched = true;
     if (executeInstance == null) {
-      throw new SQLException("There is no instance yet!");
+      return -1;
     }
     return updateCount;
   }
