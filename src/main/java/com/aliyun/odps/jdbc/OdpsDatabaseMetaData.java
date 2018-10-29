@@ -204,7 +204,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getIdentifierQuoteString() throws SQLException {
-    return " ";
+    return "`";
   }
 
   @Override
