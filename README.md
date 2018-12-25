@@ -251,6 +251,9 @@ Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC.
 |  STRING   | byte[]          | String                            |  VARCHAR  |
 |  DECIMAL  | math.BigDecimal | math.BigDecimal                   |  DECIMAL  |
 
+NOTE: Possible timezone issue
+
+DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse or format action. When application that using JDBC display a DATETIME as a human-readable string format, it is the application itself did the format using application defined or OS defined timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid inconsistent datetime parse/format.
 
 ### Type Conversion
 
@@ -273,12 +276,16 @@ The implicit type conversion follows the rule:
 |    Time    |        |        |         |    Y     |   Y    |         |
 | Timestamp  |        |        |         |    Y     |   Y    |         |
 
-
 ## MaxCompute Service Compatibility and Recommended JDBC version
+
+Since Sprint27, MaxCompute tunnel service supported a feature named instance tunnel that allowing client read query result set through tunnel endpoint, to release client from creating temporary table. And this JDBC driver began adopt using instance tunnel since version 2.0.
+
+However, for users using MaxCompute deploy that is earlier than Sprint27 (especially Private Cloud cases), please stick to the latest version before 2.0.
 
 | MaxCompute | JDBC |
 | :--------: | :--: |
 | Public Service | 2.4 |
+| Non PRC Public Service | 2.4.1-oversea |
 | <= Sprint27 | 1.9.2 |
 
 ## Authors && Contributors
