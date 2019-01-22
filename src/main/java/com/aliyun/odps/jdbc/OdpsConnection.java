@@ -111,7 +111,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
     }
 
-    String version = Utils.retrieveVersion();
+    String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.debug(String
