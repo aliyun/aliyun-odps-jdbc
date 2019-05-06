@@ -44,5 +44,6 @@ public class JdbcTest {
         }
       }
     }
+    res.close();
   }
 }
