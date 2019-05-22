@@ -41,6 +41,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
@@ -405,6 +406,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public float getFloat(int columnIndex) throws SQLException {
+    // TODO: implement
     return (float) getDouble(columnIndex);
   }
 
@@ -574,6 +576,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public short getShort(int columnIndex) throws SQLException {
+    // TODO: implement
     return (short) getLong(columnIndex);
   }
 
@@ -633,7 +636,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       if (obj == null) {
         return null;
       } else if (obj instanceof java.util.Date) {
-        return new Timestamp(((java.util.Date) obj).getTime());
+        if (obj instanceof java.sql.Timestamp) {
+          return (Timestamp) obj;
+        } else {
+          // The following conversion will lose nano values
+          return new Timestamp(((java.util.Date) obj).getTime());
+        }
       } else if (obj instanceof byte[]) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
         try {
