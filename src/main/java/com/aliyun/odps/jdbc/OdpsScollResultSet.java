@@ -258,6 +258,7 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
     return cursorRow != totalRows;
   }
 
+  @Override
   protected Object[] rowAtCursor() throws SQLException {
     // detect whether the cache contains the record
     boolean cacheHit = (cursorRow >= cachedUpperRow) && (cursorRow < cachedUpperRow + fetchSize);
