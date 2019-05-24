@@ -7,7 +7,7 @@ public class LongTransformer extends AbstractTransformer {
   @Override
   public Object transform(Object o, String charset) throws SQLException {
     if (o == null) {
-      return 0;
+      return (long) 0;
     }
 
     if (Number.class.isInstance(o)) {
