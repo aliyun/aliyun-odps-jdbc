@@ -1,0 +1,49 @@
+package com.aliyun.odps.jdbc.utils.transformer;
+
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
+
+public abstract class AbstractTransformer {
+  static final String INVALID_TRANSFORMATION_ERROR_MSG =
+      "Cannot transform ODPS-SDK Java class %s to %s";
+  static final String ENCODING_ERR_MSG =
+      "Error happened during encoding, please check the charset";
+  static final String TRANSFORMATION_ERR_MSG =
+      "Error happened when transforming %s into %s";
+
+  /**
+   * Transform ODPS SDK object to JDBC object
+   * @param o java object from ODPS SDK
+   * @param charset charset to encode byte array
+   * @return JDBC object
+   * @throws SQLException
+   */
+  public abstract Object transform(Object o, String charset) throws SQLException;
+
+  String getInvalidTransformationErrorMsg(Class odpsCls, Class jdbcCls) {
+    String errorMsg =
+        String.format(INVALID_TRANSFORMATION_ERROR_MSG, odpsCls.getName(), jdbcCls.getName());
+    return errorMsg;
+  }
+
+  String getEncodingErrMsg() {
+    return ENCODING_ERR_MSG;
+  }
+
+  String getTransformationErrMsg(Object o, Class jdbcCls) {
+    String errorMsg =
+        String.format(TRANSFORMATION_ERR_MSG, o.toString(), jdbcCls.getName());
+    return errorMsg;
+  }
+
+  public static String encodeBytes(byte[] bytes, String charset) throws SQLException {
+    if (charset != null) {
+      try {
+        return new String(bytes, charset);
+      } catch (UnsupportedEncodingException e) {
+        throw new SQLException(ENCODING_ERR_MSG, e);
+      }
+    }
+    return new String(bytes);
+  }
+}
