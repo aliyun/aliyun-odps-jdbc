@@ -24,17 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.aliyun.odps.Column;
-import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.OdpsType;
-import com.aliyun.odps.TableSchema;
-import com.aliyun.odps.data.Record;
-import com.aliyun.odps.data.RecordWriter;
-import com.aliyun.odps.data.Varchar;
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
-import com.aliyun.odps.tunnel.TableTunnel;
-import com.aliyun.odps.tunnel.TableTunnel.UploadSession;
-import com.aliyun.odps.type.TypeInfoFactory;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -47,9 +36,23 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.aliyun.odps.Column;
+import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.OdpsType;
+import com.aliyun.odps.TableSchema;
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.data.Varchar;
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.tunnel.TableTunnel;
+import com.aliyun.odps.tunnel.TableTunnel.UploadSession;
+import com.aliyun.odps.type.TypeInfoFactory;
+
 
 /**
  * This test will create a table with all the data type of ODPS 2.0 and create

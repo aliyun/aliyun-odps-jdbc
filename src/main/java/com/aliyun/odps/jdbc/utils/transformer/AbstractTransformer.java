@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc.utils.transformer;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 
+
 public abstract class AbstractTransformer {
   static final String INVALID_TRANSFORMATION_ERROR_MSG =
       "Cannot transform ODPS-SDK Java class %s to %s";

@@ -20,8 +20,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.jdbc.utils.transformer.AbstractTransformer;
-import com.aliyun.odps.jdbc.utils.transformer.TransformerFactory;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -41,6 +39,10 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+
+import com.aliyun.odps.jdbc.utils.transformer.AbstractTransformer;
+import com.aliyun.odps.jdbc.utils.transformer.TransformerFactory;
+
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
 

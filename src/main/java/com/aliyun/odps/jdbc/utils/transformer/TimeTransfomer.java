@@ -20,10 +20,12 @@
 
 package com.aliyun.odps.jdbc.utils.transformer;
 
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
+
 
 public class TimeTransfomer extends AbstractTransformer {
 

@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc.utils.transformer;
 
 import java.sql.SQLException;
 
+
 public class DoubleTransformer extends AbstractTransformer {
 
   @Override

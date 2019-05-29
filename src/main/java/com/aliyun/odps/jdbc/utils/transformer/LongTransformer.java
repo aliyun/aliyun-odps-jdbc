@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc.utils.transformer;
 
 import java.sql.SQLException;
 
+
 public class LongTransformer extends AbstractTransformer {
 
   @Override
@@ -36,9 +37,6 @@ public class LongTransformer extends AbstractTransformer {
       try {
         return Long.parseLong(encodeBytes((byte[]) o, charset));
       } catch (NumberFormatException e) {
-        String errorMsg = getTransformationErrMsg(encodeBytes((byte[]) o, charset), long.class);
-        throw new SQLException(errorMsg);
-      } catch (SQLException e) {
         String errorMsg = getTransformationErrMsg(encodeBytes((byte[]) o, charset), long.class);
         throw new SQLException(errorMsg);
       }
