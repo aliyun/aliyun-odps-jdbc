@@ -178,6 +178,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     }
   }
 
+  @Override
   protected Object[] rowAtCursor() throws SQLException {
     if (currentRow == null) {
       throw new SQLException("the row should be not-null, row=" + fetchedRows);
