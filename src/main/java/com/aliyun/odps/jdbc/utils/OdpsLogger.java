@@ -41,4 +41,6 @@ public class OdpsLogger {
   public void error(String msg) {
     logger.severe(msg);
   }
+
+
 }
