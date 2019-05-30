@@ -1,21 +1,24 @@
 package com.aliyun.odps.jdbc;
 
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.SourceLocation;
 
 public aspect PublicMethodAspect {
-  pointcut PublicMethods() : execution(public * com.aliyun.odps.jdbc.*.*(..));
+  pointcut Include() : execution(public * com.aliyun.odps.jdbc.Odps*.*(..));
 
   private OdpsLogger logger;
-  public PublicMethodAspect() throws IOException {
-    String jarDir = ClassLoader.getSystemClassLoader().getResource(".").getPath();
+  public PublicMethodAspect() throws IOException, URISyntaxException {
+    String jarDir = new File(PublicMethodAspect.class.getProtectionDomain().getCodeSource()
+        .getLocation().toURI()).getParent();
     logger = new OdpsLogger(Paths.get(jarDir, "jdbc.log").toString(), true);
   }
 
-  before() : PublicMethods() {
+  before() : Include() {
     int lineNumber = getCurrentLineNumber(thisJoinPoint);
     String classname = getCurrentClassname(thisJoinPoint);
     String methodName = getCurrentMethodName(thisJoinPoint);
@@ -24,7 +27,7 @@ public aspect PublicMethodAspect {
     logger.debug(msg);
   }
 
-  after() : PublicMethods() {
+  after() : Include() {
     int lineNumber = getCurrentLineNumber(thisJoinPoint);
     String classname = getCurrentClassname(thisJoinPoint);
     String methodName = getCurrentMethodName(thisJoinPoint);
@@ -33,7 +36,7 @@ public aspect PublicMethodAspect {
     logger.debug(msg);
   }
 
-  after() throwing(Exception e) : PublicMethods() {
+  after() throwing(Exception e) : Include() {
     e.printStackTrace();
   }
 
