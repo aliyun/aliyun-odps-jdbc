@@ -23,6 +23,8 @@ package com.aliyun.odps.jdbc.utils;
 import java.io.IOException;
 import java.util.Properties;
 
+import com.aliyun.odps.utils.StringUtils;
+
 public class Utils {
 
   // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
@@ -38,7 +40,7 @@ public class Utils {
 
   public static boolean matchPattern(String s, String pattern) {
     
-    if (pattern == null) {
+    if (StringUtils.isNullOrEmpty(pattern)) {
       return true;
     }
 
