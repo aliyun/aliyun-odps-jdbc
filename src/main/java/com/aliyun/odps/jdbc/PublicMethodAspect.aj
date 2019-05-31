@@ -15,9 +15,7 @@ public aspect PublicMethodAspect {
 
   private OdpsLogger logger;
   public PublicMethodAspect() throws IOException, URISyntaxException {
-    String jarDir = new File(PublicMethodAspect.class.getProtectionDomain().getCodeSource()
-        .getLocation().toURI()).getParent();
-    logger = new OdpsLogger(Paths.get(jarDir, "jdbc.log").toString(), true);
+    logger = new OdpsLogger(getClass().getName(), null, true, null);
   }
 
   before() : Include() {
@@ -40,11 +38,7 @@ public aspect PublicMethodAspect {
   }
 
   after() throwing(Exception e) : Include() {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-
-    logger.error(sw.toString());
+    logger.error("exception happened: ", e);
   }
 
   private int getCurrentLineNumber(JoinPoint joinPoint) {

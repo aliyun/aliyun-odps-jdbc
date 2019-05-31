@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
@@ -23,8 +24,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.slf4j.Logger;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
@@ -38,7 +37,7 @@ import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
-  private final Logger log;
+  private final OdpsLogger log;
   private static final String PRODUCT_NAME = "MaxCompute/ODPS";
   private static final String DRIVER_NAME = "odps-jdbc";
 
