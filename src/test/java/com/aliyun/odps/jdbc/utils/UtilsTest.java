@@ -20,8 +20,12 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.aliyun.odps.Instance;
+import com.aliyun.odps.utils.StringUtils;
 
 public class UtilsTest {
 
@@ -48,4 +52,13 @@ public class UtilsTest {
     Assert.assertFalse(Utils.matchPattern("abc_efg", "%ab\\_efg"));
     Assert.assertTrue(Utils.matchPattern("ab%efg", "%ab\\%efg"));
   }
+
+  @Test
+  public void testGetSinkCountFromTaskSummary() {
+
+    String jsonSummary = "{\\n    \\\"Cost\\\": {\\n        \\\"CPU\\\": 100,\\n        \\\"GPU\\\": 0,\\n        \\\"Input\\\": 400,\\n        \\\"Memory\\\": 1024},\\n    \\\"Inputs\\\": {\\\"odpsdemo_dev.10_numbers\\\": [10,\\n            400]},\\n    \\\"Outputs\\\": {\\\"odpsdemo_dev.tmp\\\": [10,\\n            496]},\\n    \\\"Stages\\\": {\\\"M1_odpsdemo_dev_20190531085701523gkm1r3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"TableScan1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"TableScan1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"TableSink1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"TableSink1\\\": {\\\"TableSink1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"TableSink1\\\": {\\\"TableSink1\\\": 496}}}}}";
+    Assert.assertEquals(10, Utils.getSinkCountFromTaskSummary(
+        StringEscapeUtils.unescapeJava(jsonSummary)));
+  }
+
 }

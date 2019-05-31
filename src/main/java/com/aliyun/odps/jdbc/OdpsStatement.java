@@ -15,7 +15,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -30,20 +29,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang.StringEscapeUtils;
+
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.LogView;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.task.SQLTask;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.utils.StringUtils;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
@@ -222,16 +226,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     if (taskSummary != null) {
-      JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
-      JSONObject outputs = jsonSummary.getJSONObject("Outputs");
-
-      if (outputs.size() > 0) {
-        for (Object item : outputs.values()) {
-          JSONArray array = (JSONArray) item;
-          returnRowCount += array.getInteger(0);
-        }
-        updateCount = returnRowCount;
-      }
+      updateCount = Utils.getSinkCountFromTaskSummary(
+          StringEscapeUtils.unescapeJava(taskSummary.getJsonSummary()));
     } else {
       connHandle.log.warn("task summary is empty");
     }
@@ -562,7 +558,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         settings.put(key, sqlTaskProperties.getProperty(key));
       }
       if (!settings.isEmpty()) {
-        sqlTask.setProperty(SETTINGS, JSON.toJSONString(settings));
+        String json = new GsonBuilder().disableHtmlEscaping().create().toJson(settings);
+        sqlTask.setProperty(SETTINGS, json);
       }
       if (!sqlTaskProperties.isEmpty()) {
         connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
