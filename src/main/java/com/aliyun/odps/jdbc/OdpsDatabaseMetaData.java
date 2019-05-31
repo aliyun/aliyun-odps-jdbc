@@ -764,7 +764,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       try {
         for (Table t : conn.getOdps().tables()) {
           String tableName = t.getName();
-          if (tableNamePattern != null) {
+          if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
             if (!Utils.matchPattern(tableName, tableNamePattern)) {
               continue;
             }
