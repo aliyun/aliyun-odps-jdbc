@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -28,8 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import org.slf4j.Logger;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -283,8 +282,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   /**
    *
-   * @param sql
-   * @return
+   * @param sql sql statement
+   * @return if the input sql statement is a query statement
    * @throws SQLException
    */
   public static boolean isQuery(String sql) throws SQLException {
@@ -534,7 +533,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     updateCountFetched = false;
   }
 
-  protected Logger getParentLogger() {
+  protected OdpsLogger getParentLogger() {
     return connHandle.log;
   }
 
