@@ -116,10 +116,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     checkClosed();
 
     if (fetchedRows == totalRows) {
-      long end = System.currentTimeMillis();
-      conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
-      // For forward result set, we implicitly close it after fetching all records
-      close();
       return false;
     }
 
@@ -139,6 +135,10 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         }
 
         fetchedRows++;
+        if (fetchedRows == totalRows) {
+          long end = System.currentTimeMillis();
+          conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
+        }
 
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
