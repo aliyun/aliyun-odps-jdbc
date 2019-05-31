@@ -71,19 +71,38 @@ public aspect PublicMethodAspect {
     }
   }
 
-  private String getCurrentArguments(JoinPoint joinPoint) {
-    try {
-      Object[] args =  joinPoint.getArgs();
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < args.length; i++) {
-        sb.append(args[i].toString());
-        if (i != args.length - 1) {
+  private String formatObject(Object o) {
+    // null
+    if (o == null) {
+      return "null";
+    }
+    // object[]
+    StringBuilder sb = new StringBuilder();
+    if (o instanceof Object[]) {
+      sb.append("[");
+      int l = ((Object[])o).length;
+      for (int i = 0; i < l; i++) {
+        Object oi = ((Object[])o)[i];
+        sb.append(formatObject(oi));
+        if (i != l - 1) {
           sb.append(", ");
         }
       }
+      sb.append("]");
       return sb.toString();
+    }
+    // default
+    sb.append("'");
+    sb.append(o.toString());
+    sb.append("'");
+    return sb.toString();
+  }
+
+  private String getCurrentArguments(JoinPoint joinPoint) {
+    try {
+      return formatObject(joinPoint.getArgs());
     } catch (Exception e) {
-      return "N/A";
+      return "?";
     }
   }
 }
