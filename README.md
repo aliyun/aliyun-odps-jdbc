@@ -244,10 +244,16 @@ Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC.
 
 | ODPS Type | Java Type       | JDBC Interface                    |   JDBC    |
 | :-------: | :-------------- | :-------------------------------- | :-------: |
-|  BIGINT   | Long            | int, short, long                  |  BIGINT   |
+|  TINYINT  | Byte            | byte                              |  TINYINT  |
+|  SMALLINT | Short           | short                             |  SMALLINT |
+|  INT      | Integer         | int                               |  INTEGER  |
+|  BIGINT   | Long            | long                              |  BIGINT   |
+|  FLOAT    | Float           | float                             |  FLOAT    |
 |  DOUBLE   | Double          | double, float                     |  DOUBLE   |
 |  BOOLEAN  | Boolean         | boolean                           |  BOOLEAN  |
-| DATETIME  | util.Date       | sql.Date, sql.Time, sql.Timestamp | TIMESTAMP |
+|  DATETIME | util.Date       | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
+|  TIMESTAMP| sql.Timestamp   | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
+|  VARCHAR  | Varchar         | String                            |  VARCHAR  |                      
 |  STRING   | byte[]          | String                            |  VARCHAR  |
 |  DECIMAL  | math.BigDecimal | math.BigDecimal                   |  DECIMAL  |
 
@@ -260,21 +266,21 @@ DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UT
 The implicit type conversion follows the rule:
 
 
-|    ODPS    | BIGINT | DOUBLE | BOOLEAN | DATETIME | STRING | DECIMAL |
-| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: |
-|  boolean   |   Y    |   Y    |    Y    |          |   Y    |         |
-|    byte    |   Y    |   Y    |         |          |        |    Y    |
-|    int     |   Y    |   Y    |         |          |   Y    |    Y    |
-|   short    |   Y    |   Y    |         |          |   Y    |    Y    |
-|    long    |   Y    |   Y    |         |          |   Y    |    Y    |
-|   double   |   Y    |   Y    |         |          |   Y    |    Y    |
-|   float    |   Y    |   Y    |         |          |   Y    |    Y    |
-| BigDecimal |        |        |         |          |   Y    |    Y    |
-|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |
-|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |
-|    Date    |        |        |         |    Y     |   Y    |         |
-|    Time    |        |        |         |    Y     |   Y    |         |
-| Timestamp  |        |        |         |    Y     |   Y    |         |
+| JAVA\ODPS  |TINYINT |SMALLINT|INT      |BIGINT    |FLOAT   |DOUBLE   |DECIMAL  |VARCHAR  |STRING   |DATETIME |TIMESTAMP|BOOLEAN  |
+| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
+|    byte    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |         |         |         |         |
+|   short    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
+|    int     |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
+|    long    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
+|   float    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
+|   double   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
+| BigDecimal |        |        |         |          |        |         |    Y    |         |         |         |         |         |
+|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
+|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
+|    Date    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
+|    Time    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
+| Timestamp  |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
+|  boolean   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |    Y    |
 
 ## MaxCompute Service Compatibility and Recommended JDBC version
 
@@ -294,6 +300,7 @@ However, for users using MaxCompute deploy that is earlier than Sprint27 (especi
 - [Li Ruibo](https://github.com/lyman)
 - [Zhao Zhenyi](https://github.com/emerson-zhao)
 - [Wen Shaojin](https://github.com/wenshao)
+- [Wang Zhong](https://github.com/cornmonster)
 
 ## License
 
