@@ -39,11 +39,8 @@ import com.aliyun.odps.utils.StringUtils;
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
   private final Logger log;
-  private static final String PRODUCT_NAME = "ODPS";
-  private static final String PRODUCT_VERSION = "1.1";
-  private static final String DRIVER_NAME = "ODPS";
-  private static final int DRIVER_MAJOR_VERSION = 1;
-  private static final int DRIVER_MINOR_VERSION = 1;
+  private static final String PRODUCT_NAME = "MaxCompute/ODPS";
+  private static final String DRIVER_NAME = "odps-jdbc";
 
   private static final String SCHEMA_TERM = "project";
   private static final String CATALOG_TERM = "endpoint";
@@ -119,7 +116,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getDatabaseProductVersion() throws SQLException {
-    return PRODUCT_VERSION;
+    return Utils.retrieveVersion("sdk.version");
   }
 
   @Override
@@ -129,17 +126,27 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getDriverVersion() throws SQLException {
-    return DRIVER_MAJOR_VERSION + "." + DRIVER_MINOR_VERSION;
+    return Utils.retrieveVersion("driver.version");
   }
 
   @Override
   public int getDriverMajorVersion() {
-    return DRIVER_MAJOR_VERSION;
+    try {
+      return Integer.parseInt(Utils.retrieveVersion("driver.version").split("\\.")[0]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 1;
+    }
   }
 
   @Override
   public int getDriverMinorVersion() {
-    return DRIVER_MINOR_VERSION;
+    try {
+      return Integer.parseInt(Utils.retrieveVersion("driver.version").split("\\.")[1]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 0;
+    }
   }
 
   @Override
@@ -823,6 +830,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("TABLE_CAT"), Arrays.asList(TypeInfoFactory.STRING));
     List<Object[]> rows = new ArrayList<Object[]>();
+    String[] row = {conn.getOdps().getEndpoint()};
+    rows.add(row);
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
 
   }
@@ -1143,17 +1152,28 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getDatabaseMajorVersion() throws SQLException {
-    return 0;
+    try {
+      return Integer.parseInt(Utils.retrieveVersion("sdk.version").split("\\.")[0]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 1;
+    }
   }
 
   @Override
   public int getDatabaseMinorVersion() throws SQLException {
-    return 0;
+    try {
+      return Integer.parseInt(Utils.retrieveVersion("sdk.version").split("\\.")[1]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 0;
+    }
   }
 
   @Override
   public int getJDBCMajorVersion() throws SQLException {
-    return 0;
+    // TODO: risky
+    return 4;
   }
 
   @Override

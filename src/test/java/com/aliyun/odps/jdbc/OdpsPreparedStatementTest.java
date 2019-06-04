@@ -20,6 +20,9 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -28,14 +31,8 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.aliyun.odps.data.Record;
-import com.aliyun.odps.data.RecordWriter;
-import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsPreparedStatementTest {
 
@@ -58,9 +55,6 @@ public class OdpsPreparedStatementTest {
         "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
         + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
     long unixtime = new java.util.Date().getTime();
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-
 
     pstmt.setBigDecimal(1, BigDecimal.TEN);
     pstmt.setBoolean(2, Boolean.TRUE);
@@ -74,7 +68,7 @@ public class OdpsPreparedStatementTest {
     pstmt.setShort(10, Short.MAX_VALUE);
     pstmt.setString(11, "hello");
     pstmt.setTime(12, new Time(unixtime));
-    pstmt.setTimestamp(13, new Timestamp(unixtime));
+    pstmt.setTimestamp(13, Timestamp.valueOf("2019-05-27 00:00:00.123456789"));
 
     {
       ResultSet rs = pstmt.executeQuery();
@@ -91,8 +85,8 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals(Short.MAX_VALUE, rs.getShort(10));
       Assert.assertEquals("hello", rs.getString(11));
       Assert.assertEquals(new Time(unixtime).toString(), rs.getTime(12).toString());
-      Assert.assertEquals(formatter.format(new Timestamp(unixtime)),
-                          formatter.format(rs.getTimestamp(13)));
+      Assert.assertEquals("2019-05-27 00:00:00.123456789",
+                          rs.getTimestamp(13).toString());
       rs.close();
     }
     pstmt.close();

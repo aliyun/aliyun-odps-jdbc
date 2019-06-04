@@ -69,6 +69,7 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
     }
   }
 
+  @Override
   protected Object[] rowAtCursor() throws SQLException {
     return row;
   }

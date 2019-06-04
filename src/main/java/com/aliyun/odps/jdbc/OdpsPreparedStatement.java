@@ -527,11 +527,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-    if (x == null) {
-      parameters.put(parameterIndex, null);
-      return;
-    }
-    parameters.put(parameterIndex, new java.util.Date(x.getTime()));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
@@ -629,6 +625,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       }
     } else if (x instanceof Double) {
       return x.toString();
+    } else if (x instanceof Timestamp) {
+      return "cast('" + x.toString() + "' as timestamp)";
     } else if (x instanceof java.util.Date) {
       SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return "cast('" + formatter.format(x) + "' as datetime)";
