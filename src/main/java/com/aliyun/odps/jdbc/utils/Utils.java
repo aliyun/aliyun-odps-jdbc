@@ -67,15 +67,21 @@ public class Utils {
     return true;
   }
 
+
+  // return record count of sum(Outputs) in json summary
+  // -1 if no Outputs
   public static int getSinkCountFromTaskSummary(String jsonSummary) {
     if (StringUtils.isNullOrEmpty(jsonSummary)) {
-      return 0;
+      return -1;
     }
 
     int ret = 0;
     try {
       JsonObject summary = new JsonParser().parse(jsonSummary).getAsJsonObject();
       JsonObject outputs = summary.getAsJsonObject("Outputs");
+      if ("{}".equals(outputs.toString())) {
+        return -1;
+      }
 
       for (Map.Entry<String, JsonElement> entry : outputs.entrySet()) {
         ret += entry.getValue().getAsJsonArray().get(0).getAsInt();
