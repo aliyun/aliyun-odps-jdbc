@@ -1,12 +1,10 @@
 package com.aliyun.odps.jdbc.utils;
 
-import com.aliyun.odps.jdbc.OdpsDriver;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +13,8 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.aliyun.odps.jdbc.OdpsDriver;
 
 public class OdpsLogger {
   private static final String DEFAULT_OUTPUT_DIR = "/tmp";

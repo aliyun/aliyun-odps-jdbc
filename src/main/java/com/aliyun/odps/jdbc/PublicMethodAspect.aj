@@ -15,7 +15,7 @@ public aspect PublicMethodAspect {
 
   private OdpsLogger logger;
   public PublicMethodAspect() throws IOException, URISyntaxException {
-    logger = new OdpsLogger(getClass().getName(), null, true, null);
+    logger = new OdpsLogger(getClass().getName(), null, false, null);
   }
 
   before() : Include() {
