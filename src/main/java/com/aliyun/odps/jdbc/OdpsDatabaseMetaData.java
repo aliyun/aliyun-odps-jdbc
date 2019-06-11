@@ -854,8 +854,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     List<Object[]> rows = new ArrayList<Object[]>();
     
-    if (tableNamePattern != null && !tableNamePattern.trim().isEmpty()
-        && !tableNamePattern.trim().equals("%") && !tableNamePattern.trim().equals("*")) {
+    if (!tableNamePattern.trim().isEmpty() && !tableNamePattern.trim().equals("%")
+        && !tableNamePattern.trim().equals("*")) {
       try {
         Table table;
         if (StringUtils.isNullOrEmpty(schemaPattern)) {
@@ -869,10 +869,10 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         for (int i = 0; i < columns.size(); i++) {
           Column col = columns.get(i);
           JdbcColumn jdbcCol =
-              new JdbcColumn(col.getName(), tableNamePattern, null, col.getType(), col.getTypeInfo(),
+              new JdbcColumn(col.getName(), tableNamePattern, table.getProject(), col.getType(), col.getTypeInfo(),
                   col.getComment(), i + 1);
           Object[] rowVals =
-              {null, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
+              {catalog, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
                   (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
                   (long) jdbcCol.getDecimalDigits(), (long) jdbcCol.getNumPercRaidx(),
                   (long) jdbcCol.getIsNullable(), jdbcCol.getComment(), null, null, null, null,
