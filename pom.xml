@@ -46,7 +46,7 @@
     </distributionManagement>
 
     <properties>
-        <sdk.version>0.29.11-oversea-public</sdk.version>
+        <sdk.version>0.31.3-public</sdk.version>
         <junit.version>4.11</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>1.7</jdk.version>
