@@ -97,7 +97,6 @@ public class OdpsStatementTest {
         Assert.assertEquals(i, rs.getInt(1));
         i++;
       }
-      Assert.assertTrue(rs.isClosed());
     }
     long end = System.currentTimeMillis();
     System.out.printf("step\tmillis\t%d\n", end - start);
@@ -122,7 +121,6 @@ public class OdpsStatementTest {
         Assert.assertEquals(null, rs.getString(1));
         i++;
       }
-      Assert.assertTrue(rs.isClosed());
     }
     long end = System.currentTimeMillis();
     System.out.printf("step\tmillis\t%d\n", end - start);

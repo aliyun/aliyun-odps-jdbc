@@ -173,7 +173,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     beforeExecute();
     runSQL(sql);
 
-    return updateCount >= 0 ? getResultSet() : EMPTY_RESULT_SET;
+    return updateCount < 0 ? getResultSet() : EMPTY_RESULT_SET;
   }
 
   @Override
