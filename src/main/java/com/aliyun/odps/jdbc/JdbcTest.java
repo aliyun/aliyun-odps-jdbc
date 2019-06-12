@@ -11,6 +11,14 @@ public class JdbcTest {
   // res will be closed in this function
   private static void printResultSet(ResultSet res) throws SQLException {
     int columnCount = res.getMetaData().getColumnCount();
+    for (int i = 0; i < columnCount; i++) {
+      System.out.print(res.getMetaData().getColumnName(i + 1));
+      if (i < columnCount - 1) {
+        System.out.print(" | ");
+      } else {
+        System.out.print("\n");
+      }
+    }
     while (res.next()) {
       for (int i = 0; i < columnCount; i++) {
         System.out.print(res.getString(i + 1));
