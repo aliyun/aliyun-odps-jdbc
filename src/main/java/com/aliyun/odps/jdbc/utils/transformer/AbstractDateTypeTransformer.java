@@ -1,10 +1,19 @@
 package com.aliyun.odps.jdbc.utils.transformer;
 
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.TimeZone;
 
 public abstract class AbstractDateTypeTransformer extends AbstractTransformer {
+  static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = new ThreadLocal<>();
+  static ThreadLocal<SimpleDateFormat> DATE_FORMAT = new ThreadLocal<>();
+  static ThreadLocal<SimpleDateFormat> TIME_FORMAT = new ThreadLocal<>();
+  static {
+    DATETIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
+    DATE_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
+    TIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
+  }
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
@@ -21,16 +30,9 @@ public abstract class AbstractDateTypeTransformer extends AbstractTransformer {
    */
   public abstract Object transform(Object o, String charset, Calendar cal) throws SQLException;
 
-  /**
-   * Return the timezone of the input calendar
-   * @param cal a calendar object
-   * @return the timezone of the input calendar. If cal == null, or the cal.getTimezone() == null,
-   * return the timezone of this JVM
-   */
-  TimeZone getTimeZone(Calendar cal) {
-    if (cal == null || cal.getTimeZone() == null) {
-      return TimeZone.getDefault();
-    }
-    return cal.getTimeZone();
+  void restoreToDefaultCalendar() {
+    DATETIME_FORMAT.get().setCalendar(Calendar.getInstance());
+    DATE_FORMAT.get().setCalendar(Calendar.getInstance());
+    TIME_FORMAT.get().setCalendar(Calendar.getInstance());
   }
 }

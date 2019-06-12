@@ -870,7 +870,7 @@ public class ImplicitTypeConversionTest {
   }
 
   @Test
-  public void testGetWithCalendar() throws SQLException {
+  public void testGetStringWithCalendar() throws SQLException {
     // Here we pass a calendar with timezone JSP (Japen Standard Time, GMT+9) to getTime, getDate,
     // and getTimestamp. Expected return value should be one hour earlier. E.g. the string in ODPS
     // is "2019-06-12 00:00:00", the expected return value should be "2019-06-11 23:00:00"

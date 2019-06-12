@@ -40,22 +40,28 @@ public class TimeTransfomer extends AbstractDateTypeTransformer {
     if (java.util.Date.class.isInstance(o)) {
       return new java.sql.Time(((java.util.Date) o).getTime());
     } else if (o instanceof byte[]) {
-      SimpleDateFormat datetimeFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      SimpleDateFormat timeFormat = new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT);
-      TimeZone timeZone = getTimeZone(cal);
-      datetimeFormat.setTimeZone(timeZone);
-      timeFormat.setTimeZone(timeZone);
       try {
-        return new java.sql.Time(datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
-      } catch (ParseException ignored) {
+        SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
+        SimpleDateFormat timeFormat = TIME_FORMAT.get();
+        if (cal != null) {
+          datetimeFormat.setCalendar(cal);
+          timeFormat.setCalendar(cal);
+        }
+        try {
+          return new java.sql.Time(
+              datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
+        } catch (ParseException ignored) {
+        }
+        try {
+          return new java.sql.Time(timeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
+        } catch (ParseException ignored) {
+        }
+        String errorMsg =
+            getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Time.class);
+        throw new SQLException(errorMsg);
+      } finally {
+        restoreToDefaultCalendar();
       }
-      try {
-        return new java.sql.Time(timeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
-      } catch (ParseException ignored) {
-      }
-      String errorMsg =
-          getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Time.class);
-      throw new SQLException(errorMsg);
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
       throw new SQLException(errorMsg);

@@ -46,10 +46,13 @@ public class TimestampTransformer extends AbstractDateTypeTransformer {
         return new java.sql.Timestamp(((java.util.Date) o).getTime());
       }
     } else if (o instanceof byte[]) {
-      // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
-      SimpleDateFormat datetimeFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      datetimeFormat.setTimeZone(getTimeZone(cal));
       try {
+        // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
+        SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
+        if (cal != null) {
+          datetimeFormat.setCalendar(cal);
+        }
+
         // A timestamp string has two parts: datetime part and nano value part. We will firstly
         // process the datetime part and apply the timezone. The nano value part will be set to the
         // timestamp object later, since it has nothing to do with timezone.
@@ -63,7 +66,6 @@ public class TimestampTransformer extends AbstractDateTypeTransformer {
         } else {
           date = datetimeFormat.parse(timestampStr.substring(0, dotIndex));
         }
-
         // Overwrite the datetime part
         Timestamp timestamp = java.sql.Timestamp.valueOf(timestampStr);
         int nanoValue = timestamp.getNanos();
@@ -77,6 +79,8 @@ public class TimestampTransformer extends AbstractDateTypeTransformer {
       } catch (ParseException e) {
         String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
+      } finally {
+        restoreToDefaultCalendar();
       }
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
