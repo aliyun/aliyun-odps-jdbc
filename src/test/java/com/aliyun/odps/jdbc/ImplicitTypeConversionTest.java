@@ -33,11 +33,14 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -864,5 +867,27 @@ public class ImplicitTypeConversionTest {
     } catch (SQLException e) {
       assertTrue(e.getMessage().contains("Cannot transform"));
     }
+  }
+
+  @Test
+  public void testGetWithCalendar() throws SQLException {
+    // Here we pass a calendar with timezone JSP (Japen Standard Time, GMT+9) to getTime, getDate,
+    // and getTimestamp. Expected return value should be one hour earlier. E.g. the string in ODPS
+    // is "2019-06-12 00:00:00", the expected return value should be "2019-06-11 23:00:00"
+
+    String expectedTime = "23:00:00";
+    String expectedDate = "2019-05-22";
+    String expectedTimestamp = "2019-05-22 23:00:00.0";
+
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
+
+    Date date = rs.getDate(STRING_COL_2, cal);
+    java.sql.Time time = rs.getTime(STRING_COL_2, cal);
+    Timestamp timestamp = rs.getTimestamp(STRING_COL_2, cal);
+
+    Assert.assertEquals(expectedDate, date.toString());
+    Assert.assertEquals(expectedTime, time.toString());
+    Assert.assertEquals(expectedTimestamp, timestamp.toString());
   }
 }

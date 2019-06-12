@@ -41,14 +41,10 @@ public abstract class AbstractTransformer {
    */
   public abstract Object transform(Object o, String charset) throws SQLException;
 
-  String getInvalidTransformationErrorMsg(Class odpsCls, Class jdbcCls) {
+  static String getInvalidTransformationErrorMsg(Class odpsCls, Class jdbcCls) {
     String errorMsg =
         String.format(INVALID_TRANSFORMATION_ERROR_MSG, odpsCls.getName(), jdbcCls.getName());
     return errorMsg;
-  }
-
-  String getEncodingErrMsg() {
-    return ENCODING_ERR_MSG;
   }
 
   String getTransformationErrMsg(Object o, Class jdbcCls) {

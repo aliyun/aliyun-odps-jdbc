@@ -21,12 +21,19 @@
 package com.aliyun.odps.jdbc.utils.transformer;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
-public class TimestampTransformer extends AbstractTransformer {
+public class TimestampTransformer extends AbstractDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset) throws SQLException {
+  public Object transform(Object o, String charset, Calendar cal) throws SQLException {
     if (o == null) {
       return null;
     }
@@ -39,10 +46,35 @@ public class TimestampTransformer extends AbstractTransformer {
         return new java.sql.Timestamp(((java.util.Date) o).getTime());
       }
     } else if (o instanceof byte[]) {
+      // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
+      SimpleDateFormat datetimeFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+      datetimeFormat.setTimeZone(getTimeZone(cal));
       try {
-        // Acceptable format: yyyy-[m]m-[d]d hh:mm:ss[.f...]
-        return java.sql.Timestamp.valueOf(encodeBytes((byte[]) o, charset));
+        // A timestamp string has two parts: datetime part and nano value part. We will firstly
+        // process the datetime part and apply the timezone. The nano value part will be set to the
+        // timestamp object later, since it has nothing to do with timezone.
+
+        // Deal with the datetime part, apply the timezone
+        String timestampStr = encodeBytes((byte[]) o, charset);
+        int dotIndex = timestampStr.indexOf('.');
+        Date date;
+        if (dotIndex == -1) {
+          date = datetimeFormat.parse(timestampStr);
+        } else {
+          date = datetimeFormat.parse(timestampStr.substring(0, dotIndex));
+        }
+
+        // Overwrite the datetime part
+        Timestamp timestamp = java.sql.Timestamp.valueOf(timestampStr);
+        int nanoValue = timestamp.getNanos();
+        timestamp.setTime(date.getTime());
+        timestamp.setNanos(nanoValue);
+
+        return timestamp;
       } catch (IllegalArgumentException e) {
+        String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
+        throw new SQLException(errorMsg);
+      } catch (ParseException e) {
         String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
       }

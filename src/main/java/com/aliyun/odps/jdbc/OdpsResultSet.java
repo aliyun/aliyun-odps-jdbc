@@ -20,6 +20,7 @@
 
 package com.aliyun.odps.jdbc;
 
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -38,9 +39,9 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Map;
 
+import com.aliyun.odps.jdbc.utils.transformer.AbstractDateTypeTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.AbstractTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.TransformerFactory;
 
@@ -319,8 +320,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public java.sql.Date getDate(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    return (java.sql.Date) transformToJdbcType(obj, java.sql.Date.class);
+    return getDate(columnIndex, null);
   }
 
   @Override
@@ -331,12 +331,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public java.sql.Date getDate(int columnIndex, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    Object obj = getInnerObject(columnIndex);
+    return (java.sql.Date) transformToJdbcType(obj, java.sql.Date.class, cal);
   }
 
   @Override
   public java.sql.Date getDate(String columnLabel, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    int columnIndex = findColumn(columnLabel);
+    return getDate(columnIndex, cal);
   }
 
   @Override
@@ -493,8 +495,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Time getTime(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    return (java.sql.Time) transformToJdbcType(obj, java.sql.Time.class);
+    return getTime(columnIndex, null);
   }
 
   @Override
@@ -505,18 +506,19 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    Object obj = getInnerObject(columnIndex);
+    return (java.sql.Time) transformToJdbcType(obj, java.sql.Time.class, cal);
   }
 
   @Override
   public Time getTime(String columnLabel, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    int columnIndex = findColumn(columnLabel);
+    return getTime(columnIndex, cal);
   }
 
   @Override
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    return (Timestamp) transformToJdbcType(obj, Timestamp.class);
+    return getTimestamp(columnIndex, null);
   }
 
   @Override
@@ -527,12 +529,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    Object obj = getInnerObject(columnIndex);
+    return (Timestamp) transformToJdbcType(obj, Timestamp.class, cal);
   }
 
   @Override
   public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    int columnIndex = findColumn(columnLabel);
+    return getTimestamp(columnIndex, cal);
   }
 
   @Override
@@ -643,6 +647,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private Object transformToJdbcType(Object o, Class jdbcCls) throws SQLException {
     AbstractTransformer transformer = TransformerFactory.getTransformer(jdbcCls);
     return transformer.transform(o, stmt.getConnection().getCharset());
+  }
+
+  private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal) throws SQLException {
+    AbstractTransformer transformer = TransformerFactory.getTransformer(jdbcCls);
+    return ((AbstractDateTypeTransformer) transformer).transform(
+        o, stmt.getConnection().getCharset(), cal);
   }
 
   @Override

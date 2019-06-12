@@ -23,14 +23,16 @@ package com.aliyun.odps.jdbc.utils.transformer;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
-public class DateTransformer extends AbstractTransformer {
+public class DateTransformer extends AbstractDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset) throws SQLException {
+  public Object transform(Object o, String charset, Calendar cal) throws SQLException {
     if (o == null) {
       return null;
     }
@@ -38,14 +40,22 @@ public class DateTransformer extends AbstractTransformer {
     if (java.util.Date.class.isInstance(o)) {
       return new java.sql.Date(((java.util.Date) o).getTime());
     } else if (o instanceof byte[]) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+      SimpleDateFormat datetimeFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT);
+      TimeZone timeZone = getTimeZone(cal);
+      datetimeFormat.setTimeZone(timeZone);
+      dateFormat.setTimeZone(timeZone);
+      try {
+        return new java.sql.Date(datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
+      } catch (ParseException ignored) {
+      }
       try {
         return new java.sql.Date(dateFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
-      } catch (ParseException e) {
-        String errorMsg =
-            getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Date.class);
-        throw new SQLException(errorMsg);
+      } catch (ParseException ignored) {
       }
+      String errorMsg =
+          getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Date.class);
+      throw new SQLException(errorMsg);
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Date.class);
       throw new SQLException(errorMsg);

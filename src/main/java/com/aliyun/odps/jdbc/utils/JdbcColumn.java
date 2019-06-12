@@ -33,8 +33,9 @@ import com.aliyun.odps.type.VarcharTypeInfo;
  * Wrap around column attributes in this class so that we can display getColumns() easily.
  */
 public class JdbcColumn {
-
   public static final String ODPS_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+  public static final String ODPS_DATE_FORMAT = "yyyy-MM-dd";
+  public static final String ODPS_TIME_FORMAT = "HH:mm:ss";
   public static final int ODPS_DECIMAL_PRECISON = 54;
   public static final int ODPS_DECIMAL_SCALE = 18;
   public static final int ODPS_STRING_CHARACTERS = 8 * 1024 * 1024 / 3;
