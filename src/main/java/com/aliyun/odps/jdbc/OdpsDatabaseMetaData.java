@@ -24,30 +24,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMetaData {
 
-  private final Logger log;
+  private final OdpsLogger log;
   private static final String PRODUCT_NAME = "MaxCompute/ODPS";
   private static final String DRIVER_NAME = "odps-jdbc";
 
   private static final String SCHEMA_TERM = "project";
-  private static final String CATALOG_TERM = "endpoint";
-  private static final String PROCEDURE_TERM = "UDF";
+  private static final String CATALOG_TERM = "project";
+  private static final String PROCEDURE_TERM = "N/A";
 
   private static final int TABLE_NAME_LENGTH = 128;
-  private static final String DEFAULT_ODPS_CATALOG = "";
 
   private OdpsConnection conn;
 
@@ -431,73 +429,67 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSchemasInDataManipulation() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
   public boolean supportsSchemasInProcedureCalls() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsSchemasInTableDefinitions() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
   public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsCatalogsInDataManipulation() throws SQLException {
-    return false;
+    return true;
   }
 
   @Override
   public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-    return false;
+    return true;
   }
 
   @Override
   public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-    return false;
+    return true;
   }
 
   @Override
   public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-    return false;
+    return true;
   }
 
   @Override
   public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-    return false;
+    return true;
   }
 
   @Override
   public boolean supportsPositionedDelete() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsPositionedUpdate() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
   public boolean supportsSelectForUpdate() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
@@ -647,7 +639,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public int getMaxCatalogNameLength() throws SQLException {
-    return 0;
+    return 32;
   }
 
   @Override
@@ -765,7 +757,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       try {
         for (Table t : conn.getOdps().tables()) {
           String tableName = t.getName();
-          if (tableNamePattern != null) {
+          if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
             if (!Utils.matchPattern(tableName, tableNamePattern)) {
               continue;
             }
@@ -777,7 +769,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
             }
           }
           Object[] rowVals =
-              {null, t.getProject(), tableName, tableType, t.getComment(), null, null, null, null,
+              {t.getProject(), t.getProject(), tableName, tableType, t.getComment(), null, null, null, null,
                   "USER"};
           rows.add(rowVals);
         }
@@ -807,7 +799,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         new OdpsResultSetMetaData(Arrays.asList("TABLE_SCHEM", "TABLE_CATALOG"), Arrays.asList(
             TypeInfoFactory.STRING, TypeInfoFactory.STRING));
     List<Object[]> rows = new ArrayList<Object[]>();
-    String[] row = {conn.getOdps().getDefaultProject(), DEFAULT_ODPS_CATALOG};
+    String[] row = {conn.getOdps().getDefaultProject(), conn.getOdps().getDefaultProject()};
     rows.add(row);
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
@@ -819,7 +811,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
             TypeInfoFactory.STRING, TypeInfoFactory.STRING));
     List<Object[]> rows = new ArrayList<Object[]>();
     if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
-      String[] row = {conn.getOdps().getDefaultProject(), DEFAULT_ODPS_CATALOG};
+      String[] row = {conn.getOdps().getDefaultProject(), conn.getOdps().getDefaultProject()};
       rows.add(row);
     }
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
@@ -830,7 +822,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("TABLE_CAT"), Arrays.asList(TypeInfoFactory.STRING));
     List<Object[]> rows = new ArrayList<Object[]>();
-    String[] row = {conn.getOdps().getEndpoint()};
+    String[] row = {conn.getOdps().getDefaultProject()};
     rows.add(row);
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
 
@@ -862,8 +854,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     List<Object[]> rows = new ArrayList<Object[]>();
     
-    if (tableNamePattern != null && !tableNamePattern.trim().isEmpty()
-        && !tableNamePattern.trim().equals("%") && !tableNamePattern.trim().equals("*")) {
+    if (!tableNamePattern.trim().isEmpty() && !tableNamePattern.trim().equals("%")
+        && !tableNamePattern.trim().equals("*")) {
       try {
         Table table;
         if (StringUtils.isNullOrEmpty(schemaPattern)) {
@@ -877,10 +869,10 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         for (int i = 0; i < columns.size(); i++) {
           Column col = columns.get(i);
           JdbcColumn jdbcCol =
-              new JdbcColumn(col.getName(), tableNamePattern, null, col.getType(), col.getTypeInfo(),
+              new JdbcColumn(col.getName(), tableNamePattern, table.getProject(), col.getType(), col.getTypeInfo(),
                   col.getComment(), i + 1);
           Object[] rowVals =
-              {null, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
+              {catalog, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
                   (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
                   (long) jdbcCol.getDecimalDigits(), (long) jdbcCol.getNumPercRaidx(),
                   (long) jdbcCol.getIsNullable(), jdbcCol.getComment(), null, null, null, null,

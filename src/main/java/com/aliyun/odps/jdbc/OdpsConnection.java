@@ -15,6 +15,8 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import java.io.IOException;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -73,7 +75,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Per-connection logger. All its statements produced by this connection will share this logger
    */
-  protected Logger log;
+  protected OdpsLogger log;
 
   private SQLWarning warningChain = null;
 
@@ -105,7 +107,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = UUID.randomUUID().toString().substring(24);
     MDC.put("connectionId", connectionId);
 
-    log = LoggerFactory.getLogger(logConfFile, getClass().getName());
+    log = new OdpsLogger(getClass().getName(), null, false, logConfFile);
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");

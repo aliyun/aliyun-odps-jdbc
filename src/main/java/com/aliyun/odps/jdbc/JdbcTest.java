@@ -8,6 +8,22 @@ import java.sql.Statement;
 
 public class JdbcTest {
 
+  // res will be closed in this function
+  private static void printResultSet(ResultSet res) throws SQLException {
+    int columnCount = res.getMetaData().getColumnCount();
+    while (res.next()) {
+      for (int i = 0; i < columnCount; i++) {
+        System.out.print(res.getString(i + 1));
+        if (i < columnCount - 1) {
+          System.out.print(" | ");
+        } else {
+          System.out.print("\n");
+        }
+      }
+    }
+    res.close();
+  }
+
   public static void main(String[] args) throws SQLException {
     if (args.length < 2) {
       System.out.println("Usage: java -cp odps-jdbc-...-jar-with-dependencies.jar com.aliyun.odps.jdbc.JdbcTest connection_string sql");
@@ -28,22 +44,19 @@ public class JdbcTest {
 
     System.out.println("Connection: " + connectionString);
     Connection conn = DriverManager.getConnection(connectionString);
+    ResultSet res;
 
-    Statement stmt = conn.createStatement();
     System.out.println("Running   : " + sql);
-    ResultSet res = stmt.executeQuery(sql);
-    System.out.println("Result    :");
-    int columnCount = res.getMetaData().getColumnCount();
-    while (res.next()) {
-      for (int i = 0; i < columnCount; i++) {
-        System.out.print(res.getString(i + 1));
-        if (i < columnCount - 1) {
-          System.out.print(" | ");
-        } else {
-          System.out.print("\n");
-        }
-      }
+    if (sql.equalsIgnoreCase("show tables")) {
+      res = conn.getMetaData().getTables(null, null, null, null);
+    } else {
+      Statement stmt = conn.createStatement();
+      res = stmt.executeQuery(sql);
     }
-    res.close();
+
+    System.out.println("Result    :");
+    printResultSet(res);
+
+    conn.close();
   }
 }

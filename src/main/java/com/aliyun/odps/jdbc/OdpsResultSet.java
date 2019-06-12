@@ -38,6 +38,7 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import com.aliyun.odps.jdbc.utils.transformer.AbstractTransformer;

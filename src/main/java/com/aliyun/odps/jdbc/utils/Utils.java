@@ -21,7 +21,13 @@
 package com.aliyun.odps.jdbc.utils;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
+
+import com.aliyun.odps.utils.StringUtils;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Utils {
 
@@ -38,7 +44,7 @@ public class Utils {
 
   public static boolean matchPattern(String s, String pattern) {
     
-    if (pattern == null) {
+    if (StringUtils.isNullOrEmpty(pattern)) {
       return true;
     }
 
@@ -60,4 +66,31 @@ public class Utils {
 
     return true;
   }
+
+
+  // return record count of sum(Outputs) in json summary
+  // -1 if no Outputs
+  public static int getSinkCountFromTaskSummary(String jsonSummary) {
+    if (StringUtils.isNullOrEmpty(jsonSummary)) {
+      return -1;
+    }
+
+    int ret = 0;
+    try {
+      JsonObject summary = new JsonParser().parse(jsonSummary).getAsJsonObject();
+      JsonObject outputs = summary.getAsJsonObject("Outputs");
+      if ("{}".equals(outputs.toString())) {
+        return -1;
+      }
+
+      for (Map.Entry<String, JsonElement> entry : outputs.entrySet()) {
+        ret += entry.getValue().getAsJsonArray().get(0).getAsInt();
+      }
+    } catch (Exception e) {
+      // do nothing
+      e.printStackTrace();
+    }
+    return ret;
+  }
+
 }

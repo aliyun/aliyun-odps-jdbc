@@ -24,26 +24,27 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.slf4j.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.LogView;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.task.SQLTask;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.type.TypeInfo;
+import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
@@ -63,7 +64,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private static final int POLLING_INTERVAL = 3000;
   private static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
-  private static final String SETTINGS = "settings";
+  private static ResultSet EMPTY_RESULT_SET = null;
+  static {
+    try {
+      OdpsResultSetMetaData meta =
+          new OdpsResultSetMetaData(Collections.singletonList("N/A"),
+                                    Collections.singletonList(TypeInfoFactory.STRING));
+      EMPTY_RESULT_SET = new OdpsStaticResultSet(null, meta, null);
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
 
   /**
    * The attributes of result set produced by this statement
@@ -162,84 +173,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     beforeExecute();
     runSQL(sql);
 
-    // Create a download session through tunnel
-    DownloadSession session;
-    try {
-      InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
-      String te = connHandle.getTunnelEndpoint();
-      if (!StringUtils.isNullOrEmpty(te)) {
-        connHandle.log.info("using tunnel endpoint: " + te);
-        tunnel.setEndpoint(te);
-      }
-      try {
-        session =
-            tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                                         executeInstance.getId());
-      } catch (TunnelException e1) {
-        connHandle.log.info("create download session failed: " + e1.getMessage());
-        connHandle.log.info("fallback to limit mode");
-        session =
-            tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                                         executeInstance.getId(), true);
-      }
-
-      connHandle.log.info("create download session id=" + session.getId());
-    } catch (TunnelException e) {
-      throw new SQLException("create download session failed: instance id="
-                             + executeInstance.getId(), e);
-    }
-
-    // Read schema
-    List<String> columnNames = new ArrayList<String>();
-    List<TypeInfo> columnSqlTypes = new ArrayList<TypeInfo>();
-    for (Column col : session.getSchema().getColumns()) {
-      columnNames.add(col.getName());
-      columnSqlTypes.add(col.getTypeInfo());
-    }
-    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
-
-    resultSet =
-        isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
-            : new OdpsForwardResultSet(this, meta, session);
-
-    return resultSet;
+    return updateCount < 0 ? getResultSet() : EMPTY_RESULT_SET;
   }
 
   @Override
   public synchronized int executeUpdate(String sql) throws SQLException {
     
-    int returnRowCount = 0;
-    
     checkClosed();
     beforeExecute();
     runSQL(sql);
 
-    // extract update count
-    Instance.TaskSummary taskSummary;
-    try {
-      taskSummary = executeInstance.getTaskSummary(JDBC_SQL_TASK_NAME);
-    } catch (OdpsException e) {
-      throw new SQLException("Fail to get the task summary", e);
-    }
-
-    if (taskSummary != null) {
-      JSONObject jsonSummary = JSON.parseObject(taskSummary.getJsonSummary());
-      JSONObject outputs = jsonSummary.getJSONObject("Outputs");
-
-      if (outputs.size() > 0) {
-        for (Object item : outputs.values()) {
-          JSONArray array = (JSONArray) item;
-          returnRowCount += array.getInteger(0);
-        }
-        updateCount = returnRowCount;
-      }
-    } else {
-      connHandle.log.warn("task summary is empty");
-    }
-    
-    connHandle.log.info("successfully updated " + returnRowCount + " records");
-    
-    return returnRowCount;
+    return updateCount >= 0 ? updateCount : 0;
   }
 
   @Override
@@ -273,18 +217,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       return false;
     }
 
-    if (isQuery(sql)) {
-      executeQuery(sql);
-      return true;
-    }
-    executeUpdate(sql);
-    return false;
+    checkClosed();
+    beforeExecute();
+    runSQL(sql);
+
+    return updateCount < 0;
   }
 
   /**
    *
-   * @param sql
-   * @return
+   * @param sql sql statement
+   * @return if the input sql statement is a query statement
    * @throws SQLException
    */
   public static boolean isQuery(String sql) throws SQLException {
@@ -433,6 +376,49 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet getResultSet() throws SQLException {
+
+    if (resultSet == null || resultSet.isClosed()) {
+      // Create a download session through tunnel
+      DownloadSession session;
+      try {
+        InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
+        String te = connHandle.getTunnelEndpoint();
+        if (!StringUtils.isNullOrEmpty(te)) {
+          connHandle.log.info("using tunnel endpoint: " + te);
+          tunnel.setEndpoint(te);
+        }
+        try {
+          session =
+              tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                           executeInstance.getId());
+        } catch (TunnelException e1) {
+          connHandle.log.info("create download session failed: " + e1.getMessage());
+          connHandle.log.info("fallback to limit mode");
+          session =
+              tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                           executeInstance.getId(), true);
+        }
+
+        connHandle.log.info("create download session id=" + session.getId());
+      } catch (TunnelException e) {
+        throw new SQLException("create download session failed: instance id="
+                               + executeInstance.getId(), e);
+      }
+
+      // Read schema
+      List<String> columnNames = new ArrayList<String>();
+      List<TypeInfo> columnSqlTypes = new ArrayList<TypeInfo>();
+      for (Column col : session.getSchema().getColumns()) {
+        columnNames.add(col.getName());
+        columnSqlTypes.add(col.getTypeInfo());
+      }
+      OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
+
+      resultSet =
+          isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
+                                : new OdpsForwardResultSet(this, meta, session);
+    }
+
     return resultSet;
   }
 
@@ -534,7 +520,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     updateCountFetched = false;
   }
 
-  protected Logger getParentLogger() {
+  protected OdpsLogger getParentLogger() {
     return connHandle.log;
   }
 
@@ -555,22 +541,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       long begin = System.currentTimeMillis();
 
       Odps odps = connHandle.getOdps();
-      SQLTask sqlTask = new SQLTask();
-      sqlTask.setName(JDBC_SQL_TASK_NAME);
-      sqlTask.setQuery(sql);
-      Map<String,String> settings = new HashMap<String,String>();
+
+      Map<String,String> settings = new HashMap<>();
       for (String key : sqlTaskProperties.stringPropertyNames()) {
         settings.put(key, sqlTaskProperties.getProperty(key));
-      }
-      if (!settings.isEmpty()) {
-        sqlTask.setProperty(SETTINGS, JSON.toJSONString(settings));
       }
       if (!sqlTaskProperties.isEmpty()) {
         connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
       }
 
-      executeInstance = odps.instances().create(sqlTask);
-
+      executeInstance =  SQLTask.run(odps, odps.getDefaultProject(), sql, JDBC_SQL_TASK_NAME, settings, null);
       LogView logView = new LogView(odps);
       if (connHandle.getLogviewHost() != null) {
         logView.setLogViewHost(connHandle.getLogviewHost());
@@ -632,6 +612,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       executeInstance.waitForSuccess(POLLING_INTERVAL);
       long end = System.currentTimeMillis();
       connHandle.log.debug("It took me " + (end - begin) + " ms to run sql");
+
+      // extract update count
+      Instance.TaskSummary taskSummary = null;
+      try {
+        taskSummary = executeInstance.getTaskSummary(JDBC_SQL_TASK_NAME);
+      } catch (OdpsException e) {
+        // update count become uncertain here
+        connHandle.log.warn("Failed to get TaskSummary: instance_id=" + executeInstance.getId() + ", taskname=" + JDBC_SQL_TASK_NAME);
+      }
+
+      if (taskSummary != null) {
+        updateCount = Utils.getSinkCountFromTaskSummary(
+            StringEscapeUtils.unescapeJava(taskSummary.getJsonSummary()));
+      } else {
+        connHandle.log.warn("task summary is empty");
+      }
+      connHandle.log.info("successfully updated " + updateCount + " records");
+
     } catch (OdpsException e) {
       connHandle.log.error("Fail to run sql: " + sql, e);
       throw new SQLException("Fail to run sql:" + sql, e);
