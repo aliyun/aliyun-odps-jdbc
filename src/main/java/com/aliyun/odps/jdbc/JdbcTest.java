@@ -55,7 +55,7 @@ public class JdbcTest {
     ResultSet res;
 
     System.out.println("Running   : " + sql);
-    if (sql.equalsIgnoreCase("show tables")) {
+    if (sql.trim().equalsIgnoreCase("show tables")) {
       res = conn.getMetaData().getTables(null, null, null, null);
     } else {
       Statement stmt = conn.createStatement();

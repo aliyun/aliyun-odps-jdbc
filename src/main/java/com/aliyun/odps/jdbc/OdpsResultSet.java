@@ -184,7 +184,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     Object obj = getInnerObject(columnIndex);
 
     if (obj instanceof byte[]) {
-      String charset = stmt.getConnection().getCharset();
+      String charset = conn.getCharset();
       return AbstractTransformer.encodeBytes((byte[]) obj, charset);
     }
     return obj;
@@ -642,7 +642,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   private Object transformToJdbcType(Object o, Class jdbcCls) throws SQLException {
     AbstractTransformer transformer = TransformerFactory.getTransformer(jdbcCls);
-    return transformer.transform(o, stmt.getConnection().getCharset());
+    return transformer.transform(o, conn.getCharset());
   }
 
   @Override
