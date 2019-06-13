@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
@@ -116,6 +117,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
+    log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.debug(String
         .format("charset=%s, logview=%s, lifecycle=%d", charset, logviewHost, lifecycle));
 
