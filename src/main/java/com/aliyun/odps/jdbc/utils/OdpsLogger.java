@@ -46,7 +46,7 @@ public class OdpsLogger {
       if (pathToFileHandler.containsKey(outputPath)) {
         fileHandler = pathToFileHandler.get(outputPath);
       } else {
-        fileHandler = new FileHandler(outputPath);
+        fileHandler = new FileHandler(outputPath, true);
         fileHandler.setFormatter(new OdpsFormatter());
         fileHandler.setLevel(Level.ALL);
         pathToFileHandler.put(outputPath, fileHandler);
