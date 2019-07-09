@@ -28,12 +28,12 @@ public aspect PublicMethodAspect {
     logger.debug(msg);
   }
 
-  after() : Include() {
+  after() returning(Object ret) : Include() {
     int lineNumber = getCurrentLineNumber(thisJoinPoint);
     String classname = getCurrentClassname(thisJoinPoint);
     String methodName = getCurrentMethodName(thisJoinPoint);
     String msg = String.format(
-        "Leave: [line %d] [%s] [%s]", lineNumber, classname, methodName);
+        "Leave: [line %d] [%s] [%s] [%s]", lineNumber, classname, methodName, ret);
     logger.debug(msg);
   }
 
