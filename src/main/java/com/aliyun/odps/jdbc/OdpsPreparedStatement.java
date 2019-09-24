@@ -20,10 +20,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.Column;
-import com.aliyun.odps.data.Varchar;
-import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
-import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -42,10 +38,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,9 +52,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.aliyun.odps.Column;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
+import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordWriter;
@@ -484,7 +484,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   }
 
   public void setDate(int parameterIndex, Date x) throws SQLException {
-    parameters.put(parameterIndex, new java.util.Date(x.getTime()));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
@@ -529,11 +529,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
-    if (x == null) {
-      parameters.put(parameterIndex, null);
-      return;
-    }
-    parameters.put(parameterIndex, new java.util.Date(x.getTime()));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
@@ -650,7 +646,9 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       }
     } else if (Timestamp.class.isInstance(x)) {
       return String.format("TIMESTAMP\"%s\"", x.toString());
-    } else if (java.util.Date.class.isInstance(x) || java.sql.Date.class.isInstance(x)) {
+    } else if (java.util.Date.class.isInstance(x)
+        || java.sql.Date.class.isInstance(x)
+        || java.sql.Time.class.isInstance(x)) {
       SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return String.format("DATETIME\"%s\"", formatter.format(x));
     } else if (Boolean.class.isInstance(x)) {

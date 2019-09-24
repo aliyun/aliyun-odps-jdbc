@@ -20,10 +20,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.data.Record;
-import com.aliyun.odps.data.RecordWriter;
-import com.aliyun.odps.data.Varchar;
-import com.aliyun.odps.tunnel.TableTunnel;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -35,8 +31,14 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.data.Varchar;
+import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsPreparedStatementTest {
 
