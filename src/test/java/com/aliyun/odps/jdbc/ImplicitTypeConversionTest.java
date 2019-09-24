@@ -907,7 +907,21 @@ public class ImplicitTypeConversionTest {
   }
 
   @Test
-  public void testGetNull() {
+  public void testGetNull() throws SQLException {
+    rs.next();
 
+    Assert.assertEquals(0, rs.getByte(1));
+    Assert.assertEquals(0, rs.getShort(2));
+    Assert.assertEquals(0, rs.getInt(3));
+    Assert.assertEquals(0, rs.getLong(4));
+    Assert.assertEquals(0, rs.getFloat(5), 0.001);
+    Assert.assertEquals(0, rs.getDouble(6), 0.001);
+    Assert.assertNull(rs.getBigDecimal(7));
+    Assert.assertNull(rs.getString(8));
+    Assert.assertNull(rs.getString(9));
+    Assert.assertNull(rs.getString(10));
+    Assert.assertNull(rs.getDate(11));
+    Assert.assertNull(rs.getTimestamp(12));
+    Assert.assertFalse(rs.getBoolean(13));
   }
 }
