@@ -156,10 +156,25 @@ public class ImplicitTypeConversionTest {
     DATETIME_VAL = dateFormat.parse("2019-05-23 00:00:00");
     r.set(DATETIME_COL, DATETIME_VAL);
     TIMESTAMP_VAL = Timestamp.valueOf("2019-05-23 00:00:00.123456789");
-
     r.set(TIMESTAMP_COL, TIMESTAMP_VAL);
     r.set(BOOLEAN_COL, BOOLEAN_VAL);
     writer.write(r);
+
+    r.set(TINYINT_COL, null);
+    r.set(SMALLINT_COL, null);
+    r.set(INT_COL, null);
+    r.set(BIGINT_COL, null);
+    r.set(FLOAT_COL, null);
+    r.set(DOUBLT_COL, null);
+    r.set(DECIMAL_COL, null);
+    r.set(VARCHAR_COL, null);
+    r.set(STRING_COL_1, null);
+    r.set(STRING_COL_2, null);
+    r.set(DATETIME_COL, null);
+    r.set(TIMESTAMP_COL, null);
+    r.set(BOOLEAN_COL, null);
+    writer.write(r);
+
     writer.close();
     uploadSession.commit();
 
@@ -889,5 +904,10 @@ public class ImplicitTypeConversionTest {
     Assert.assertEquals(expectedDate, date.toString());
     Assert.assertEquals(expectedTime, time.toString());
     Assert.assertEquals(expectedTimestamp, timestamp.toString());
+  }
+
+  @Test
+  public void testGetNull() {
+
   }
 }

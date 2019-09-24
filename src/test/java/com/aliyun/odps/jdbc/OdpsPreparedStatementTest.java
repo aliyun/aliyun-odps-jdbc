@@ -22,15 +22,19 @@ package com.aliyun.odps.jdbc;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.tunnel.TableTunnel;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -92,9 +96,63 @@ public class OdpsPreparedStatementTest {
     pstmt.close();
   }
 
+  @Test
+  public void testSetAllWithNewType() throws SQLException, ParseException {
+    Connection conn = TestManager.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.execute("set odps.sql.type.system.odps2=true;");
+    ddl.execute("set odps.sql.decimal.odps2=true;");
+    ddl.executeUpdate("drop table if exists insert_with_new_type;");
+    ddl.executeUpdate("create table insert_with_new_type(c1 TINYINT, c2 SMALLINT, c3 INT,"
+                          + "c4 BIGINT, c5 FLOAT, c6 DOUBLE, c7 DECIMAL(38, 18), c8 VARCHAR(255),"
+                          + "c9 STRING, c10 DATETIME, c11 TIMESTAMP, c12 BOOLEAN);");
+    PreparedStatement ps = conn.prepareStatement("insert into insert_with_new_type values "
+                                                     + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+
+    SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    java.util.Date date = datetimeFormat.parse("2019-09-23 14:25:00");
+    java.sql.Timestamp timestamp = java.sql.Timestamp.valueOf("2019-09-23 14:33:57.777");
+
+    ps.setByte(1, new Byte("127"));
+    ps.setShort(2, new Short("32767"));
+    ps.setInt(3, new Integer("2147483647"));
+    ps.setLong(4, new Long("9223372036854775807"));
+    ps.setFloat(5, new Float("3.14"));
+    ps.setDouble(6, new Double("3.141592653589"));
+    ps.setBigDecimal(7, new BigDecimal("3.1415926535897932"));
+    ps.setString(8, "foo");
+    ps.setString(9, "bar");
+    ps.setDate(10, new java.sql.Date(date.getTime()));
+    ps.setTimestamp(11,timestamp);
+    ps.setBoolean(12, true);
+
+    ps.execute();
+
+    Statement query = conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from insert_with_new_type;");
+    while (rs.next()) {
+      Assert.assertEquals(127, (byte) rs.getObject(1));
+      Assert.assertEquals(32767, (short) rs.getObject(2));
+      Assert.assertEquals(2147483647, (int) rs.getObject(3));
+      Assert.assertEquals(9223372036854775807L, (long) rs.getObject(4));
+      Assert.assertEquals(3.14, (float) rs.getObject(5), 0.001);
+      Assert.assertEquals(3.141592653589,
+                          (double) rs.getObject(6), 0.0000000000001);
+      Assert.assertEquals(new BigDecimal("3.1415926535897932"),
+                          rs.getObject(7));
+      Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
+      Assert.assertEquals("bar", rs.getObject(9));
+      Assert.assertEquals(date.toString(), rs.getObject(10).toString());
+      Assert.assertEquals(timestamp.toString(), rs.getObject(11).toString());
+      Assert.assertEquals(true, rs.getObject(12));
+    }
+
+    ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
+    ddl.close();
+  }
 
   @Test
-  public void batchInsert() throws Exception {
+  public void testBatchInsert() throws Exception {
     Connection conn = TestManager.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
@@ -111,12 +169,12 @@ public class OdpsPreparedStatementTest {
     long unixtime = new java.util.Date().getTime();
 
 
-    for (int i = 0; i < 100000; i++) {
-      ps.setInt(1, 9999);
+    for (int i = 0; i < 10; i++) {
+      ps.setLong(1, 9999);
       ps.setString(2, "hello");
       ps.setTime(3, new Time(unixtime));
       ps.setBoolean(4, true);
-      ps.setFloat(5, 3.141590261234F);
+      ps.setDouble(5, 3.141590261234F);
       ps.setBigDecimal(6, BigDecimal.TEN);
       ps.addBatch();
       if(++count % batchSize == 0) {
@@ -133,8 +191,8 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals(rs.getInt(1), 9999);
       Assert.assertEquals(rs.getString(2), "hello");
       Assert.assertEquals(rs.getTime(3), new Time(unixtime));
-      Assert.assertEquals(rs.getBoolean(4), true);
-      Assert.assertEquals(rs.getFloat(5), 3.141590261234F, 0);
+      Assert.assertTrue(rs.getBoolean(4));
+      Assert.assertEquals(rs.getDouble(5), 3.141590261234F, 0);
       Assert.assertEquals(rs.getBigDecimal(6), BigDecimal.TEN);
       count--;
     }
@@ -145,9 +203,77 @@ public class OdpsPreparedStatementTest {
     query.close();
   }
 
+  @Test
+  public void testBatchInsertWithNewType() throws SQLException, ParseException {
+    Connection conn = TestManager.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.execute("set odps.sql.type.system.odps2=true;");
+    ddl.execute("set odps.sql.decimal.odps2=true;");
+    ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
+    ddl.executeUpdate("create table batch_insert_with_new_type(c1 TINYINT, c2 SMALLINT, c3 INT, "
+                          + "c4 BIGINT, c5 FLOAT, c6 DOUBLE, c7 DECIMAL(38, 18), c8 VARCHAR(255), "
+                          + "c9 STRING, c10 DATETIME, c11 TIMESTAMP, c12 BOOLEAN);");
+
+    PreparedStatement ps = conn.prepareStatement("insert into batch_insert_with_new_type values "
+                                                     + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+
+    // insert 10 rows
+    SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    java.util.Date date = datetimeFormat.parse("2019-09-23 14:25:00");
+    java.sql.Timestamp timestamp = java.sql.Timestamp.valueOf("2019-09-23 14:33:57.777");
+    for (int i = 0; i < 10; i++) {
+      ps.setByte(1, new Byte("127"));
+      ps.setShort(2, new Short("32767"));
+      ps.setInt(3, new Integer("2147483647"));
+      ps.setLong(4, new Long("9223372036854775807"));
+      ps.setFloat(5, new Float("3.14"));
+      ps.setDouble(6, new Double("3.141592653589"));
+      ps.setBigDecimal(7, new BigDecimal("3.141592653589793238"));
+      ps.setString(8, "foo");
+      ps.setString(9, "bar");
+      ps.setTimestamp(10, new java.sql.Timestamp(date.getTime()));
+      ps.setTimestamp(11,timestamp);
+      ps.setBoolean(12, true);
+      ps.addBatch();
+    }
+
+    int[] results = ps.executeBatch();
+    ps.close();
+
+    for (int i : results) {
+      Assert.assertEquals(1, i);
+    }
+
+    Statement query = conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from batch_insert_with_new_type;");
+    while (rs.next()) {
+      Assert.assertEquals(127, (byte) rs.getObject(1));
+      Assert.assertEquals(32767, (short) rs.getObject(2));
+      Assert.assertEquals(2147483647, (int) rs.getObject(3));
+      Assert.assertEquals(9223372036854775807L, (long) rs.getObject(4));
+      Assert.assertEquals(3.14, (float) rs.getObject(5), 0.001);
+      Assert.assertEquals(3.141592653589,
+                          (double) rs.getObject(6), 0.0000000000001);
+      Assert.assertEquals(new BigDecimal("3.141592653589793238"),
+                          rs.getObject(7));
+      Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
+      Assert.assertEquals("bar", rs.getObject(9));
+      Assert.assertEquals(date.getTime(),
+                          ((java.util.Date) rs.getObject(10)).getTime());
+      Assert.assertEquals(timestamp.getTime(),
+                          ((java.sql.Timestamp) rs.getObject(11)).getTime());
+      Assert.assertEquals(timestamp.getNanos(),
+                          ((java.sql.Timestamp) rs.getObject(11)).getNanos());
+      Assert.assertEquals(true, rs.getObject(12));
+    }
+
+    ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
+    ddl.close();
+  }
+
 
   @Test
-  public void batchInsertNullAndFetch() throws Exception {
+  public void testBatchInsertNullAndFetch() throws Exception {
     Connection conn = TestManager.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
@@ -184,25 +310,25 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals(0, rs.getInt(1));
       Assert.assertTrue(rs.wasNull());
 
-      Assert.assertEquals(null, rs.getString(2));
+      Assert.assertNull(rs.getString(2));
       Assert.assertTrue(rs.wasNull());
 
-      Assert.assertEquals(null, rs.getTime(3));
+      Assert.assertNull(rs.getTime(3));
       Assert.assertTrue(rs.wasNull());
 
-      Assert.assertEquals(false, rs.getBoolean(4));
+      Assert.assertFalse(rs.getBoolean(4));
       Assert.assertTrue(rs.wasNull());
 
       Assert.assertEquals(0.0f, rs.getFloat(5), 0);
       Assert.assertTrue(rs.wasNull());
 
-      Assert.assertEquals(null, rs.getBigDecimal(6));
+      Assert.assertNull(rs.getBigDecimal(6));
       Assert.assertTrue(rs.wasNull());
 
       count--;
     }
 
-    Assert.assertEquals(count, 0);
+    Assert.assertEquals(0, count);
 
     rs.close();
     query.close();

@@ -20,6 +20,10 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.Column;
+import com.aliyun.odps.data.Varchar;
+import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
+import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -213,9 +217,14 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     try {
       long startTime = System.currentTimeMillis();
       TunnelRecordWriter recordWriter = (TunnelRecordWriter) session.openRecordWriter(blocks, true);
+      List<Column> columns = session.getSchema().getColumns();
       for (int i = 0; i < batchedSize; i++) {
         Object[] row = batchedRows.get(i);
-        reuseRecord.set(row);
+        for (int j = 0; j < columns.size(); j++) {
+          AbstractToOdpsTransformer transformer =
+              ToOdpsTransformerFactory.getTransformer(columns.get(j).getTypeInfo().getOdpsType());
+          reuseRecord.set(j, transformer.transform(row[j], getConnection().getCharset()));
+        }
         recordWriter.write(reuseRecord);
         updateCounts[i] = 1;
       }
@@ -452,6 +461,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       setTime(parameterIndex, (Time) x);
     } else if (x instanceof Date) {
       setDate(parameterIndex, (Date) x);
+    } else if (x instanceof java.util.Date) {
+      parameters.put(parameterIndex, x);
     } else {
       throw new SQLException("can not set an object of type: " + x.getClass().getName());
     }
@@ -464,12 +475,12 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-    parameters.put(parameterIndex, new Boolean(x));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
-    parameters.put(parameterIndex, new Long(x));
+    parameters.put(parameterIndex, x);
   }
 
   public void setDate(int parameterIndex, Date x) throws SQLException {
@@ -478,22 +489,22 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
-    parameters.put(parameterIndex, new Double(x));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
-    parameters.put(parameterIndex, new Double(x));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
-    parameters.put(parameterIndex, new Long(x));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
-    parameters.put(parameterIndex, new Long(x));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
@@ -504,7 +515,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public void setShort(int parameterIndex, short x) throws SQLException {
-    parameters.put(parameterIndex, new Long(x));
+    parameters.put(parameterIndex, x);
   }
 
   @Override
@@ -610,9 +621,23 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   }
 
   private String convertJavaTypeToSqlString(Object x) throws SQLException {
-    if (x instanceof Long) {
+    if (Byte.class.isInstance(x)) {
+      return String.format("%sY", x.toString());
+    } else if (Short.class.isInstance(x)) {
+      return String.format("%sS", x.toString());
+    } else if (Integer.class.isInstance(x)) {
       return x.toString();
-    } else if (x instanceof byte[]) {
+    } else if (Long.class.isInstance(x)) {
+      return String.format("%sL", x.toString());
+    } else if (Float.class.isInstance(x) || Double.class.isInstance(x)) {
+      return x.toString();
+    } else if (BigDecimal.class.isInstance(x)) {
+      return String.format("%sBD", x.toString());
+    } else if (Varchar.class.isInstance(x)) {
+      return x.toString();
+    } else if (String.class.isInstance(x)) {
+      return (String) x;
+    } else if (byte[].class.isInstance(x)) {
       try {
         String charset = getConnection().getCharset();
         if (charset != null) {
@@ -623,18 +648,14 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       } catch (UnsupportedEncodingException e) {
         throw new SQLException(e);
       }
-    } else if (x instanceof Double) {
-      return x.toString();
-    } else if (x instanceof Timestamp) {
-      return "cast('" + x.toString() + "' as timestamp)";
-    } else if (x instanceof java.util.Date) {
+    } else if (Timestamp.class.isInstance(x)) {
+      return String.format("TIMESTAMP\"%s\"", x.toString());
+    } else if (java.util.Date.class.isInstance(x) || java.sql.Date.class.isInstance(x)) {
       SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      return "cast('" + formatter.format(x) + "' as datetime)";
-    } else if (x instanceof Boolean) {
-      return x.toString();
-    } else if (x instanceof BigDecimal) {
-      return "cast('" + x.toString() + "' as decimal)";
-    } else if (x == null) {
+      return String.format("DATETIME\"%s\"", formatter.format(x));
+    } else if (Boolean.class.isInstance(x)) {
+      return x.toString().toUpperCase();
+    } else if (x == null || x.equals(Types.NULL)) {
       return "NULL";
     } else {
       throw new SQLException("unrecognized Java class: " + x.getClass().getName());

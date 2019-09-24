@@ -41,9 +41,9 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 
-import com.aliyun.odps.jdbc.utils.transformer.AbstractDateTypeTransformer;
-import com.aliyun.odps.jdbc.utils.transformer.AbstractTransformer;
-import com.aliyun.odps.jdbc.utils.transformer.TransformerFactory;
+import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
+import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcTransformer;
+import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.ToJdbcTransformerFactory;
 
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
@@ -186,7 +186,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
     if (obj instanceof byte[]) {
       String charset = conn.getCharset();
-      return AbstractTransformer.encodeBytes((byte[]) obj, charset);
+      return AbstractToJdbcTransformer.encodeBytes((byte[]) obj, charset);
     }
     return obj;
   }
@@ -224,10 +224,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -645,13 +647,13 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   }
 
   private Object transformToJdbcType(Object o, Class jdbcCls) throws SQLException {
-    AbstractTransformer transformer = TransformerFactory.getTransformer(jdbcCls);
+    AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
     return transformer.transform(o, conn.getCharset());
   }
 
   private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal) throws SQLException {
-    AbstractTransformer transformer = TransformerFactory.getTransformer(jdbcCls);
-    return ((AbstractDateTypeTransformer) transformer).transform(
+    AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
+    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(
         o, stmt.getConnection().getCharset(), cal);
   }
 

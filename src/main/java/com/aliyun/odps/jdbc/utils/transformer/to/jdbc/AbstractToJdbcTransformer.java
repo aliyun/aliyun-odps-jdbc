@@ -18,13 +18,13 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 
 
-public abstract class AbstractTransformer {
+public abstract class AbstractToJdbcTransformer {
   static final String INVALID_TRANSFORMATION_ERROR_MSG =
       "Cannot transform ODPS-SDK Java class %s to %s";
   static final String ENCODING_ERR_MSG =
@@ -42,15 +42,11 @@ public abstract class AbstractTransformer {
   public abstract Object transform(Object o, String charset) throws SQLException;
 
   static String getInvalidTransformationErrorMsg(Class odpsCls, Class jdbcCls) {
-    String errorMsg =
-        String.format(INVALID_TRANSFORMATION_ERROR_MSG, odpsCls.getName(), jdbcCls.getName());
-    return errorMsg;
+    return String.format(INVALID_TRANSFORMATION_ERROR_MSG, odpsCls.getName(), jdbcCls.getName());
   }
 
-  String getTransformationErrMsg(Object o, Class jdbcCls) {
-    String errorMsg =
-        String.format(TRANSFORMATION_ERR_MSG, o.toString(), jdbcCls.getName());
-    return errorMsg;
+  static String getTransformationErrMsg(Object o, Class jdbcCls) {
+    return String.format(TRANSFORMATION_ERR_MSG, o.toString(), jdbcCls.getName());
   }
 
   public static String encodeBytes(byte[] bytes, String charset) throws SQLException {
