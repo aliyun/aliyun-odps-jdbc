@@ -222,12 +222,7 @@
             <groupId>com.aliyun.odps</groupId>
             <artifactId>odps-sdk-core</artifactId>
             <version>${sdk.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.aliyun.odps</groupId>
-            <artifactId>odps-sdk-commons</artifactId>
-            <version>${sdk.version}</version>
+            <classifier>shaded</classifier>
         </dependency>
 
         <dependency>
