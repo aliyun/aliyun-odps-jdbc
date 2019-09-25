@@ -70,7 +70,7 @@ public class OdpsResultSetTest {
 
     decimalValue = "55.123456789012345";
     decimalStr = decimalValue + "BD";
-    odpsDecimalStr = "cast('" + decimalValue + "' as decimal)";
+    odpsDecimalStr = "cast('" + decimalValue + "' as decimal(38,18))";
     bigDecimal = new BigDecimal(decimalValue);
 
   }

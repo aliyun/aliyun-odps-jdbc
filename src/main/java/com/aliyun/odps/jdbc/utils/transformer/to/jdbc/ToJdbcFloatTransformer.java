@@ -18,24 +18,30 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
-import java.math.BigDecimal;
 import java.sql.SQLException;
 
 
-public class BigDecimalTransformer extends AbstractTransformer {
+public class ToJdbcFloatTransformer extends AbstractToJdbcTransformer {
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
     if (o == null) {
-      return null;
+      return (float) 0;
     }
 
-    if (BigDecimal.class.isInstance(o)) {
-      return o;
+    if (Number.class.isInstance(o)) {
+      return ((Number) o).floatValue();
+    } else if (o instanceof byte[]) {
+      try {
+        return Float.parseFloat(encodeBytes((byte[]) o, charset));
+      } catch (NumberFormatException e) {
+        String errorMsg = getTransformationErrMsg(encodeBytes((byte[]) o, charset), float.class);
+        throw new SQLException(errorMsg);
+      }
     } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), BigDecimal.class);
+      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), float.class);
       throw new SQLException(errorMsg);
     }
   }

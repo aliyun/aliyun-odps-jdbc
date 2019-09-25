@@ -18,7 +18,7 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -27,10 +27,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
-
-public class TimestampTransformer extends AbstractDateTypeTransformer {
+public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
   public Object transform(Object o, String charset, Calendar cal) throws SQLException {

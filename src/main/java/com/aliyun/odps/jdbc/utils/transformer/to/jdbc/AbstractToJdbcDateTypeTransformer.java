@@ -1,11 +1,11 @@
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public abstract class AbstractDateTypeTransformer extends AbstractTransformer {
+public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
   static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = new ThreadLocal<>();
   static ThreadLocal<SimpleDateFormat> DATE_FORMAT = new ThreadLocal<>();
   static ThreadLocal<SimpleDateFormat> TIME_FORMAT = new ThreadLocal<>();

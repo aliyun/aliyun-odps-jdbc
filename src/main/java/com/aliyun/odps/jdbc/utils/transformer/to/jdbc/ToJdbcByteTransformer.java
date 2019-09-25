@@ -18,27 +18,23 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 
 
-public class BooleanTransformer extends AbstractTransformer {
+public class ToJdbcByteTransformer extends AbstractToJdbcTransformer {
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
     if (o == null) {
-      return false;
+      return (byte) 0;
     }
 
-    if (Boolean.class.isInstance(o)) {
-      return o;
-    } else if (Number.class.isInstance(o)) {
-      return ((Number) o).intValue() != 0;
-    } else if (o instanceof byte[]) {
-      return !"0".equals(encodeBytes((byte[]) o, charset));
+    if (Number.class.isInstance(o)) {
+      return ((Number) o).byteValue();
     } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), boolean.class);
+      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), byte.class);
       throw new SQLException(errorMsg);
     }
   }
