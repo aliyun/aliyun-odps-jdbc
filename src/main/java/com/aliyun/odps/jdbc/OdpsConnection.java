@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.Project;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import java.io.IOException;
 import java.sql.Array;
@@ -86,7 +87,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   
   private String tunnelEndpoint;
 
-  OdpsConnection(String url, Properties info) {
+  OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
     String accessId = connRes.getAccessId();
@@ -134,6 +135,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.lifecycle = lifecycle;
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<Statement>();
+
+    try {
+      Project odpsProject = odps.projects().get();
+      String msg = "Connect to odps project %s successfully";
+      log.debug(String.format(msg, odpsProject.getName()));
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
   }
 
 
