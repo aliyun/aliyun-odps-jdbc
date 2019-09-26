@@ -632,7 +632,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Varchar.class.isInstance(x)) {
       return x.toString();
     } else if (String.class.isInstance(x)) {
-      return (String) x;
+      return "'" + (String) x + "'";
     } else if (byte[].class.isInstance(x)) {
       try {
         String charset = getConnection().getCharset();
