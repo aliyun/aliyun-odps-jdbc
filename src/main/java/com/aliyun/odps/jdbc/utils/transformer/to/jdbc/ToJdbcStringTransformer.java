@@ -18,31 +18,32 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
-public class LongTransformer extends AbstractTransformer {
+public class ToJdbcStringTransformer extends AbstractToJdbcTransformer {
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
     if (o == null) {
-      return (long) 0;
+      return null;
     }
 
-    if (Number.class.isInstance(o)) {
-      return ((Number) o).longValue();
-    } else if (o instanceof byte[]) {
-      try {
-        return Long.parseLong(encodeBytes((byte[]) o, charset));
-      } catch (NumberFormatException e) {
-        String errorMsg = getTransformationErrMsg(encodeBytes((byte[]) o, charset), long.class);
-        throw new SQLException(errorMsg);
+    if (o instanceof byte[]) {
+      return encodeBytes((byte[]) o, charset);
+    } else if (java.util.Date.class.isInstance(o)) {
+      if (java.sql.Timestamp.class.isInstance(o)) {
+        return o.toString();
       }
+      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+      return dateFormat.format(((java.util.Date) o));
     } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), long.class);
-      throw new SQLException(errorMsg);
+      return o.toString();
     }
   }
 }

@@ -18,30 +18,30 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 
 
-public class IntTransformer extends AbstractTransformer {
+public class ToJdbcDoubleTransformer extends AbstractToJdbcTransformer {
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
     if (o == null) {
-      return (int) 0;
+      return (double) 0;
     }
 
     if (Number.class.isInstance(o)) {
-      return ((Number) o).intValue();
+      return ((Number) o).doubleValue();
     } else if (o instanceof byte[]) {
       try {
-        return Integer.parseInt(encodeBytes((byte[]) o, charset));
+        return Double.parseDouble(encodeBytes((byte[]) o, charset));
       } catch (NumberFormatException e) {
-        String errorMsg = getTransformationErrMsg(encodeBytes((byte[]) o, charset), int.class);
+        String errorMsg = getTransformationErrMsg(encodeBytes((byte[]) o, charset), double.class);
         throw new SQLException(errorMsg);
       }
     } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), int.class);
+      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), double.class);
       throw new SQLException(errorMsg);
     }
   }

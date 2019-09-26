@@ -100,7 +100,7 @@ public class OdpsResultSetMetaDataTest {
     Assert.assertEquals("INT", rsmd.getColumnTypeName(3));
     Assert.assertEquals("DOUBLE", rsmd.getColumnTypeName(4));
     Assert.assertEquals("DATETIME", rsmd.getColumnTypeName(5));
-    Assert.assertEquals("DECIMAL", rsmd.getColumnTypeName(6));
+    Assert.assertTrue(rsmd.getColumnTypeName(6).contains("DECIMAL"));
   }
 
   @Test

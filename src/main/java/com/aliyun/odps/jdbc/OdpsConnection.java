@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.Project;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import java.io.IOException;
 import java.sql.Array;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
@@ -85,7 +87,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   
   private String tunnelEndpoint;
 
-  OdpsConnection(String url, Properties info) {
+  OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
     String accessId = connRes.getAccessId();
@@ -116,6 +118,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
+    log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.debug(String
         .format("charset=%s, logview=%s, lifecycle=%d", charset, logviewHost, lifecycle));
 
@@ -132,6 +135,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.lifecycle = lifecycle;
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<Statement>();
+
+    try {
+      Project odpsProject = odps.projects().get();
+      String msg = "Connect to odps project %s successfully";
+      log.debug(String.format(msg, odpsProject.getName()));
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
   }
 
 

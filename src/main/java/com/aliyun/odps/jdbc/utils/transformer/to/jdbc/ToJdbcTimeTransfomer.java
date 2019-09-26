@@ -18,19 +18,15 @@
  *
  */
 
-package com.aliyun.odps.jdbc.utils.transformer;
+package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
-
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
-public class DateTransformer extends AbstractDateTypeTransformer {
+public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
   public Object transform(Object o, String charset, Calendar cal) throws SQLException {
@@ -39,32 +35,32 @@ public class DateTransformer extends AbstractDateTypeTransformer {
     }
 
     if (java.util.Date.class.isInstance(o)) {
-      return new java.sql.Date(((java.util.Date) o).getTime());
+      return new java.sql.Time(((java.util.Date) o).getTime());
     } else if (o instanceof byte[]) {
       try {
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
-        SimpleDateFormat dateFormat = DATE_FORMAT.get();
+        SimpleDateFormat timeFormat = TIME_FORMAT.get();
         if (cal != null) {
           datetimeFormat.setCalendar(cal);
-          dateFormat.setCalendar(cal);
+          timeFormat.setCalendar(cal);
         }
         try {
-          return new java.sql.Date(
+          return new java.sql.Time(
               datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
         } catch (ParseException ignored) {
         }
         try {
-          return new java.sql.Date(dateFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
+          return new java.sql.Time(timeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
         } catch (ParseException ignored) {
         }
         String errorMsg =
-            getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Date.class);
+            getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Time.class);
         throw new SQLException(errorMsg);
       } finally {
         restoreToDefaultCalendar();
       }
     } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Date.class);
+      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
       throw new SQLException(errorMsg);
     }
   }
