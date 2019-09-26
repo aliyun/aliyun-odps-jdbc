@@ -61,6 +61,9 @@ import com.aliyun.odps.type.TypeInfoFactory;
  * This test will create a table with all the data type of ODPS 2.0 and create
  */
 public class ImplicitTypeConversionTest {
+  private static final String TEST_TABLE = "implicit_type_conversion_test";
+  private static final String TEST_TABLE_NULL = "implicit_type_conversion_test_null";
+
   private static final String TINYINT_COL = "t_tinyint";
   private static final String SMALLINT_COL = "t_smallint";
   private static final String INT_COL = "t_int";
@@ -90,16 +93,114 @@ public class ImplicitTypeConversionTest {
   private static final boolean BOOLEAN_VAL = true;
 
   private static ResultSet rs;
+  private static ResultSet rsNull;
   // The charset in configuration must be 'UTF-8', which is the default value, or the test may fail
   private static String charset = "UTF-8";
   private static SimpleDateFormat dateFormat =
       new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
 
-
   @BeforeClass
   public static void setUp() throws OdpsException, IOException, ParseException, SQLException {
+    createTestTable();
+    createTestTableNull();
+  }
+
+  private static void createTestTable()
+      throws OdpsException, IOException, ParseException, SQLException {
+    // Create table for test
     TestManager tm = TestManager.getInstance();
-    tm.odps.tables().delete("implicit_type_conversion_test", true);
+    tm.odps.tables().delete(TEST_TABLE, true);
+    TableSchema schema = getTestTableSchema();
+    Map<String, String> hints = new HashMap<String, String>();
+    hints.put("odps.sql.type.system.odps2", "true");
+    tm.odps.tables().create(
+        tm.odps.getDefaultProject(),
+        TEST_TABLE,
+        schema,
+        null,
+        true,
+        null,hints, null);
+
+    // Upload a record
+    TableTunnel tunnel = new TableTunnel(tm.odps);
+    UploadSession uploadSession = tunnel.createUploadSession(
+        tm.odps.getDefaultProject(), TEST_TABLE);
+    RecordWriter writer = uploadSession.openRecordWriter(0);
+    Record r = uploadSession.newRecord();
+    r.set(TINYINT_COL, Byte.parseByte(TINYINT_VAL));
+    r.set(SMALLINT_COL, Short.parseShort(SMALLINT_VAL));
+    r.set(INT_COL, Integer.parseInt(INT_VAL));
+    r.set(BIGINT_COL, Long.parseLong(BIGINT_VAL));
+    r.set(FLOAT_COL, Float.parseFloat(FLOAT_VAL));
+    r.set(DOUBLT_COL, Double.parseDouble(DOUBLE_VAL));
+    r.set(DECIMAL_COL, new BigDecimal(DECIMAL_VAL));
+    r.set(VARCHAR_COL, new Varchar(VARCHAR_VAL));
+    r.set(STRING_COL_1, STRING_VAL_1);
+    r.set(STRING_COL_2, STRING_VAL_2);
+    DATETIME_VAL = dateFormat.parse("2019-05-23 00:00:00");
+    r.set(DATETIME_COL, DATETIME_VAL);
+    TIMESTAMP_VAL = Timestamp.valueOf("2019-05-23 00:00:00.123456789");
+    r.set(TIMESTAMP_COL, TIMESTAMP_VAL);
+    r.set(BOOLEAN_COL, BOOLEAN_VAL);
+    writer.write(r);
+    writer.close();
+    uploadSession.commit();
+
+    // Query the test
+    String sql = "select * from " + TEST_TABLE;
+    Statement stmt = tm.conn.createStatement();
+    stmt.execute(sql);
+    rs = stmt.getResultSet();
+    rs.next();
+  }
+
+  private static void createTestTableNull() throws OdpsException, IOException, SQLException {
+    // Create table for test
+    TestManager tm = TestManager.getInstance();
+    tm.odps.tables().delete(TEST_TABLE_NULL, true);
+    TableSchema schema = getTestTableSchema();
+    Map<String, String> hints = new HashMap<String, String>();
+    hints.put("odps.sql.type.system.odps2", "true");
+    tm.odps.tables().create(
+        tm.odps.getDefaultProject(),
+        TEST_TABLE_NULL,
+        schema,
+        null,
+        true,
+        null,hints, null);
+
+    // Upload a record
+    TableTunnel tunnel = new TableTunnel(tm.odps);
+    UploadSession uploadSession = tunnel.createUploadSession(
+        tm.odps.getDefaultProject(), TEST_TABLE_NULL);
+    RecordWriter writer = uploadSession.openRecordWriter(0);
+    Record r = uploadSession.newRecord();
+    r.set(TINYINT_COL, null);
+    r.set(SMALLINT_COL, null);
+    r.set(INT_COL, null);
+    r.set(BIGINT_COL, null);
+    r.set(FLOAT_COL, null);
+    r.set(DOUBLT_COL, null);
+    r.set(DECIMAL_COL, null);
+    r.set(VARCHAR_COL, null);
+    r.set(STRING_COL_1, null);
+    r.set(STRING_COL_2, null);
+    r.set(DATETIME_COL, null);
+    r.set(TIMESTAMP_COL, null);
+    r.set(BOOLEAN_COL, null);
+    writer.write(r);
+    writer.close();
+    uploadSession.commit();
+
+    // Query the test
+    String sql = "select * from " + TEST_TABLE_NULL;
+    Statement stmt = tm.conn.createStatement();
+    stmt.execute(sql);
+    rsNull = stmt.getResultSet();
+    rsNull.next();
+  }
+
+  private static TableSchema getTestTableSchema() {
     TableSchema schema = new TableSchema();
     schema.addColumn(
         new Column(TINYINT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.TINYINT)));
@@ -127,69 +228,16 @@ public class ImplicitTypeConversionTest {
         new Column(TIMESTAMP_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.TIMESTAMP)));
     schema.addColumn(
         new Column(BOOLEAN_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.BOOLEAN)));
-
-    Map<String, String> hints = new HashMap<String, String>();
-    hints.put("odps.sql.type.system.odps2", "true");
-    tm.odps.tables().create(
-        tm.odps.getDefaultProject(),
-        "implicit_type_conversion_test",
-        schema,
-        null,
-        true,
-        null,hints, null);
-
-    TableTunnel tunnel = new TableTunnel(tm.odps);
-    UploadSession uploadSession = tunnel.createUploadSession(
-        tm.odps.getDefaultProject(), "implicit_type_conversion_test");
-    RecordWriter writer = uploadSession.openRecordWriter(0);
-    Record r = uploadSession.newRecord();
-    r.set(TINYINT_COL, Byte.parseByte(TINYINT_VAL));
-    r.set(SMALLINT_COL, Short.parseShort(SMALLINT_VAL));
-    r.set(INT_COL, Integer.parseInt(INT_VAL));
-    r.set(BIGINT_COL, Long.parseLong(BIGINT_VAL));
-    r.set(FLOAT_COL, Float.parseFloat(FLOAT_VAL));
-    r.set(DOUBLT_COL, Double.parseDouble(DOUBLE_VAL));
-    r.set(DECIMAL_COL, new BigDecimal(DECIMAL_VAL));
-    r.set(VARCHAR_COL, new Varchar(VARCHAR_VAL));
-    r.set(STRING_COL_1, STRING_VAL_1);
-    r.set(STRING_COL_2, STRING_VAL_2);
-    DATETIME_VAL = dateFormat.parse("2019-05-23 00:00:00");
-    r.set(DATETIME_COL, DATETIME_VAL);
-    TIMESTAMP_VAL = Timestamp.valueOf("2019-05-23 00:00:00.123456789");
-    r.set(TIMESTAMP_COL, TIMESTAMP_VAL);
-    r.set(BOOLEAN_COL, BOOLEAN_VAL);
-    writer.write(r);
-
-    r.set(TINYINT_COL, null);
-    r.set(SMALLINT_COL, null);
-    r.set(INT_COL, null);
-    r.set(BIGINT_COL, null);
-    r.set(FLOAT_COL, null);
-    r.set(DOUBLT_COL, null);
-    r.set(DECIMAL_COL, null);
-    r.set(VARCHAR_COL, null);
-    r.set(STRING_COL_1, null);
-    r.set(STRING_COL_2, null);
-    r.set(DATETIME_COL, null);
-    r.set(TIMESTAMP_COL, null);
-    r.set(BOOLEAN_COL, null);
-    writer.write(r);
-
-    writer.close();
-    uploadSession.commit();
-
-    String sql = "select * from implicit_type_conversion_test";
-    Statement stmt = tm.conn.createStatement();
-    stmt.execute(sql);
-    rs = stmt.getResultSet();
-    rs.next();
+    return schema;
   }
 
   @AfterClass
   public static void tearDown() throws OdpsException, SQLException {
     rs.close();
+    rsNull.close();
     TestManager tm = TestManager.getInstance();
-    tm.odps.tables().delete("implicit_type_conversion_test", true);
+    tm.odps.tables().delete(TEST_TABLE, true);
+    tm.odps.tables().delete(TEST_TABLE_NULL, true);
   }
 
   /**
@@ -908,20 +956,18 @@ public class ImplicitTypeConversionTest {
 
   @Test
   public void testGetNull() throws SQLException {
-    rs.next();
-
-    Assert.assertEquals(0, rs.getByte(1));
-    Assert.assertEquals(0, rs.getShort(2));
-    Assert.assertEquals(0, rs.getInt(3));
-    Assert.assertEquals(0, rs.getLong(4));
-    Assert.assertEquals(0, rs.getFloat(5), 0.001);
-    Assert.assertEquals(0, rs.getDouble(6), 0.001);
-    Assert.assertNull(rs.getBigDecimal(7));
-    Assert.assertNull(rs.getString(8));
-    Assert.assertNull(rs.getString(9));
-    Assert.assertNull(rs.getString(10));
-    Assert.assertNull(rs.getDate(11));
-    Assert.assertNull(rs.getTimestamp(12));
-    Assert.assertFalse(rs.getBoolean(13));
+    Assert.assertEquals(0, rsNull.getByte(1));
+    Assert.assertEquals(0, rsNull.getShort(2));
+    Assert.assertEquals(0, rsNull.getInt(3));
+    Assert.assertEquals(0, rsNull.getLong(4));
+    Assert.assertEquals(0, rsNull.getFloat(5), 0.001);
+    Assert.assertEquals(0, rsNull.getDouble(6), 0.001);
+    Assert.assertNull(rsNull.getBigDecimal(7));
+    Assert.assertNull(rsNull.getString(8));
+    Assert.assertNull(rsNull.getString(9));
+    Assert.assertNull(rsNull.getString(10));
+    Assert.assertNull(rsNull.getDate(11));
+    Assert.assertNull(rsNull.getTimestamp(12));
+    Assert.assertFalse(rsNull.getBoolean(13));
   }
 }
