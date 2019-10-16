@@ -35,8 +35,8 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
    */
   private boolean isEmptyResultSet = false;
 
-  OdpsStaticResultSet(OdpsResultSetMetaData meta) throws SQLException {
-    super(null, meta);
+  OdpsStaticResultSet(OdpsConnection conn, OdpsResultSetMetaData meta) throws SQLException {
+    super(conn, null, meta);
     // Construct an empty result set
     isEmptyResultSet = true;
   }
@@ -44,9 +44,9 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
   /**
    * For non-empty result set, its data is passed via parameter
    */
-  OdpsStaticResultSet(OdpsResultSetMetaData meta, Iterator<Object[]> iter)
+  OdpsStaticResultSet(OdpsConnection conn, OdpsResultSetMetaData meta, Iterator<Object[]> iter)
       throws SQLException {
-    super(null, meta);
+    super(conn, null, meta);
     iterator = iter;
     isEmptyResultSet = false;
   }
@@ -69,6 +69,7 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
     }
   }
 
+  @Override
   protected Object[] rowAtCursor() throws SQLException {
     return row;
   }
