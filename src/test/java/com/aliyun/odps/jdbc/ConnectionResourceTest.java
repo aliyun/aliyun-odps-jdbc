@@ -18,82 +18,71 @@
  *
  */
 
+
 package com.aliyun.odps.jdbc;
 
+import java.io.FileInputStream;
 import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.aliyun.odps.jdbc.utils.ConnectionResource;
+
 public class ConnectionResourceTest {
 
   @Test
-  public void connectionURLMinimumTest() {
+  public void testConnectionResourceTest() throws Exception {
+    String odpsConfigFile = getClass().getClassLoader().getResource("odps_config.ini").getPath();
+    String url1 =
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logconffile=/Users/emerson/logback.xml&odps_config="
+            + odpsConfigFile;
+    ConnectionResource resource = new ConnectionResource(url1, null);
+    Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
+    Assert.assertEquals("p2", resource.getProject());
+    Assert.assertEquals("345", resource.getAccessId());
+    Assert.assertEquals("456=", resource.getAccessKey());
+    Assert.assertEquals(null, resource.getLogLevel());
+    Assert.assertEquals("2", resource.getLifecycle());
+    Assert.assertEquals("UTF-8", resource.getCharset());
+    Assert.assertEquals("logback1.xml", resource.getLogConfFile());
+    Assert.assertEquals(null, resource.getLogview());
+    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", null);
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals(null, cr.getAccessId());
-    Assert.assertEquals(null, cr.getAccessKey());
-    Assert.assertEquals(null, cr.getLogview());
-    Assert.assertEquals("UTF-8", cr.getCharset());
-    Assert.assertEquals("3", cr.getLifecycle());
-  }
 
-  @Test
-  public void connectionURLFullTest() {
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5", null);
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals("idid", cr.getAccessId());
-    Assert.assertEquals("keykey", cr.getAccessKey());
-    Assert.assertEquals("loglog", cr.getLogview());
-    Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("5", cr.getLifecycle());
-  }
-
-  @Test
-  public void connectionInfoFullTest() {
-
-    Properties info = new Properties();
-    info.put("access_id", "idid");
-    info.put("access_key", "keykey");
-    info.put("logview_host", "loglog");
-    info.put("charset", "setset");
-    info.put("lifecycle", "5");
-
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", info);
-
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals("idid", cr.getAccessId());
-    Assert.assertEquals("keykey", cr.getAccessKey());
-    Assert.assertEquals("loglog", cr.getLogview());
-    Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("5", cr.getLifecycle());
-  }
-
-  @Test
-  public void connectionInfoOverrideTest() {
+    String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
+    String url2 =
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnelEndpoint=http://1.1.1.1:8066&logconffile="
+            + logConfigFile;
+    resource = new ConnectionResource(url2, null);
+    Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
+    Assert.assertEquals("p1", resource.getProject());
+    Assert.assertEquals("123", resource.getAccessId());
+    Assert.assertEquals("234=", resource.getAccessKey());
+    Assert.assertEquals(logConfigFile, resource.getLogConfFile());
+    Assert.assertEquals("debug", resource.getLogLevel());
+    Assert.assertEquals("3", resource.getLifecycle());
+    Assert.assertEquals("UTF-8", resource.getCharset());
+    Assert.assertEquals(logConfigFile, resource.getLogConfFile());
+    Assert.assertEquals("http://abc.com:8080", resource.getLogview());
+    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
     Properties info = new Properties();
-    info.put("access_id", "id");
-    info.put("access_key", "key");
-    info.put("logview_host", "log");
-    info.put("charset", "set");
-    info.put("lifecycle", "100");
+    info.load(new FileInputStream(odpsConfigFile));
+    resource = new ConnectionResource(url2, info);
+    Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
+    Assert.assertEquals("p2", resource.getProject());
+    Assert.assertEquals("345", resource.getAccessId());
+    Assert.assertEquals("456=", resource.getAccessKey());
+    Assert.assertEquals("debug", resource.getLogLevel());
+    Assert.assertEquals("2", resource.getLifecycle());
+    Assert.assertEquals("UTF-8", resource.getCharset());
+    Assert.assertEquals("logback1.xml", resource.getLogConfFile());
+    Assert.assertEquals("http://abc.com:8080", resource.getLogview());
+    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5", info);
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals("id", cr.getAccessId());
-    Assert.assertEquals("key", cr.getAccessKey());
-    Assert.assertEquals("log", cr.getLogview());
-    Assert.assertEquals("set", cr.getCharset());
-    Assert.assertEquals("100", cr.getLifecycle());
   }
+
 
 }

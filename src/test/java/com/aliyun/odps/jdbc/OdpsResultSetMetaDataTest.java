@@ -30,6 +30,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
+
 public class OdpsResultSetMetaDataTest {
 
   static Statement stmt;
@@ -38,7 +42,19 @@ public class OdpsResultSetMetaDataTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    stmt = OdpsConnectionFactory.getInstance().conn.createStatement();
+    stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(id bigint);");
+
+    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), "dual");
+    RecordWriter writer = upload.openRecordWriter(0);
+    Record r = upload.newRecord();
+    r.setBigint(0, 42L);
+    writer.write(r);
+    writer.close();
+    upload.commit(new Long[]{0L});
+
     String sql = "select 'yichao' name, true male, 25 age, 173.5 height, "
                  + "cast('2015-07-09 11:11:11' as datetime) day, "
                  + "cast('2.1234567890123' as decimal) volume from dual;";
@@ -50,7 +66,6 @@ public class OdpsResultSetMetaDataTest {
   public static void tearDown() throws Exception {
     rs.close();
     stmt.close();
-    OdpsConnectionFactory.getInstance().conn.close();
   }
 
   @Test
@@ -72,7 +87,7 @@ public class OdpsResultSetMetaDataTest {
   public void testGetColumnType() throws Exception {
     Assert.assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
     Assert.assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
-    Assert.assertEquals(Types.BIGINT, rsmd.getColumnType(3));
+    Assert.assertEquals(Types.INTEGER, rsmd.getColumnType(3));
     Assert.assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
     Assert.assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
     Assert.assertEquals(Types.DECIMAL, rsmd.getColumnType(6));
@@ -82,10 +97,10 @@ public class OdpsResultSetMetaDataTest {
   public void testGetColumnTypeName() throws Exception {
     Assert.assertEquals("STRING", rsmd.getColumnTypeName(1));
     Assert.assertEquals("BOOLEAN", rsmd.getColumnTypeName(2));
-    Assert.assertEquals("BIGINT", rsmd.getColumnTypeName(3));
+    Assert.assertEquals("INT", rsmd.getColumnTypeName(3));
     Assert.assertEquals("DOUBLE", rsmd.getColumnTypeName(4));
     Assert.assertEquals("DATETIME", rsmd.getColumnTypeName(5));
-    Assert.assertEquals("DECIMAL", rsmd.getColumnTypeName(6));
+    Assert.assertTrue(rsmd.getColumnTypeName(6).contains("DECIMAL"));
   }
 
   @Test

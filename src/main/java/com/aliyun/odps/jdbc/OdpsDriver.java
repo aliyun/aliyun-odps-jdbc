@@ -29,6 +29,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.Utils;
+
 public class OdpsDriver implements Driver {
 
   static {
@@ -105,12 +108,22 @@ public class OdpsDriver implements Driver {
 
   @Override
   public int getMajorVersion() {
-    return 0;
+    try {
+      return Integer.parseInt(Utils.retrieveVersion("driver.version").split("\\.")[0]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 1;
+    }
   }
 
   @Override
   public int getMinorVersion() {
-    return 1;
+    try {
+      return Integer.parseInt(Utils.retrieveVersion("driver.version").split("\\.")[1]);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 0;
+    }
   }
 
   @Override
@@ -119,6 +132,6 @@ public class OdpsDriver implements Driver {
   }
 
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-    throw new SQLFeatureNotSupportedException();
+    return Logger.getLogger("com.aliyun.odps.jdbc");
   }
 }
