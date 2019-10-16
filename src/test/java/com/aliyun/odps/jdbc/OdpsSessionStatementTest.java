@@ -247,6 +247,24 @@ public class OdpsSessionStatementTest {
     stmt.close();
   }
 
+
+  @Test
+  public void testCancelQuery() throws Exception {
+    Statement stmt = sessionConn.createStatement();
+    String sql = "select * from " + INPUT_TABLE_NAME + " limit 10000;";
+    ExecuteSQL updateIt = new ExecuteSQL(stmt, sql);
+    CancelSQL cancelIt = new CancelSQL(stmt);
+
+    // kicks-off execution 4s earlier
+    updateIt.mythread.start();
+    Thread.sleep(2000);
+    cancelIt.mythread.start();
+
+    updateIt.mythread.join();
+    cancelIt.mythread.join();
+    stmt.close();
+  }
+
   @Test
   public void testQueryOrUpdate() throws Exception {
     Assert.assertTrue(OdpsStatement.isQuery("select 1 id, 1.5 weight from dual;"));
