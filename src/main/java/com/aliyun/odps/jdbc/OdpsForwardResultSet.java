@@ -28,6 +28,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -49,6 +50,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   long accumTime;
   long accumKBytes = 0;
 
+  boolean sessionMode = false;
   /**
    * The maximum retry time we allow to tolerate the network problem
    */
@@ -60,12 +62,16 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     sessionHandle = session;
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();
-
+    sessionMode = !StringUtils.isNullOrEmpty(sessionHandle.getTaskName());
     // maxRows take effect only if it > 0
     if (maxRows > 0 && maxRows <= recordCount) {
       totalRows = maxRows;
-    } else {
+    } else if (!sessionMode) {
       totalRows = recordCount;
+    } else {
+      // in session mode, we can not get totalRows from tunnel
+      // totalRows is useless in session mode
+      totalRows = 10000L;
     }
 
     startTime = System.currentTimeMillis();
@@ -115,7 +121,8 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   public boolean next() throws SQLException {
     checkClosed();
 
-    if (fetchedRows == totalRows) {
+    // in session mode, we can not get totalRows from tunnel
+    if (fetchedRows == totalRows && !sessionMode) {
       return false;
     }
 
@@ -128,6 +135,12 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
           accumTime = System.currentTimeMillis();
         }
         reuseRecord = reader.read(reuseRecord);
+        if (reuseRecord == null) {
+          // in session mode, this means the end of stream
+          long end = System.currentTimeMillis();
+          conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
+          return false;
+        }
         int columns = reuseRecord.getColumnCount();
         currentRow = new Object[columns];
         for (int i = 0; i < columns; i++) {
@@ -135,10 +148,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         }
 
         fetchedRows++;
-        if (fetchedRows == totalRows) {
-          long end = System.currentTimeMillis();
-          conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
-        }
 
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
@@ -156,7 +165,11 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (++retry == READER_REOPEN_TIME_MAX) {
           throw new SQLException("to much retries because: " + e.getMessage());
         }
-        rebuildReader();
+        // Can not rebuild tunnel reader in session mode, just retry reading
+        if (!sessionMode) {
+          rebuildReader();
+        }
+
       }
     }
   }

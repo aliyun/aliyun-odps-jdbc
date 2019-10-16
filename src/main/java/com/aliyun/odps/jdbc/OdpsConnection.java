@@ -18,6 +18,7 @@ package com.aliyun.odps.jdbc;
 import com.aliyun.odps.Project;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import java.io.IOException;
+
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -35,15 +36,11 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TimeZone;
-import java.util.UUID;
+import org.slf4j.Logger;
+import java.util.*;
 import java.util.concurrent.Executor;
 
-import org.slf4j.Logger;
+import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -52,6 +49,7 @@ import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.LoggerFactory;
+
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -82,10 +80,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private SQLWarning warningChain = null;
 
   private String connectionId;
-  
+
   private final Properties sqlTaskProperties = new Properties();
-  
+
   private String tunnelEndpoint;
+
+  private String majorVersion;
+  private static final String MAJOR_VERSION = "odps.task.major.version";
+
+  private boolean sessionMode = false;
+  private OdpsSessionManager sessionManager = null;
+
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -98,6 +103,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
+    String sessionName = connRes.getSessionName();
+    Long sessionTimeout = connRes.getSessionTimeout();
 
     int lifecycle;
     try {
@@ -136,16 +143,31 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<Statement>();
 
+    this.majorVersion = connRes.getMajorVersion();
+
     try {
       Project odpsProject = odps.projects().get();
+
+
+      if (!StringUtils.isNullOrEmpty(sessionName)) {
+        sessionMode = true;
+
+        sessionManager = new OdpsSessionManager(sessionName, odps, log);
+
+        // only support major version when attaching a session
+        Map<String, String> hints = new HashMap<>();
+        hints.put(MAJOR_VERSION, majorVersion);
+
+        sessionManager.attachSession(hints, sessionTimeout);
+      }
       String msg = "Connect to odps project %s successfully";
       log.debug(String.format(msg, odpsProject.getName()));
+
     } catch (OdpsException e) {
+      log.error("Connect to odps failed:" + e.getMessage());
       throw new SQLException(e);
     }
   }
-
-
 
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
@@ -273,6 +295,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       for (Statement stmt : stmtHandles) {
         if (stmt != null) {
           stmt.close();
+        }
+      }
+      if (runningInSessionMode()) {
+        try {
+          sessionManager.detachSession();
+        } catch (OdpsException e) {
+          throw new SQLException(e.toString(), e);
         }
       }
     }
@@ -409,6 +438,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         isResultSetScrollable = false;
         break;
       case ResultSet.TYPE_SCROLL_INSENSITIVE:
+        if (runningInSessionMode()) {
+          throw new SQLFeatureNotSupportedException(
+              "only support statement with ResultSet type: TYPE_FORWARD_ONLY in session mode");
+        }
         isResultSetScrollable = true;
         break;
       default:
@@ -555,5 +588,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
   }
-      
+
+  public OdpsSessionManager getSessionManager() { return sessionManager; }
+
+  public boolean runningInSessionMode() { return sessionMode && sessionManager.attached(); }
 }
