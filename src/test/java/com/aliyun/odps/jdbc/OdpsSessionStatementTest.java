@@ -257,7 +257,7 @@ public class OdpsSessionStatementTest {
 
     // kicks-off execution 4s earlier
     updateIt.mythread.start();
-    Thread.sleep(2000);
+    Thread.sleep(1000);
     cancelIt.mythread.start();
 
     updateIt.mythread.join();
