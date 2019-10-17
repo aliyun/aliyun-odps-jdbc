@@ -63,17 +63,17 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();
     sessionMode = !StringUtils.isNullOrEmpty(sessionHandle.getTaskName());
+    if (sessionMode) {
+      // in session mode, we can not get totalRows from tunnel
+      // FIXME hardcode count 10000L
+      recordCount = 10000L;
+    }
     // maxRows take effect only if it > 0
     if (maxRows > 0 && maxRows <= recordCount) {
       totalRows = maxRows;
-    } else if (!sessionMode) {
-      totalRows = recordCount;
     } else {
-      // in session mode, we can not get totalRows from tunnel
-      // totalRows is useless in session mode
-      totalRows = 10000L;
+      totalRows = recordCount;
     }
-
     startTime = System.currentTimeMillis();
   }
 
@@ -121,8 +121,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   public boolean next() throws SQLException {
     checkClosed();
 
-    // in session mode, we can not get totalRows from tunnel
-    if (fetchedRows == totalRows && !sessionMode) {
+    if (fetchedRows == totalRows) {
       return false;
     }
 
@@ -136,7 +135,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         }
         reuseRecord = reader.read(reuseRecord);
         if (reuseRecord == null) {
-          // in session mode, this means the end of stream
+          // this means the end of stream
           long end = System.currentTimeMillis();
           conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
           return false;

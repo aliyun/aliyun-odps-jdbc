@@ -129,8 +129,27 @@ public class OdpsSessionStatementTest {
   @Test
   public void testSetMaxRows() throws Exception {
     Statement stmt = sessionConn.createStatement();
-    stmt.setMaxRows(10000);
-    Assert.assertEquals(10000, stmt.getMaxRows());
+    stmt.setMaxRows(8888);
+    Assert.assertEquals(8888, stmt.getMaxRows());
+    ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
+    {
+      int i = 0;
+      while (rs.next()) {
+        Assert.assertEquals(i + 1, rs.getRow());
+        Assert.assertEquals(i, rs.getInt(1));
+        i++;
+      }
+      Assert.assertEquals(8888, i);
+    }
+    rs.close();
+    stmt.close();
+  }
+
+  @Test
+  public void testExceedMaxRows() throws Exception {
+    Statement stmt = sessionConn.createStatement();
+    stmt.setMaxRows(11111);
+    Assert.assertEquals(11111, stmt.getMaxRows());
     ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
     {
       int i = 0;
@@ -144,7 +163,7 @@ public class OdpsSessionStatementTest {
     rs.close();
     stmt.close();
   }
-
+  
   /**
    * Thread for a sql to be cancelled
    */
