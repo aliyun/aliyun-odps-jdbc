@@ -31,6 +31,8 @@ public class ConnectionResource {
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";
   private static final String CHARSET_DEFAULT_VALUE = "UTF-8";
   private static final String LIFECYCLE_DEFAULT_VALUE = "3";
+  private static final String MAJOR_VERSION_DEFAULT_VALUE = "default";
+  private static final String SESSION_TIMEOUT_DEFAULT_VALUE = "30";
 
   /**
    * keys to retrieve properties from url.
@@ -45,6 +47,9 @@ public class ConnectionResource {
   private static final String LOGLEVEL_URL_KEY = "loglevel";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
   private static final String LOGCONFFILE_URL_KEY = "logconffile";
+  private static final String SESSION_NAME_URL_KEY = "sessionName";
+  private static final String SESSION_TIMEOUT_URL_KEY = "sessionTimeout";
+  private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
 
   /**
    * Keys to retrieve properties from info.
@@ -60,7 +65,9 @@ public class ConnectionResource {
   public static final String LOGLEVEL_PROP_KEY = "log_level";
   public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
   public static final String LOGCONFFILE_PROP_KEY = "log_conf_file";
-
+  public static final String SESSION_NAME_PROP_KEY = "session_name";
+  public static final String SESSION_TIMEOUT_PROP_KEY = "session_timeout";
+  public static final String MAJOR_VERSION_PROP_KEY = "major_version";
 
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
@@ -78,6 +85,9 @@ public class ConnectionResource {
   private String logLevel;
   private String tunnelEndpoint;
   private String logConfFile;
+  private String sessionName;
+  private Long sessionTimeout;
+  private String majorVersion;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -141,6 +151,15 @@ public class ConnectionResource {
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGCONFFILE_PROP_KEY,
             LOGCONFFILE_URL_KEY);
+    sessionName =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, SESSION_NAME_PROP_KEY,
+            SESSION_NAME_URL_KEY);
+    sessionTimeout = Long.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, SESSION_TIMEOUT_DEFAULT_VALUE, SESSION_TIMEOUT_PROP_KEY,
+            SESSION_TIMEOUT_URL_KEY));
+    majorVersion =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, MAJOR_VERSION_DEFAULT_VALUE, MAJOR_VERSION_PROP_KEY,
+            MAJOR_VERSION_URL_KEY);
   }
 
   @SuppressWarnings("deprecation")
@@ -208,6 +227,14 @@ public class ConnectionResource {
   public String getLogConfFile() {
     return logConfFile;
   }
+
+  public String getSessionName() {
+    return sessionName;
+  }
+
+  public Long getSessionTimeout() { return sessionTimeout; }
+
+  public String getMajorVersion() { return majorVersion; }
 
   @SuppressWarnings("rawtypes")
   private static String tryGetFirstNonNullValueByAltMapAndAltKey(List<Map> maps,

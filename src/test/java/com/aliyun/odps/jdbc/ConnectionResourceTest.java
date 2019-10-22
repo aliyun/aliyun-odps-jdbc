@@ -48,12 +48,13 @@ public class ConnectionResourceTest {
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals(null, resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-
-
+    Assert.assertEquals("sn", resource.getSessionName());
+    Assert.assertEquals(Long.valueOf(11), resource.getSessionTimeout());
+    Assert.assertEquals("default1", resource.getMajorVersion());
 
     String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
     String url2 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnelEndpoint=http://1.1.1.1:8066&logconffile="
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnelEndpoint=http://1.1.1.1:8066&sessionName=sn&sessionTimeout=11&majorVersion=default1&logconffile="
             + logConfigFile;
     resource = new ConnectionResource(url2, null);
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
@@ -81,7 +82,9 @@ public class ConnectionResourceTest {
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-
+    Assert.assertEquals("sn", resource.getSessionName());
+    Assert.assertEquals(Long.valueOf(11), resource.getSessionTimeout());
+    Assert.assertEquals("default1", resource.getMajorVersion());
   }
 
 
