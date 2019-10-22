@@ -3,7 +3,7 @@ name: Question
 about: A question about MaxCompute JDBC Driver
 title: "[QUESTION]"
 labels: question
-assignees: lyman, cornmonster
+assignees: cornmonster, lyman
 
 ---
 
