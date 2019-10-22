@@ -1,9 +1,9 @@
 ---
 name: Question
 about: A question about MaxCompute JDBC Driver
-title: ''
+title: "[QUESTION]"
 labels: question
-assignees: ''
+assignees: lyman, cornmonster
 
 ---
 
