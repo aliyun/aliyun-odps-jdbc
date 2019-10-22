@@ -137,9 +137,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.stmtHandles = new ArrayList<Statement>();
 
     try {
-      Project odpsProject = odps.projects().get();
+      odps.projects().get().reload();
       String msg = "Connect to odps project %s successfully";
-      log.debug(String.format(msg, odpsProject.getName()));
+      log.debug(String.format(msg, odps.getDefaultProject()));
     } catch (OdpsException e) {
       throw new SQLException(e);
     }
