@@ -812,25 +812,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     tables.clear();
   }
 
-//  // wrap table iterator from odps sdk, depends on server side optimization
-//  @Override
-//  public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern,
-//                              String[] types) throws SQLException {
-//    long begin = System.currentTimeMillis();
-//
-//    OdpsResultSetMetaData meta =
-//        new OdpsResultSetMetaData(
-//            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS",
-//                          "TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME",
-//                          "REF_GENERATION"),
-//            Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-//                          TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-//                          TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-//                          TypeInfoFactory.STRING));
-//    return new OdpsTableMetaResultSet(getConnection(), meta, conn.getOdps().tables().iterator(),
-//                                      tableNamePattern, types, begin);
-//  }
-
   @Override
   public ResultSet getSchemas() throws SQLException {
     OdpsResultSetMetaData meta =
