@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.aliyun.odps</groupId>
     <artifactId>odps-jdbc</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
     <name>odps-jdbc</name>
     <description>Aliyun ODPS JDBC driver</description>
     <url>http://odps.aliyun.com</url>
@@ -199,13 +199,7 @@
             <groupId>com.aliyun.odps</groupId>
             <artifactId>odps-sdk-core</artifactId>
             <version>${sdk.version}</version>
-            <classifier>shaded</classifier>
-            <exclusions>
-              <exclusion>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-              </exclusion>
-            </exclusions>
+            <classifier>jar-with-dependencies</classifier>
         </dependency>
 
         <dependency>

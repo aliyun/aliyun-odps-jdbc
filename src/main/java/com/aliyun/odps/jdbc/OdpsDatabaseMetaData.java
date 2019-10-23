@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.aliyun.odps.Column;
@@ -755,6 +756,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
       try {
+        LinkedList<String> tables = new LinkedList<>();
         for (Table t : conn.getOdps().tables()) {
           String tableName = t.getName();
           if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
@@ -762,16 +764,13 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
               continue;
             }
           }
-          String tableType = t.isVirtualView() ? "VIEW" : "TABLE";
-          if (types != null && types.length != 0) {
-            if (!Arrays.asList(types).contains(tableType)) {
-              continue;
-            }
+          tables.add(tableName);
+          if (tables.size() == 100) {
+            convertTablesToRows(types, rows, tables);
           }
-          Object[] rowVals =
-              {t.getProject(), t.getProject(), tableName, tableType, t.getComment(), null, null, null, null,
-                  "USER"};
-          rows.add(rowVals);
+        }
+        if (tables.size() > 0) {
+          convertTablesToRows(types, rows, tables);
         }
       } catch (Exception e) {
         log.error("getTables fails: ", e);
@@ -783,14 +782,34 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " Tables");
 
     OdpsResultSetMetaData meta =
-        new OdpsResultSetMetaData(Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
-            "TABLE_TYPE", "REMARKS", "TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME",
-            "SELF_REFERENCING_COL_NAME", "REF_GENERATION"), Arrays.asList(TypeInfoFactory.STRING,
-            TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-            TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-            TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING));
+        new OdpsResultSetMetaData(
+            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS",
+                          "TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME",
+                          "REF_GENERATION"),
+            Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                          TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                          TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                          TypeInfoFactory.STRING));
 
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
+  }
+
+  private void convertTablesToRows(String[] types, List<Object[]> rows, LinkedList<String> tables)
+      throws OdpsException {
+    for (Table t : conn.getOdps().tables().loadTables(tables)) {
+      String tableType = t.isVirtualView() ? "VIEW" : "TABLE";
+      if (types != null && types.length != 0) {
+        if (!Arrays.asList(types).contains(tableType)) {
+          continue;
+        }
+      }
+      Object[] rowVals =
+          {t.getProject(), t.getProject(), t.getName(), tableType, t.getComment(), null, null,
+           null, null,
+           "USER"};
+      rows.add(rowVals);
+    }
+    tables.clear();
   }
 
   @Override

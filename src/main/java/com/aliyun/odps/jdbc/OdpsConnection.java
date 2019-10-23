@@ -146,8 +146,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.majorVersion = connRes.getMajorVersion();
 
     try {
-      Project odpsProject = odps.projects().get();
-
+      odps.projects().get().reload();
 
       if (!StringUtils.isNullOrEmpty(sessionName)) {
         sessionMode = true;
@@ -161,7 +160,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         sessionManager.attachSession(hints, sessionTimeout);
       }
       String msg = "Connect to odps project %s successfully";
-      log.debug(String.format(msg, odpsProject.getName()));
+      log.debug(String.format(msg, odps.getDefaultProject()));
 
     } catch (OdpsException e) {
       log.error("Connect to odps failed:" + e.getMessage());
@@ -495,15 +494,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public boolean isValid(int timeout) throws SQLException {
-    if (timeout < 0) {
-      throw new SQLException("timeout value was negative");
-    }
-    try {
-      odps.projects().exists("123");
-      return true;
-    } catch (OdpsException e) {
-      return false;
-    }
+    // connection validation is already done in constructor, always return true here
+    return true;
   }
 
   @Override
