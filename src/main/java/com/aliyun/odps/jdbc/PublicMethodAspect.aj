@@ -22,7 +22,7 @@ public aspect PublicMethodAspect {
     int lineNumber = getCurrentLineNumber(thisJoinPoint);
     String classname = getCurrentClassname(thisJoinPoint);
     String methodName = getCurrentMethodName(thisJoinPoint);
-    String args = getCurrentArguments(thisJoinPoint);
+    String args = getCurrentArguments(thisJoinPoint).replaceAll("accessKey=\\w+", "accessKey=***");
     String msg = String.format(
         "Enter: [line %d] [%s] [%s] [%s]", lineNumber, classname, methodName, args);
     logger.debug(msg);
