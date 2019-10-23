@@ -673,6 +673,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     connHandle.log.debug("It took me " + (end - begin) + " ms to run sql");
 
     // extract update count
+    /*
     String summaryText = null;
     String jsonSummary = null;
     try {
@@ -688,7 +689,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           StringEscapeUtils.unescapeJava(jsonSummary));
     } else {
       connHandle.log.warn("task summary is empty");
-    }
+    }*/
     connHandle.log.info("successfully updated " + updateCount + " records");
   }
 
