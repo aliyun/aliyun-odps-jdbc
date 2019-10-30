@@ -249,6 +249,9 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   // Commit on close
   @Override
   public void close() throws SQLException {
+    if (isClosed()) {
+      return;
+    }
 
     if (session != null && blocks > 0) {
       Long[] blockList = new Long[blocks];
