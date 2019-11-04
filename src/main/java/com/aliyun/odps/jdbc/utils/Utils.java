@@ -43,7 +43,10 @@ public class Utils {
   }
 
   public static boolean matchPattern(String s, String pattern) {
-    
+
+    pattern = pattern.toLowerCase();
+    s = s.toLowerCase();
+
     if (StringUtils.isNullOrEmpty(pattern)) {
       return true;
     }
