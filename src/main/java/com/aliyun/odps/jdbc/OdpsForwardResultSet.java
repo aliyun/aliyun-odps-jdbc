@@ -58,8 +58,16 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
+    this(stmt, meta, session, null);
+  }
+
+
+  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, TunnelRecordReader reader)
+      throws SQLException {
     super(stmt.getConnection(), stmt, meta);
-    sessionHandle = session;
+    this.reader = reader;
+    this.sessionHandle = session;
+
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();
     sessionMode = !StringUtils.isNullOrEmpty(sessionHandle.getTaskName());

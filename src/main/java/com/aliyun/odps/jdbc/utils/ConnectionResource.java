@@ -50,7 +50,7 @@ public class ConnectionResource {
   private static final String SESSION_NAME_URL_KEY = "sessionName";
   private static final String SESSION_TIMEOUT_URL_KEY = "sessionTimeout";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
-
+  private static final String LONG_POLLING_URL_KEY = "longPolling";
   /**
    * Keys to retrieve properties from info.
    *
@@ -68,7 +68,7 @@ public class ConnectionResource {
   public static final String SESSION_NAME_PROP_KEY = "session_name";
   public static final String SESSION_TIMEOUT_PROP_KEY = "session_timeout";
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
-
+  public static final String LONG_POLLING_PROP_KEY = "long_polling";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -88,6 +88,7 @@ public class ConnectionResource {
   private String sessionName;
   private Long sessionTimeout;
   private String majorVersion;
+  private boolean longPolling = false;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -160,6 +161,9 @@ public class ConnectionResource {
     majorVersion =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, MAJOR_VERSION_DEFAULT_VALUE, MAJOR_VERSION_PROP_KEY,
             MAJOR_VERSION_URL_KEY);
+    longPolling = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", LONG_POLLING_PROP_KEY, LONG_POLLING_URL_KEY)
+    );
   }
 
   @SuppressWarnings("deprecation")
@@ -235,6 +239,10 @@ public class ConnectionResource {
   public Long getSessionTimeout() { return sessionTimeout; }
 
   public String getMajorVersion() { return majorVersion; }
+
+  public boolean isLongPolling() {
+    return longPolling;
+  }
 
   @SuppressWarnings("rawtypes")
   private static String tryGetFirstNonNullValueByAltMapAndAltKey(List<Map> maps,

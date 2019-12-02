@@ -89,6 +89,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static final String MAJOR_VERSION = "odps.task.major.version";
 
   private boolean sessionMode = false;
+  private boolean longPolling = false;
   private OdpsSessionManager sessionManager = null;
 
 
@@ -144,6 +145,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.stmtHandles = new ArrayList<Statement>();
 
     this.majorVersion = connRes.getMajorVersion();
+    this.longPolling = connRes.isLongPolling();
 
     try {
       odps.projects().get().reload();
@@ -584,4 +586,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public OdpsSessionManager getSessionManager() { return sessionManager; }
 
   public boolean runningInSessionMode() { return sessionMode && sessionManager.attached(); }
+
+  public boolean isLongPollingSession() {
+    return longPolling;
+  }
 }
