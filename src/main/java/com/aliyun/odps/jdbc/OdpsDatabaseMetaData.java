@@ -873,8 +873,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     List<Object[]> rows = new ArrayList<Object[]>();
     
-    if (!tableNamePattern.trim().isEmpty() && !tableNamePattern.trim().equals("%")
-        && !tableNamePattern.trim().equals("*")) {
+    if (!tableNamePattern.trim().isEmpty() && !"%".equals(tableNamePattern.trim())
+        && !"*".equals(tableNamePattern.trim())) {
       try {
         Table table;
         if (StringUtils.isNullOrEmpty(schemaPattern)) {
@@ -883,13 +883,20 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
         }
         table.reload();
-        // Read column information from table schema
-        List<Column> columns = table.getSchema().getColumns();
+
+        // Read column & partition column information from table schema
+        List<Column> columns = new LinkedList<>();
+        columns.addAll(table.getSchema().getColumns());
+        columns.addAll(table.getSchema().getPartitionColumns());
         for (int i = 0; i < columns.size(); i++) {
           Column col = columns.get(i);
-          JdbcColumn jdbcCol =
-              new JdbcColumn(col.getName(), tableNamePattern, table.getProject(), col.getType(), col.getTypeInfo(),
-                  col.getComment(), i + 1);
+          JdbcColumn jdbcCol = new JdbcColumn(col.getName(),
+                                              tableNamePattern,
+                                              table.getProject(),
+                                              col.getType(),
+                                              col.getTypeInfo(),
+                                              col.getComment(),
+                                              i + 1);
           Object[] rowVals =
               {catalog, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
                   (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
@@ -1265,12 +1272,14 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern,
-      String columnNamePattern) throws SQLException {
+                                    String columnNamePattern) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public boolean generatedKeyAlwaysReturned() throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();

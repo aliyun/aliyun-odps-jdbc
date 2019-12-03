@@ -44,12 +44,12 @@ public class Utils {
 
   public static boolean matchPattern(String s, String pattern) {
 
-    pattern = pattern.toLowerCase();
-    s = s.toLowerCase();
-
     if (StringUtils.isNullOrEmpty(pattern)) {
       return true;
     }
+
+    pattern = pattern.toLowerCase();
+    s = s.toLowerCase();
 
     if (pattern.contains("%") || pattern.contains("_")) {
       // (?<!a)  looks 1 char behind and ensure not equal
