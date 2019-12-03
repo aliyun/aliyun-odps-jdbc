@@ -6,7 +6,7 @@
 
 ## Chinese Docs
 
-[使用 odps-jdbc 接入 ODPS，不再从零开始](https://yq.aliyun.com/articles/5588)
+[MaxCompute JDBC介绍](https://help.aliyun.com/document_detail/143408.html)
 
 ## Installation
 
