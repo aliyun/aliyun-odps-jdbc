@@ -15,9 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.Project;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
-import java.io.IOException;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -36,7 +34,6 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import org.slf4j.Logger;
 import java.util.*;
 import java.util.concurrent.Executor;
 
@@ -48,7 +45,6 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
-import com.aliyun.odps.jdbc.utils.LoggerFactory;
 
 import com.aliyun.odps.jdbc.utils.Utils;
 
@@ -88,7 +84,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String majorVersion;
   private static final String MAJOR_VERSION = "odps.task.major.version";
 
-  private boolean sessionMode = false;
+  private boolean interactiveMode = false;
   private boolean longPolling = false;
   private OdpsSessionManager sessionManager = null;
 
@@ -104,9 +100,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
-    String sessionName = connRes.getSessionName();
-    Long sessionTimeout = connRes.getSessionTimeout();
+    String serviceName = connRes.getInteractiveServiceName();
+    Long interactiveTimeout = connRes.getInteractiveTimeout();
 
+    this.interactiveMode = connRes.isInteractiveMode();
     int lifecycle;
     try {
       lifecycle = Integer.parseInt(connRes.getLifecycle());
@@ -150,16 +147,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     try {
       odps.projects().get().reload();
 
-      if (!StringUtils.isNullOrEmpty(sessionName)) {
-        sessionMode = true;
-
-        sessionManager = new OdpsSessionManager(sessionName, odps, log);
+      if (interactiveMode) {
+        sessionManager = new OdpsSessionManager(serviceName, odps, log);
 
         // only support major version when attaching a session
         Map<String, String> hints = new HashMap<>();
         hints.put(MAJOR_VERSION, majorVersion);
 
-        sessionManager.attachSession(hints, sessionTimeout);
+        sessionManager.attachSession(hints, interactiveTimeout);
       }
       String msg = "Connect to odps project %s successfully";
       log.debug(String.format(msg, odps.getDefaultProject()));
@@ -298,7 +293,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
           stmt.close();
         }
       }
-      if (runningInSessionMode()) {
+      if (runningInInteractiveMode()) {
         try {
           sessionManager.detachSession();
         } catch (OdpsException e) {
@@ -439,7 +434,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         isResultSetScrollable = false;
         break;
       case ResultSet.TYPE_SCROLL_INSENSITIVE:
-        if (runningInSessionMode()) {
+        if (runningInInteractiveMode()) {
           throw new SQLFeatureNotSupportedException(
               "only support statement with ResultSet type: TYPE_FORWARD_ONLY in session mode");
         }
@@ -585,7 +580,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public OdpsSessionManager getSessionManager() { return sessionManager; }
 
-  public boolean runningInSessionMode() { return sessionMode && sessionManager.attached(); }
+  public boolean runningInInteractiveMode() { return interactiveMode && sessionManager.attached(); }
 
   public boolean isLongPollingSession() {
     return longPolling;

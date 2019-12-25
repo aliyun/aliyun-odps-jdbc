@@ -119,7 +119,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     try {
-      if (connHandle.runningInSessionMode()) {
+      if (connHandle.runningInInteractiveMode()) {
         // TODO cancel session query
         Session session = connHandle.getSessionManager().getSessionInstance();
         session.setInformation("cancel", "*");
@@ -377,7 +377,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    connHandle.log.warn("OdpsDriver do not support query timeout, setQueryTimeout: " + seconds);
   }
 
   @Override
@@ -396,7 +396,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           tunnel.setEndpoint(te);
         }
         try {
-          if (!connHandle.runningInSessionMode()) {
+          if (!connHandle.runningInInteractiveMode()) {
             session =
                 tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
                     executeInstance.getId());
@@ -413,7 +413,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           }
         } catch (TunnelException e1) {
           // do not retry when using session
-          if (!connHandle.runningInSessionMode()) {
+          if (!connHandle.runningInInteractiveMode()) {
             connHandle.log.info("create download session failed: " + e1.getMessage());
             connHandle.log.info("fallback to limit mode");
             session =
@@ -730,7 +730,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
       }
 
-      if (!connHandle.runningInSessionMode()) {
+      if (!connHandle.runningInInteractiveMode()) {
         runSQLOffline(sql, odps, settings);
       } else if (connHandle.isLongPollingSession()) {
         runSQLInSessionLongPollingMode(sql, settings);

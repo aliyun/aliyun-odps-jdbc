@@ -28,13 +28,6 @@ public class OdpsSessionManager {
     return session;
   }
 
-  public String getSessionId() {
-    if (attached()) {
-      return session.getInstance().getId();
-    }
-    return null;
-  }
-
   public void attachSession(Map<String, String> hints, Long timeout) throws OdpsException {
     log.debug("attachSession:" + sessionName);
     try {
