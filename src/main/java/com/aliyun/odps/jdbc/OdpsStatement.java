@@ -677,7 +677,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     SessionQueryResult subqueryResult =  session.run(sql, settings);
     Iterator<Session.SubQueryResponse> responseIterator = subqueryResult.getResultIterator();
 
-    connHandle.log.debug("Run SQL: " + sql);
+    connHandle.log.info("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
     connHandle.log.info(session.getLogView());
     warningChain = new SQLWarning(session.getLogView());
 
