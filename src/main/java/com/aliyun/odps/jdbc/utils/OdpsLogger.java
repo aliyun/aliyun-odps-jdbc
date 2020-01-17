@@ -17,9 +17,9 @@ import java.util.logging.Logger;
 import com.aliyun.odps.jdbc.OdpsDriver;
 
 public class OdpsLogger {
-  private static final String DEFAULT_OUTPUT_DIR = "/tmp";
-  private static Map<String, FileHandler> pathToFileHandler = new ConcurrentHashMap<>();
 
+  private static final String DEFAULT_OUTPUT_DIR = "/tmp/odps_jdbc";
+  private static Map<String, FileHandler> pathToFileHandler = new ConcurrentHashMap<>();
 
   private Logger odpsLogger;
   private org.slf4j.Logger sl4jLogger;
@@ -27,29 +27,33 @@ public class OdpsLogger {
   /**
    * Constructor
    *
-   * @param name For both odps and sl4j logger, name of the logger
-   * @param outputPath For odps logger, output path for file handler
-   * @param toConsole For odps logger, output to console or not
+   * @param name           For both odps and sl4j logger, name of the logger
+   * @param outputDir      For odps logger, output directory for file handler
+   * @param toConsole      For odps logger, output to console or not
    * @param configFilePath For sl4j logger, config file path
    */
-  public OdpsLogger(String name, String outputPath, boolean toConsole, String configFilePath) {
+  public OdpsLogger(String name, String outputDir, boolean toConsole, String configFilePath) {
 
     Objects.requireNonNull(name);
 
     // Init odps logger
-    if (outputPath == null) {
-      outputPath = getDefaultOutputPath();
+    if (outputDir == null) {
+      outputDir = getDefaultOutputDir();
     }
     odpsLogger = Logger.getLogger(name);
     try {
       FileHandler fileHandler;
-      if (pathToFileHandler.containsKey(outputPath)) {
-        fileHandler = pathToFileHandler.get(outputPath);
+      if (pathToFileHandler.containsKey(outputDir)) {
+        fileHandler = pathToFileHandler.get(outputDir);
       } else {
-        fileHandler = new FileHandler(outputPath, true);
+
+        String outputPattern = Paths.get(outputDir, "odps_jdbc.%g.log").toString();
+        fileHandler = new FileHandler(outputPattern,
+                                      100 * 1024 * 1024,
+                                      50,
+                                      true);
         fileHandler.setFormatter(new OdpsFormatter());
-        fileHandler.setLevel(Level.ALL);
-        pathToFileHandler.put(outputPath, fileHandler);
+        fileHandler.setLevel(Level.WARNING);
       }
       odpsLogger.addHandler(fileHandler);
     } catch (IOException e) {
@@ -58,10 +62,10 @@ public class OdpsLogger {
     if (toConsole) {
       Handler consoleHandler = new ConsoleHandler();
       consoleHandler.setFormatter(new OdpsFormatter());
-      consoleHandler.setLevel(Level.ALL);
+      consoleHandler.setLevel(Level.WARNING);
       odpsLogger.addHandler(consoleHandler);
     }
-    odpsLogger.setLevel(Level.ALL);
+    odpsLogger.setLevel(Level.WARNING);
 
     // Init sl4j logger
     sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
@@ -103,14 +107,14 @@ public class OdpsLogger {
    *
    * @return default output path
    */
-  public static String getDefaultOutputPath() {
-    String outputPath;
+  public static String getDefaultOutputDir() {
+    String outputDir;
     try {
-      outputPath = new File(OdpsDriver.class.getProtectionDomain().getCodeSource()
-          .getLocation().toURI()).getParent();
+      outputDir = new File(OdpsDriver.class.getProtectionDomain().getCodeSource()
+                               .getLocation().toURI()).getParent();
     } catch (Exception e) {
-      outputPath = DEFAULT_OUTPUT_DIR;
+      outputDir = DEFAULT_OUTPUT_DIR;
     }
-    return Paths.get(outputPath, "jdbc.log").toString();
+    return outputDir;
   }
 }
