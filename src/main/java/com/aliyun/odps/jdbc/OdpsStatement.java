@@ -377,7 +377,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
-    connHandle.log.warn("OdpsDriver do not support query timeout, setQueryTimeout: " + seconds);
+    connHandle.log.debug("OdpsDriver do not support query timeout, setQueryTimeout: " + seconds);
   }
 
   @Override
@@ -392,7 +392,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
         String te = connHandle.getTunnelEndpoint();
         if (!StringUtils.isNullOrEmpty(te)) {
-          connHandle.log.info("using tunnel endpoint: " + te);
+          connHandle.log.debug("using tunnel endpoint: " + te);
           tunnel.setEndpoint(te);
         }
         try {
@@ -414,18 +414,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         } catch (TunnelException e1) {
           // do not retry when using session
           if (!connHandle.runningInInteractiveMode()) {
-            connHandle.log.info("create download session failed: " + e1.getMessage());
-            connHandle.log.info("fallback to limit mode");
+            connHandle.log.error("create download session failed: " + e1.getMessage());
+            connHandle.log.error("fallback to limit mode");
             session =
                 tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
                     executeInstance.getId(), true);
           } else {
-            connHandle.log.info("create download session for session failed: " + e1.getMessage());
+            connHandle.log.error("create download session for session failed: " + e1.getMessage());
             throw e1;
           }
         }
 
-        connHandle.log.info("create download session id=" + session.getId());
+        connHandle.log.debug("create download session id=" + session.getId());
       } catch (TunnelException e) {
         throw new SQLException("create download session failed: instance id="
             + executeInstance.getId(), e);
@@ -568,7 +568,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
     String logViewUrl = logView.generateLogView(executeInstance, 7 * 24);
     connHandle.log.debug("Run SQL: " + sql);
-    connHandle.log.info(logViewUrl);
+    connHandle.log.debug(logViewUrl);
     warningChain = new SQLWarning(logViewUrl);
 
     // Poll the task status within the instance
@@ -639,7 +639,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     } else {
       connHandle.log.warn("task summary is empty");
     }
-    connHandle.log.info("successfully updated " + updateCount + " records");
+    connHandle.log.debug("successfully updated " + updateCount + " records");
   }
 
   private void runSQLInSessionLongPollingMode(String sql, Map<String,String> settings) throws SQLException, OdpsException {
@@ -662,7 +662,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     connHandle.log.debug("Run SQL: " + sql + ", subQueryId:" + subQueryId);
-    connHandle.log.info(session.getLogView());
+    connHandle.log.debug(session.getLogView());
     warningChain = new SQLWarning(session.getLogView());
 
     long end = System.currentTimeMillis();
@@ -677,8 +677,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     SessionQueryResult subqueryResult =  session.run(sql, settings);
     Iterator<Session.SubQueryResponse> responseIterator = subqueryResult.getResultIterator();
 
-    connHandle.log.info("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
-    connHandle.log.info(session.getLogView());
+    connHandle.log.debug("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
+    connHandle.log.debug(session.getLogView());
     warningChain = new SQLWarning(session.getLogView());
 
     Session.SubQueryResponse response = null;
@@ -694,7 +694,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         throw new SQLException("Fail to run query", response.result);
       } else if (response.status != OBJECT_STATUS_RUNNING) {
         // finished
-        connHandle.log.info("sql status: success");
+        connHandle.log.debug("sql status: success");
         break;
       } else {
         try {
