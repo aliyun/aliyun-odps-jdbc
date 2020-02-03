@@ -783,7 +783,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     long end = System.currentTimeMillis();
-    log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " Tables");
+    log.info("It took me " + (end - begin) + " ms to get " + rows.size() + " Tables");
 
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(
@@ -918,7 +918,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     long end = System.currentTimeMillis();
-    log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " columns");
+    log.info("It took me " + (end - begin) + " ms to get " + rows.size() + " columns");
 
     // Build result set meta data
     OdpsResultSetMetaData meta =
@@ -1258,7 +1258,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     long end = System.currentTimeMillis();
-    log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " functions");
+    log.info("It took me " + (end - begin) + " ms to get " + rows.size() + " functions");
 
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME",
