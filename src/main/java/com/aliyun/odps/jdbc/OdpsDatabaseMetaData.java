@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -756,15 +757,18 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
       try {
-        LinkedList<String> tables = new LinkedList<>();
-        for (Table t : conn.getOdps().tables()) {
+        LinkedList<Table> tables = new LinkedList<>();
+        Iterable<Table> it = conn.getOdps().tables().iterable(conn.getOdps().getDefaultProject(),
+                                                              null,
+                                                              true);
+        for (Table t : it) {
           String tableName = t.getName();
           if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
             if (!Utils.matchPattern(tableName, tableNamePattern)) {
               continue;
             }
           }
-          tables.add(tableName);
+          tables.add(t);
           if (tables.size() == 100) {
             convertTablesToRows(types, rows, tables);
           }
@@ -779,7 +783,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     long end = System.currentTimeMillis();
-    log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " Tables");
+    log.info("It took me " + (end - begin) + " ms to get " + rows.size() + " Tables");
 
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(
@@ -794,9 +798,9 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
-  private void convertTablesToRows(String[] types, List<Object[]> rows, LinkedList<String> tables)
+  private void convertTablesToRows(String[] types, List<Object[]> rows, LinkedList<Table> tables)
       throws OdpsException {
-    for (Table t : conn.getOdps().tables().loadTables(tables)) {
+    for (Table t : tables) {
       String tableType = t.isVirtualView() ? "VIEW" : "TABLE";
       if (types != null && types.length != 0) {
         if (!Arrays.asList(types).contains(tableType)) {
@@ -914,7 +918,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     long end = System.currentTimeMillis();
-    log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " columns");
+    log.info("It took me " + (end - begin) + " ms to get " + rows.size() + " columns");
 
     // Build result set meta data
     OdpsResultSetMetaData meta =
@@ -1254,7 +1258,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     long end = System.currentTimeMillis();
-    log.debug("It took me " + (end - begin) + " ms to get " + rows.size() + " functions");
+    log.info("It took me " + (end - begin) + " ms to get " + rows.size() + " functions");
 
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME",

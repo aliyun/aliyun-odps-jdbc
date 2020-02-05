@@ -121,7 +121,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     try {
       executeInstance.stop();
-      connHandle.log.debug("submit cancel to instance id=" + executeInstance.getId());
+      connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
     } catch (OdpsException e) {
       throw new SQLException(e);
     }
@@ -150,7 +150,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       resultSet = null;
     }
 
-    connHandle.log.debug("the statement has been closed");
+    connHandle.log.info("the statement has been closed");
 
     connHandle = null;
     executeInstance = null;
@@ -262,7 +262,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       int i = sql.toLowerCase().indexOf("set");
       String pairstring = sql.substring(i + 3);
       String[] pair = pairstring.split("=");
-      connHandle.log.debug("set sql task property: " + pair[0].trim() + "=" + pair[1].trim());
+      connHandle.log.info("set sql task property: " + pair[0].trim() + "=" + pair[1].trim());
       connHandle.getSqlTaskProperties().setProperty(pair[0].trim(), pair[1].trim());
       sqlTaskProperties.setProperty(pair[0].trim(), pair[1].trim());
       return true;
@@ -279,7 +279,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       String project = sql.substring(i + 3).trim();
       if (project.length() > 0) {
         connHandle.getOdps().setDefaultProject(project);
-        connHandle.log.debug("set project to " + project);
+        connHandle.log.info("set project to " + project);
       }
       return true;
     }
@@ -399,7 +399,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                            executeInstance.getId(), true);
         }
 
-        connHandle.log.info("create download session id=" + session.getId());
+        connHandle.log.info(String.format("create download session for instance %s, session id=%s",
+                                          executeInstance.getId(), session.getId()));
       } catch (TunnelException e) {
         throw new SQLException("create download session failed: instance id="
                                + executeInstance.getId(), e);
@@ -547,17 +548,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         settings.put(key, sqlTaskProperties.getProperty(key));
       }
       if (!sqlTaskProperties.isEmpty()) {
-        connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
+        connHandle.log.info("Enabled SQL task properties: " + sqlTaskProperties);
       }
 
+      connHandle.log.info("SQL: " + sql);
       executeInstance =  SQLTask.run(odps, odps.getDefaultProject(), sql, JDBC_SQL_TASK_NAME, settings, null);
+      connHandle.log.info("Instance ID: " + executeInstance.getId());
       LogView logView = new LogView(odps);
       if (connHandle.getLogviewHost() != null) {
         logView.setLogViewHost(connHandle.getLogviewHost());
       }
       String logViewUrl = logView.generateLogView(executeInstance, 7 * 24);
-      connHandle.log.debug("Run SQL: " + sql);
-      connHandle.log.info(logViewUrl);
+      connHandle.log.info("Logview: " + logViewUrl);
       warningChain = new SQLWarning(logViewUrl);
 
       // Poll the task status within the instance
@@ -586,7 +588,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         switch (taskstatus.getStatus()) {
           case SUCCESS:
             complete = true;
-            connHandle.log.debug("sql status: success");
+            connHandle.log.info("instance " + executeInstance.getId() + " sql status: success");
             break;
           case FAILED:
             try {
@@ -598,7 +600,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
               throw new SQLException("Fail to get task status", e);
             }
           case CANCELLED:
-            connHandle.log.info("execute instance cancelled");
+            connHandle.log.info("execute instance " + executeInstance.getId() + " cancelled");
             throw new SQLException("execute instance cancelled", "CANCELLED");
           case WAITING:
           case RUNNING:
@@ -611,7 +613,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       // 等待 instance 结束
       executeInstance.waitForSuccess(POLLING_INTERVAL);
       long end = System.currentTimeMillis();
-      connHandle.log.debug("It took me " + (end - begin) + " ms to run sql");
+      connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
 
       // extract update count
       Instance.TaskSummary taskSummary = null;

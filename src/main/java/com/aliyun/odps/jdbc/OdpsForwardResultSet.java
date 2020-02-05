@@ -108,7 +108,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     } catch (IOException e) {
       throw new SQLException(e);
     }
-    conn.log.debug("the result set has been closed");
+    conn.log.info("the result set has been closed");
   }
 
   @Override
@@ -137,14 +137,14 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         fetchedRows++;
         if (fetchedRows == totalRows) {
           long end = System.currentTimeMillis();
-          conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
+          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records");
         }
 
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
           long delta = reader.getTotalBytes() / 1024 - accumKBytes;
           long duration = System.currentTimeMillis() - accumTime;
-          conn.log.debug(String.format("fetched %d rows, %d KB, %.2f KB/s", ACCUM_FETCHED_ROWS,
+          conn.log.info(String.format("fetched %d rows, %d KB, %.2f KB/s", ACCUM_FETCHED_ROWS,
                                   delta, (float) delta / duration * 1000));
 
           accumKBytes = reader.getTotalBytes() / 1024;
@@ -170,7 +170,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     try {
       long count = totalRows - fetchedRows;
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
-      conn.log.debug(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
+      conn.log.info(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
       throw new SQLException(e);
     } catch (TunnelException e) {

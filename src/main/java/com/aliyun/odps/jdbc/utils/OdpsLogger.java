@@ -48,7 +48,7 @@ public class OdpsLogger {
       } else {
         fileHandler = new FileHandler(outputPath, true);
         fileHandler.setFormatter(new OdpsFormatter());
-        fileHandler.setLevel(Level.ALL);
+        fileHandler.setLevel(Level.INFO);
         pathToFileHandler.put(outputPath, fileHandler);
       }
       odpsLogger.addHandler(fileHandler);
@@ -58,10 +58,10 @@ public class OdpsLogger {
     if (toConsole) {
       Handler consoleHandler = new ConsoleHandler();
       consoleHandler.setFormatter(new OdpsFormatter());
-      consoleHandler.setLevel(Level.ALL);
+      consoleHandler.setLevel(Level.INFO);
       odpsLogger.addHandler(consoleHandler);
     }
-    odpsLogger.setLevel(Level.ALL);
+    odpsLogger.setLevel(Level.INFO);
 
     // Init sl4j logger
     sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
