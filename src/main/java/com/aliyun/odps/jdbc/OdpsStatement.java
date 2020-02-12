@@ -428,10 +428,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.log.debug("create download session id=" + session.getId());
       } catch (TunnelException e) {
         throw new SQLException("create download session failed: instance id="
-            + executeInstance.getId(), e);
+            + executeInstance.getId() + ", Error:" + e.getMessage(), e);
       } catch (IOException e) {
         throw new SQLException("create download session failed: instance id="
-            + executeInstance.getId(), e);
+            + executeInstance.getId() + ", Error:" + e.getMessage(), e);
       }
 
       // Read schema
@@ -677,7 +677,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     SessionQueryResult subqueryResult =  session.run(sql, settings);
     Iterator<Session.SubQueryResponse> responseIterator = subqueryResult.getResultIterator();
 
-    connHandle.log.debug("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
+    connHandle.log.info("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
     connHandle.log.debug(session.getLogView());
     warningChain = new SQLWarning(session.getLogView());
 
@@ -706,7 +706,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     long end = System.currentTimeMillis();
-    connHandle.log.debug("It took me " + (end - begin) + " ms to run sql");
+    connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
   }
 
   private void runSQL(String sql) throws SQLException {
