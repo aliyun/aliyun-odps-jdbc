@@ -382,7 +382,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet getResultSet() throws SQLException {
-
+    long startTime = System.currentTimeMillis();
     if (resultSet == null || resultSet.isClosed()) {
       TunnelRecordReader reader = null;
       // Create a download session through tunnel
@@ -445,7 +445,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
       resultSet =
           isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
-                                : new OdpsForwardResultSet(this, meta, session, reader);
+                                : new OdpsForwardResultSet(this, meta, session, reader, startTime);
     }
 
     return resultSet;
@@ -622,7 +622,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // 等待 instance 结束
     executeInstance.waitForSuccess(POLLING_INTERVAL);
     long end = System.currentTimeMillis();
-    connHandle.log.debug("It took me " + (end - begin) + " ms to run sql");
+    connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
 
     // extract update count
     Instance.TaskSummary taskSummary = null;
@@ -661,12 +661,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       subQueryId = -1;
     }
 
-    connHandle.log.debug("Run SQL: " + sql + ", subQueryId:" + subQueryId);
-    connHandle.log.debug(session.getLogView());
+    connHandle.log.info("Run SQL: " + sql + ", subQueryId:" + subQueryId);
+    connHandle.log.info(session.getLogView());
     warningChain = new SQLWarning(session.getLogView());
 
     long end = System.currentTimeMillis();
-    connHandle.log.debug("It took me " + (end - begin) + " ms to submit sql");
+    connHandle.log.info("It took me " + (end - begin) + " ms to submit sql");
   }
 
   private void runSQLInSession(String sql, Map<String,String> settings) throws SQLException, OdpsException {
@@ -678,7 +678,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Iterator<Session.SubQueryResponse> responseIterator = subqueryResult.getResultIterator();
 
     connHandle.log.info("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
-    connHandle.log.debug(session.getLogView());
+    connHandle.log.info(session.getLogView());
     warningChain = new SQLWarning(session.getLogView());
 
     Session.SubQueryResponse response = null;

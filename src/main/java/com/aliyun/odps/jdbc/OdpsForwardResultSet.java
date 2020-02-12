@@ -58,11 +58,11 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
-    this(stmt, meta, session, null);
+    this(stmt, meta, session, null, System.currentTimeMillis());
   }
 
 
-  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, TunnelRecordReader reader)
+  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, TunnelRecordReader reader, long startTime)
       throws SQLException {
     super(stmt.getConnection(), stmt, meta);
     this.reader = reader;
@@ -82,7 +82,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     } else {
       totalRows = recordCount;
     }
-    startTime = System.currentTimeMillis();
+    this.startTime = startTime;
   }
 
   protected void checkClosed() throws SQLException {
@@ -145,7 +145,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (reuseRecord == null) {
           // this means the end of stream
           long end = System.currentTimeMillis();
-          conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
+          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records, count:+" + fetchedRows);
           return false;
         }
         int columns = reuseRecord.getColumnCount();
