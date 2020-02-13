@@ -145,7 +145,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (reuseRecord == null) {
           // this means the end of stream
           long end = System.currentTimeMillis();
-          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records, count:+" + fetchedRows);
+          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records, count:" + fetchedRows);
           return false;
         }
         int columns = reuseRecord.getColumnCount();

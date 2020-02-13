@@ -29,7 +29,7 @@ public class OdpsSessionManager {
   }
 
   public void attachSession(Map<String, String> hints, Long timeout) throws OdpsException {
-    log.debug("attachSession:" + sessionName);
+    log.info("attachSession:" + sessionName);
     try {
       session = Session.attach(odps, sessionName, hints, timeout, OdpsStatement.getDefaultTaskName());
       if (session == null || !session.isStarted()) {
@@ -37,6 +37,7 @@ public class OdpsSessionManager {
       }
       if (!StringUtils.isNullOrEmpty(session.getStartSessionMessage())) {
         log.info(session.getStartSessionMessage());
+        log.info("attachSession success:" + sessionName + ",id:" + session.getInstance().getId());
       }
     } catch (OdpsException e) {
       log.error("attachSession failed:" + e.toString());
@@ -45,9 +46,9 @@ public class OdpsSessionManager {
   }
 
   public void detachSession() throws OdpsException {
-    log.debug("detachSession:" + sessionName);
     if (attached()) {
       try {
+        log.info("detachSession:" + sessionName + ", id:" + session.getInstance().getId());
         session.stop();
       } catch (OdpsException e) {
         log.error("detachSession failed:" + e.toString());
