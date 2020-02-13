@@ -29,7 +29,6 @@ import java.util.*;
 import com.aliyun.odps.*;
 import com.aliyun.odps.data.SessionQueryResult;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
-import com.sun.tools.javac.util.Pair;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
@@ -177,11 +176,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     String query = "";
     String[] queries = sql.split(";");
     for (String s : queries) {
-      Pair<String, String> property = parseSetClause(s);
-      if (property == null) {
-        query += s;
+      if (s.matches("(?i)^(\\s*)(SET)(\\s+)(.*)=(.*);?(\\s*)$")) {
+        if (s.contains(";")) {
+          s = s.replace(';', ' ');
+        }
+        int i = s.toLowerCase().indexOf("set");
+        String pairstring = s.substring(i + 3);
+        String[] pair = pairstring.split("=");
+        connHandle.log.debug("set session property: " + pair[0].trim() + "=" + pair[1].trim());
+        properties.put(pair[0].trim(), pair[1].trim());
       } else {
-        properties.put(property.fst, property.snd);
+        query += s;
       }
     }
     if (StringUtils.isNullOrEmpty(query)) {
@@ -283,21 +288,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException(e);
     }
     return false;
-  }
-
-  private Pair<String, String> parseSetClause(String sql) {
-    Pair<String, String> property = null;
-    if (sql.matches("(?i)^(\\s*)(SET)(\\s+)(.*)=(.*);?(\\s*)$")) {
-      if (sql.contains(";")) {
-        sql = sql.replace(';', ' ');
-      }
-      int i = sql.toLowerCase().indexOf("set");
-      String pairstring = sql.substring(i + 3);
-      String[] pair = pairstring.split("=");
-      connHandle.log.debug("set session property: " + pair[0].trim() + "=" + pair[1].trim());
-      property = new Pair<>(pair[0].trim(), pair[1].trim());
-    }
-    return property;
   }
 
   private void processSetClause(Properties properties) {
@@ -761,7 +751,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
       if (!settings.isEmpty()) {
-        connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
+        connHandle.log.info("Enabled SQL task properties: " + settings);
       }
 
       if (!connHandle.runningInInteractiveMode()) {
