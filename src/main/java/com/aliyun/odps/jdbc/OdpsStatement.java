@@ -29,6 +29,7 @@ import java.util.*;
 import com.aliyun.odps.*;
 import com.aliyun.odps.data.SessionQueryResult;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.sun.tools.javac.util.Pair;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
@@ -172,22 +173,46 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
+  private String preCheckQuery(String sql, Properties properties) {
+    String query = "";
+    String[] queries = sql.split(";");
+    for (String s : queries) {
+      Pair<String, String> property = parseSetClause(s);
+      if (property == null) {
+        query += s;
+      } else {
+        properties.put(property.fst, property.snd);
+      }
+    }
+    if (StringUtils.isNullOrEmpty(query)) {
+      // just set property
+      processSetClause(properties);
+    }
+    return query;
+  }
+
   @Override
   public synchronized ResultSet executeQuery(String sql) throws SQLException {
-    
+    Properties properties = new Properties();
+
+    String query = preCheckQuery(sql, properties);
+
     checkClosed();
     beforeExecute();
-    runSQL(sql);
+    runSQL(query, properties);
 
     return updateCount < 0 ? getResultSet() : EMPTY_RESULT_SET;
   }
 
   @Override
   public synchronized int executeUpdate(String sql) throws SQLException {
-    
+    Properties properties = new Properties();
+
+    String query = preCheckQuery(sql, properties);
+
     checkClosed();
     beforeExecute();
-    runSQL(sql);
+    runSQL(query, properties);
 
     return updateCount >= 0 ? updateCount : 0;
   }
@@ -215,17 +240,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public boolean execute(String sql) throws SQLException {
     // short cut for SET clause
-    if (processSetClause(sql)) {
-      return false;
-    }
+    Properties properties = new Properties();
+
+    String query = preCheckQuery(sql, properties);
     
-    if (processUseClause(sql)) {
+    if (processUseClause(query)) {
       return false;
     }
 
     checkClosed();
     beforeExecute();
-    runSQL(sql);
+    runSQL(query, properties);
 
     return updateCount < 0;
   }
@@ -260,7 +285,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return false;
   }
 
-  private boolean processSetClause(String sql) {
+  private Pair<String, String> parseSetClause(String sql) {
+    Pair<String, String> property = null;
     if (sql.matches("(?i)^(\\s*)(SET)(\\s+)(.*)=(.*);?(\\s*)$")) {
       if (sql.contains(";")) {
         sql = sql.replace(';', ' ');
@@ -268,12 +294,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       int i = sql.toLowerCase().indexOf("set");
       String pairstring = sql.substring(i + 3);
       String[] pair = pairstring.split("=");
-      connHandle.log.debug("set sql task property: " + pair[0].trim() + "=" + pair[1].trim());
-      connHandle.getSqlTaskProperties().setProperty(pair[0].trim(), pair[1].trim());
-      sqlTaskProperties.setProperty(pair[0].trim(), pair[1].trim());
-      return true;
+      connHandle.log.debug("set session property: " + pair[0].trim() + "=" + pair[1].trim());
+      property = new Pair<>(pair[0].trim(), pair[1].trim());
     }
-    return false;
+    return property;
+  }
+
+  private void processSetClause(Properties properties) {
+    for (String key : properties.stringPropertyNames()) {
+      connHandle.log.debug("set sql task property: " + key + "=" + properties.getProperty(key));
+      connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
+      sqlTaskProperties.setProperty(key, properties.getProperty(key));
+    }
   }
   
   private boolean processUseClause(String sql) {
@@ -709,7 +741,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
   }
 
-  private void runSQL(String sql) throws SQLException {
+  private void runSQL(String sql, Properties properties) throws SQLException {
     try {
 
       // If the client forget to end with a semi-colon, append it.
@@ -717,16 +749,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         sql += ";";
       }
 
-      long begin = System.currentTimeMillis();
-
       Odps odps = connHandle.getOdps();
 
       Map<String,String> settings = new HashMap<>();
-
       for (String key : sqlTaskProperties.stringPropertyNames()) {
         settings.put(key, sqlTaskProperties.getProperty(key));
       }
-      if (!sqlTaskProperties.isEmpty()) {
+      if (properties != null && !properties.isEmpty()) {
+        for (String key : properties.stringPropertyNames()) {
+          settings.put(key, properties.getProperty(key));
+        }
+      }
+      if (!settings.isEmpty()) {
         connHandle.log.debug("Enabled SQL task properties: " + sqlTaskProperties);
       }
 

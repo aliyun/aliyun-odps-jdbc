@@ -4,47 +4,21 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.aliyun.odps</groupId>
     <artifactId>odps-jdbc</artifactId>
-    <version>3.0.3</version>
+    <version>3.0.5-session-SNAPSHOT</version>
     <name>odps-jdbc</name>
     <description>Aliyun ODPS JDBC driver</description>
     <url>http://odps.aliyun.com</url>
-
-    <organization>
-        <name>Alibaba Cloud Computing</name>
-        <url>http://www.aliyun.com</url>
-    </organization>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
     <parent>
-      <groupId>org.sonatype.oss</groupId>
-      <artifactId>oss-parent</artifactId>
-      <version>7</version>
+        <groupId>com.taobao</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.3</version>
     </parent>
-
-    <scm>
-        <connection>scm:git:http://github.com/aliyun/aliyun-odps-jdbc.git</connection>
-        <developerConnection>scm:git:git@github.com:aliyun/aliyun-odps-jdbc.git</developerConnection>
-        <url>http://github.com/aliyun/aliyun-odps-jdbc</url>
-    </scm>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
+    <repositories>
         <repository>
-            <id>nexus-releases</id>
-            <name>Nexus Release Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>alibaba-repo</id>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/repository</url>
         </repository>
-    </distributionManagement>
-
+    </repositories>
     <properties>
         <sdk.version>0.34.0-SNAPSHOT</sdk.version>
         <junit.version>4.11</junit.version>
@@ -152,20 +126,6 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-	        </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
