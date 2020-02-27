@@ -20,6 +20,8 @@ public class OdpsLogger {
   private static final String DEFAULT_OUTPUT_DIR = "/tmp";
   private static Map<String, FileHandler> pathToFileHandler = new ConcurrentHashMap<>();
 
+
+  private Logger odpsLogger;
   private org.slf4j.Logger sl4jLogger;
 
   /**
@@ -31,12 +33,14 @@ public class OdpsLogger {
    * @param configFilePath For sl4j logger, config file path
    */
   public OdpsLogger(String name, String outputPath, boolean toConsole, String configFilePath) {
+
     Objects.requireNonNull(name);
 
     // Init odps logger
     if (outputPath == null) {
       outputPath = getDefaultOutputPath();
     }
+    odpsLogger = Logger.getLogger(name);
     try {
       FileHandler fileHandler;
       if (pathToFileHandler.containsKey(outputPath)) {
@@ -47,6 +51,7 @@ public class OdpsLogger {
         fileHandler.setLevel(Level.ALL);
         pathToFileHandler.put(outputPath, fileHandler);
       }
+      odpsLogger.addHandler(fileHandler);
     } catch (IOException e) {
       // ignore
     }
@@ -54,24 +59,31 @@ public class OdpsLogger {
       Handler consoleHandler = new ConsoleHandler();
       consoleHandler.setFormatter(new OdpsFormatter());
       consoleHandler.setLevel(Level.ALL);
+      odpsLogger.addHandler(consoleHandler);
     }
+    odpsLogger.setLevel(Level.ALL);
+
     // Init sl4j logger
     sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
   }
 
   public synchronized void debug(String msg) {
+    odpsLogger.fine(msg);
     sl4jLogger.debug(msg);
   }
 
   public synchronized void info(String msg) {
+    odpsLogger.info(msg);
     sl4jLogger.info(msg);
   }
 
   public synchronized void warn(String msg) {
+    odpsLogger.warning(msg);
     sl4jLogger.warn(msg);
   }
 
   public synchronized void error(String msg) {
+    odpsLogger.severe(msg);
     sl4jLogger.error(msg);
   }
 
@@ -79,6 +91,9 @@ public class OdpsLogger {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
+
+    odpsLogger.severe(msg);
+    odpsLogger.severe(sw.toString());
     sl4jLogger.error(msg, e);
   }
 
