@@ -53,6 +53,7 @@ public class ConnectionResource {
   private static final String INTERACTIVE_TIMEOUT_URL_KEY = "interactiveTimeout";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
   private static final String LONG_POLLING_URL_KEY = "longPolling";
+  private static final String ENABLE_ODPS_LOGGER_URL_KEY = "enableOdpsLogger";
   /**
    * Keys to retrieve properties from info.
    *
@@ -72,6 +73,7 @@ public class ConnectionResource {
   public static final String INTERACTIVE_TIMEOUT_PROP_KEY = "interactive_timeout";
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
   public static final String LONG_POLLING_PROP_KEY = "long_polling";
+  public static final String ENABLE_ODPS_LOGGER_PROP_KEY = "enable_odps_logger";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -93,6 +95,7 @@ public class ConnectionResource {
   private Long interactiveTimeout;
   private String majorVersion;
   private boolean longPolling = false;
+  private boolean enableOdpsLogger = false;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -170,6 +173,9 @@ public class ConnectionResource {
             MAJOR_VERSION_URL_KEY);
     longPolling = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", LONG_POLLING_PROP_KEY, LONG_POLLING_URL_KEY)
+    );
+    enableOdpsLogger = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
     );
   }
 
@@ -249,6 +255,10 @@ public class ConnectionResource {
 
   public boolean isLongPolling() {
     return longPolling;
+  }
+
+  public boolean isEnableOdpsLogger() {
+    return enableOdpsLogger;
   }
 
   @SuppressWarnings("rawtypes")

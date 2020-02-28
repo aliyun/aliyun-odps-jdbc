@@ -29,7 +29,7 @@ public class OdpsSessionManager {
   }
 
   public void attachSession(Map<String, String> hints, Long timeout) throws OdpsException {
-    log.info("attachSession:" + sessionName);
+    log.info("attachSession:" + sessionName + " with hint" + hints);
     try {
       session = Session.attach(odps, sessionName, hints, timeout, OdpsStatement.getDefaultTaskName());
       if (session == null || !session.isStarted()) {

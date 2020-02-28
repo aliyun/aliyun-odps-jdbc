@@ -37,7 +37,6 @@ import java.sql.Struct;
 import java.util.*;
 import java.util.concurrent.Executor;
 
-import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -83,9 +82,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String majorVersion;
   private static final String MAJOR_VERSION = "odps.task.major.version";
-
+  private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private boolean longPolling = false;
+  private Long interactiveTimeout = 30l;
   private OdpsSessionManager sessionManager = null;
 
 
@@ -101,9 +101,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
     String serviceName = connRes.getInteractiveServiceName();
-    Long interactiveTimeout = connRes.getInteractiveTimeout();
 
-    this.interactiveMode = connRes.isInteractiveMode();
     int lifecycle;
     try {
       lifecycle = Integer.parseInt(connRes.getLifecycle());
@@ -114,7 +112,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = UUID.randomUUID().toString().substring(24);
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(getClass().getName(), null, false, logConfFile);
+    log = new OdpsLogger(getClass().getName(), null, logConfFile, false, connRes.isEnableOdpsLogger());
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
@@ -143,18 +141,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     this.majorVersion = connRes.getMajorVersion();
     this.longPolling = connRes.isLongPolling();
+    this.interactiveTimeout = connRes.getInteractiveTimeout();
+    this.interactiveMode = connRes.isInteractiveMode();
 
     try {
       odps.projects().get().reload();
 
       if (interactiveMode) {
         sessionManager = new OdpsSessionManager(serviceName, odps, log);
-
-        // only support major version when attaching a session
-        Map<String, String> hints = new HashMap<>();
-        hints.put(MAJOR_VERSION, majorVersion);
-
-        sessionManager.attachSession(hints, interactiveTimeout);
+        attachSession();
       }
       String msg = "Connect to odps project %s successfully";
       log.debug(String.format(msg, odps.getDefaultProject()));
@@ -163,6 +158,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       log.error("Connect to odps failed:" + e.getMessage());
       throw new SQLException(e);
     }
+  }
+
+  private void attachSession() throws OdpsException {
+    // only support major version when attaching a session
+    Map<String, String> hints = new HashMap<>();
+    hints.put(MAJOR_VERSION, majorVersion);
+    for (String key : info.stringPropertyNames()) {
+      if (key.startsWith(ODPS_SETTING_PREFIX)) {
+        hints.put(key, info.getProperty(key));
+      }
+    }
+    sessionManager.attachSession(hints, interactiveTimeout);
   }
 
   @Override

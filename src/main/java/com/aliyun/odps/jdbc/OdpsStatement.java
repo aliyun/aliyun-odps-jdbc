@@ -123,10 +123,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         // TODO cancel session query
         Session session = connHandle.getSessionManager().getSessionInstance();
         session.setInformation("cancel", "*");
-        connHandle.log.debug("submit cancel query instance id=" + executeInstance.getId());
+        connHandle.log.info("submit cancel query instance id=" + executeInstance.getId());
       } else {
         executeInstance.stop();
-        connHandle.log.debug("submit cancel to instance id=" + executeInstance.getId());
+        connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
       }
     } catch (OdpsException e) {
       throw new SQLException(e);
@@ -183,7 +183,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         int i = s.toLowerCase().indexOf("set");
         String pairstring = s.substring(i + 3);
         String[] pair = pairstring.split("=");
-        connHandle.log.debug("set session property: " + pair[0].trim() + "=" + pair[1].trim());
+        connHandle.log.info("set session property: " + pair[0].trim() + "=" + pair[1].trim());
         properties.put(pair[0].trim(), pair[1].trim());
       } else {
         query += s;
@@ -292,7 +292,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private void processSetClause(Properties properties) {
     for (String key : properties.stringPropertyNames()) {
-      connHandle.log.debug("set sql task property: " + key + "=" + properties.getProperty(key));
+      connHandle.log.info("set sql task property: " + key + "=" + properties.getProperty(key));
       connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
       sqlTaskProperties.setProperty(key, properties.getProperty(key));
     }
@@ -307,7 +307,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       String project = sql.substring(i + 3).trim();
       if (project.length() > 0) {
         connHandle.getOdps().setDefaultProject(project);
-        connHandle.log.debug("set project to " + project);
+        connHandle.log.info("set project to " + project);
       }
       return true;
     }
@@ -414,7 +414,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
         String te = connHandle.getTunnelEndpoint();
         if (!StringUtils.isNullOrEmpty(te)) {
-          connHandle.log.debug("using tunnel endpoint: " + te);
+          connHandle.log.info("using tunnel endpoint: " + te);
           tunnel.setEndpoint(te);
         }
         try {
@@ -589,8 +589,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       logView.setLogViewHost(connHandle.getLogviewHost());
     }
     String logViewUrl = logView.generateLogView(executeInstance, 7 * 24);
-    connHandle.log.debug("Run SQL: " + sql);
-    connHandle.log.debug(logViewUrl);
+    connHandle.log.info("Run SQL: " + sql);
+    connHandle.log.info(logViewUrl);
     warningChain = new SQLWarning(logViewUrl);
 
     // Poll the task status within the instance
