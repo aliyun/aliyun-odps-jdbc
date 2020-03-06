@@ -148,8 +148,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       odps.projects().get().reload();
 
       if (interactiveMode) {
-        sessionManager = new OdpsSessionManager(serviceName, odps, log);
-        attachSession();
+        attachSession(serviceName);
       }
       String msg = "Connect to odps project %s successfully";
       log.debug(String.format(msg, odps.getDefaultProject()));
@@ -160,7 +159,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  private void attachSession() throws OdpsException {
+  public void attachSession(String serviceName) throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     hints.put(MAJOR_VERSION, majorVersion);
@@ -169,7 +168,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         hints.put(key, info.getProperty(key));
       }
     }
-    sessionManager.attachSession(hints, interactiveTimeout);
+    if (sessionManager == null) {
+      sessionManager = new OdpsSessionManager(serviceName, odps, log, hints, interactiveTimeout);
+    }
+    sessionManager.attachSession();
   }
 
   @Override
@@ -301,11 +303,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         }
       }
       if (runningInInteractiveMode()) {
-        try {
           sessionManager.detachSession();
-        } catch (OdpsException e) {
-          throw new SQLException(e.toString(), e);
-        }
       }
     }
     isClosed = true;

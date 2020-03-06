@@ -676,7 +676,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         subQueryId = subqueryResult.getSubQueryInfo().queryId;
       } else {
         connHandle.log.error("Submit query failed:" + subQueryInfo.result);
-        throw new SQLException("Submit query failed:" + subQueryInfo.result);
+        throw new OdpsException("Submit query failed:" + subQueryInfo.result);
       }
     } else {
       // will get latest query, never reach here by design
@@ -713,7 +713,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
       if (response.status == OBJECT_STATUS_FAILED) {
         connHandle.log.error("Fail to run query:" + response.result);
-        throw new SQLException("Fail to run query", response.result);
+        throw new OdpsException("Fail to run query", response.result);
       } else if (response.status != OBJECT_STATUS_RUNNING) {
         // finished
         connHandle.log.debug("sql status: success");
@@ -764,6 +764,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     } catch (OdpsException e) {
       connHandle.log.error("Fail to run sql: " + sql, e);
+      if (connHandle.runningInInteractiveMode()) {
+        // just reattach
+        connHandle.getSessionManager().tryReattach();
+      }
       throw new SQLException("Fail to run sql:" + sql, e);
     }
   }
