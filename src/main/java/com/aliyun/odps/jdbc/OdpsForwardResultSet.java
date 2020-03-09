@@ -155,9 +155,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         }
 
         fetchedRows++;
-        conn.log.info("Fetch record, current fetchedRows:"
-            + fetchedRows + ",reuseRecord:" + reuseRecord
-            + ",reader:" + reader + ",reader.getTotalBytes():" + reader.getTotalBytes());
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
           long delta = reader.getTotalBytes() / 1024 - accumKBytes;
