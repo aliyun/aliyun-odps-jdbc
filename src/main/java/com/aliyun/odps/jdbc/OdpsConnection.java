@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.Instance;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 
 import java.sql.Array;
@@ -37,6 +38,8 @@ import java.sql.Struct;
 import java.util.*;
 import java.util.concurrent.Executor;
 
+import com.aliyun.odps.tunnel.InstanceTunnel;
+import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -86,6 +89,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean interactiveMode = false;
   private boolean longPolling = false;
   private Long interactiveTimeout = 30l;
+  private InstanceTunnel instanceTunnel = null;
   private OdpsSessionManager sessionManager = null;
 
 
@@ -146,7 +150,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     try {
       odps.projects().get().reload();
-
+      instanceTunnel = new InstanceTunnel(odps);
+      if (!StringUtils.isNullOrEmpty(tunnelEndpoint)) {
+        log.info("using tunnel endpoint: " + tunnelEndpoint);
+        instanceTunnel.setEndpoint(tunnelEndpoint);
+      } else {
+        String routerEndpoint = odps.projects().get(odps.getDefaultProject()).getTunnelEndpoint();
+        log.info("using router tunnel endpoint: " + routerEndpoint);
+        instanceTunnel.setEndpoint(routerEndpoint);
+      }
       if (interactiveMode) {
         attachSession(serviceName);
       }
@@ -589,5 +601,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isLongPollingSession() {
     return longPolling;
+  }
+
+  public InstanceTunnel getInstanceTunnel() {
+    return instanceTunnel;
   }
 }
