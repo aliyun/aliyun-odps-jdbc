@@ -201,7 +201,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Properties properties = new Properties();
 
     String query = preCheckQuery(sql, properties);
-
+    if (StringUtils.isNullOrEmpty(query)) {
+      return EMPTY_RESULT_SET;
+    }
     checkClosed();
     beforeExecute();
     runSQL(query, properties);
@@ -211,10 +213,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public synchronized int executeUpdate(String sql) throws SQLException {
+
     Properties properties = new Properties();
 
     String query = preCheckQuery(sql, properties);
-
+    if (StringUtils.isNullOrEmpty(query)) {
+      return 0;
+    }
+    if (connHandle.runningInInteractiveMode()) {
+      throw new SQLFeatureNotSupportedException("executeUpdate() is not supported in session mode.");
+    }
     checkClosed();
     beforeExecute();
     runSQL(query, properties);
@@ -244,11 +252,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean execute(String sql) throws SQLException {
+
     // short cut for SET clause
     Properties properties = new Properties();
 
     String query = preCheckQuery(sql, properties);
-    
+    if (StringUtils.isNullOrEmpty(query)) {
+      return false;
+    }
     if (processUseClause(query)) {
       return false;
     }
