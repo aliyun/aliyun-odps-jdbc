@@ -50,7 +50,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
     Assert.assertEquals(false, resource.isInteractiveMode());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
-    Assert.assertEquals(Long.valueOf(11), resource.getInteractiveTimeout());
     Assert.assertEquals("default1", resource.getMajorVersion());
 
     String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
@@ -85,7 +84,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
-    Assert.assertEquals(Long.valueOf(11), resource.getInteractiveTimeout());
     Assert.assertEquals("default1", resource.getMajorVersion());
   }
 

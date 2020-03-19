@@ -27,8 +27,7 @@ import java.sql.Statement;
 import java.util.*;
 
 import com.aliyun.odps.*;
-import com.aliyun.odps.data.SessionQueryResult;
-import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.aliyun.odps.sqa.SQLExecutor;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
@@ -47,7 +46,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private Instance executeInstance = null;
   private ResultSet resultSet = null;
   private int updateCount = -1;
-  private int subQueryId = -1;
+
+  // result cache in session mode
+  com.aliyun.odps.data.ResultSet sessionResultSet = null;
 
   // when the update count is fetched by the client, set this true
   // Then the next call the getUpdateCount() will return -1, indicating there's no more results.
@@ -92,10 +93,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private SQLWarning warningChain = null;
 
-  // session query status
-  private static int OBJECT_STATUS_RUNNING = 2;
-  private static int OBJECT_STATUS_FAILED = 4;
-
   OdpsStatement(OdpsConnection conn) {
     this(conn, false);
   }
@@ -120,9 +117,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     try {
       if (connHandle.runningInInteractiveMode()) {
-        // TODO cancel session query
-        Session session = connHandle.getSessionManager().getSessionInstance();
-        session.setInformation("cancel", "*");
+        connHandle.getExecutor().cancel();
         connHandle.log.info("submit cancel query instance id=" + executeInstance.getId());
       } else {
         executeInstance.stop();
@@ -160,6 +155,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     connHandle = null;
     executeInstance = null;
+    sessionResultSet = null;
     isClosed = true;
   }
 
@@ -268,7 +264,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     beforeExecute();
     runSQL(query, properties);
 
-    return updateCount < 0;
+    return connHandle.runningInInteractiveMode() ? true : updateCount < 0;
   }
 
   /**
@@ -417,66 +413,61 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public ResultSet getResultSet() throws SQLException {
     long startTime = System.currentTimeMillis();
     if (resultSet == null || resultSet.isClosed()) {
-      TunnelRecordReader reader = null;
-      // Create a download session through tunnel
-      DownloadSession session;
-      try {
-        InstanceTunnel tunnel = connHandle.getInstanceTunnel();
-
+      if (!connHandle.runningInInteractiveMode()) {
+        // Create a download session through tunnel
+        DownloadSession session;
         try {
-          if (!connHandle.runningInInteractiveMode()) {
+          InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
+          String te = connHandle.getTunnelEndpoint();
+          if (!StringUtils.isNullOrEmpty(te)) {
+            connHandle.log.info("using tunnel endpoint: " + te);
+            tunnel.setEndpoint(te);
+          }
+
+          try {
             session =
                 tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
                     executeInstance.getId());
-          } else if (connHandle.isLongPollingSession()) {
-            session =
-                tunnel.createDirectDownloadSession(connHandle.getOdps().getDefaultProject(),
-                    executeInstance.getId(), getDefaultTaskName(), subQueryId);
-            // in long polling mode, we must open reader to get schema
-            reader = session.openRecordReader(0, 1);
-          } else {
-            session =
-                tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                    executeInstance.getId(), getDefaultTaskName(), subQueryId);
-          }
-        } catch (TunnelException e1) {
-          // do not retry when using session
-          if (!connHandle.runningInInteractiveMode()) {
+          } catch (TunnelException e1) {
             connHandle.log.error("create download session failed: " + e1.getMessage());
             connHandle.log.error("fallback to limit mode");
             session =
                 tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
                     executeInstance.getId(), true);
-          } else {
-            connHandle.log.error("create download session for session failed: " + e1.getMessage());
-            throw e1;
           }
+
+          connHandle.log.debug("create download session id=" + session.getId());
+        } catch (TunnelException e) {
+          connHandle.log.error("create download session for session failed: " + e.getMessage());
+          e.printStackTrace();
+          throw new SQLException("create download session failed: instance id="
+              + executeInstance.getId() + ", Error:" + e.getMessage(), e);
         }
 
-        connHandle.log.debug("create download session id=" + session.getId());
-      } catch (TunnelException e) {
-        throw new SQLException("create download session failed: instance id="
-            + executeInstance.getId() + ", Error:" + e.getMessage(), e);
-      } catch (IOException e) {
-        throw new SQLException("create download session failed: instance id="
-            + executeInstance.getId() + ", Error:" + e.getMessage(), e);
+        resultSet =
+            isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(session.getSchema().getColumns()), session)
+                : new OdpsForwardResultSet(this, getResultMeta(session.getSchema().getColumns()), session, startTime);
+      } else {
+        if (sessionResultSet != null) {
+          OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
+          resultSet = new OdpsSessionForwardResultSet(this, meta, sessionResultSet, startTime);
+          sessionResultSet = null;
+        }
       }
-
-      // Read schema
-      List<String> columnNames = new ArrayList<String>();
-      List<TypeInfo> columnSqlTypes = new ArrayList<TypeInfo>();
-      for (Column col : session.getSchema().getColumns()) {
-        columnNames.add(col.getName());
-        columnSqlTypes.add(col.getTypeInfo());
-      }
-      OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnSqlTypes);
-
-      resultSet =
-          isResultSetScrollable ? new OdpsScollResultSet(this, meta, session)
-                                : new OdpsForwardResultSet(this, meta, session, reader, startTime);
     }
 
     return resultSet;
+  }
+
+  private OdpsResultSetMetaData getResultMeta(List<Column> columns) {
+    // Read schema
+    List<String> columnNames = new ArrayList<String>();
+    List<TypeInfo> columnSqlTypes = new ArrayList<TypeInfo>();
+    for (Column col : columns) {
+      columnNames.add(col.getName());
+      columnSqlTypes.add(col.getTypeInfo());
+    }
+    return new OdpsResultSetMetaData(columnNames, columnSqlTypes);
   }
 
   @Override
@@ -571,6 +562,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     executeInstance = null;
+    sessionResultSet = null;
     isClosed = false;
     isCancelled = false;
     updateCount = -1;
@@ -670,68 +662,22 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     connHandle.log.debug("successfully updated " + updateCount + " records");
   }
 
-  private void runSQLInSessionLongPollingMode(String sql, Map<String,String> settings) throws SQLException, OdpsException {
-    long begin = System.currentTimeMillis();
-    Session session = connHandle.getSessionManager().getSessionInstance();
-    executeInstance = session.getInstance();
-
-    SessionQueryResult subqueryResult =  session.run(sql, settings);
-    Session.SubQueryInfo subQueryInfo = subqueryResult.getSubQueryInfo();
-    if (subQueryInfo != null) {
-      if (StringUtils.isNullOrEmpty(subQueryInfo.result)) {
-        subQueryId = subqueryResult.getSubQueryInfo().queryId;
-      } else {
-        connHandle.log.error("Submit query failed:" + subQueryInfo.result);
-        throw new OdpsException("Submit query failed:" + subQueryInfo.result);
-      }
-    } else {
-      // will get latest query, never reach here by design
-      subQueryId = -1;
-    }
-
-    connHandle.log.info("Run SQL: " + sql + ", subQueryId:" + subQueryId);
-    connHandle.log.info(session.getLogView());
-    warningChain = new SQLWarning(session.getLogView());
-
-    long end = System.currentTimeMillis();
-    connHandle.log.info("It took me " + (end - begin) + " ms to submit sql");
-  }
-
   private void runSQLInSession(String sql, Map<String,String> settings) throws SQLException, OdpsException {
     long begin = System.currentTimeMillis();
-    Session session = connHandle.getSessionManager().getSessionInstance();
-    executeInstance = session.getInstance();
-
-    SessionQueryResult subqueryResult =  session.run(sql, settings);
-    Iterator<Session.SubQueryResponse> responseIterator = subqueryResult.getResultIterator();
-
-    connHandle.log.info("Run SQL instance:" + session.getInstance().getId() + " SQL:" + sql);
-    connHandle.log.info(session.getLogView());
-    warningChain = new SQLWarning(session.getLogView());
-
-    Session.SubQueryResponse response = null;
-
-    // 等待 instance 结束
-    while (responseIterator.hasNext()) {
-      response = responseIterator.next();
-      if (!StringUtils.isNullOrEmpty(response.warnings)) {
-        connHandle.log.warn("Warnings: " + response.warnings);
-      }
-      if (response.status == OBJECT_STATUS_FAILED) {
-        connHandle.log.error("Fail to run query:" + response.result);
-        throw new OdpsException("Fail to run query", response.result);
-      } else if (response.status != OBJECT_STATUS_RUNNING) {
-        // finished
-        connHandle.log.debug("sql status: success");
-        break;
-      } else {
-        try {
-          Thread.sleep(50);
-        } catch (InterruptedException e) {
-          //ignore
-        }
-      }
+    SQLExecutor executor = connHandle.getExecutor();
+    executor.run(sql, settings);
+    String logView = executor.getLogView();
+    try {
+      sessionResultSet = executor.getResultSet();
+    } catch (IOException e) {
+      connHandle.log.error("Run SQL failed:" + e.getMessage());
+      throw new SQLException(e.getMessage(), e);
     }
+
+    executeInstance = executor.getInstance();
+
+    connHandle.log.info("Run SQL: " + sql + ", LogView:" + logView);
+    warningChain = new SQLWarning(executor.getLogView());
 
     long end = System.currentTimeMillis();
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
@@ -762,24 +708,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
       if (!connHandle.runningInInteractiveMode()) {
         runSQLOffline(sql, odps, settings);
-      } else if (connHandle.isLongPollingSession()) {
-        runSQLInSessionLongPollingMode(sql, settings);
       } else {
         runSQLInSession(sql, settings);
       }
 
     } catch (OdpsException e) {
       connHandle.log.error("Fail to run sql: " + sql, e);
-      if (connHandle.runningInInteractiveMode()) {
-        // just reattach
-        connHandle.getSessionManager().tryReattach();
-      }
-      throw new SQLException("Fail to run sql:" + sql, e);
+      throw new SQLException("Fail to run sql:" + sql + ", Error:" + e.toString(), e);
     }
   }
 
-  public Instance getExecuteInstance() {
-    return executeInstance;
-  }
   public static String getDefaultTaskName() { return JDBC_SQL_TASK_NAME; }
 }

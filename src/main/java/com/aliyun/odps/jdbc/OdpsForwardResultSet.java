@@ -50,7 +50,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   long accumTime;
   long accumKBytes = 0;
 
-  boolean sessionMode = false;
   /**
    * The maximum retry time we allow to tolerate the network problem
    */
@@ -58,24 +57,17 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
-    this(stmt, meta, session, null, System.currentTimeMillis());
+    this(stmt, meta, session, System.currentTimeMillis());
   }
 
 
-  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, TunnelRecordReader reader, long startTime)
+  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, long startTime)
       throws SQLException {
     super(stmt.getConnection(), stmt, meta);
-    this.reader = reader;
     this.sessionHandle = session;
 
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();
-    sessionMode = !StringUtils.isNullOrEmpty(sessionHandle.getTaskName());
-    if (sessionMode) {
-      // in session mode, we can not get totalRows from tunnel
-      // FIXME hardcode count 10000L
-      recordCount = 10000L;
-    }
     // maxRows take effect only if it > 0
     if (maxRows > 0 && maxRows <= recordCount) {
       totalRows = maxRows;
@@ -171,12 +163,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (++retry == READER_REOPEN_TIME_MAX) {
           throw new SQLException("to much retries because: " + e.getMessage());
         }
-        // Can not rebuild tunnel reader in session mode, just retry reading
-        if (!sessionMode) {
-          rebuildReader();
-        } else {
-          throw new SQLException("Read result failed: " + e.getMessage());
-        }
+        rebuildReader();
       }
     }
   }
