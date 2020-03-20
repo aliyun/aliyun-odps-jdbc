@@ -590,5 +590,5 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return executor;
   }
 
-  public boolean runningInInteractiveMode() { return interactiveMode && executor.isActive(); }
+  public boolean runningInInteractiveMode() { return interactiveMode; }
 }
