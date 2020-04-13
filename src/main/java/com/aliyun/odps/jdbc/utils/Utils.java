@@ -47,6 +47,9 @@ public class Utils {
     if (StringUtils.isNullOrEmpty(pattern)) {
       return true;
     }
+    
+    pattern = pattern.toLowerCase();
+    s = s.toLowerCase();
 
     if (pattern.contains("%") || pattern.contains("_")) {
       // (?<!a)  looks 1 char behind and ensure not equal
