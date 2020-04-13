@@ -15,6 +15,8 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import com.aliyun.odps.utils.StringUtils;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Collections;
 
 public class ConnectionResource {
 
@@ -52,6 +55,7 @@ public class ConnectionResource {
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
   private static final String ENABLE_ODPS_LOGGER_URL_KEY = "enableOdpsLogger";
   private static final String ENABLE_FALLBACK_URL_KEY = "enableFallback";
+  private static final String TABLE_LIST_URL_KEY = "tableList";
   /**
    * Keys to retrieve properties from info.
    *
@@ -71,6 +75,7 @@ public class ConnectionResource {
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
   public static final String ENABLE_ODPS_LOGGER_PROP_KEY = "enable_odps_logger";
   public static final String ENABLE_FALLBACK_PROP_KEY = "enable_fallback";
+  public static final String TABLE_LIST_PROP_KEY = "table_list";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -92,6 +97,7 @@ public class ConnectionResource {
   private String majorVersion;
   private boolean enableOdpsLogger = false;
   private boolean enableFallback = true;
+  private List<String> tableList = new ArrayList<>();
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -171,6 +177,12 @@ public class ConnectionResource {
     enableFallback = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_FALLBACK_PROP_KEY, ENABLE_FALLBACK_URL_KEY)
     );
+
+    String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
+        TABLE_LIST_URL_KEY);
+    if (!StringUtils.isNullOrEmpty(tableStr)) {
+      Collections.addAll(tableList, tableStr.split(","));
+    }
   }
 
   @SuppressWarnings("deprecation")
@@ -271,5 +283,9 @@ public class ConnectionResource {
 
   public boolean isEnableFallback() {
     return enableFallback;
+  }
+
+  public List<String> getTableList() {
+    return tableList;
   }
 }

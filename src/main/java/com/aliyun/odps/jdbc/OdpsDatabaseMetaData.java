@@ -749,24 +749,32 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern,
       String[] types) throws SQLException {
-
     long begin = System.currentTimeMillis();
-
     List<Object[]> rows = new ArrayList<Object[]>();
-
     if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
+      LinkedList<String> tables = new LinkedList<>();
       try {
-        LinkedList<String> tables = new LinkedList<>();
-        for (Table t : conn.getOdps().tables()) {
-          String tableName = t.getName();
-          if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
-            if (!Utils.matchPattern(tableName, tableNamePattern)) {
-              continue;
+        if (!conn.getTableList().isEmpty()) {
+          for (String tableName : conn.getTableList()) {
+            if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
+              if (!Utils.matchPattern(tableName, tableNamePattern)) {
+                continue;
+              }
             }
+            tables.add(tableName);
           }
-          tables.add(tableName);
-          if (tables.size() == 100) {
-            convertTablesToRows(types, rows, tables);
+        } else {
+          for (Table t : conn.getOdps().tables()) {
+            String tableName = t.getName();
+            if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
+              if (!Utils.matchPattern(tableName, tableNamePattern)) {
+                continue;
+              }
+            }
+            tables.add(tableName);
+            if (tables.size() == 100) {
+              convertTablesToRows(types, rows, tables);
+            }
           }
         }
         if (tables.size() > 0) {

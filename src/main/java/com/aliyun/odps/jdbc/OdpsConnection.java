@@ -87,6 +87,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private boolean enableFallback = true;
+  private List<String> tableList = new ArrayList<>();
 
   private SQLExecutor executor = null;
 
@@ -144,6 +145,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
     this.enableFallback = connRes.isEnableFallback();
+    this.tableList = connRes.getTableList();
 
     try {
       odps.projects().get().reload();
@@ -591,4 +593,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   public boolean runningInInteractiveMode() { return interactiveMode; }
+
+  public List<String> getTableList() {
+    return tableList;
+  }
 }
