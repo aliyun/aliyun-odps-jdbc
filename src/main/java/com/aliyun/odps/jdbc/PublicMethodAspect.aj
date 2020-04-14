@@ -25,6 +25,7 @@ public aspect PublicMethodAspect {
     String args = getCurrentArguments(thisJoinPoint).replaceAll("accessKey=\\w+", "accessKey=***");
     String msg = String.format(
         "Enter: [line %d] [%s] [%s] [%s]", lineNumber, classname, methodName, args);
+    logger.debug(msg);
   }
 
   after() returning(Object ret) : Include() {
@@ -33,6 +34,7 @@ public aspect PublicMethodAspect {
     String methodName = getCurrentMethodName(thisJoinPoint);
     String msg = String.format(
         "Leave: [line %d] [%s] [%s] [%s]", lineNumber, classname, methodName, ret);
+    logger.debug(msg);
   }
 
   after() throwing(Exception e) : Include() {
