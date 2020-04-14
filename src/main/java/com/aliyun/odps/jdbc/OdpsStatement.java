@@ -718,5 +718,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
+  public Instance getExecuteInstance() {
+    return executeInstance;
+  }
+
   public static String getDefaultTaskName() { return JDBC_SQL_TASK_NAME; }
 }
