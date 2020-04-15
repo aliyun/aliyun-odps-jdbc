@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -133,7 +133,7 @@ public class ConnectionResource {
     accessKey =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, ACCESS_KEY_PROP_KEY_ALT,
             ACCESS_KEY_PROP_KEY, ACCESS_KEY_URL_KEY);
-    
+
     if (accessKey != null) {
       try {
         accessKey = URLDecoder.decode(accessKey, CHARSET_DEFAULT_VALUE);
@@ -141,7 +141,7 @@ public class ConnectionResource {
         accessKey = URLDecoder.decode(accessKey);
       }
     }
-    
+
     charset =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CHARSET_DEFAULT_VALUE, CHARSET_PROP_KEY,
             CHARSET_URL_KEY);
@@ -154,10 +154,10 @@ public class ConnectionResource {
             LIFECYCLE_URL_KEY);
     logLevel =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGLEVEL_PROP_KEY, LOGLEVEL_URL_KEY);
-    
+
     tunnelEndpoint =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
-    
+
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGCONFFILE_PROP_KEY,
             LOGCONFFILE_URL_KEY);
@@ -242,7 +242,7 @@ public class ConnectionResource {
   public String getLogLevel() {
     return logLevel;
   }
-  
+
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
   }

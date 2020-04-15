@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -76,7 +76,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    * The attributes of result set produced by this statement
    */
   protected boolean isResultSetScrollable = false;
-  
+
   private Properties sqlTaskProperties;
 
   /**
@@ -304,7 +304,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       sqlTaskProperties.setProperty(key, properties.getProperty(key));
     }
   }
-  
+
   private boolean processUseClause(String sql) {
     if (sql.matches("(?i)^(\\s*)(USE)(\\s+)(.*);?(\\s*)$")) {
       if (sql.contains(";")) {
@@ -716,6 +716,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       connHandle.log.error("Fail to run sql: " + sql, e);
       throw new SQLException("Fail to run sql:" + sql + ", Error:" + e.toString(), e);
     }
+  }
+
+  public Instance getExecuteInstance() {
+    return executeInstance;
   }
 
   public static String getDefaultTaskName() { return JDBC_SQL_TASK_NAME; }
