@@ -174,6 +174,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .properties(hints)
         .serviceName(serviceName)
         .enableFallback(enableFallback)
+        .enableReattach(true)
         .taskName(OdpsStatement.getDefaultTaskName());
     executor = builder.build();
   }
