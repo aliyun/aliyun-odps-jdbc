@@ -85,7 +85,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static final String MAJOR_VERSION = "odps.task.major.version";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
-  private boolean enableFallback = true;
+  private boolean enableFallback = false;
   private List<String> tableList = new ArrayList<>();
 
   private SQLExecutor executor = null;

@@ -175,7 +175,7 @@ public class ConnectionResource {
     );
 
     enableFallback = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_FALLBACK_PROP_KEY, ENABLE_FALLBACK_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_FALLBACK_PROP_KEY, ENABLE_FALLBACK_URL_KEY)
     );
 
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
