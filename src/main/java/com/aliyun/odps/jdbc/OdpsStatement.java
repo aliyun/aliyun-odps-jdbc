@@ -46,6 +46,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private Instance executeInstance = null;
   private ResultSet resultSet = null;
   private int updateCount = -1;
+  private int queryTimeout = -1;
 
   // result cache in session mode
   com.aliyun.odps.data.ResultSet sessionResultSet = null;
@@ -401,12 +402,23 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getQueryTimeout() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (!connHandle.runningInInteractiveMode()) {
+      throw new SQLFeatureNotSupportedException();
+    } else {
+      return queryTimeout;
+    }
   }
 
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
-    connHandle.log.debug("OdpsDriver do not support query timeout, setQueryTimeout: " + seconds);
+    if (seconds <= 0) {
+      throw new SQLFeatureNotSupportedException("Invalid query timeout:" + String.valueOf(seconds));
+    }
+    if (!connHandle.runningInInteractiveMode()) {
+      connHandle.log.debug("OdpsDriver do not support query timeout, setQueryTimeout: " + seconds);
+    } else {
+      queryTimeout = seconds;
+    }
   }
 
   @Override
@@ -665,6 +677,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private void runSQLInSession(String sql, Map<String,String> settings) throws SQLException, OdpsException {
     long begin = System.currentTimeMillis();
     SQLExecutor executor = connHandle.getExecutor();
+    if (queryTimeout != -1) {
+      settings.put("odps.sql.session.query.timeout", String.valueOf(queryTimeout));
+    }
     executor.run(sql, settings);
     String logView = executor.getLogView();
     try {
