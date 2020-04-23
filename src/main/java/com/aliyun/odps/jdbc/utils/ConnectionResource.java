@@ -54,7 +54,6 @@ public class ConnectionResource {
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
   private static final String ENABLE_ODPS_LOGGER_URL_KEY = "enableOdpsLogger";
-  private static final String ENABLE_FALLBACK_URL_KEY = "enableFallback";
   private static final String TABLE_LIST_URL_KEY = "tableList";
   /**
    * Keys to retrieve properties from info.
@@ -74,7 +73,6 @@ public class ConnectionResource {
   public static final String SERVICE_NAME_PROP_KEY = "interactive_service_name";
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
   public static final String ENABLE_ODPS_LOGGER_PROP_KEY = "enable_odps_logger";
-  public static final String ENABLE_FALLBACK_PROP_KEY = "enable_fallback";
   public static final String TABLE_LIST_PROP_KEY = "table_list";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
@@ -96,7 +94,6 @@ public class ConnectionResource {
   private String interactiveServiceName;
   private String majorVersion;
   private boolean enableOdpsLogger = false;
-  private boolean enableFallback = true;
   private List<String> tableList = new ArrayList<>();
 
   public static boolean acceptURL(String url) {
@@ -172,10 +169,6 @@ public class ConnectionResource {
             MAJOR_VERSION_URL_KEY);
     enableOdpsLogger = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
-    );
-
-    enableFallback = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_FALLBACK_PROP_KEY, ENABLE_FALLBACK_URL_KEY)
     );
 
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
@@ -279,10 +272,6 @@ public class ConnectionResource {
 
   public boolean isInteractiveMode() {
     return interactiveMode;
-  }
-
-  public boolean isEnableFallback() {
-    return enableFallback;
   }
 
   public List<String> getTableList() {

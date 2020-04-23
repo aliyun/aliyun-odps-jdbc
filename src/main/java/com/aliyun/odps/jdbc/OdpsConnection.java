@@ -37,6 +37,7 @@ import java.sql.Struct;
 import java.util.*;
 import java.util.concurrent.Executor;
 
+import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
 import org.slf4j.MDC;
@@ -85,7 +86,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static final String MAJOR_VERSION = "odps.task.major.version";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
-  private boolean enableFallback = false;
   private List<String> tableList = new ArrayList<>();
 
   private SQLExecutor executor = null;
@@ -143,7 +143,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
-    this.enableFallback = connRes.isEnableFallback();
     this.tableList = connRes.getTableList();
 
     try {
@@ -173,7 +172,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     builder.odps(odps)
         .properties(hints)
         .serviceName(serviceName)
-        .enableFallback(enableFallback)
+        .fallbackPolicy(FallbackPolicy.nonFallbackPolicy())
         .enableReattach(true)
         .taskName(OdpsStatement.getDefaultTaskName());
     executor = builder.build();
