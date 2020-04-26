@@ -284,7 +284,10 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (getExecuteInstance() == null) {
+      this.execute();
+    }
+    return getResultSet().getMetaData();
   }
 
   @Override

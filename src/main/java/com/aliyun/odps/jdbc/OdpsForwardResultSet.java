@@ -50,7 +50,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   long accumTime;
   long accumKBytes = 0;
 
-  boolean sessionMode = false;
   /**
    * The maximum retry time we allow to tolerate the network problem
    */
@@ -58,23 +57,24 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
   OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
       throws SQLException {
+    this(stmt, meta, session, System.currentTimeMillis());
+  }
+
+
+  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, long startTime)
+      throws SQLException {
     super(stmt.getConnection(), stmt, meta);
-    sessionHandle = session;
+    this.sessionHandle = session;
+
     int maxRows = stmt.resultSetMaxRows;
     long recordCount = sessionHandle.getRecordCount();
-    sessionMode = !StringUtils.isNullOrEmpty(sessionHandle.getTaskName());
-    if (sessionMode) {
-      // in session mode, we can not get totalRows from tunnel
-      // FIXME hardcode count 10000L
-      recordCount = 10000L;
-    }
     // maxRows take effect only if it > 0
     if (maxRows > 0 && maxRows <= recordCount) {
       totalRows = maxRows;
     } else {
       totalRows = recordCount;
     }
-    startTime = System.currentTimeMillis();
+    this.startTime = startTime;
   }
 
   protected void checkClosed() throws SQLException {
@@ -137,7 +137,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (reuseRecord == null) {
           // this means the end of stream
           long end = System.currentTimeMillis();
-          conn.log.debug("It took me " + (end - startTime) + " ms to fetch all records");
+          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records, count:" + fetchedRows);
           return false;
         }
         int columns = reuseRecord.getColumnCount();
@@ -147,7 +147,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         }
 
         fetchedRows++;
-
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
           long delta = reader.getTotalBytes() / 1024 - accumKBytes;
@@ -164,11 +163,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (++retry == READER_REOPEN_TIME_MAX) {
           throw new SQLException("to much retries because: " + e.getMessage());
         }
-        // Can not rebuild tunnel reader in session mode, just retry reading
-        if (!sessionMode) {
-          rebuildReader();
-        }
-
+        rebuildReader();
       }
     }
   }
@@ -182,7 +177,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     try {
       long count = totalRows - fetchedRows;
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
-      conn.log.debug(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
+      conn.log.warn(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
       throw new SQLException(e);
     } catch (TunnelException e) {

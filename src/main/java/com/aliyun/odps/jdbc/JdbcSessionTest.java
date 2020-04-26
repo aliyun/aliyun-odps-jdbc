@@ -32,7 +32,8 @@ public class JdbcSessionTest {
     if (args.length < 2) {
       System.out.println("Usage: java -cp odps-jdbc-...-jar-with-dependencies.jar com.aliyun.odps.jdbc.JdbcTest connection_string sql");
       System.out.println(
-          "   eg. JdbcTest 'jdbc:odps:http://service.odps.aliyun.com/api?project=odpsdemo?accessId=...&accessKey=...&charset=UTF-8&sessionName=...&majorVersion=default' 'select * from dual'");
+          "   eg. JdbcTest 'jdbc:odps:http://service.odps.aliyun.com/api?project=odpsdemo&accessId=..." +
+              "&accessKey=...&charset=UTF-8&interactiveMode=true&interactiveServiceName=public.default&majorVersion=default&longPolling=false' 'select * from dual'");
       System.exit(1);
     }
     String connectionString = args[0];

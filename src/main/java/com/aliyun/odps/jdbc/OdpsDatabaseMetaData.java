@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -749,24 +749,32 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern,
       String[] types) throws SQLException {
-
     long begin = System.currentTimeMillis();
-
     List<Object[]> rows = new ArrayList<Object[]>();
-
     if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
+      LinkedList<String> tables = new LinkedList<>();
       try {
-        LinkedList<String> tables = new LinkedList<>();
-        for (Table t : conn.getOdps().tables()) {
-          String tableName = t.getName();
-          if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
-            if (!Utils.matchPattern(tableName, tableNamePattern)) {
-              continue;
+        if (!conn.getTableList().isEmpty()) {
+          for (String tableName : conn.getTableList()) {
+            if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
+              if (!Utils.matchPattern(tableName, tableNamePattern)) {
+                continue;
+              }
             }
+            tables.add(tableName);
           }
-          tables.add(tableName);
-          if (tables.size() == 100) {
-            convertTablesToRows(types, rows, tables);
+        } else {
+          for (Table t : conn.getOdps().tables()) {
+            String tableName = t.getName();
+            if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
+              if (!Utils.matchPattern(tableName, tableNamePattern)) {
+                continue;
+              }
+            }
+            tables.add(tableName);
+            if (tables.size() == 100) {
+              convertTablesToRows(types, rows, tables);
+            }
           }
         }
         if (tables.size() > 0) {
@@ -872,9 +880,9 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     }
 
     List<Object[]> rows = new ArrayList<Object[]>();
-    
-    if (!tableNamePattern.trim().isEmpty() && !tableNamePattern.trim().equals("%")
-        && !tableNamePattern.trim().equals("*")) {
+
+    if (!tableNamePattern.trim().isEmpty() && !"%".equals(tableNamePattern.trim())
+        && !"*".equals(tableNamePattern.trim())) {
       try {
         Table table;
         if (StringUtils.isNullOrEmpty(schemaPattern)) {
@@ -883,13 +891,20 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
         }
         table.reload();
-        // Read column information from table schema
-        List<Column> columns = table.getSchema().getColumns();
+
+        // Read column & partition column information from table schema
+        List<Column> columns = new LinkedList<>();
+        columns.addAll(table.getSchema().getColumns());
+        columns.addAll(table.getSchema().getPartitionColumns());
         for (int i = 0; i < columns.size(); i++) {
           Column col = columns.get(i);
-          JdbcColumn jdbcCol =
-              new JdbcColumn(col.getName(), tableNamePattern, table.getProject(), col.getType(), col.getTypeInfo(),
-                  col.getComment(), i + 1);
+          JdbcColumn jdbcCol = new JdbcColumn(col.getName(),
+                                              tableNamePattern,
+                                              table.getProject(),
+                                              col.getType(),
+                                              col.getTypeInfo(),
+                                              col.getComment(),
+                                              i + 1);
           Object[] rowVals =
               {catalog, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
                   (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
@@ -1265,12 +1280,14 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern,
-      String columnNamePattern) throws SQLException {
+                                    String columnNamePattern) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public boolean generatedKeyAlwaysReturned() throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();

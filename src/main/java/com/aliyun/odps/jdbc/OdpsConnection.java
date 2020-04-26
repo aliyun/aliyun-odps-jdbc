@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -15,9 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.Project;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
-import java.io.IOException;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -36,11 +34,12 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import org.slf4j.Logger;
 import java.util.*;
 import java.util.concurrent.Executor;
 
-import com.aliyun.odps.utils.StringUtils;
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.sqa.SQLExecutor;
+import com.aliyun.odps.sqa.SQLExecutorBuilder;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -48,8 +47,6 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
-import com.aliyun.odps.jdbc.utils.LoggerFactory;
-
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -87,9 +84,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String majorVersion;
   private static final String MAJOR_VERSION = "odps.task.major.version";
+  private static String ODPS_SETTING_PREFIX = "odps.";
+  private boolean interactiveMode = false;
+  private List<String> tableList = new ArrayList<>();
 
-  private boolean sessionMode = false;
-  private OdpsSessionManager sessionManager = null;
+  private SQLExecutor executor = null;
 
 
   OdpsConnection(String url, Properties info) throws SQLException {
@@ -103,8 +102,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
-    String sessionName = connRes.getSessionName();
-    Long sessionTimeout = connRes.getSessionTimeout();
+    String serviceName = connRes.getInteractiveServiceName();
 
     int lifecycle;
     try {
@@ -116,7 +114,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = UUID.randomUUID().toString().substring(24);
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(getClass().getName(), null, false, logConfFile);
+    log = new OdpsLogger(getClass().getName(), null, logConfFile, false, connRes.isEnableOdpsLogger());
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
@@ -144,20 +142,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.stmtHandles = new ArrayList<Statement>();
 
     this.majorVersion = connRes.getMajorVersion();
+    this.interactiveMode = connRes.isInteractiveMode();
+    this.tableList = connRes.getTableList();
 
     try {
       odps.projects().get().reload();
-
-      if (!StringUtils.isNullOrEmpty(sessionName)) {
-        sessionMode = true;
-
-        sessionManager = new OdpsSessionManager(sessionName, odps, log);
-
-        // only support major version when attaching a session
-        Map<String, String> hints = new HashMap<>();
-        hints.put(MAJOR_VERSION, majorVersion);
-
-        sessionManager.attachSession(hints, sessionTimeout);
+      if (interactiveMode) {
+        initSQLExecutor(serviceName);
       }
       String msg = "Connect to odps project %s successfully";
       log.debug(String.format(msg, odps.getDefaultProject()));
@@ -166,6 +157,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       log.error("Connect to odps failed:" + e.getMessage());
       throw new SQLException(e);
     }
+  }
+
+  public void initSQLExecutor(String serviceName) throws OdpsException {
+    // only support major version when attaching a session
+    Map<String, String> hints = new HashMap<>();
+    hints.put(MAJOR_VERSION, majorVersion);
+    for (String key : info.stringPropertyNames()) {
+      if (key.startsWith(ODPS_SETTING_PREFIX)) {
+        hints.put(key, info.getProperty(key));
+      }
+    }
+    SQLExecutorBuilder builder = new SQLExecutorBuilder();
+    builder.odps(odps)
+        .properties(hints)
+        .serviceName(serviceName)
+        .fallbackPolicy(FallbackPolicy.nonFallbackPolicy())
+        .enableReattach(true)
+        .taskName(OdpsStatement.getDefaultTaskName());
+    executor = builder.build();
   }
 
   @Override
@@ -296,12 +306,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
           stmt.close();
         }
       }
-      if (runningInSessionMode()) {
-        try {
-          sessionManager.detachSession();
-        } catch (OdpsException e) {
-          throw new SQLException(e.toString(), e);
-        }
+      if (runningInInteractiveMode()) {
+          executor.close();
       }
     }
     isClosed = true;
@@ -437,7 +443,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         isResultSetScrollable = false;
         break;
       case ResultSet.TYPE_SCROLL_INSENSITIVE:
-        if (runningInSessionMode()) {
+        if (runningInInteractiveMode()) {
           throw new SQLFeatureNotSupportedException(
               "only support statement with ResultSet type: TYPE_FORWARD_ONLY in session mode");
         }
@@ -581,7 +587,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return tunnelEndpoint;
   }
 
-  public OdpsSessionManager getSessionManager() { return sessionManager; }
+  public SQLExecutor getExecutor() {
+    return executor;
+  }
 
-  public boolean runningInSessionMode() { return sessionMode && sessionManager.attached(); }
+  public boolean runningInInteractiveMode() { return interactiveMode; }
+
+  public List<String> getTableList() {
+    return tableList;
+  }
 }

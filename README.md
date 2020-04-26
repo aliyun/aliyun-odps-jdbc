@@ -6,7 +6,7 @@
 
 ## Chinese Docs
 
-[使用 odps-jdbc 接入 ODPS，不再从零开始](https://yq.aliyun.com/articles/5588)
+[MaxCompute JDBC介绍](https://help.aliyun.com/document_detail/143408.html)
 
 ## Installation
 
@@ -253,7 +253,7 @@ Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC.
 |  BOOLEAN  | Boolean         | boolean                           |  BOOLEAN  |
 |  DATETIME | util.Date       | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
 |  TIMESTAMP| sql.Timestamp   | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
-|  VARCHAR  | Varchar         | String                            |  VARCHAR  |                      
+|  VARCHAR  | Varchar         | String                            |  VARCHAR  |
 |  STRING   | byte[]          | String                            |  VARCHAR  |
 |  DECIMAL  | math.BigDecimal | math.BigDecimal                   |  DECIMAL  |
 
