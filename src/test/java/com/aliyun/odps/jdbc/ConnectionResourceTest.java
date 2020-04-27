@@ -22,6 +22,7 @@
 package com.aliyun.odps.jdbc;
 
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.Properties;
 
 import org.junit.Assert;
@@ -35,8 +36,9 @@ public class ConnectionResourceTest {
   public void testConnectionResourceTest() throws Exception {
     String odpsConfigFile = getClass().getClassLoader().getResource("odps_config.ini").getPath();
     String url1 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logconffile=/Users/emerson/logback.xml&odps_config="
-            + odpsConfigFile;
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D" +
+            "&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logconffile=/Users/emerson/logback.xml" +
+            "&odps_config=" + odpsConfigFile;
     ConnectionResource resource = new ConnectionResource(url1, null);
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
     Assert.assertEquals("p2", resource.getProject());
@@ -48,14 +50,25 @@ public class ConnectionResourceTest {
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals(null, resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-
-
+    Assert.assertEquals(false, resource.isInteractiveMode());
+    Assert.assertEquals("sn", resource.getInteractiveServiceName());
+    Assert.assertEquals("default1", resource.getMajorVersion());
+    List<String> tableList = resource.getTableList();
+    Assert.assertEquals(2, tableList.size());
+    Assert.assertEquals("table1", tableList.get(0));
+    Assert.assertEquals("table2", tableList.get(1));
 
     String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
     String url2 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D&logview_host=http://abc.com:8080&tunnelEndpoint=http://1.1.1.1:8066&logconffile="
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123" +
+            "&accessKey=234%3D&logview_host=http://abc.com:8080" +
+            "&tunnelEndpoint=http://1.1.1.1:8066&interactiveMode=true" +
+            "&interactiveServiceName=sn&interactiveTimeout=11" +
+            "&table_list=table1,table2" +
+            "&majorVersion=default1&logconffile="
             + logConfigFile;
     resource = new ConnectionResource(url2, null);
+    Assert.assertEquals(true, resource.isInteractiveMode());
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
     Assert.assertEquals("p1", resource.getProject());
     Assert.assertEquals("123", resource.getAccessId());
@@ -67,7 +80,10 @@ public class ConnectionResourceTest {
     Assert.assertEquals(logConfigFile, resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-
+    tableList = resource.getTableList();
+    Assert.assertEquals(2, tableList.size());
+    Assert.assertEquals("table1", tableList.get(0));
+    Assert.assertEquals("table2", tableList.get(1));
     Properties info = new Properties();
     info.load(new FileInputStream(odpsConfigFile));
     resource = new ConnectionResource(url2, info);
@@ -81,7 +97,12 @@ public class ConnectionResourceTest {
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-
+    Assert.assertEquals("sn", resource.getInteractiveServiceName());
+    Assert.assertEquals("default1", resource.getMajorVersion());
+    tableList = resource.getTableList();
+    Assert.assertEquals(2, tableList.size());
+    Assert.assertEquals("table1", tableList.get(0));
+    Assert.assertEquals("table2", tableList.get(1));
   }
 
 

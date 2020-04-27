@@ -309,7 +309,7 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
       long duration = System.currentTimeMillis() - start;
       long totalKBytes = reader.getTotalBytes() / 1024;
       conn.log.info(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
-                                  count, totalKBytes, (float) totalKBytes / duration * 1000));
+                              count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException e) {
       throw new SQLException(e);

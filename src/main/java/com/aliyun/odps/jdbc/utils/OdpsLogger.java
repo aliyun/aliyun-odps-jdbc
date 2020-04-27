@@ -20,7 +20,7 @@ public class OdpsLogger {
   private static final String DEFAULT_OUTPUT_DIR = "/tmp";
   private static Map<String, FileHandler> pathToFileHandler = new ConcurrentHashMap<>();
 
-
+  private boolean enableOdpsLogger = false;
   private Logger odpsLogger;
   private org.slf4j.Logger sl4jLogger;
 
@@ -30,9 +30,11 @@ public class OdpsLogger {
    * @param name For both odps and sl4j logger, name of the logger
    * @param outputPath For odps logger, output path for file handler
    * @param toConsole For odps logger, output to console or not
+   * @param enableOdpsLogger For odps logger, enable or not
    * @param configFilePath For sl4j logger, config file path
    */
-  public OdpsLogger(String name, String outputPath, boolean toConsole, String configFilePath) {
+  public OdpsLogger(String name, String outputPath, String configFilePath, boolean toConsole, boolean enableOdpsLogger) {
+    this.enableOdpsLogger = enableOdpsLogger;
 
     Objects.requireNonNull(name);
 
@@ -40,7 +42,16 @@ public class OdpsLogger {
     if (outputPath == null) {
       outputPath = getDefaultOutputPath();
     }
-    odpsLogger = Logger.getLogger(name);
+    if (enableOdpsLogger) {
+      odpsLogger = Logger.getLogger(name);
+      odpsLogger.setLevel(Level.ALL);
+      if (toConsole) {
+        Handler consoleHandler = new ConsoleHandler();
+        consoleHandler.setFormatter(new OdpsFormatter());
+        consoleHandler.setLevel(Level.ALL);
+        odpsLogger.addHandler(consoleHandler);
+      }
+    }
     try {
       FileHandler fileHandler;
       if (pathToFileHandler.containsKey(outputPath)) {
@@ -48,42 +59,45 @@ public class OdpsLogger {
       } else {
         fileHandler = new FileHandler(outputPath, true);
         fileHandler.setFormatter(new OdpsFormatter());
-        fileHandler.setLevel(Level.INFO);
+        fileHandler.setLevel(Level.ALL);
         pathToFileHandler.put(outputPath, fileHandler);
       }
-      odpsLogger.addHandler(fileHandler);
+      if (enableOdpsLogger) {
+        odpsLogger.addHandler(fileHandler);
+      }
     } catch (IOException e) {
       // ignore
     }
-    if (toConsole) {
-      Handler consoleHandler = new ConsoleHandler();
-      consoleHandler.setFormatter(new OdpsFormatter());
-      consoleHandler.setLevel(Level.INFO);
-      odpsLogger.addHandler(consoleHandler);
-    }
-    odpsLogger.setLevel(Level.INFO);
 
     // Init sl4j logger
     sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
   }
 
   public synchronized void debug(String msg) {
-    odpsLogger.fine(msg);
+    if (enableOdpsLogger) {
+      odpsLogger.fine(msg);
+    }
     sl4jLogger.debug(msg);
   }
 
   public synchronized void info(String msg) {
-    odpsLogger.info(msg);
+    if (enableOdpsLogger) {
+      odpsLogger.info(msg);
+    }
     sl4jLogger.info(msg);
   }
 
   public synchronized void warn(String msg) {
-    odpsLogger.warning(msg);
+    if (enableOdpsLogger) {
+      odpsLogger.warning(msg);
+    }
     sl4jLogger.warn(msg);
   }
 
   public synchronized void error(String msg) {
-    odpsLogger.severe(msg);
+    if (enableOdpsLogger) {
+      odpsLogger.severe(msg);
+    }
     sl4jLogger.error(msg);
   }
 
@@ -91,9 +105,10 @@ public class OdpsLogger {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
-
-    odpsLogger.severe(msg);
-    odpsLogger.severe(sw.toString());
+    if (enableOdpsLogger) {
+      odpsLogger.severe(msg);
+      odpsLogger.severe(sw.toString());
+    }
     sl4jLogger.error(msg, e);
   }
 

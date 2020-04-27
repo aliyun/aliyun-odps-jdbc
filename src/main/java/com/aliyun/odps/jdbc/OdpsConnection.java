@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -15,9 +15,8 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.Project;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
-import java.io.IOException;
+
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -35,15 +34,12 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executor;
 
-import org.slf4j.Logger;
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.sqa.SQLExecutor;
+import com.aliyun.odps.sqa.SQLExecutorBuilder;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -51,7 +47,6 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
-import com.aliyun.odps.jdbc.utils.LoggerFactory;
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -82,10 +77,19 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private SQLWarning warningChain = null;
 
   private String connectionId;
-  
+
   private final Properties sqlTaskProperties = new Properties();
-  
+
   private String tunnelEndpoint;
+
+  private String majorVersion;
+  private static final String MAJOR_VERSION = "odps.task.major.version";
+  private static String ODPS_SETTING_PREFIX = "odps.";
+  private boolean interactiveMode = false;
+  private List<String> tableList = new ArrayList<>();
+
+  private SQLExecutor executor = null;
+
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -98,6 +102,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
+    String serviceName = connRes.getInteractiveServiceName();
 
     int lifecycle;
     try {
@@ -109,7 +114,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = UUID.randomUUID().toString().substring(24);
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(getClass().getName(), null, false, logConfFile);
+    log = new OdpsLogger(getClass().getName(), null, logConfFile, false, connRes.isEnableOdpsLogger());
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
@@ -120,7 +125,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String
-        .format("charset=%s, logviewhost=%s, lifecycle=%d", charset, logviewHost, lifecycle));
+        .format("charset=%s, logview=%s, lifecycle=%d", charset, logviewHost, lifecycle));
 
     Account account = new AliyunAccount(accessId, accessKey);
     log.debug("debug mode on");
@@ -136,16 +141,42 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<Statement>();
 
+    this.majorVersion = connRes.getMajorVersion();
+    this.interactiveMode = connRes.isInteractiveMode();
+    this.tableList = connRes.getTableList();
+
     try {
       odps.projects().get().reload();
+      if (interactiveMode) {
+        initSQLExecutor(serviceName);
+      }
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
+
     } catch (OdpsException e) {
+      log.error("Connect to odps failed:" + e.getMessage());
       throw new SQLException(e);
     }
   }
 
-
+  public void initSQLExecutor(String serviceName) throws OdpsException {
+    // only support major version when attaching a session
+    Map<String, String> hints = new HashMap<>();
+    hints.put(MAJOR_VERSION, majorVersion);
+    for (String key : info.stringPropertyNames()) {
+      if (key.startsWith(ODPS_SETTING_PREFIX)) {
+        hints.put(key, info.getProperty(key));
+      }
+    }
+    SQLExecutorBuilder builder = new SQLExecutorBuilder();
+    builder.odps(odps)
+        .properties(hints)
+        .serviceName(serviceName)
+        .fallbackPolicy(FallbackPolicy.nonFallbackPolicy())
+        .enableReattach(true)
+        .taskName(OdpsStatement.getDefaultTaskName());
+    executor = builder.build();
+  }
 
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
@@ -274,6 +305,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         if (stmt != null && !stmt.isClosed()) {
           stmt.close();
         }
+      }
+      if (runningInInteractiveMode()) {
+          executor.close();
       }
     }
     isClosed = true;
@@ -409,6 +443,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         isResultSetScrollable = false;
         break;
       case ResultSet.TYPE_SCROLL_INSENSITIVE:
+        if (runningInInteractiveMode()) {
+          throw new SQLFeatureNotSupportedException(
+              "only support statement with ResultSet type: TYPE_FORWARD_ONLY in session mode");
+        }
         isResultSetScrollable = true;
         break;
       default:
@@ -548,5 +586,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
   }
-      
+
+  public SQLExecutor getExecutor() {
+    return executor;
+  }
+
+  public boolean runningInInteractiveMode() { return interactiveMode; }
+
+  public List<String> getTableList() {
+    return tableList;
+  }
 }
