@@ -126,8 +126,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
-    log.debug(String
-        .format("charset=%s, logview=%s, lifecycle=%d", charset, logviewHost, lifecycle));
+    log.info(String
+        .format("charset=%s, logviewhost=%s, lifecycle=%d", charset, logviewHost, lifecycle));
 
     Account account = new AliyunAccount(accessId, accessKey);
     log.debug("debug mode on");

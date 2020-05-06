@@ -420,7 +420,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds <= 0) {
-      throw new SQLFeatureNotSupportedException("Invalid query timeout:" + String.valueOf(seconds));
+      throw new IllegalArgumentException("Invalid query timeout:" + String.valueOf(seconds));
     }
     if (!connHandle.runningInInteractiveMode()) {
       connHandle.log.debug("OdpsDriver do not support query timeout, setQueryTimeout: " + seconds);

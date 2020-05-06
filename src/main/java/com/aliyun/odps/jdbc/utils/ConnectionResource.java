@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Collections;
 
+import com.aliyun.odps.utils.StringUtils;
+
 public class ConnectionResource {
 
   private static final String JDBC_ODPS_URL_PREFIX = "jdbc:odps:";

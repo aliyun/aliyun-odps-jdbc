@@ -8,4 +8,4 @@ interactive_mode=false
 interactive_service_name=
 interactive_timeout=30
 major_version=default
-log_level=DEBUG
+log_level=INFO

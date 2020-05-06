@@ -752,9 +752,10 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     long begin = System.currentTimeMillis();
     List<Object[]> rows = new ArrayList<Object[]>();
     if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
-      LinkedList<String> tables = new LinkedList<>();
       try {
+
         if (!conn.getTableList().isEmpty()) {
+          LinkedList<String> tables = new LinkedList<>();
           for (String tableName : conn.getTableList()) {
             if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
               if (!Utils.matchPattern(tableName, tableNamePattern)) {
@@ -763,15 +764,22 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
             }
             tables.add(tableName);
           }
+          if (tables.size() > 0) {
+            convertTableNamesToRows(types, rows, tables);
+          }
         } else {
-          for (Table t : conn.getOdps().tables()) {
+          LinkedList<Table> tables = new LinkedList<>();
+          Iterable<Table> it = conn.getOdps().tables().iterable(conn.getOdps().getDefaultProject(),
+              null,
+              true);
+          for (Table t : it) {
             String tableName = t.getName();
             if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
               if (!Utils.matchPattern(tableName, tableNamePattern)) {
                 continue;
               }
             }
-            tables.add(tableName);
+            tables.add(t);
             if (tables.size() == 100) {
               convertTablesToRows(types, rows, tables);
             }
@@ -779,9 +787,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           if (tables.size() > 0) {
             convertTablesToRows(types, rows, tables);
           }
-        }
-        if (tables.size() > 0) {
-          convertTablesToRows(types, rows, tables);
         }
       } catch (Exception e) {
         log.error("getTables fails: ", e);
@@ -805,9 +810,18 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
-  private void convertTablesToRows(String[] types, List<Object[]> rows, LinkedList<String> tables)
+  private void convertTableNamesToRows(String[] types, List<Object[]> rows, LinkedList<String> names)
       throws OdpsException {
-    for (Table t : conn.getOdps().tables().loadTables(tables)) {
+    LinkedList<Table> tables = new LinkedList<>();
+    for (Table t : conn.getOdps().tables().loadTables(names)) {
+      tables.add(t);
+    }
+    convertTablesToRows(types, rows, tables);
+  }
+
+  private void convertTablesToRows(String[] types, List<Object[]> rows, LinkedList<Table> tables)
+      throws OdpsException {
+    for (Table t : tables) {
       String tableType = t.isVirtualView() ? "VIEW" : "TABLE";
       if (types != null && types.length != 0) {
         if (!Arrays.asList(types).contains(tableType)) {
@@ -816,8 +830,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       }
       Object[] rowVals =
           {t.getProject(), t.getProject(), t.getName(), tableType, t.getComment(), null, null,
-           null, null,
-           "USER"};
+              null, null,
+              "USER"};
       rows.add(rowVals);
     }
     tables.clear();
