@@ -784,6 +784,9 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
               convertTablesToRows(types, rows, tables);
             }
           }
+          if (tables.size() > 0) {
+            convertTablesToRows(types, rows, tables);
+          }
         }
       } catch (Exception e) {
         log.error("getTables fails: ", e);
