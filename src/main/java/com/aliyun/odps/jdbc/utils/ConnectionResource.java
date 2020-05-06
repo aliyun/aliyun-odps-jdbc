@@ -15,8 +15,6 @@
 
 package com.aliyun.odps.jdbc.utils;
 
-import com.aliyun.odps.utils.StringUtils;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Collections;
+
+import com.aliyun.odps.utils.StringUtils;
 
 public class ConnectionResource {
 
