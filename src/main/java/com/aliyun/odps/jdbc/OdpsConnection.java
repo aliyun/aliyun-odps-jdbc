@@ -40,6 +40,7 @@ import java.util.concurrent.Executor;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -90,6 +91,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private SQLExecutor executor = null;
 
+  private String executeProject = null;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -144,7 +146,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
     this.tableList = connRes.getTableList();
-
+    this.executeProject = connRes.getExecuteProject();
     try {
       odps.projects().get().reload();
       if (interactiveMode) {
@@ -169,7 +171,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       }
     }
     SQLExecutorBuilder builder = new SQLExecutorBuilder();
-    builder.odps(odps)
+    Odps executeOdps = this.odps;
+    if (!StringUtils.isNullOrEmpty(executeProject)) {
+      executeOdps = this.odps.clone();
+      executeOdps.setDefaultProject(executeProject);
+    }
+    builder.odps(executeOdps)
         .properties(hints)
         .serviceName(serviceName)
         .fallbackPolicy(FallbackPolicy.nonFallbackPolicy())
@@ -595,5 +602,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public List<String> getTableList() {
     return tableList;
+  }
+
+  public String getExecuteProject() {
+    return executeProject;
   }
 }
