@@ -44,6 +44,7 @@ public class ConnectionResource {
   private static final String ACCESS_ID_URL_KEY = "accessId";
   private static final String ACCESS_KEY_URL_KEY = "accessKey";
   private static final String PROJECT_URL_KEY = "project";
+  private static final String EXECUTE_PROJECT_URL_KEY = "executeProject";
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String LIFECYCLE_URL_KEY = "lifecycle";
@@ -63,6 +64,7 @@ public class ConnectionResource {
   public static final String ACCESS_ID_PROP_KEY = "access_id";
   public static final String ACCESS_KEY_PROP_KEY = "access_key";
   public static final String PROJECT_PROP_KEY = "project_name";
+  public static final String EXECUTE_PROJECT_PROP_KEY = "execute_project_name";
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
   public static final String LIFECYCLE_PROP_KEY = "lifecycle";
@@ -84,6 +86,7 @@ public class ConnectionResource {
   private String accessId;
   private String accessKey;
   private String project;
+  private String executeProject;
   private String charset;
   private String logview;
   private String lifecycle;
@@ -144,6 +147,8 @@ public class ConnectionResource {
             CHARSET_URL_KEY);
     project =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, PROJECT_PROP_KEY, PROJECT_URL_KEY);
+    executeProject =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, EXECUTE_PROJECT_PROP_KEY, EXECUTE_PROJECT_URL_KEY);
     logview =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY, LOGVIEW_URL_KEY);
     lifecycle =
@@ -210,6 +215,10 @@ public class ConnectionResource {
 
   public String getProject() {
     return project;
+  }
+
+  public String getExecuteProject() {
+    return executeProject;
   }
 
   public String getCharset() {
