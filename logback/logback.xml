@@ -1,18 +1,23 @@
 <configuration>
+  <property name="LOG_HOME" value="logback"/>
+  <property name="LOG_NAME" value="jdbc"/>
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>logback/jdbc.log</file>
+    <file>${LOG_HOME}/${LOG_NAME}.log</file>
 
     <encoder>
       <pattern>%date %level [%thread] %logger{10}  %X{connectionId} [%file:%line] %msg%n</pattern>
     </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_HOME}/${LOG_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <maxFileSize>100MB</maxFileSize>
+    </rollingPolicy>
   </appender>
-
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%msg%n</pattern>
     </encoder>
   </appender>
-
   <logger name="com.aliyun.odps" level="debug"/>
 
   <root level="debug">

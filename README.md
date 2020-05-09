@@ -253,7 +253,7 @@ Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC.
 |  BOOLEAN  | Boolean         | boolean                           |  BOOLEAN  |
 |  DATETIME | util.Date       | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
 |  TIMESTAMP| sql.Timestamp   | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
-|  VARCHAR  | Varchar         | String                            |  VARCHAR  |                      
+|  VARCHAR  | Varchar         | String                            |  VARCHAR  |
 |  STRING   | byte[]          | String                            |  VARCHAR  |
 |  DECIMAL  | math.BigDecimal | math.BigDecimal                   |  DECIMAL  |
 

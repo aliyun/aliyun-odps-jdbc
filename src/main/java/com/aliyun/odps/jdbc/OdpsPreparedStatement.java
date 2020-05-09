@@ -209,7 +209,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     }
 
     getConnection().log.info(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
-                             + " in batch");
+                  + " in batch");
 
     int[] updateCounts = new int[batchedSize];
     Arrays.fill(updateCounts, -1);
@@ -252,7 +252,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     if (isClosed()) {
       return;
     }
-
     if (session != null && blocks > 0) {
       Long[] blockList = new Long[blocks];
       getConnection().log.info("commit session: " + blocks + " blocks");

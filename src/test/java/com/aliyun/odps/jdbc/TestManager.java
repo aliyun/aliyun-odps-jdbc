@@ -41,10 +41,17 @@ import com.aliyun.odps.tunnel.TableTunnel;
 public class TestManager {
 
   public Connection conn;
+  public Connection sessionConn;
   public Odps odps;
   public TableTunnel tunnel;
 
   private static final TestManager cf = new TestManager();
+
+  protected void finalize() throws Throwable{
+    if (sessionConn != null) {
+      sessionConn.close();
+    }
+  }
 
   private TestManager() {
     try {
@@ -76,6 +83,22 @@ public class TestManager {
       stmt.execute("set odps.sql.runtime.mode=executionengine;");
       stmt.execute("set odps.compiler.verify=true;");
       stmt.execute("set odps.compiler.output.format=lot,pot;");
+
+      String serviceName = odpsConfig.getProperty("interactive_service_name");
+      String urlSession = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s", endpoint, project, loglevel, logview, serviceName);
+
+      // pass project name via url
+      sessionConn = DriverManager.getConnection(urlSession, username, password);
+      Assert.assertNotNull(sessionConn);
+      Statement sessionConnStatement = sessionConn.createStatement();
+      sessionConnStatement.execute("set odps.sql.hive.compatible=true;");
+      sessionConnStatement.execute("set odps.sql.preparse.odps2=lot;");
+      sessionConnStatement.execute("set odps.sql.planner.mode=lot;");
+      sessionConnStatement.execute("set odps.sql.planner.parser.odps2=true;");
+      sessionConnStatement.execute("set odps.sql.ddl.odps2=true;");
+      sessionConnStatement.execute("set odps.sql.runtime.mode=executionengine;");
+      sessionConnStatement.execute("set odps.compiler.verify=true;");
+      sessionConnStatement.execute("set odps.compiler.output.format=lot,pot;");
 
       Account account = new AliyunAccount(username, password);
       odps = new Odps(account);
