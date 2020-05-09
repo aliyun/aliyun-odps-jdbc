@@ -782,7 +782,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         }
       } catch (Exception e) {
         log.error("getTables fails: ", e);
-        throw new SQLException("getTables fails: ", e);
+        throw new SQLException("getTables fails: " + e.getMessage(), e);
       }
     }
 
