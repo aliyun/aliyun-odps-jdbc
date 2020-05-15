@@ -201,6 +201,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (StringUtils.isNullOrEmpty(query)) {
       return EMPTY_RESULT_SET;
     }
+
+    if (processUseClause(query)) {
+      return EMPTY_RESULT_SET;
+    }
     checkClosed();
     beforeExecute();
     runSQL(query, properties);
@@ -306,7 +310,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  private boolean processUseClause(String sql) {
+  private boolean processUseClause(String sql) throws SQLFeatureNotSupportedException {
     if (sql.matches("(?i)^(\\s*)(USE)(\\s+)(.*);?(\\s*)$")) {
       if (sql.contains(";")) {
         sql = sql.replace(';', ' ');
@@ -314,6 +318,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       int i = sql.toLowerCase().indexOf("use");
       String project = sql.substring(i + 3).trim();
       if (project.length() > 0) {
+        if (connHandle.runningInInteractiveMode()) {
+          throw new SQLFeatureNotSupportedException(
+              "ODPS-1850001 - 'use project' is not supported in odps jdbc for now.");
+        }
         connHandle.getOdps().setDefaultProject(project);
         connHandle.log.info("set project to " + project);
       }
