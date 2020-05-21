@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.utils.StringUtils;
 
 import java.io.FileInputStream;
@@ -56,6 +57,11 @@ public class ConnectionResource {
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
   private static final String ENABLE_ODPS_LOGGER_URL_KEY = "enableOdpsLogger";
   private static final String TABLE_LIST_URL_KEY = "tableList";
+  private static final String FALLBACK_FOR_UNKNOWN_URL_KEY = "fallbackForUnknownError";
+  private static final String FALLBACK_FOR_RESOURCE_URL_KEY = "fallbackForResourceNotEnough";
+  private static final String FALLBACK_FOR_UPGRADING_URL_KEY = "fallbackForUpgrading";
+  private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
+  private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   /**
    * Keys to retrieve properties from info.
    *
@@ -76,6 +82,11 @@ public class ConnectionResource {
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
   public static final String ENABLE_ODPS_LOGGER_PROP_KEY = "enable_odps_logger";
   public static final String TABLE_LIST_PROP_KEY = "table_list";
+  private static final String FALLBACK_FOR_UNKNOWN_PROP_KEY = "fallback_for_unknownerror";
+  private static final String FALLBACK_FOR_RESOURCE_PROP_KEY = "fallback_for_resourcenotenough";
+  private static final String FALLBACK_FOR_UPGRADING_PROP_KEY = "fallback_for_upgrading";
+  private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
+  private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -98,6 +109,7 @@ public class ConnectionResource {
   private String majorVersion;
   private boolean enableOdpsLogger = false;
   private List<String> tableList = new ArrayList<>();
+  private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -175,6 +187,23 @@ public class ConnectionResource {
     enableOdpsLogger = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
     );
+
+    fallbackPolicy.fallback4ResourceNotEnough(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
+    ));
+    fallbackPolicy.fallback4RunningTimeout(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
+    ));
+    fallbackPolicy.fallback4Upgrading(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
+    ));
+    fallbackPolicy.fallback4UnsupportedFeature(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
+    ));
+    fallbackPolicy.fallback4UnknownError(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
+    ));
+
 
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
         TABLE_LIST_URL_KEY);
@@ -285,5 +314,9 @@ public class ConnectionResource {
 
   public List<String> getTableList() {
     return tableList;
+  }
+
+  public FallbackPolicy getFallbackPolicy() {
+    return fallbackPolicy;
   }
 }

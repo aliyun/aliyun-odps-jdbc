@@ -692,6 +692,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     String logView = executor.getLogView();
     try {
       sessionResultSet = executor.getResultSet();
+      List<String> exeLog = executor.getExecutionLog();
+      if (!exeLog.isEmpty()) {
+        for (String log : exeLog) {
+          connHandle.log.warn("Session execution log:" + log);
+        }
+      }
     } catch (IOException e) {
       connHandle.log.error("Run SQL failed:" + e.getMessage());
       throw new SQLException(e.getMessage(), e);

@@ -150,7 +150,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     try {
       odps.projects().get().reload();
       if (interactiveMode) {
-        initSQLExecutor(serviceName);
+        initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       }
       String msg = "Connect to odps project %s successfully";
       log.debug(String.format(msg, odps.getDefaultProject()));
@@ -161,7 +161,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public void initSQLExecutor(String serviceName) throws OdpsException {
+  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy) throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     hints.put(MAJOR_VERSION, majorVersion);
@@ -179,7 +179,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     builder.odps(executeOdps)
         .properties(hints)
         .serviceName(serviceName)
-        .fallbackPolicy(FallbackPolicy.nonFallbackPolicy())
+        .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
         .taskName(OdpsStatement.getDefaultTaskName());
     executor = builder.build();
