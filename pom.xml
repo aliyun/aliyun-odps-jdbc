@@ -20,7 +20,7 @@
     </repository>
   </repositories>
   <properties>
-    <sdk.version>0.35.0</sdk.version>
+    <sdk.version>0.35.1</sdk.version>
     <junit.version>4.11</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>
