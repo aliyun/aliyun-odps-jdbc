@@ -21,6 +21,7 @@
 package com.aliyun.odps.jdbc;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -41,6 +42,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 
+import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.ToJdbcTransformerFactory;
@@ -236,12 +238,20 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public InputStream getBinaryStream(int columnIndex) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    Object obj = getInnerObject(columnIndex);
+    InputStream inputStrem = null;
+    if (obj instanceof byte[]) {
+      inputStrem = new ByteArrayInputStream((byte[])obj);
+    } else if (obj instanceof Binary) {
+      inputStrem = new ByteArrayInputStream(((Binary)obj).data());
+    }
+    return inputStrem;
   }
 
   @Override
   public InputStream getBinaryStream(String columnLabel) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    int columnIndex = findColumn(columnLabel);
+    return getBinaryStream(columnIndex);
   }
 
   @Override
