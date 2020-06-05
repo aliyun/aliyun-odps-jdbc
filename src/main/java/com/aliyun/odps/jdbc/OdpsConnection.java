@@ -85,6 +85,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String majorVersion;
   private static final String MAJOR_VERSION = "odps.task.major.version";
+  private static final String LONG_TIME_TASK = "odps.longtime.instance";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private List<String> tableList = new ArrayList<>();
@@ -165,6 +166,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     hints.put(MAJOR_VERSION, majorVersion);
+    hints.put(LONG_TIME_TASK, "true");
     for (String key : info.stringPropertyNames()) {
       if (key.startsWith(ODPS_SETTING_PREFIX)) {
         hints.put(key, info.getProperty(key));
