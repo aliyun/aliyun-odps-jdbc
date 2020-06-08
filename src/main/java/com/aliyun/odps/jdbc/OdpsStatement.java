@@ -169,38 +169,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
-  private String preCheckQuery(String sql, Properties properties) {
-    String query = "";
-    String[] queries = sql.split(";");
-    for (String s : queries) {
-      if (s.matches("(?i)^(\\s*)(SET)(\\s+)(.*)=(.*);?(\\s*)$")) {
-        if (s.contains(";")) {
-          s = s.replace(';', ' ');
-        }
-        int i = s.toLowerCase().indexOf("set");
-        String pairstring = s.substring(i + 3);
-        String[] pair = pairstring.split("=");
-        connHandle.log.info("set session property: " + pair[0].trim() + "=" + pair[1].trim());
-        properties.put(pair[0].trim(), pair[1].trim());
-      } else {
-        query += s;
-      }
-    }
-    if (StringUtils.isNullOrEmpty(query)) {
-      // just set property
-      processSetClause(properties);
-    }
-    return query;
-  }
-
   @Override
   public synchronized ResultSet executeQuery(String sql) throws SQLException {
     Properties properties = new Properties();
 
-    String query = preCheckQuery(sql, properties);
+    String query = Utils.parseSetting(sql, properties);
+
     if (StringUtils.isNullOrEmpty(query)) {
+      // only settings, just set properties
+      processSetClause(properties);
       return EMPTY_RESULT_SET;
     }
+    // otherwise those properties is just for this query
 
     if (processUseClause(query)) {
       return EMPTY_RESULT_SET;
@@ -217,10 +197,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     Properties properties = new Properties();
 
-    String query = preCheckQuery(sql, properties);
+    String query = Utils.parseSetting(sql, properties);
+
     if (StringUtils.isNullOrEmpty(query)) {
+      // only settings, just set properties
+      processSetClause(properties);
       return 0;
     }
+    // otherwise those properties is just for this query
+
     if (connHandle.runningInInteractiveMode()) {
       throw new SQLFeatureNotSupportedException("executeUpdate() is not supported in session mode.");
     }
@@ -257,10 +242,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // short cut for SET clause
     Properties properties = new Properties();
 
-    String query = preCheckQuery(sql, properties);
+    String query = Utils.parseSetting(sql, properties);
+
     if (StringUtils.isNullOrEmpty(query)) {
+      // only settings, just set properties
+      processSetClause(properties);
       return false;
     }
+    // otherwise those properties is just for this query
+
     if (processUseClause(query)) {
       return false;
     }
