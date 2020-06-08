@@ -96,4 +96,36 @@ public class Utils {
     return ret;
   }
 
+  public static String parseSetting(String sql, Properties properties) {
+    if (StringUtils.isNullOrEmpty(sql)) {
+      throw new IllegalArgumentException("Invalid query :" + sql);
+    }
+    sql = sql.trim();
+    if (!sql.endsWith(";")) {
+      sql += ";";
+    }
+    int index = 0;
+    int end = 0;
+    while ((end = sql.indexOf(';', index)) != -1) {
+      String s = sql.substring(index, end);
+      if (s.toUpperCase().matches("(?i)^(\\s*)(SET)(\\s+)(.*)=(.*);?(\\s*)$")) {
+        // handle one setting
+        int i = s.toLowerCase().indexOf("set");
+        String pairString = s.substring(i + 3);
+        String[] pair = pairString.split("=");
+        properties.put(pair[0].trim(), pair[1].trim());
+        index = end + 1;
+      } else {
+        // break if there is no settings before
+        break;
+      }
+    }
+    if (index >= sql.length()) {
+      // only settings, no query behind
+      return null;
+    } else {
+      // trim setting before query
+      return sql.substring(index).trim();
+    }
+  }
 }
