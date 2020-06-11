@@ -3,6 +3,8 @@ dist: trusty
 jdk:
   - oraclejdk8
 install: mvn install -B -DskipTests=true -Dgpg.skip=true -Djavadoc.skip=true
+before_script:
+- rm -f src/main/java/com/aliyun/odps/jdbc/PublicMethodAspect.aj
 script: mvn package -B -DskipTests=true -Dgpg.skip=true -Djavadoc.skip=true
 env:
   global:
