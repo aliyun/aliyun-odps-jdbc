@@ -40,6 +40,7 @@ import java.util.concurrent.Executor;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -84,12 +85,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String majorVersion;
   private static final String MAJOR_VERSION = "odps.task.major.version";
+  private static final String LONG_TIME_TASK = "odps.longtime.instance";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private List<String> tableList = new ArrayList<>();
 
   private SQLExecutor executor = null;
 
+  private String executeProject = null;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -144,11 +147,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
     this.tableList = connRes.getTableList();
-
+    this.executeProject = connRes.getExecuteProject();
     try {
       odps.projects().get().reload();
       if (interactiveMode) {
-        initSQLExecutor(serviceName);
+        initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       }
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
@@ -159,20 +162,26 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public void initSQLExecutor(String serviceName) throws OdpsException {
+  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy) throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     hints.put(MAJOR_VERSION, majorVersion);
+    hints.put(LONG_TIME_TASK, "true");
     for (String key : info.stringPropertyNames()) {
       if (key.startsWith(ODPS_SETTING_PREFIX)) {
         hints.put(key, info.getProperty(key));
       }
     }
     SQLExecutorBuilder builder = new SQLExecutorBuilder();
-    builder.odps(odps)
+    Odps executeOdps = this.odps;
+    if (!StringUtils.isNullOrEmpty(executeProject)) {
+      executeOdps = this.odps.clone();
+      executeOdps.setDefaultProject(executeProject);
+    }
+    builder.odps(executeOdps)
         .properties(hints)
         .serviceName(serviceName)
-        .fallbackPolicy(FallbackPolicy.nonFallbackPolicy())
+        .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
         .taskName(OdpsStatement.getDefaultTaskName());
     executor = builder.build();
@@ -595,5 +604,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public List<String> getTableList() {
     return tableList;
+  }
+
+  public String getExecuteProject() {
+    return executeProject;
   }
 }

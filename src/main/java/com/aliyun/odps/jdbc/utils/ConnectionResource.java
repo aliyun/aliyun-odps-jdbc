@@ -15,6 +15,9 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.utils.StringUtils;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +47,7 @@ public class ConnectionResource {
   private static final String ACCESS_ID_URL_KEY = "accessId";
   private static final String ACCESS_KEY_URL_KEY = "accessKey";
   private static final String PROJECT_URL_KEY = "project";
+  private static final String EXECUTE_PROJECT_URL_KEY = "executeProject";
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String LIFECYCLE_URL_KEY = "lifecycle";
@@ -55,6 +59,11 @@ public class ConnectionResource {
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
   private static final String ENABLE_ODPS_LOGGER_URL_KEY = "enableOdpsLogger";
   private static final String TABLE_LIST_URL_KEY = "tableList";
+  private static final String FALLBACK_FOR_UNKNOWN_URL_KEY = "fallbackForUnknownError";
+  private static final String FALLBACK_FOR_RESOURCE_URL_KEY = "fallbackForResourceNotEnough";
+  private static final String FALLBACK_FOR_UPGRADING_URL_KEY = "fallbackForUpgrading";
+  private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
+  private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   /**
    * Keys to retrieve properties from info.
    *
@@ -63,6 +72,7 @@ public class ConnectionResource {
   public static final String ACCESS_ID_PROP_KEY = "access_id";
   public static final String ACCESS_KEY_PROP_KEY = "access_key";
   public static final String PROJECT_PROP_KEY = "project_name";
+  public static final String EXECUTE_PROJECT_PROP_KEY = "execute_project_name";
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
   public static final String LIFECYCLE_PROP_KEY = "lifecycle";
@@ -74,6 +84,11 @@ public class ConnectionResource {
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
   public static final String ENABLE_ODPS_LOGGER_PROP_KEY = "enable_odps_logger";
   public static final String TABLE_LIST_PROP_KEY = "table_list";
+  private static final String FALLBACK_FOR_UNKNOWN_PROP_KEY = "fallback_for_unknownerror";
+  private static final String FALLBACK_FOR_RESOURCE_PROP_KEY = "fallback_for_resourcenotenough";
+  private static final String FALLBACK_FOR_UPGRADING_PROP_KEY = "fallback_for_upgrading";
+  private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
+  private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -84,6 +99,7 @@ public class ConnectionResource {
   private String accessId;
   private String accessKey;
   private String project;
+  private String executeProject;
   private String charset;
   private String logview;
   private String lifecycle;
@@ -95,6 +111,7 @@ public class ConnectionResource {
   private String majorVersion;
   private boolean enableOdpsLogger = false;
   private List<String> tableList = new ArrayList<>();
+  private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -144,6 +161,8 @@ public class ConnectionResource {
             CHARSET_URL_KEY);
     project =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, PROJECT_PROP_KEY, PROJECT_URL_KEY);
+    executeProject =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, EXECUTE_PROJECT_PROP_KEY, EXECUTE_PROJECT_URL_KEY);
     logview =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY, LOGVIEW_URL_KEY);
     lifecycle =
@@ -170,6 +189,23 @@ public class ConnectionResource {
     enableOdpsLogger = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
     );
+
+    fallbackPolicy.fallback4ResourceNotEnough(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
+    ));
+    fallbackPolicy.fallback4RunningTimeout(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
+    ));
+    fallbackPolicy.fallback4Upgrading(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
+    ));
+    fallbackPolicy.fallback4UnsupportedFeature(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
+    ));
+    fallbackPolicy.fallback4UnknownError(Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
+    ));
+
 
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
         TABLE_LIST_URL_KEY);
@@ -210,6 +246,10 @@ public class ConnectionResource {
 
   public String getProject() {
     return project;
+  }
+
+  public String getExecuteProject() {
+    return executeProject;
   }
 
   public String getCharset() {
@@ -276,5 +316,9 @@ public class ConnectionResource {
 
   public List<String> getTableList() {
     return tableList;
+  }
+
+  public FallbackPolicy getFallbackPolicy() {
+    return fallbackPolicy;
   }
 }

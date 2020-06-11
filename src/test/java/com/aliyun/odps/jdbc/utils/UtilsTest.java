@@ -20,12 +20,15 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import com.aliyun.odps.jdbc.OdpsStatement;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.utils.StringUtils;
+
+import java.util.Properties;
 
 public class UtilsTest {
 
@@ -68,4 +71,87 @@ public class UtilsTest {
         StringEscapeUtils.unescapeJava(jsonSummary)));
   }
 
+  @Test
+  public void testParseSetting() {
+    {
+      String sql = "select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, sql);
+      Assert.assertEquals(properties.size(), 0);
+    }
+    {
+      String sql = "set 1=1;select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, "select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;");
+      Assert.assertEquals(properties.size(), 1);
+      Assert.assertTrue(properties.getProperty("1").equals("1"));
+    }
+    {
+      String sql = "select 1 from test;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, sql);
+      Assert.assertEquals(properties.size(), 0);
+    }
+    {
+      String sql = "select 1 from test";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, sql + ";");
+      Assert.assertEquals(properties.size(), 0);
+    }
+    {
+      String sql = "set 1=1;select 1 from test;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, "select 1 from test;");
+      Assert.assertEquals(properties.size(), 1);
+      Assert.assertTrue(properties.getProperty("1").equals("1"));
+    }
+    {
+      String sql = "set 1=1;set 2=2; select 1 from test;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, "select 1 from test;");
+      Assert.assertEquals(properties.size(), 2);
+      Assert.assertTrue(properties.getProperty("1").equals("1"));
+      Assert.assertTrue(properties.getProperty("2").equals("2"));
+    }
+    {
+      String sql = "set 1=1";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, null);
+      Assert.assertEquals(properties.size(), 1);
+      Assert.assertTrue(properties.getProperty("1").equals("1"));
+    }
+    {
+      String sql = "Set 1=1";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, null);
+      Assert.assertEquals(properties.size(), 1);
+      Assert.assertTrue(properties.getProperty("1").equals("1"));
+    }
+    {
+      String sql = "set 1=1;set 2=2;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, null);
+      Assert.assertEquals(properties.size(), 2);
+      Assert.assertTrue(properties.getProperty("1").equals("1"));
+      Assert.assertTrue(properties.getProperty("2").equals("2"));
+    }
+    {
+      // TODO apply this setting or ignore this setting?
+      String sql = "select 1 from test;set 1=1;";
+      Properties properties = new Properties();
+      String realQuery = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realQuery, sql);
+      Assert.assertEquals(properties.size(), 0);
+      Assert.assertTrue(properties.isEmpty());
+    }
+  }
 }
