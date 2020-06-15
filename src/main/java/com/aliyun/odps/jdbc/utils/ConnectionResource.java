@@ -64,6 +64,7 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_UPGRADING_URL_KEY = "fallbackForUpgrading";
   private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
+  private static final String ALWAYS_FALLBACK_URL_KEY = "alwaysFallback";
   /**
    * Keys to retrieve properties from info.
    *
@@ -89,6 +90,7 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_UPGRADING_PROP_KEY = "fallback_for_upgrading";
   private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
+  private static final String ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "always_fallback";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -206,6 +208,12 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
     ));
 
+    boolean alwaysFallback = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY, ALWAYS_FALLBACK_URL_KEY)
+    );
+    if (alwaysFallback) {
+      fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
+    }
 
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
         TABLE_LIST_URL_KEY);
