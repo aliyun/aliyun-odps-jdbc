@@ -20,6 +20,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -42,14 +43,18 @@ public class OdpsStatementTest {
 
   private static String OUTPUT_TABLE_NAME = "statement_test_table_output";
   private static String INPUT_TABLE_NAME = "statement_test_table_input";
+  private static String PARTITIONED_TABLE_NAME = "partitioned_table_name";
 
   @BeforeClass
   public static void setUp() throws Exception {
-    Statement stmt = conn.createStatement();
+    Statement stmt = TestManager.getInstance().conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
-    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
-    stmt.executeUpdate("create table if not exists "+ OUTPUT_TABLE_NAME +"(id bigint);");
+    stmt.executeUpdate("drop table if exists " + PARTITIONED_TABLE_NAME);
+    stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
+    stmt.executeUpdate("create table if not exists " + OUTPUT_TABLE_NAME + "(id bigint);");
+    stmt.executeUpdate("create table if not exists " + PARTITIONED_TABLE_NAME + "(foo bigint) partitioned by (bar string);");
+    stmt.executeUpdate("alter table " + PARTITIONED_TABLE_NAME + " add partition (bar='hello')");
     stmt.close();
 
     TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
@@ -314,5 +319,93 @@ public class OdpsStatementTest {
         OdpsStatement.isQuery("insert into table yichao_test_table_output select 1 id from dual;"));
     Assert.assertFalse(OdpsStatement.isQuery(
         "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
+  }
+
+  @Test
+  public void testDescTable() {
+    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+      stmt.execute("desc " + PARTITIONED_TABLE_NAME);
+      try (ResultSet rs = stmt.getResultSet()) {
+        int columnCount = rs.getMetaData().getColumnCount();
+        while (rs.next()) {
+          for (int i = 1; i <= columnCount; i++) {
+            System.out.print(rs.getString(i));
+            if (i == columnCount) {
+              System.out.print("\n");
+            } else {
+              System.out.print(", ");
+            }
+          }
+        }
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testDescPartition() {
+    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+      stmt.execute("desc " + PARTITIONED_TABLE_NAME + " partition (bar='hello');");
+      try (ResultSet rs = stmt.getResultSet()) {
+        int columnCount = rs.getMetaData().getColumnCount();
+        while (rs.next()) {
+          for (int i = 1; i <= columnCount; i++) {
+            System.out.print(rs.getString(i));
+            if (i == columnCount) {
+              System.out.print("\n");
+            } else {
+              System.out.print(", ");
+            }
+          }
+        }
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testShowTables() {
+    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+      stmt.execute("show tables;");
+      try (ResultSet rs = stmt.getResultSet()) {
+        int columnCount = rs.getMetaData().getColumnCount();
+        while (rs.next()) {
+          for (int i = 1; i <= columnCount; i++) {
+            System.out.print(rs.getString(i));
+            if (i == columnCount) {
+              System.out.print("\n");
+            } else {
+              System.out.print(", ");
+            }
+          }
+        }
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testShowPartitions() {
+    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+      stmt.execute("show partitions " + PARTITIONED_TABLE_NAME);
+      try (ResultSet rs = stmt.getResultSet()) {
+        int columnCount = rs.getMetaData().getColumnCount();
+        while (rs.next()) {
+          for (int i = 1; i <= columnCount; i++) {
+            System.out.print(rs.getString(i));
+            if (i == columnCount) {
+              System.out.print("\n");
+            } else {
+              System.out.print(", ");
+            }
+          }
+        }
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 }

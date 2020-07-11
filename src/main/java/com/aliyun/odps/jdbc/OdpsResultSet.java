@@ -79,7 +79,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public void setFetchSize(int rows) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    conn.log.warn("Unsupported method call: OdpsResultSet#setFetchSize, ignored");
   }
 
   @Override
