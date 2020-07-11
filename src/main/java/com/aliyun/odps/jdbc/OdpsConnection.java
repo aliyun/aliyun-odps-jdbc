@@ -117,7 +117,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = UUID.randomUUID().toString().substring(24);
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(getClass().getName(), null, logConfFile, false, connRes.isEnableOdpsLogger());
+    log = new OdpsLogger(connectionId,
+                         null,
+                         logConfFile,
+                         false,
+                         connRes.isEnableOdpsLogger());
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
