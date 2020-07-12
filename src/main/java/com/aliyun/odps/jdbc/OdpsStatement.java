@@ -121,8 +121,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.getExecutor().cancel();
         connHandle.log.info("submit cancel query instance id=" + executeInstance.getId());
       } else {
-        executeInstance.stop();
-        connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
+        // If the instance has already terminated, calling Instance.stop# results in an exception.
+        // Checking the instance status before calling Instance.stop# could handle most cases. But
+        // if the instance terminated after the checking, an exception would still be thrown.
+        if (!executeInstance.isTerminated()) {
+          executeInstance.stop();
+          connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
+        }
       }
     } catch (OdpsException e) {
       throw new SQLException(e);
