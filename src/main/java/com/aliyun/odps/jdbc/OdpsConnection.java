@@ -15,8 +15,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.jdbc.utils.OdpsLogger;
-
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -34,13 +32,15 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.aliyun.odps.sqa.FallbackPolicy;
-import com.aliyun.odps.sqa.SQLExecutor;
-import com.aliyun.odps.sqa.SQLExecutorBuilder;
-import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
@@ -48,9 +48,16 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.sqa.SQLExecutor;
+import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
+
+  private static final AtomicLong CONNECTION_ID_GENERATOR = new AtomicLong(0);
 
   private final Odps odps;
   private final Properties info;
@@ -114,10 +121,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("lifecycle is expected to be an integer");
     }
 
-    connectionId = UUID.randomUUID().toString().substring(24);
+    connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(getClass().getName(), null, logConfFile, false, connRes.isEnableOdpsLogger());
+    log = new OdpsLogger(connectionId,
+                         null,
+                         logConfFile,
+                         false,
+                         connRes.isEnableOdpsLogger());
 
     if (connRes.getLogLevel() != null) {
       log.warn("The logLevel is deprecated, please set log level in log conf file!");
