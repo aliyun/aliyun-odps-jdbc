@@ -183,6 +183,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
+        .tunnelEndpoint(tunnelEndpoint)
         .taskName(OdpsStatement.getDefaultTaskName());
     executor = builder.build();
   }
