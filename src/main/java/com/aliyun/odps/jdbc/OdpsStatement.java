@@ -27,6 +27,8 @@ import java.sql.Statement;
 import java.util.*;
 
 import com.aliyun.odps.*;
+import com.aliyun.odps.Instance.Status;
+import com.aliyun.odps.Instance.TaskStatus;
 import com.aliyun.odps.sqa.SQLExecutor;
 import org.apache.commons.lang.StringEscapeUtils;
 
@@ -594,9 +596,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  private void runSQLOffline(String sql, Odps odps, Map<String,String> settings) throws SQLException, OdpsException {
+  private void runSQLOffline(
+      String sql,
+      Odps odps, Map<String,String> settings)
+      throws SQLException, OdpsException {
+
     long begin = System.currentTimeMillis();
-    executeInstance =  SQLTask.run(odps, odps.getDefaultProject(), sql, JDBC_SQL_TASK_NAME, settings, null);
+    executeInstance =
+        SQLTask.run(odps, odps.getDefaultProject(), sql, JDBC_SQL_TASK_NAME, settings, null);
     LogView logView = new LogView(odps);
     if (connHandle.getLogviewHost() != null) {
       logView.setLogViewHost(connHandle.getLogviewHost());
@@ -608,30 +615,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // Poll the task status within the instance
     boolean complete = false;
-    Instance.TaskStatus taskstatus;
 
+    // 等待 instance 结束
     while (!complete) {
       try {
         Thread.sleep(POLLING_INTERVAL);
       } catch (InterruptedException e) {
         break;
       }
+      complete = Status.TERMINATED.equals(executeInstance.getStatus());
+    }
 
-      try {
-        taskstatus = executeInstance.getTaskStatus().get(JDBC_SQL_TASK_NAME);
-        if (taskstatus == null) {
-          connHandle.log.warn("NullPointer when get task status");
-          // NOTE: keng!!
-          continue;
-        }
-      } catch (OdpsException e) {
-        connHandle.log.error("Fail to get task status:" + sql, e);
-        throw new SQLException("Fail to get task status", e);
-      }
-
-      switch (taskstatus.getStatus()) {
+    TaskStatus taskStatus = executeInstance.getTaskStatus().get(JDBC_SQL_TASK_NAME);
+    if (taskStatus == null) {
+      connHandle.log.warn("Failed to get task status. "
+                              + "The instance may have been killed before its task was created.");
+    } else {
+      switch (taskStatus.getStatus()) {
         case SUCCESS:
-          complete = true;
           connHandle.log.debug("sql status: success");
           break;
         case FAILED:
@@ -649,13 +650,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         case WAITING:
         case RUNNING:
         case SUSPENDED:
-          connHandle.log.debug("sql status: " + taskstatus.getStatus());
+          connHandle.log.debug("sql status: " + taskStatus.getStatus());
           break;
+        default:
       }
     }
 
-    // 等待 instance 结束
-    executeInstance.waitForSuccess(POLLING_INTERVAL);
     long end = System.currentTimeMillis();
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
 
