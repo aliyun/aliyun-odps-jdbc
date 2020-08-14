@@ -192,7 +192,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     executor = builder.build();
     if (interactiveMode) {
       long cost = System.currentTimeMillis() - startTime;
-      log.info(String.format("attach session and init SQLExecutor time cost=%d", cost));
+      log.info(String.format("Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d", executor.getInstance().getId(), cost));
     }
   }
 
