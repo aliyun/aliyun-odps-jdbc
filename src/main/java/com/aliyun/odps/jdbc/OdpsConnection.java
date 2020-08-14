@@ -149,8 +149,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.tableList = connRes.getTableList();
     this.executeProject = connRes.getExecuteProject();
     try {
+      long startTime = System.currentTimeMillis();
       odps.projects().get().reload();
       if (interactiveMode) {
+        long cost = System.currentTimeMillis() - startTime;
+        log.info(String.format("load project meta infos time cost=%d", cost));
         initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       }
       String msg = "Connect to odps project %s successfully";
@@ -185,7 +188,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .enableReattach(true)
         .tunnelEndpoint(tunnelEndpoint)
         .taskName(OdpsStatement.getDefaultTaskName());
+    long startTime = System.currentTimeMillis();
     executor = builder.build();
+    if (interactiveMode) {
+      long cost = System.currentTimeMillis() - startTime;
+      log.info(String.format("attach session and init SQLExecutor time cost=%d", cost));
+    }
   }
 
   @Override
