@@ -170,6 +170,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     Map<String, String> hints = new HashMap<>();
     hints.put(MAJOR_VERSION, majorVersion);
     hints.put(LONG_TIME_TASK, "true");
+    hints.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
     for (String key : info.stringPropertyNames()) {
       if (key.startsWith(ODPS_SETTING_PREFIX)) {
         hints.put(key, info.getProperty(key));
