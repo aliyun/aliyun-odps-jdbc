@@ -21,11 +21,9 @@
 package com.aliyun.odps.jdbc.utils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
-import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.utils.StringUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -106,7 +104,7 @@ public class Utils {
     if (StringUtils.isNullOrEmpty(sql)) {
       throw new IllegalArgumentException("Invalid query :" + sql);
     }
-    properties.put(JDBC_USER_AGENT, JDBCVersion + " " + SDKVersion);
+    
     sql = sql.trim();
     if (!sql.endsWith(";")) {
       sql += ";";
