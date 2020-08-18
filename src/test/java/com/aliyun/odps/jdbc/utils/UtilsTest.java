@@ -31,8 +31,7 @@ import com.aliyun.odps.utils.StringUtils;
 import java.util.Properties;
 
 public class UtilsTest {
-  private static final String JDBC_USER_AGENT = "odps.idata.useragent";
-
+  
   @Test
   public void matchPattern() throws Exception {
 
