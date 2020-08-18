@@ -106,7 +106,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
     String serviceName = connRes.getInteractiveServiceName();
-
+    sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
     int lifecycle;
     try {
       lifecycle = Integer.parseInt(connRes.getLifecycle());
