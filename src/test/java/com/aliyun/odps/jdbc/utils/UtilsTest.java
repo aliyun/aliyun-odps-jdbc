@@ -78,14 +78,14 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, sql);
-      Assert.assertEquals(properties.size(), 1);
+      Assert.assertEquals(properties.size(), 0);
     }
     {
       String sql = "set 1=1;select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;";
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, "select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;");
-      Assert.assertEquals(properties.size(), 2);
+      Assert.assertEquals(properties.size(), 1);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
     }
     {
@@ -93,21 +93,21 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, sql);
-      Assert.assertEquals(properties.size(), 1);
+      Assert.assertEquals(properties.size(), 0);
     }
     {
       String sql = "select 1 from test";
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, sql + ";");
-      Assert.assertEquals(properties.size(), 1);
+      Assert.assertEquals(properties.size(), 0);
     }
     {
       String sql = "set 1=1;select 1 from test;";
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, "select 1 from test;");
-      Assert.assertEquals(properties.size(), 2);
+      Assert.assertEquals(properties.size(), 1);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
     }
     {
@@ -115,7 +115,7 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, "select 1 from test;");
-      Assert.assertEquals(properties.size(), 3);
+      Assert.assertEquals(properties.size(), 2);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
       Assert.assertTrue(properties.getProperty("2").equals("2"));
     }
@@ -124,7 +124,7 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, null);
-      Assert.assertEquals(properties.size(), 2);
+      Assert.assertEquals(properties.size(), 1);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
     }
     {
@@ -132,7 +132,7 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, null);
-      Assert.assertEquals(properties.size(), 2);
+      Assert.assertEquals(properties.size(), 1);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
     }
     {
@@ -140,7 +140,7 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, null);
-      Assert.assertEquals(properties.size(), 3);
+      Assert.assertEquals(properties.size(), 2);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
       Assert.assertTrue(properties.getProperty("2").equals("2"));
     }
@@ -150,8 +150,8 @@ public class UtilsTest {
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
       Assert.assertEquals(realQuery, sql);
-      Assert.assertEquals(properties.size(), 1);
-      Assert.assertTrue(!properties.isEmpty());
+      Assert.assertEquals(properties.size(), 0);
+      Assert.assertTrue(properties.isEmpty());
     }
   }
 }
