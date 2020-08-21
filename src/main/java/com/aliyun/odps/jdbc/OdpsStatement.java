@@ -690,7 +690,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     } catch (IOException e) {
       connHandle.log.error("Run SQL failed:" + e.getMessage());
-      throw new SQLException(e.getMessage(), e);
+      throw new SQLException("execute sql [" + sql + "] instance:["
+          + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
+    } catch (OdpsException e) {
+      connHandle.log.error("Run SQL failed:" + e.getMessage());
+      throw new SQLException("execute sql [" + sql + "] instance:["
+          + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
     }
 
     executeInstance = executor.getInstance();
