@@ -65,6 +65,10 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   private static final String ALWAYS_FALLBACK_URL_KEY = "alwaysFallback";
+  //Unit: result record row count, only applied in interactive mode
+  private static final String INSTANCE_TUNNEL_MAX_RECORD_URL_KEY = "instanceTunnelMaxRecord";
+  //Unit: Bytes, only applied in interactive mode
+  private static final String INSTANCE_TUNNEL_MAX_SIZE_URL_KEY = "instanceTunnelMaxSize";
   /**
    * Keys to retrieve properties from info.
    *
@@ -91,6 +95,10 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
   private static final String ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "always_fallback";
+  //Unit: result record row count, only applied in interactive mode
+  private static final String INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY = "instance_tunnel_max_record";
+  //Unit: Bytes, only applied in interactive mode
+  private static final String INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY = "instance_tunnel_max_size";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -114,6 +122,8 @@ public class ConnectionResource {
   private boolean enableOdpsLogger = false;
   private List<String> tableList = new ArrayList<>();
   private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
+  private Long countLimit;
+  private Long sizeLimit;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -215,6 +225,20 @@ public class ConnectionResource {
       fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
     }
 
+    countLimit = Long.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY, INSTANCE_TUNNEL_MAX_RECORD_URL_KEY)
+    );
+    if (countLimit <= 0L){
+      countLimit = null;
+    }
+
+    sizeLimit = Long.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY, INSTANCE_TUNNEL_MAX_SIZE_URL_KEY)
+    );
+    if (sizeLimit <= 0L){
+      sizeLimit = null;
+    }
+
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
         TABLE_LIST_URL_KEY);
     if (!StringUtils.isNullOrEmpty(tableStr)) {
@@ -300,6 +324,12 @@ public class ConnectionResource {
 
   public boolean isEnableOdpsLogger() {
     return enableOdpsLogger;
+  }
+
+  public Long getCountLimit() { return countLimit; }
+
+  public Long getSizeLimit() {
+    return sizeLimit;
   }
 
   @SuppressWarnings("rawtypes")
