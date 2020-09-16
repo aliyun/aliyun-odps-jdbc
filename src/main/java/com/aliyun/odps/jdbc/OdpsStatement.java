@@ -92,6 +92,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected int resultSetMaxRows = 0;
   protected int resultSetFetchSize = 10000;
 
+  //Unit: result record row count, only applied in interactive mode
+  protected Long resultCountLimit = null;
+  //Unit: Bytes, only applied in interactive mode
+  protected Long resultSizeLimit = null;
+
   private SQLWarning warningChain = null;
 
   OdpsStatement(OdpsConnection conn) {
@@ -101,6 +106,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHandle = conn;
     sqlTaskProperties = (Properties) conn.getSqlTaskProperties().clone();
+    this.resultCountLimit = conn.getCountLimit();
+    this.resultSizeLimit = conn.getSizeLimit();
     this.isResultSetScrollable = isResultSetScrollable;
   }
 
@@ -681,7 +688,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     executor.run(sql, settings);
     String logView = executor.getLogView();
     try {
-      sessionResultSet = executor.getResultSet();
+      sessionResultSet = executor.getResultSet(resultCountLimit, resultSizeLimit);
       List<String> exeLog = executor.getExecutionLog();
       if (!exeLog.isEmpty()) {
         for (String log : exeLog) {
