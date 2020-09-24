@@ -239,48 +239,56 @@ mvn test
 
 ### Data Type Mapping
 
-Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC. They can be accessed by the getters of `ResultSet` like `getInt()` and `getTime()`. The following table reflects the mapping between JDBC data type and ODPS data type:
+Currently, 13 ODPS data types are supported. Please see the following table for supported ODPS data 
+types and corresponding JDBC interfaces.
 
 
-| ODPS Type | Java Type       | JDBC Interface                    |   JDBC    |
-| :-------: | :-------------- | :-------------------------------- | :-------: |
-|  TINYINT  | Byte            | byte                              |  TINYINT  |
-|  SMALLINT | Short           | short                             |  SMALLINT |
-|  INT      | Integer         | int                               |  INTEGER  |
-|  BIGINT   | Long            | long                              |  BIGINT   |
-|  FLOAT    | Float           | float                             |  FLOAT    |
-|  DOUBLE   | Double          | double, float                     |  DOUBLE   |
-|  BOOLEAN  | Boolean         | boolean                           |  BOOLEAN  |
-|  DATETIME | util.Date       | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
-|  TIMESTAMP| sql.Timestamp   | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
-|  VARCHAR  | Varchar         | String                            |  VARCHAR  |
-|  STRING   | byte[]          | String                            |  VARCHAR  |
-|  DECIMAL  | math.BigDecimal | math.BigDecimal                   |  DECIMAL  |
+| ODPS Type | JDBC Interface                    |   JDBC Type |
+| :-------: | :-------------------------------: | :-------:   |
+|  TINYINT  | java.sql.ResultSet.getByte        |  TINYINT    |
+|  SMALLINT | java.sql.ResultSet.getShort       |  SMALLINT   |
+|  INT      | java.sql.ResultSet.getInt         |  INTEGER    |
+|  BIGINT   | java.sql.ResultSet.getLong        |  BIGINT     |
+|  FLOAT    | java.sql.ResultSet.getFloat       |  FLOAT      |
+|  DOUBLE   | java.sql.ResultSet.getDouble      |  DOUBLE     |
+|  BOOLEAN  | java.sql.ResultSet.getBoolean     |  BOOLEAN    |
+|  DATETIME | java.sql.ResultSet.getTimestamp   |  TIMESTAMP  |
+|  TIMESTAMP| java.sql.ResultSet.getTimestamp   |  TIMESTAMP  |
+|  VARCHAR  | java.sql.ResultSet.getString      |  VARCHAR    |
+|  STRING   | java.sql.ResultSet.getString      |  VARCHAR    |
+|  DECIMAL  | java.sql.ResultSet.getBigDecimal  |  DECIMAL    |
+|  BINARY   | java.sql.ResultSet.getBytes       |  BINARY     |
 
 NOTE: Possible timezone issue
 
-DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse or format action. When application that using JDBC display a DATETIME as a human-readable string format, it is the application itself did the format using application defined or OS defined timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid inconsistent datetime parse/format.
+DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is 
+TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse 
+or format action. When application that using JDBC display a DATETIME as a human-readable string 
+format, it is the application itself did the format using application defined or OS defined 
+timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid 
+inconsistent datetime parse/format.
 
 ### Type Conversion
 
-The implicit type conversion follows the rule:
+Implicit type conversion happens when accessing a ODPS data type with JDBC interfaces other than the
+recommended one. Please see the following table for supported implicit conversions.
 
 
-| JAVA\ODPS  |TINYINT |SMALLINT|INT      |BIGINT    |FLOAT   |DOUBLE   |DECIMAL  |VARCHAR  |STRING   |DATETIME |TIMESTAMP|BOOLEAN  |
-| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-|    byte    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |         |         |         |         |
-|   short    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|    int     |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|    long    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|   float    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|   double   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-| BigDecimal |        |        |         |          |        |         |    Y    |         |         |         |         |         |
-|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
-|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
-|    Date    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
-|    Time    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
-| Timestamp  |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
-|  boolean   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |    Y    |
+| JAVA\ODPS  |TINYINT |SMALLINT|INT      |BIGINT    |FLOAT   |DOUBLE   |DECIMAL  |VARCHAR  |STRING   |DATETIME |TIMESTAMP|BOOLEAN  |BINARY   |
+| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
+|    byte    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |         |         |         |         |         |
+|   short    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|    int     |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|    long    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|   float    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|   double   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+| BigDecimal |        |        |         |          |        |         |    Y    |         |         |         |         |         |         |
+|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |         |
+|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
+|    Date    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
+|    Time    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
+| Timestamp  |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
+|  boolean   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |    Y    |         |
 
 ## MaxCompute Service Compatibility and Recommended JDBC version
 
@@ -289,9 +297,9 @@ Since Sprint27, MaxCompute tunnel service supported a feature named instance tun
 However, for users using MaxCompute deploy that is earlier than Sprint27 (especially Private Cloud cases), please stick to the latest version before 2.0.
 
 | MaxCompute | JDBC |
-| :--------: | :--: |
-| Public Service | 2.4 |
-| Non PRC Public Service | 2.4.1-oversea |
+| :--------: | :---: |
+| Public Service | latest |
+| Non PRC Public Service | latest |
 | <= Sprint27 | 1.9.2 |
 
 ## Authors && Contributors
