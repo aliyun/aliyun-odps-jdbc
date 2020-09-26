@@ -69,6 +69,7 @@ public class ConnectionResource {
   private static final String INSTANCE_TUNNEL_MAX_RECORD_URL_KEY = "instanceTunnelMaxRecord";
   //Unit: Bytes, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_SIZE_URL_KEY = "instanceTunnelMaxSize";
+  private static final String STS_TOKEN_URL_KEY = "stsToken";
   /**
    * Keys to retrieve properties from info.
    *
@@ -99,6 +100,7 @@ public class ConnectionResource {
   private static final String INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY = "instance_tunnel_max_record";
   //Unit: Bytes, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY = "instance_tunnel_max_size";
+  private static final String STS_TOKEN_PROP_KEY = "sts_token";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -124,6 +126,7 @@ public class ConnectionResource {
   private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
   private Long countLimit;
   private Long sizeLimit;
+  private String stsToken;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -224,6 +227,8 @@ public class ConnectionResource {
     if (alwaysFallback) {
       fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
     }
+    stsToken =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
     countLimit = Long.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY, INSTANCE_TUNNEL_MAX_RECORD_URL_KEY)
@@ -358,5 +363,9 @@ public class ConnectionResource {
 
   public FallbackPolicy getFallbackPolicy() {
     return fallbackPolicy;
+  }
+
+  public String getStsToken() {
+    return stsToken;
   }
 }

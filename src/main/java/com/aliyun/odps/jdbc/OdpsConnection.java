@@ -15,6 +15,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 
 import java.sql.Array;
@@ -110,6 +111,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
     String serviceName = connRes.getInteractiveServiceName();
+    String stsToken = connRes.getStsToken();
     sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
     int lifecycle;
     try {
@@ -133,8 +135,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String
         .format("charset=%s, logviewhost=%s, lifecycle=%d", charset, logviewHost, lifecycle));
-
-    Account account = new AliyunAccount(accessId, accessKey);
+    Account account;
+    if (stsToken == null || stsToken.length() <= 0) {
+      account = new AliyunAccount(accessId, accessKey);
+    }
+    else {
+      account = new StsAccount(accessId, accessKey, stsToken);
+    }
     log.debug("debug mode on");
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
