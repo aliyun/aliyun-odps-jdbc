@@ -68,8 +68,8 @@ public class ConnectionResource {
   //Unit: Bytes, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_SIZE_URL_KEY = "instanceTunnelMaxSize";
   private static final String STS_TOKEN_URL_KEY = "stsToken";
-
   private static final String DISABLE_CONN_SETTING_URL_KEY = "disableConnectionSetting";
+
   /**
    * Keys to retrieve properties from info.
    *
@@ -101,8 +101,8 @@ public class ConnectionResource {
   //Unit: Bytes, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY = "instance_tunnel_max_size";
   private static final String STS_TOKEN_PROP_KEY = "sts_token";
-
   private static final String DISABLE_CONN_SETTING_PROP_KEY = "disable_connection_setting";
+
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
