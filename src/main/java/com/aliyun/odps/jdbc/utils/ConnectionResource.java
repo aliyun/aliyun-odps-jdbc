@@ -15,13 +15,11 @@
 
 package com.aliyun.odps.jdbc.utils;
 
-import com.aliyun.odps.sqa.FallbackPolicy;
-import com.aliyun.odps.utils.StringUtils;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +27,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.utils.GsonObjectBuilder;
+import com.aliyun.odps.utils.StringUtils;
+import com.google.gson.reflect.TypeToken;
 
 public class ConnectionResource {
 
@@ -70,6 +72,7 @@ public class ConnectionResource {
   private static final String DISABLE_CONN_SETTING_URL_KEY = "disableConnectionSetting";
   private static final String USE_PROJECT_TIME_ZONE_URL_KEY = "useProjectTimeZone";
   private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
+  private static final String SETTINGS_URL_KEY = "settings";
 
   /**
    * Keys to retrieve properties from info.
@@ -104,6 +107,7 @@ public class ConnectionResource {
   private static final String DISABLE_CONN_SETTING_PROP_KEY = "disable_connection_setting";
   private static final String USE_PROJECT_TIME_ZONE_PROP_KEY = "use_project_time_zone";
   private static final String ENABLE_LIMIT_PROP_KEY = "enable_limit";
+  private static final String SETTINGS_PROP_KEY = "settings";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -132,6 +136,7 @@ public class ConnectionResource {
   private boolean disableConnSetting = false;
   private boolean useProjectTimeZone = false;
   private boolean enableLimit = false;
+  private Map<String, String> settings = new HashMap<>();
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -161,13 +166,11 @@ public class ConnectionResource {
       maps.add(paramsInURL);
     }
 
-    accessId =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, ACCESS_ID_PROP_KEY_ALT,
-            ACCESS_ID_PROP_KEY, ACCESS_ID_URL_KEY);
-    accessKey =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, ACCESS_KEY_PROP_KEY_ALT,
-            ACCESS_KEY_PROP_KEY, ACCESS_KEY_URL_KEY);
+    accessId = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, ACCESS_ID_PROP_KEY_ALT, ACCESS_ID_PROP_KEY, ACCESS_ID_URL_KEY);
 
+    accessKey = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, ACCESS_KEY_PROP_KEY_ALT, ACCESS_KEY_PROP_KEY, ACCESS_KEY_URL_KEY);
     if (accessKey != null) {
       try {
         accessKey = URLDecoder.decode(accessKey, CHARSET_DEFAULT_VALUE);
@@ -277,6 +280,13 @@ public class ConnectionResource {
         tables.computeIfAbsent(parts[0], p -> new LinkedList<>());
         tables.get(parts[0]).add(parts[1]);
       }
+    }
+
+    String globalSettingsInJson = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, SETTINGS_URL_KEY, SETTINGS_PROP_KEY);
+    if (globalSettingsInJson != null) {
+      Type type = new TypeToken<Map<String, String>>() {}.getType();
+      settings.putAll(GsonObjectBuilder.get().fromJson(globalSettingsInJson, type));
     }
   }
 
@@ -404,5 +414,9 @@ public class ConnectionResource {
 
   public boolean isEnableLimit() {
     return enableLimit;
+  }
+
+  public Map<String, String> getSettings() {
+    return settings;
   }
 }
