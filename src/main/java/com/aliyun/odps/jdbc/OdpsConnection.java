@@ -95,6 +95,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   //Unit: Bytes, only applied in interactive mode
   private Long resultSizeLimit = null;
 
+  private boolean disableConnSetting = false;
+
   private SQLExecutor executor = null;
 
   private String executeProject = null;
@@ -161,6 +163,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.executeProject = connRes.getExecuteProject();
     this.resultCountLimit = connRes.getCountLimit();
     this.resultSizeLimit = connRes.getSizeLimit();
+    this.disableConnSetting = connRes.isDisableConnSetting();
     try {
       long startTime = System.currentTimeMillis();
       odps.projects().get().reload();
@@ -635,4 +638,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public Long getCountLimit() { return resultCountLimit; }
 
   public Long getSizeLimit() { return resultSizeLimit; }
+
+  public boolean disableConnSetting() { return disableConnSetting; }
 }

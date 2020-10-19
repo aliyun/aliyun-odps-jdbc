@@ -302,7 +302,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private void processSetClause(Properties properties) {
     for (String key : properties.stringPropertyNames()) {
       connHandle.log.info("set sql task property: " + key + "=" + properties.getProperty(key));
-      connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
+      if (!connHandle.disableConnSetting()) {
+        connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
+      }
       sqlTaskProperties.setProperty(key, properties.getProperty(key));
     }
   }
