@@ -30,7 +30,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class Utils {
-
+  public static final String JDBC_USER_AGENT = "odps.idata.useragent";
+  public static final String JDBCKey = "driver.version";
+  public static final String SDKKey = "sdk.version";
+  public static String JDBCVersion = "JDBC-Version:" + retrieveVersion(JDBCKey);
+  public static String SDKVersion = "SDK-Version:" + retrieveVersion(SDKKey);
   // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
   public static String retrieveVersion(String key) {
     Properties prop = new Properties();
@@ -100,6 +104,7 @@ public class Utils {
     if (StringUtils.isNullOrEmpty(sql)) {
       throw new IllegalArgumentException("Invalid query :" + sql);
     }
+    
     sql = sql.trim();
     if (!sql.endsWith(";")) {
       sql += ";";

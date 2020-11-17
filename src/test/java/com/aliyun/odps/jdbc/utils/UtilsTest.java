@@ -31,8 +31,7 @@ import com.aliyun.odps.utils.StringUtils;
 import java.util.Properties;
 
 public class UtilsTest {
-
-
+  
   @Test
   public void matchPattern() throws Exception {
 

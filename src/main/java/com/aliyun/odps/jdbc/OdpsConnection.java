@@ -15,6 +15,9 @@
 
 package com.aliyun.odps.jdbc;
 
+import com.aliyun.odps.account.StsAccount;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
+
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -96,6 +99,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private List<String> tableList = new ArrayList<>();
+  //Unit: result record row count, only applied in interactive mode
+  private Long resultCountLimit = null;
+  //Unit: Bytes, only applied in interactive mode
+  private Long resultSizeLimit = null;
+
+  private boolean disableConnSetting = false;
 
   private SQLExecutor executor = null;
 
@@ -113,7 +122,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
     String serviceName = connRes.getInteractiveServiceName();
-
+    String stsToken = connRes.getStsToken();
+    sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
     int lifecycle;
     try {
       lifecycle = Integer.parseInt(connRes.getLifecycle());
@@ -140,8 +150,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String
         .format("charset=%s, logviewhost=%s, lifecycle=%d", charset, logviewHost, lifecycle));
-
-    Account account = new AliyunAccount(accessId, accessKey);
+    Account account;
+    if (stsToken == null || stsToken.length() <= 0) {
+      account = new AliyunAccount(accessId, accessKey);
+    }
+    else {
+      account = new StsAccount(accessId, accessKey, stsToken);
+    }
     log.debug("debug mode on");
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
@@ -159,9 +174,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.interactiveMode = connRes.isInteractiveMode();
     this.tableList = connRes.getTableList();
     this.executeProject = connRes.getExecuteProject();
+    this.resultCountLimit = connRes.getCountLimit();
+    this.resultSizeLimit = connRes.getSizeLimit();
+    this.disableConnSetting = connRes.isDisableConnSetting();
     try {
+      long startTime = System.currentTimeMillis();
       odps.projects().get().reload();
       if (interactiveMode) {
+        long cost = System.currentTimeMillis() - startTime;
+        log.info(String.format("load project meta infos time cost=%d", cost));
         initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       }
       String msg = "Connect to odps project %s successfully";
@@ -194,8 +215,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
+        .tunnelEndpoint(tunnelEndpoint)
         .taskName(OdpsStatement.getDefaultTaskName());
+    long startTime = System.currentTimeMillis();
     executor = builder.build();
+    if (interactiveMode) {
+      long cost = System.currentTimeMillis() - startTime;
+      log.info(String.format("Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d", executor.getInstance().getId(), cost));
+    }
   }
 
   @Override
@@ -620,4 +647,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public String getExecuteProject() {
     return executeProject;
   }
+
+  public Long getCountLimit() { return resultCountLimit; }
+
+  public Long getSizeLimit() { return resultSizeLimit; }
+
+  public boolean disableConnSetting() { return disableConnSetting; }
 }
