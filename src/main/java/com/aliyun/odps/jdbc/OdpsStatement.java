@@ -25,8 +25,13 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.aliyun.odps.*;
+import com.aliyun.odps.Instance.Status;
+import com.aliyun.odps.Instance.TaskStatus;
 import com.aliyun.odps.sqa.SQLExecutor;
 import org.apache.commons.lang.StringEscapeUtils;
 
@@ -41,6 +46,117 @@ import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
+
+  /**
+   * TODO: Hack, remove later
+   */
+  private static Pattern DESC_TABLE_PATTERN = Pattern.compile(
+      "\\s*(DESCRIBE|DESC)\\s+([^;]+);?", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+  private static Pattern SHOW_TABLES_PATTERN = Pattern.compile(
+      "\\s*SHOW\\s+TABLES\\s*;?", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+  private static Pattern SHOW_PARTITIONS_PATTERN = Pattern.compile(
+      "\\s*SHOW\\s+PARTITIONS\\s+([^;]+);?", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+
+  private static final Pattern TABLE_PARTITION_PATTERN = Pattern.compile(
+      "\\s*([\\w\\.]+)(\\s*|(\\s+PARTITION\\s*\\((.*)\\)))\\s*", Pattern.CASE_INSENSITIVE);
+
+  public static String[] parseTablePartition(String tablePartition) {
+    String[] ret = new String[2];
+
+    Matcher m = TABLE_PARTITION_PATTERN.matcher(tablePartition);
+    boolean match = m.matches();
+
+    if (match && m.groupCount() >= 1) {
+      ret[0] = m.group(1);
+    }
+
+    if (match && m.groupCount() >= 4) {
+      ret[1] = m.group(4);
+    }
+
+    return ret;
+  }
+
+  private void descTablePartition(String tablePartition) throws SQLException {
+    String[] parsedTablePartition = parseTablePartition(tablePartition);
+    if (parsedTablePartition[0] == null) {
+      throw new SQLException("Invalid argument: " + tablePartition);
+    }
+
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("col_name", "data_type", "comment"),
+        Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING));
+    List<Object[]> rows = new LinkedList<>();
+
+    try {
+      Table t = connHandle.getOdps().tables().get(parsedTablePartition[0]);
+      addColumnDesc(t.getSchema().getColumns(), rows);
+      addColumnDesc(t.getSchema().getPartitionColumns(), rows);
+
+      if (t.isPartitioned()) {
+        rows.add(new String[] {"", null, null});
+        rows.add(new String[] {"# Partition Information", null, null});
+        rows.add(new String[] {"# col_name", "data_type", "comment"});
+        rows.add(new String[] {"", null, null});
+        addColumnDesc(t.getSchema().getPartitionColumns(), rows);
+
+        if (parsedTablePartition[1] != null) {
+          Partition partition = t.getPartition(new PartitionSpec(parsedTablePartition[1]));
+          PartitionSpec spec = partition.getPartitionSpec();
+          rows.add(new String[] {"", null, null});
+          rows.add(new String[] {"# Detailed Partition Information", null, null});
+          List<String> partitionValues = partition.getPartitionSpec().keys()
+                                                  .stream()
+                                                  .map(spec::get)
+                                                  .collect(Collectors.toList());
+          rows.add(new String[] {"Partition Value:", String.join(", ",partitionValues), null});
+          rows.add(new String[] {"Database:", connHandle.getOdps().getDefaultProject(), null});
+          rows.add(new String[] {"Table:", parsedTablePartition[0], null});
+          rows.add(new String[] {"CreateTime:", partition.getCreatedTime().toString(), null});
+          rows.add(new String[] {"LastDDLTime:", partition.getLastMetaModifiedTime().toString(), null});
+          rows.add(new String[] {"LastModifiedTime:", partition.getLastDataModifiedTime().toString(), null});
+        }
+      }
+    } catch (Exception e) {
+      throw new SQLException(e);
+    }
+
+    resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
+  }
+
+  private void addColumnDesc(List<Column> columns, List<Object[]> rows) {
+    for (Column c : columns) {
+      String[] row = new String[3];
+      row[0] = c.getName();
+      row[1] = c.getTypeInfo().getTypeName();
+      row[2] = c.getComment();
+      rows.add(row);
+    }
+  }
+
+  private void showTables() throws SQLException {
+    OdpsResultSetMetaData meta =
+        new OdpsResultSetMetaData(Collections.singletonList("tab_name"),
+                                  Collections.singletonList(TypeInfoFactory.STRING));
+    List<Object[]> rows = new LinkedList<>();
+    for (Table table : connHandle.getOdps().tables()) {
+      rows.add(new String[] {table.getName()});
+    }
+    resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
+  }
+
+  private void showPartitions(String table) throws SQLException {
+    OdpsResultSetMetaData meta =
+        new OdpsResultSetMetaData(Collections.singletonList("partition"),
+                                  Collections.singletonList(TypeInfoFactory.STRING));
+    List<Object[]> rows = new LinkedList<>();
+    for (Partition partition : connHandle.getOdps().tables().get(table).getPartitions()) {
+      rows.add(new String[] {partition.getPartitionSpec().toString(false, true)});
+    }
+
+    resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
+  }
+
 
   private OdpsConnection connHandle;
   private Instance executeInstance = null;
@@ -128,8 +244,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.getExecutor().cancel();
         connHandle.log.info("submit cancel query instance id=" + executeInstance.getId());
       } else {
-        executeInstance.stop();
-        connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
+        // If the instance has already terminated, calling Instance.stop# results in an exception.
+        // Checking the instance status before calling Instance.stop# could handle most cases. But
+        // if the instance terminated after the checking, an exception would still be thrown.
+        if (!executeInstance.isTerminated()) {
+          executeInstance.stop();
+          connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
+        }
       }
     } catch (OdpsException e) {
       throw new SQLException(e);
@@ -167,6 +288,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     isClosed = true;
   }
 
+  @Override
   public void closeOnCompletion() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -180,23 +302,39 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public synchronized ResultSet executeQuery(String sql) throws SQLException {
     Properties properties = new Properties();
 
-    String query = Utils.parseSetting(sql, properties);
+    // TODO: hack, remove later
+    Matcher descTablePatternMatcher = DESC_TABLE_PATTERN.matcher(sql);
+    Matcher showTablesPatternMatcher = SHOW_TABLES_PATTERN.matcher(sql);
+    Matcher showPartitionsPatternMatcher = SHOW_PARTITIONS_PATTERN.matcher(sql);
 
-    if (StringUtils.isNullOrEmpty(query)) {
-      // only settings, just set properties
-      processSetClause(properties);
-      return EMPTY_RESULT_SET;
+    if (descTablePatternMatcher.matches()) {
+      descTablePartition(showPartitionsPatternMatcher.group(2));
+      return getResultSet();
+    } else if (showTablesPatternMatcher.matches()) {
+      showTables();
+      return getResultSet();
+    } else if (showPartitionsPatternMatcher.matches()) {
+      showPartitions(showPartitionsPatternMatcher.group(1));
+      return getResultSet();
+    } else {
+      String query = Utils.parseSetting(sql, properties);
+
+      if (StringUtils.isNullOrEmpty(query)) {
+        // only settings, just set properties
+        processSetClause(properties);
+        return EMPTY_RESULT_SET;
+      }
+      // otherwise those properties is just for this query
+
+      if (processUseClause(query)) {
+        return EMPTY_RESULT_SET;
+      }
+      checkClosed();
+      beforeExecute();
+      runSQL(query, properties);
+
+      return updateCount < 0 ? getResultSet() : EMPTY_RESULT_SET;
     }
-    // otherwise those properties is just for this query
-
-    if (processUseClause(query)) {
-      return EMPTY_RESULT_SET;
-    }
-    checkClosed();
-    beforeExecute();
-    runSQL(query, properties);
-
-    return updateCount < 0 ? getResultSet() : EMPTY_RESULT_SET;
   }
 
   @Override
@@ -249,24 +387,45 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // short cut for SET clause
     Properties properties = new Properties();
 
-    String query = Utils.parseSetting(sql, properties);
+    // TODO: hack, remove later
+    Matcher descTablePatternMatcher = DESC_TABLE_PATTERN.matcher(sql);
+    Matcher showTablesPatternMatcher = SHOW_TABLES_PATTERN.matcher(sql);
+    Matcher showPartitionsPatternMatcher = SHOW_PARTITIONS_PATTERN.matcher(sql);
 
-    if (StringUtils.isNullOrEmpty(query)) {
-      // only settings, just set properties
-      processSetClause(properties);
-      return false;
+    if (descTablePatternMatcher.matches()) {
+      descTablePartition(descTablePatternMatcher.group(2));
+      return true;
+    } else if (showTablesPatternMatcher.matches()) {
+      showTables();
+      return true;
+    } else if (showPartitionsPatternMatcher.matches()) {
+      showPartitions(showPartitionsPatternMatcher.group(1));
+      return true;
+    } else {
+      boolean ret = false;
+      String query = Utils.parseSetting(sql, properties);
+
+      if (query != null && query.toUpperCase().matches("^SELECT[\\s\\S]*")) {
+        ret = true;
+      }
+
+      if (StringUtils.isNullOrEmpty(query)) {
+        // only settings, just set properties
+        processSetClause(properties);
+        return false;
+      }
+      // otherwise those properties is just for this query
+
+      if (processUseClause(query)) {
+        return false;
+      }
+
+      checkClosed();
+      beforeExecute();
+      runSQL(query, properties);
+
+      return connHandle.runningInInteractiveMode() || ret;
     }
-    // otherwise those properties is just for this query
-
-    if (processUseClause(query)) {
-      return false;
-    }
-
-    checkClosed();
-    beforeExecute();
-    runSQL(query, properties);
-
-    return connHandle.runningInInteractiveMode() ? true : updateCount < 0;
   }
 
   /**
@@ -459,8 +618,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         } catch (TunnelException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
-          throw new SQLException("create download session failed: instance id="
-              + executeInstance.getId() + ", Error:" + e.getMessage(), e);
+
+          if ("InstanceTypeNotSupported".equalsIgnoreCase(e.getErrorCode())) {
+            return null;
+          } else {
+            throw new SQLException("create download session failed: instance id="
+                                   + executeInstance.getId() + ", Error:" + e.getMessage(), e);
+          }
         }
 
         resultSet =
@@ -568,6 +732,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public void setPoolable(boolean poolable) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -598,9 +763,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  private void runSQLOffline(String sql, Odps odps, Map<String,String> settings) throws SQLException, OdpsException {
+  private void runSQLOffline(
+      String sql,
+      Odps odps, Map<String,String> settings)
+      throws SQLException, OdpsException {
+
     long begin = System.currentTimeMillis();
-    executeInstance =  SQLTask.run(odps, odps.getDefaultProject(), sql, JDBC_SQL_TASK_NAME, settings, null);
+    executeInstance =
+        SQLTask.run(odps, odps.getDefaultProject(), sql, JDBC_SQL_TASK_NAME, settings, null);
     LogView logView = new LogView(odps);
     if (connHandle.getLogviewHost() != null) {
       logView.setLogViewHost(connHandle.getLogviewHost());
@@ -612,30 +782,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     // Poll the task status within the instance
     boolean complete = false;
-    Instance.TaskStatus taskstatus;
 
+    // 等待 instance 结束
     while (!complete) {
       try {
         Thread.sleep(POLLING_INTERVAL);
       } catch (InterruptedException e) {
         break;
       }
+      complete = Status.TERMINATED.equals(executeInstance.getStatus());
+    }
 
-      try {
-        taskstatus = executeInstance.getTaskStatus().get(JDBC_SQL_TASK_NAME);
-        if (taskstatus == null) {
-          connHandle.log.warn("NullPointer when get task status");
-          // NOTE: keng!!
-          continue;
-        }
-      } catch (OdpsException e) {
-        connHandle.log.error("Fail to get task status:" + sql, e);
-        throw new SQLException("Fail to get task status", e);
-      }
-
-      switch (taskstatus.getStatus()) {
+    TaskStatus taskStatus = executeInstance.getTaskStatus().get(JDBC_SQL_TASK_NAME);
+    if (taskStatus == null) {
+      connHandle.log.warn("Failed to get task status. "
+                              + "The instance may have been killed before its task was created.");
+    } else {
+      switch (taskStatus.getStatus()) {
         case SUCCESS:
-          complete = true;
           connHandle.log.debug("sql status: success");
           break;
         case FAILED:
@@ -653,13 +817,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         case WAITING:
         case RUNNING:
         case SUSPENDED:
-          connHandle.log.debug("sql status: " + taskstatus.getStatus());
+          connHandle.log.debug("sql status: " + taskStatus.getStatus());
           break;
+        default:
       }
     }
 
-    // 等待 instance 结束
-    executeInstance.waitForSuccess(POLLING_INTERVAL);
     long end = System.currentTimeMillis();
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
 

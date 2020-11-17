@@ -28,6 +28,7 @@ import java.util.Iterator;
 class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
 
   private Iterator<Object[]> iterator;
+  private boolean isClosed = false;
   Object[] row;
 
   /**
@@ -54,6 +55,12 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public void close() throws SQLException {
     iterator = null;
+    isClosed = true;
+  }
+
+  @Override
+  public boolean isClosed() {
+    return isClosed;
   }
 
   @Override

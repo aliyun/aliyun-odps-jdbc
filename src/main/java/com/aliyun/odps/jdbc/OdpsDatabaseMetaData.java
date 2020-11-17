@@ -20,8 +20,10 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,6 +35,7 @@ import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.StringUtils;
 
@@ -174,8 +177,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean storesLowerCaseIdentifiers() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return true;
   }
 
   @Override
@@ -1032,19 +1034,137 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public ResultSet getTypeInfo() throws SQLException {
-    // Return an empty result set
-    OdpsResultSetMetaData meta =
-        new OdpsResultSetMetaData(Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
-            Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING));
+    List<String> columnNames =
+        Arrays.asList("TYPE_NAME", "DATA_TYPE", "PRECISION",
+                      "LITERAL_PREFIX", "LITERAL_SUFFIX", "CREATE_PARAMS",
+                      "NULLABLE", "CASE_SENSITIVE", "SEARCHABLE",
+                      "UNSIGNED_ATTRIBUTE", "FIXED_PREC_SCALE", "AUTO_INCREMENT",
+                      "LOCAL_TYPE_NAME", "MINIMUM_SCALE", "MAXIMUM_SCALE",
+                      "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "NUM_PREC_RADIX");
+    List<TypeInfo> columnTypes =
+        Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.INT, TypeInfoFactory.INT,
+                      TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                      TypeInfoFactory.SMALLINT, TypeInfoFactory.BOOLEAN, TypeInfoFactory.SMALLINT,
+                      TypeInfoFactory.BOOLEAN, TypeInfoFactory.BOOLEAN, TypeInfoFactory.BOOLEAN,
+                      TypeInfoFactory.STRING, TypeInfoFactory.SMALLINT, TypeInfoFactory.SMALLINT,
+                      TypeInfoFactory.INT, TypeInfoFactory.INT, TypeInfoFactory.INT);
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnTypes);
 
-    return new OdpsStaticResultSet(getConnection(), meta);
+    List<Object[]> rows = new ArrayList<>();
+    rows.add(new Object[] {TypeInfoFactory.TINYINT.getTypeName(), Types.TINYINT, 3,
+                           null, "Y", null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, 0, 0,
+                           null, null, 10});
+    rows.add(new Object[] {TypeInfoFactory.SMALLINT.getTypeName(), Types.SMALLINT, 5,
+                           null, "S", null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, 0, 0,
+                           null, null, 10});
+    rows.add(new Object[] {TypeInfoFactory.INT.getTypeName(), Types.INTEGER, 10,
+                           null, null, null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, 0, 0,
+                           null, null, 10});
+    rows.add(new Object[] {TypeInfoFactory.BIGINT.getTypeName(), Types.BIGINT, 19,
+                           null, "L", null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, 0, 0,
+                           null, null, 10});
+    rows.add(new Object[] {TypeInfoFactory.BINARY.getTypeName(), Types.BINARY, 8 * 1024 * 1024,
+                           null, null, null,
+                           typeNullable, null, typePredNone,
+                           false, false, false,
+                           null, 0, 0,
+                           null, null, null});
+    rows.add(new Object[] {TypeInfoFactory.FLOAT.getTypeName(), Types.FLOAT, null,
+                           null, null, null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, null, null,
+                           null, null, 2});
+    rows.add(new Object[] {TypeInfoFactory.DOUBLE.getTypeName(), Types.DOUBLE, null,
+                           null, null, null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, null, null,
+                           null, null, 2});
+    rows.add(new Object[] {TypeInfoFactory.DECIMAL.getTypeName(), Types.DECIMAL, 38,
+                           null, "BD", null,
+                           typeNullable, null, typePredBasic,
+                           false, true, false,
+                           null, 18, 18,
+                           null, null, 10});
+    rows.add(new Object[] {"VARCHAR", Types.VARCHAR, null,
+                           null, null, "PRECISION",
+                           typeNullable, true, typePredChar,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    rows.add(new Object[] {"CHAR", Types.CHAR, null,
+                           null, null, "PRECISION",
+                           typeNullable, true, typePredChar,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    rows.add(new Object[] {TypeInfoFactory.STRING, Types.VARCHAR, 8 * 1024 * 1024,
+                           "\"", "\"", null,
+                           typeNullable, true, typePredChar,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    // yyyy-mm-dd
+    rows.add(new Object[] {TypeInfoFactory.DATE, Types.DATE, 10,
+                           "DATE'", "'", null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    // yyyy-mm-dd hh:MM:ss.SSS
+    rows.add(new Object[] {TypeInfoFactory.DATETIME, Types.TIMESTAMP, 23,
+                           "DATETIME'", "'", null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    // yyyy-mm-dd hh:MM:ss.SSSSSSSSS
+    rows.add(new Object[] {TypeInfoFactory.TIMESTAMP, Types.TIMESTAMP, 29,
+                           "TIMESTAMP'", "'", null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    rows.add(new Object[] {TypeInfoFactory.BOOLEAN, Types.BOOLEAN, null,
+                           null, null, null,
+                           typeNullable, null, typePredBasic,
+                           false, false, false,
+                           null, null, null,
+                           null, null, null});
+    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   @Override
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique,
       boolean approximate) throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    OdpsResultSetMetaData meta =
+        new OdpsResultSetMetaData(
+            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
+                          "NON_UNIQUE", "INDEX_QUALIFIER", "INDEX_NAME",
+                          "TYPE", "ORDINAL_POSITION", "COLUMN_NAME",
+                          "ASC_OR_DESC", "CARDINALITY", "PAGES",
+                          "FILTER_CONDITION"),
+            Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                          TypeInfoFactory.BOOLEAN, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                          TypeInfoFactory.SMALLINT, TypeInfoFactory.SMALLINT, TypeInfoFactory.STRING,
+                          TypeInfoFactory.STRING, TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
+                          TypeInfoFactory.STRING));
+
+    // Return an empty result set since index is unsupported in MaxCompute
+    return new OdpsStaticResultSet(getConnection(), meta, Collections.emptyIterator());
   }
 
   @Override
@@ -1058,8 +1178,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return false;
   }
 
   @Override
@@ -1124,7 +1243,6 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types)
       throws SQLException {
-
     // Return an empty result set
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME",
