@@ -69,6 +69,7 @@ public class ConnectionResource {
   private static final String STS_TOKEN_URL_KEY = "stsToken";
   private static final String DISABLE_CONN_SETTING_URL_KEY = "disableConnectionSetting";
   private static final String USE_PROJECT_TIME_ZONE_URL_KEY = "useProjectTimeZone";
+  private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
 
   /**
    * Keys to retrieve properties from info.
@@ -102,7 +103,7 @@ public class ConnectionResource {
   private static final String STS_TOKEN_PROP_KEY = "sts_token";
   private static final String DISABLE_CONN_SETTING_PROP_KEY = "disable_connection_setting";
   private static final String USE_PROJECT_TIME_ZONE_PROP_KEY = "use_project_time_zone";
-
+  private static final String ENABLE_LIMIT_PROP_KEY = "enable_limit";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -130,6 +131,7 @@ public class ConnectionResource {
   private String stsToken;
   private boolean disableConnSetting = false;
   private boolean useProjectTimeZone = false;
+  private boolean enableLimit = false;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -251,6 +253,10 @@ public class ConnectionResource {
 
     useProjectTimeZone = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY, USE_PROJECT_TIME_ZONE_URL_KEY)
+    );
+
+    enableLimit = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
     );
 
     String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
@@ -380,5 +386,9 @@ public class ConnectionResource {
 
   public boolean isUseProjectTimeZone() {
     return useProjectTimeZone;
+  }
+
+  public boolean isEnableLimit() {
+    return enableLimit;
   }
 }

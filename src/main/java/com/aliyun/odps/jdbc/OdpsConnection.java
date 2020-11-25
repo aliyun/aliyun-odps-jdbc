@@ -105,6 +105,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean useProjectTimeZone = false;
 
+  private boolean enableLimit = false;
+
   private SQLExecutor executor = null;
 
   private String executeProject = null;
@@ -166,6 +168,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.resultSizeLimit = connRes.getSizeLimit();
     this.disableConnSetting = connRes.isDisableConnSetting();
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
+    this.enableLimit = connRes.isEnableLimit();
 
     try {
       long startTime = System.currentTimeMillis();
@@ -679,4 +682,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public Long getSizeLimit() { return resultSizeLimit; }
 
   public boolean disableConnSetting() { return disableConnSetting; }
+
+  public boolean enableLimit() { return enableLimit; }
 }
