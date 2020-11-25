@@ -208,6 +208,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected int resultSetMaxRows = 0;
   protected int resultSetFetchSize = 10000;
 
+  //Unit: result record row count, only applied in interactive mode
+  protected Long resultCountLimit = null;
+  //Unit: Bytes, only applied in interactive mode
+  protected Long resultSizeLimit = null;
+
   private SQLWarning warningChain = null;
 
   OdpsStatement(OdpsConnection conn) {
@@ -217,6 +222,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHandle = conn;
     sqlTaskProperties = (Properties) conn.getSqlTaskProperties().clone();
+    this.resultCountLimit = conn.getCountLimit();
+    this.resultSizeLimit = conn.getSizeLimit();
     this.isResultSetScrollable = isResultSetScrollable;
   }
 
@@ -454,7 +461,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private void processSetClause(Properties properties) {
     for (String key : properties.stringPropertyNames()) {
       connHandle.log.info("set sql task property: " + key + "=" + properties.getProperty(key));
-      connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
+      if (!connHandle.disableConnSetting()) {
+        connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
+      }
       sqlTaskProperties.setProperty(key, properties.getProperty(key));
     }
   }
@@ -844,7 +853,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     executor.run(sql, settings);
     String logView = executor.getLogView();
     try {
-      sessionResultSet = executor.getResultSet();
+      sessionResultSet = executor.getResultSet(resultCountLimit, resultSizeLimit);
       List<String> exeLog = executor.getExecutionLog();
       if (!exeLog.isEmpty()) {
         for (String log : exeLog) {
@@ -853,7 +862,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     } catch (IOException e) {
       connHandle.log.error("Run SQL failed:" + e.getMessage());
-      throw new SQLException(e.getMessage(), e);
+      throw new SQLException("execute sql [" + sql + "] instance:["
+          + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
+    } catch (OdpsException e) {
+      connHandle.log.error("Run SQL failed:" + e.getMessage());
+      throw new SQLException("execute sql [" + sql + "] instance:["
+          + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
     }
 
     executeInstance = executor.getInstance();
