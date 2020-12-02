@@ -333,7 +333,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       beforeExecute();
       runSQL(query, properties);
 
-      return updateCount < 0 ? getResultSet() : EMPTY_RESULT_SET;
+      return hasResultSet(query) ? getResultSet() : EMPTY_RESULT_SET;
     }
   }
 
@@ -402,12 +402,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       showPartitions(showPartitionsPatternMatcher.group(1));
       return true;
     } else {
-      boolean ret = false;
       String query = Utils.parseSetting(sql, properties);
-
-      if (query != null && query.toUpperCase().matches("^SELECT[\\s\\S]*")) {
-        ret = true;
-      }
 
       if (StringUtils.isNullOrEmpty(query)) {
         // only settings, just set properties
@@ -424,7 +419,19 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       beforeExecute();
       runSQL(query, properties);
 
-      return connHandle.runningInInteractiveMode() || ret;
+      return hasResultSet(query);
+    }
+  }
+
+  public boolean hasResultSet(String sql) throws SQLException {
+    if (connHandle.runningInInteractiveMode()) {
+      return true;
+    }
+
+    if (updateCount == 0) {
+      return isQuery(sql);
+    } else {
+      return updateCount < 0;
     }
   }
 
@@ -686,6 +693,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return warningChain;
   }
 
+  @Override
   public boolean isCloseOnCompletion() throws SQLException {
     return false;
   }
@@ -695,6 +703,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return isClosed;
   }
 
+  @Override
   public boolean isPoolable() throws SQLException {
     return false;
   }
