@@ -29,11 +29,11 @@ import java.util.List;
 
 public class OdpsSessionForwardResultSet extends OdpsResultSet implements ResultSet {
 
-  private List<Record> recordList = null;
   private Object[] currentRow;
-
+  com.aliyun.odps.data.ResultSet resultSet;
   private int fetchedRows = 0;
-  private int totalRows = 0;
+  // max row count can be read
+  private int totalRows = Integer.MAX_VALUE;
   private boolean isClosed = false;
 
   private long startTime;
@@ -43,21 +43,12 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
       throws SQLException {
     super(stmt.getConnection(), stmt, meta);
 
-    // TODO use resultSet to fetch record after recordCount is supported
-    this.recordList = new ArrayList<>();
-    while(resultSet.hasNext()) {
-      this.recordList.add(resultSet.next());
-    }
-
-    int maxRows = stmt.resultSetMaxRows;
-    int recordCount = recordList.size();
-
     // maxRows take effect only if it > 0
-    if (maxRows > 0 && maxRows <= recordCount) {
-      totalRows = maxRows;
-    } else {
-      totalRows = recordCount;
+    if (stmt.resultSetMaxRows > 0) {
+      totalRows = stmt.resultSetMaxRows;
     }
+
+    this.resultSet = resultSet;
     this.startTime = startTime;
   }
 
@@ -97,12 +88,12 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
   public boolean next() throws SQLException {
     checkClosed();
 
-    if (fetchedRows == totalRows) {
+    if (fetchedRows == totalRows || !resultSet.hasNext()) {
       conn.log.info("It took me " + (System.currentTimeMillis() - startTime)
-          + " ms to fetch all records, count:" + fetchedRows);
+                    + " ms to fetch all records, count:" + fetchedRows);
       return false;
     }
-    Record record = recordList.get(fetchedRows);
+    Record record = resultSet.next();
     int columns = record.getColumnCount();
     currentRow = new Object[columns];
     for (int i = 0; i < columns; i++) {
