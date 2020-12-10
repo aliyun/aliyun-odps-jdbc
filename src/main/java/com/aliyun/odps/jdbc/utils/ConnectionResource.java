@@ -61,6 +61,7 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   private static final String ALWAYS_FALLBACK_URL_KEY = "alwaysFallback";
+  private static final String AUTO_SELECT_LIMIT_URL_KEY = "autoSelectLimit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_URL_KEY = "instanceTunnelMaxRecord";
   //Unit: Bytes, only applied in interactive mode
@@ -93,6 +94,7 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
   private static final String ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "always_fallback";
+  private static final String AUTO_SELECT_LIMIT_PROP_KEY = "auto_select_limit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY = "instance_tunnel_max_record";
   //Unit: Bytes, only applied in interactive mode
@@ -122,6 +124,7 @@ public class ConnectionResource {
   private boolean enableOdpsLogger = false;
   private List<String> tableList = new ArrayList<>();
   private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
+  private Long autoSelectLimit;
   private Long countLimit;
   private Long sizeLimit;
   private String stsToken;
@@ -224,6 +227,10 @@ public class ConnectionResource {
     stsToken =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
+    autoSelectLimit = Long.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", AUTO_SELECT_LIMIT_PROP_KEY, AUTO_SELECT_LIMIT_URL_KEY)
+    );
+
     countLimit = Long.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY, INSTANCE_TUNNEL_MAX_RECORD_URL_KEY)
     );
@@ -323,6 +330,10 @@ public class ConnectionResource {
 
   public boolean isEnableOdpsLogger() {
     return enableOdpsLogger;
+  }
+
+  public Long getAutoSelectLimit() {
+    return autoSelectLimit;
   }
 
   public Long getCountLimit() { return countLimit; }

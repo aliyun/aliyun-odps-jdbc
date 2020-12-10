@@ -94,6 +94,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private List<String> tableList = new ArrayList<>();
+
+  private Long autoSelectLimit = null;
   //Unit: result record row count, only applied in interactive mode
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
@@ -159,6 +161,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.interactiveMode = connRes.isInteractiveMode();
     this.tableList = connRes.getTableList();
     this.executeProject = connRes.getExecuteProject();
+    this.autoSelectLimit = connRes.getAutoSelectLimit();
     this.resultCountLimit = connRes.getCountLimit();
     this.resultSizeLimit = connRes.getSizeLimit();
     this.disableConnSetting = connRes.isDisableConnSetting();
@@ -663,6 +666,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public String getExecuteProject() {
     return executeProject;
+  }
+
+  public Long getAutoSelectLimit() {
+    return autoSelectLimit;
   }
 
   public Long getCountLimit() { return resultCountLimit; }
