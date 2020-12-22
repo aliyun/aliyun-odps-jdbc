@@ -205,7 +205,7 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE, SERVICE_NAME_PROP_KEY,
             SERVICE_NAME_URL_KEY);
     majorVersion =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, MAJOR_VERSION_DEFAULT_VALUE, MAJOR_VERSION_PROP_KEY,
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, MAJOR_VERSION_PROP_KEY,
             MAJOR_VERSION_URL_KEY);
     enableOdpsLogger = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
