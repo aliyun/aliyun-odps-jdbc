@@ -435,17 +435,16 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public ResultSet getResultSet() throws SQLException {
     long startTime = System.currentTimeMillis();
     if (resultSet == null || resultSet.isClosed()) {
+      DownloadSession session;
+      InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
+      String te = connHandle.getTunnelEndpoint();
+      if (!StringUtils.isNullOrEmpty(te)) {
+        connHandle.log.info("using tunnel endpoint: " + te);
+        tunnel.setEndpoint(te);
+      }
       if (!connHandle.runningInInteractiveMode()) {
         // Create a download session through tunnel
-        DownloadSession session;
         try {
-          InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
-          String te = connHandle.getTunnelEndpoint();
-          if (!StringUtils.isNullOrEmpty(te)) {
-            connHandle.log.info("using tunnel endpoint: " + te);
-            tunnel.setEndpoint(te);
-          }
-
           try {
             session =
                 tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
@@ -471,9 +470,29 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 : new OdpsForwardResultSet(this, getResultMeta(session.getSchema().getColumns()), session, startTime);
       } else {
         if (sessionResultSet != null) {
-          OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
-          resultSet = new OdpsSessionForwardResultSet(this, meta, sessionResultSet, startTime);
-          sessionResultSet = null;
+          try {
+            session = tunnel.createDirectDownloadSession(
+                connHandle.getOdps().getDefaultProject(),
+                connHandle.getExecutor().getInstance().getId(),
+                connHandle.getExecutor().getTaskName(),
+                connHandle.getExecutor().getSubqueryId(),
+                enableLimit);
+            OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
+            resultSet =
+                isResultSetScrollable ? new OdpsSessionScollResultSet(this, meta, session)
+                                      : new OdpsSessionForwardResultSet(this, meta, sessionResultSet, startTime);
+            sessionResultSet = null;
+          } catch (TunnelException e) {
+            connHandle.log.error("create download session for session failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new SQLException("create session resultset failed: instance id="
+                                   + connHandle.getExecutor().getInstance().getId() + ", Error:" + e.getMessage(), e);
+          } catch (IOException e) {
+            connHandle.log.error("create download session for session failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new SQLException("create session resultset failed: instance id="
+                                   + connHandle.getExecutor().getInstance().getId() + ", Error:" + e.getMessage(), e);
+          }
         }
       }
     }
