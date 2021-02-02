@@ -24,18 +24,28 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 
-public class ToJdbcDateToJdbcDateTypeTransformer extends AbstractToJdbcDateTypeTransformer {
+public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset, Calendar cal) throws SQLException {
+  public Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone projectTimeZone) throws SQLException {
+
     if (o == null) {
       return null;
     }
 
     if (java.util.Date.class.isInstance(o)) {
-      return new java.sql.Date(((java.util.Date) o).getTime());
+      long time = ((java.util.Date) o).getTime();
+      if (projectTimeZone != null) {
+        time += projectTimeZone.getOffset(time);
+      }
+      return new java.sql.Date(time);
     } else if (o instanceof byte[]) {
       try {
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
