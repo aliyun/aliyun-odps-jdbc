@@ -40,7 +40,7 @@ public class ToJdbcTransformerFactory {
   private static final ToJdbcBigDecimalTransformer BIG_DECIMAL_TRANSFORMER = new ToJdbcBigDecimalTransformer();
   private static final ToJdbcStringTransformer STRING_TRANSFORMER = new ToJdbcStringTransformer();
   private static final ToJdbcByteArrayTransformer BYTE_ARRAY_TRANSFORMER = new ToJdbcByteArrayTransformer();
-  private static final ToJdbcDateToJdbcDateTypeTransformer DATE_TRANSFORMER = new ToJdbcDateToJdbcDateTypeTransformer();
+  private static final ToJdbcDateTransformer DATE_TRANSFORMER = new ToJdbcDateTransformer();
   private static final ToJdbcTimeTransfomer TIME_TRANSFORMER = new ToJdbcTimeTransfomer();
   private static final ToJdbcTimestampTransformer TIMESTAMP_TRANSFORMER = new ToJdbcTimestampTransformer();
   private static final ToJdbcBooleanTransformer BOOLEAN_TRANSFORMER = new ToJdbcBooleanTransformer();
