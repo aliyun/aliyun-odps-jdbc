@@ -458,16 +458,22 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           }
 
           connHandle.log.debug("create download session id=" + session.getId());
+
+          resultSet =
+              isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(session.getSchema().getColumns()), session,
+                                                             OdpsScollResultSet.ResultMode.OFFLINE)
+                                    : new OdpsForwardResultSet(this, getResultMeta(session.getSchema().getColumns()), session, startTime);
         } catch (TunnelException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
           throw new SQLException("create download session failed: instance id="
               + executeInstance.getId() + ", Error:" + e.getMessage(), e);
+        } catch (IOException e) {
+          connHandle.log.error("create download session for session failed: " + e.getMessage());
+          e.printStackTrace();
+          throw new SQLException("create download session failed: instance id="
+                                 + executeInstance.getId() + ", Error:" + e.getMessage(), e);
         }
-
-        resultSet =
-            isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(session.getSchema().getColumns()), session)
-                : new OdpsForwardResultSet(this, getResultMeta(session.getSchema().getColumns()), session, startTime);
       } else {
         if (sessionResultSet != null) {
           try {
@@ -479,7 +485,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 enableLimit);
             OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
             resultSet =
-                isResultSetScrollable ? new OdpsSessionScollResultSet(this, meta, session)
+                isResultSetScrollable ? new OdpsScollResultSet(this, meta, session,
+                                                                      OdpsScollResultSet.ResultMode.INTERACTIVE)
                                       : new OdpsSessionForwardResultSet(this, meta, sessionResultSet, startTime);
             sessionResultSet = null;
           } catch (TunnelException e) {
