@@ -35,6 +35,11 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
   private int fetchSize;
   private OdpsStatement.FetchDirection fetchDirection;
   private final long totalRows;
+  private ResultMode mode;
+
+  public enum ResultMode {
+    OFFLINE, INTERACTIVE
+  };
 
   /**
    * Keeps in the memory a frame of rows which are likely be accessed in the near future.
@@ -56,15 +61,25 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
 
   private boolean isClosed = false;
 
-  OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session)
-      throws SQLException {
+  OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, ResultMode mode)
+      throws SQLException, TunnelException, IOException {
     super(stmt.getConnection(), stmt, meta);
+    this.mode = mode;
     sessionHandle = session;
     fetchSize = stmt.resultSetFetchSize;
     fetchDirection = stmt.resultSetFetchDirection;
     int maxRows = stmt.resultSetMaxRows;
 
-    long recordCount = sessionHandle.getRecordCount();
+    long recordCount;
+    if (mode.equals(ResultMode.OFFLINE)) {
+      recordCount = sessionHandle.getRecordCount();
+    } else {
+      // In interactive mode, createDownloadSession won't call server
+      // Before get total record count, openRecordReader must be called
+      TunnelRecordReader reader = sessionHandle.openRecordReader(0, -1, -1);
+      recordCount = sessionHandle.getRecordCount();
+      reader.close();
+    }
 
     // maxRows take effect only if it > 0
     if (maxRows > 0 && maxRows <= recordCount) {
@@ -297,7 +312,12 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
     try {
       long start = System.currentTimeMillis();
       Record reuseRecord = null;
-      TunnelRecordReader reader = sessionHandle.openRecordReader(cachedUpperRow, count, true);
+      TunnelRecordReader reader;
+      if (mode.equals(ResultMode.OFFLINE)) {
+        reader = sessionHandle.openRecordReader(cachedUpperRow, count, true);
+      } else {
+        reader = sessionHandle.openRecordReader(cachedUpperRow, count, -1);
+      }
       for (int i = 0; i < count; i++) {
         reuseRecord = reader.read(reuseRecord);
         int columns = reuseRecord.getColumnCount();
