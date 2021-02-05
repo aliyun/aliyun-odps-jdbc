@@ -26,23 +26,37 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 
 public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset, Calendar cal) throws SQLException {
+  public Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone projectTimeZone) throws SQLException {
+
     if (o == null) {
       return null;
     }
 
     if (java.util.Date.class.isInstance(o)) {
-      if (o instanceof java.sql.Timestamp) {
-        return o;
-      } else {
-        // The following conversion will lose nano values
-        return new java.sql.Timestamp(((java.util.Date) o).getTime());
+      long time = ((java.util.Date) o).getTime();
+      if (projectTimeZone != null) {
+        time += projectTimeZone.getOffset(time);
       }
+
+      int nanos = 0;
+      if (o instanceof java.sql.Timestamp) {
+        nanos = ((java.sql.Timestamp) o).getNanos();
+      }
+
+      java.sql.Timestamp ts = new java.sql.Timestamp(time);
+      ts.setNanos(nanos);
+
+      return ts;
     } else if (o instanceof byte[]) {
       try {
         // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]

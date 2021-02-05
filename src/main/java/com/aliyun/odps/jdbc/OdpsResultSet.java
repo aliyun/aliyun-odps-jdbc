@@ -41,6 +41,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
@@ -663,8 +664,10 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal) throws SQLException {
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
+
+    TimeZone projectTimeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
     return ((AbstractToJdbcDateTypeTransformer) transformer).transform(
-        o, stmt.getConnection().getCharset(), cal);
+        o, stmt.getConnection().getCharset(), cal, projectTimeZone);
   }
 
   @Override
