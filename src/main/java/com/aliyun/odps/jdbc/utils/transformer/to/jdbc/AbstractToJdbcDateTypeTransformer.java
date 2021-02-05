@@ -4,6 +4,7 @@ import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
   static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = new ThreadLocal<>();
@@ -17,7 +18,7 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
-    return this.transform(o, charset, null);
+    return this.transform(o, charset, null, null);
   }
 
   /**
@@ -28,7 +29,11 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
    * @return JDBC object
    * @throws SQLException
    */
-  public abstract Object transform(Object o, String charset, Calendar cal) throws SQLException;
+  public abstract Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone projectTimeZone) throws SQLException;
 
   void restoreToDefaultCalendar() {
     DATETIME_FORMAT.get().setCalendar(Calendar.getInstance());

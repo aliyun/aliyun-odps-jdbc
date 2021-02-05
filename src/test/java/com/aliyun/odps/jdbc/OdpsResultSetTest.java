@@ -19,10 +19,12 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -309,5 +311,30 @@ public class OdpsResultSetTest {
       Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
     }
     rs.close();
+  }
+
+  @Test
+  public void testGetTimestampWithTimeZone() throws SQLException {
+    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
+
+    // Make sure the project's time zone is not UTC, or this test case will always pass.
+    Assert.assertNotEquals(0, tz.getRawOffset());
+
+    long timestampWithoutTimeZone;
+    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr)))
+    {
+      rs.next();
+      timestampWithoutTimeZone = rs.getTimestamp(1).getTime();
+    }
+
+    long timestampWithTimeZone;
+    ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
+    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr)))
+    {
+      rs.next();
+      timestampWithTimeZone = rs.getTimestamp(1).getTime();
+    }
+
+    Assert.assertEquals(tz.getRawOffset(),timestampWithTimeZone - timestampWithoutTimeZone);
   }
 }

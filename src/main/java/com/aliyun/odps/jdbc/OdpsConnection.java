@@ -63,6 +63,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static final AtomicLong CONNECTION_ID_GENERATOR = new AtomicLong(0);
 
   private final Odps odps;
+  private final TimeZone tz;
   private final Properties info;
   private final List<Statement> stmtHandles;
 
@@ -105,6 +106,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private Long resultSizeLimit = null;
 
   private boolean disableConnSetting = false;
+
+  private boolean useProjectTimeZone = false;
 
   private SQLExecutor executor = null;
 
@@ -168,7 +171,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.logviewHost = logviewHost;
     this.lifecycle = lifecycle;
     this.tunnelEndpoint = tunnelEndpoint;
-    this.stmtHandles = new ArrayList<Statement>();
+    this.stmtHandles = new ArrayList<>();
 
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
@@ -177,9 +180,20 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.resultCountLimit = connRes.getCountLimit();
     this.resultSizeLimit = connRes.getSizeLimit();
     this.disableConnSetting = connRes.isDisableConnSetting();
+    this.useProjectTimeZone = connRes.isUseProjectTimeZone();
+
     try {
       long startTime = System.currentTimeMillis();
-      odps.projects().get().reload();
+
+      // Default value for odps.sql.timezone
+      String timeZoneId = "Asia/Shanghai";
+      String projectTimeZoneId = odps.projects().get().getProperty("odps.sql.timezone");
+      if (!StringUtils.isNullOrEmpty(projectTimeZoneId)) {
+        timeZoneId = projectTimeZoneId;
+      }
+
+      log.info("Project timezone: " + timeZoneId);
+      tz = TimeZone.getTimeZone(timeZoneId);
       if (interactiveMode) {
         long cost = System.currentTimeMillis() - startTime;
         log.info(String.format("load project meta infos time cost=%d", cost));
@@ -583,26 +597,31 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public void setSchema(String schema) throws SQLException {
     checkClosed();
     odps.setDefaultProject(schema);
   }
 
+  @Override
   public String getSchema() throws SQLException {
     checkClosed();
     return odps.getDefaultProject();
   }
 
+  @Override
   public void abort(Executor executor) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
+  @Override
   public int getNetworkTimeout() throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
@@ -610,6 +629,22 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public Odps getOdps() {
     return this.odps;
+  }
+
+  public TimeZone getProjectTimeZone() {
+    return tz;
+  }
+
+  public boolean isUseProjectTimeZone() {
+    return useProjectTimeZone;
+  }
+
+  /**
+   * For test
+   * @param useProjectTimeZone
+   */
+  public void setUseProjectTimeZone(boolean useProjectTimeZone) {
+    this.useProjectTimeZone = useProjectTimeZone;
   }
 
   private void checkClosed() throws SQLException {
