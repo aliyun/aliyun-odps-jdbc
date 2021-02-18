@@ -1105,5 +1105,4 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   public boolean wasNull() throws SQLException {
     return wasNull;
   }
-
 }
