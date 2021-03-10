@@ -920,7 +920,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           JdbcColumn jdbcCol = new JdbcColumn(col.getName(),
                                               tableNamePattern,
                                               table.getProject(),
-                                              col.getType(),
+                                              col.getTypeInfo().getOdpsType(),
                                               col.getTypeInfo(),
                                               col.getComment(),
                                               i + 1);

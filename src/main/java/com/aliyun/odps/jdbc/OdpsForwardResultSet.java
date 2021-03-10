@@ -46,9 +46,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   /**
    * For logging the time consumption for fetching 10000 rows
    */
-  private static final long ACCUM_FETCHED_ROWS = 10000;
-  long accumTime;
-  long accumKBytes = 0;
+  private static final long ACCUM_FETCHED_ROWS = 100000;
 
   /**
    * The maximum retry time we allow to tolerate the network problem
@@ -131,7 +129,6 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       try {
         if (reader == null) {
           rebuildReader();
-          accumTime = System.currentTimeMillis();
         }
         reuseRecord = reader.read(reuseRecord);
         if (reuseRecord == null) {
@@ -149,13 +146,13 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         fetchedRows++;
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
-          long delta = reader.getTotalBytes() / 1024 - accumKBytes;
-          long duration = System.currentTimeMillis() - accumTime;
-          conn.log.info(String.format("fetched %d rows, %d KB, %.2f KB/s", ACCUM_FETCHED_ROWS,
-                                  delta, (float) delta / duration * 1000));
-
-          accumKBytes = reader.getTotalBytes() / 1024;
-          accumTime = System.currentTimeMillis();
+          long current = System.currentTimeMillis();
+          conn.log.info(
+              String.format("fetched %d rows, %d KB, %.2f KB/s",
+                            fetchedRows,
+                            reader.getTotalBytes() / 1000,
+                            (float) reader.getTotalBytes() / (current - startTime))
+          );
         }
         return true;
       } catch (IOException e) {
