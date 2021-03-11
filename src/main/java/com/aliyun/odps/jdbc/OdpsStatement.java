@@ -721,7 +721,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       settings.put("odps.sql.select.auto.limit", autoSelectLimit.toString());
     }
     executor.run(sql, settings);
-    String logView = executor.getLogView();
     try {
       sessionResultSet = executor.getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
       List<String> exeLog = executor.getExecutionLog();
@@ -739,14 +738,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       throw new SQLException("execute sql [" + sql + "] instance:["
           + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
     }
+    long end = System.currentTimeMillis();
+    connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
 
     executeInstance = executor.getInstance();
 
+    String logView = executor.getLogView();
     connHandle.log.info("Run SQL: " + sql + ", LogView:" + logView);
     warningChain = new SQLWarning(executor.getSummary());
-
-    long end = System.currentTimeMillis();
-    connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
   }
 
   private void runSQL(String sql, Properties properties) throws SQLException {
