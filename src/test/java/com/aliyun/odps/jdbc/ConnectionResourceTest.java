@@ -44,12 +44,11 @@ public class ConnectionResourceTest {
     Assert.assertEquals("p2", resource.getProject());
     Assert.assertEquals("345", resource.getAccessId());
     Assert.assertEquals("456=", resource.getAccessKey());
-    Assert.assertEquals(null, resource.getLogLevel());
-    Assert.assertEquals("2", resource.getLifecycle());
     Assert.assertEquals("UTF-8", resource.getCharset());
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals(null, resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
+
     Assert.assertEquals(false, resource.isInteractiveMode());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
     Assert.assertEquals("default1", resource.getMajorVersion());
@@ -65,7 +64,7 @@ public class ConnectionResourceTest {
             "&tunnelEndpoint=http://1.1.1.1:8066&interactiveMode=true" +
             "&interactiveServiceName=sn&interactiveTimeout=11" +
             "&table_list=table1,table2" +
-            "&majorVersion=default1&logconffile="
+            "&majorVersion=default1&logConfFile="
             + logConfigFile;
     resource = new ConnectionResource(url2, null);
     Assert.assertEquals(true, resource.isInteractiveMode());
@@ -74,8 +73,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("123", resource.getAccessId());
     Assert.assertEquals("234=", resource.getAccessKey());
     Assert.assertEquals(logConfigFile, resource.getLogConfFile());
-    Assert.assertEquals("debug", resource.getLogLevel());
-    Assert.assertEquals("3", resource.getLifecycle());
     Assert.assertEquals("UTF-8", resource.getCharset());
     Assert.assertEquals(logConfigFile, resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
@@ -91,8 +88,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("p2", resource.getProject());
     Assert.assertEquals("345", resource.getAccessId());
     Assert.assertEquals("456=", resource.getAccessKey());
-    Assert.assertEquals("debug", resource.getLogLevel());
-    Assert.assertEquals("2", resource.getLifecycle());
     Assert.assertEquals("UTF-8", resource.getCharset());
     Assert.assertEquals("logback1.xml", resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());

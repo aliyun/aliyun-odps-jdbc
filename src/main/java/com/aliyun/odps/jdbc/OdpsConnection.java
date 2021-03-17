@@ -51,7 +51,6 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
-import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
@@ -73,11 +72,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private final String charset;
 
   private final String logviewHost;
-
-  /**
-   * The lifecycle of the temp table created when execute query
-   */
-  protected final int lifecycle;
 
   private boolean isClosed = false;
 
@@ -127,12 +121,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String serviceName = connRes.getInteractiveServiceName();
     String stsToken = connRes.getStsToken();
     sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
-    int lifecycle;
-    try {
-      lifecycle = Integer.parseInt(connRes.getLifecycle());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("lifecycle is expected to be an integer");
-    }
 
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
     MDC.put("connectionId", connectionId);
@@ -143,16 +131,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
                          false,
                          connRes.isEnableOdpsLogger());
 
-    if (connRes.getLogLevel() != null) {
-      log.warn("The logLevel is deprecated, please set log level in log conf file!");
-    }
-
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
-    log.info(String
-        .format("charset=%s, logviewhost=%s, lifecycle=%d", charset, logviewHost, lifecycle));
+    log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
     if (stsToken == null || stsToken.length() <= 0) {
       account = new AliyunAccount(accessId, accessKey);
@@ -169,7 +152,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.info = info;
     this.charset = charset;
     this.logviewHost = logviewHost;
-    this.lifecycle = lifecycle;
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<>();
 

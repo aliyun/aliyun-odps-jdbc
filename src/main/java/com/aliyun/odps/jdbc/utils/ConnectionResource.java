@@ -48,10 +48,8 @@ public class ConnectionResource {
   private static final String EXECUTE_PROJECT_URL_KEY = "executeProject";
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
-  private static final String LIFECYCLE_URL_KEY = "lifecycle";
-  private static final String LOGLEVEL_URL_KEY = "loglevel";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
-  private static final String LOGCONFFILE_URL_KEY = "logconffile";
+  private static final String LOG_CONF_FILE_URL_KEY = "logConfFile";
   private static final String INTERACTIVE_MODE_URL_KEY = "interactiveMode";
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
@@ -82,10 +80,8 @@ public class ConnectionResource {
   public static final String EXECUTE_PROJECT_PROP_KEY = "execute_project_name";
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
-  public static final String LIFECYCLE_PROP_KEY = "lifecycle";
-  public static final String LOGLEVEL_PROP_KEY = "log_level";
   public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
-  public static final String LOGCONFFILE_PROP_KEY = "log_conf_file";
+  public static final String LOG_CONF_FILE_PROP_KEY = "log_conf_file";
   public static final String INTERACTIVE_MODE_PROP_KEY = "interactive_mode";
   public static final String SERVICE_NAME_PROP_KEY = "interactive_service_name";
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
@@ -118,8 +114,6 @@ public class ConnectionResource {
   private String executeProject;
   private String charset;
   private String logview;
-  private String lifecycle;
-  private String logLevel;
   private String tunnelEndpoint;
   private String logConfFile;
   private boolean interactiveMode;
@@ -186,18 +180,12 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, EXECUTE_PROJECT_PROP_KEY, EXECUTE_PROJECT_URL_KEY);
     logview =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY, LOGVIEW_URL_KEY);
-    lifecycle =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, LIFECYCLE_DEFAULT_VALUE, LIFECYCLE_PROP_KEY,
-            LIFECYCLE_URL_KEY);
-    logLevel =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGLEVEL_PROP_KEY, LOGLEVEL_URL_KEY);
-
     tunnelEndpoint =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
 
     logConfFile =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGCONFFILE_PROP_KEY,
-            LOGCONFFILE_URL_KEY);
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_CONF_FILE_PROP_KEY,
+                                                 LOG_CONF_FILE_URL_KEY);
     interactiveMode = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", INTERACTIVE_MODE_PROP_KEY,
             INTERACTIVE_MODE_URL_KEY));
@@ -317,14 +305,6 @@ public class ConnectionResource {
 
   public String getLogview() {
     return logview;
-  }
-
-  public String getLifecycle() {
-    return lifecycle;
-  }
-
-  public String getLogLevel() {
-    return logLevel;
   }
 
   public String getTunnelEndpoint() {
