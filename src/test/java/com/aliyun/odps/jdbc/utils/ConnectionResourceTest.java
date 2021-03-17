@@ -37,7 +37,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals(null, cr.getAccessKey());
     Assert.assertEquals(null, cr.getLogview());
     Assert.assertEquals("UTF-8", cr.getCharset());
-    Assert.assertEquals("3", cr.getLifecycle());
   }
 
   @Test
@@ -51,8 +50,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("keykey", cr.getAccessKey());
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("5", cr.getLifecycle());
-    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 
   @Test
@@ -74,8 +71,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("keykey", cr.getAccessKey());
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("5", cr.getLifecycle());
-    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 
   @Test
@@ -97,7 +92,5 @@ public class ConnectionResourceTest {
     Assert.assertEquals("key", cr.getAccessKey());
     Assert.assertEquals("log", cr.getLogview());
     Assert.assertEquals("set", cr.getCharset());
-    Assert.assertEquals("100", cr.getLifecycle());
-    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 }

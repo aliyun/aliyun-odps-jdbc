@@ -82,20 +82,31 @@ while (rs.next()) {
 
 
 
-### Connection String
+### Connection String Parameters
 
+#### Basic
 
-|   URL key   |  Property Key  | Description                              |
-| :---------: | :------------: | :--------------------------------------- |
-| `endpoint`  |  `end_point`   | the endpoint of the ODPS cluster         |
-|  `project`  | `project_name` | the current ODPS project                 |
-| `accessId`  |  `access_id`   | the id to access the ODPS service        |
-| `accessKey` |  `access_key`  | the authentication key                   |
-|  `logview`  | `logview_host` | the host domain of the log view appeared in the log history |
-| `lifecycle` |  `lifecycle`   | the lifecycle of the temp table using in query |
-|  `charset`  |   `charset`    | the charset of the string                |
-| `loglevel`  |  `log_level`   | the level of debug infomartion debug/info/fatal |
-| `tunnelEndpoint` | `tunnel_endpoint` | the endpoint of ODPS Tunnel service |
+|   URL key        |  Property Key     | Required | Default value | Description                              |
+| :--------------: | :---------------: | :------: | :-----------: | :--------------------------------------- |
+| `endpoint`       | `end_point`       | True     |               | The endpoint of your MaxCompute service  |
+| `project`        | `project_name`    | True     |               | The name of your MaxCompute project      |
+| `accessId`       | `access_id`       | True     |               | Your Alibaba Cloud access key ID         |
+| `accessKey`      | `access_key`      | True     |               | Your Alibaba Cloud access key secret     |
+| `interactiveMode`| `interactive_mode`| False    | false         | For MCQA, enable MCQA                    |
+| `logview`        | `logview_host`    | False    | Provided by MC | The endpoint of MaxCompute Logview       |
+| `tunnelEndpoint` | `tunnel_endpoint` | False    | Provided by MC | The endpoint of the MaxCompute Tunnel service |
+| `enableOdpsLogger` | `enable_odps_logger` | False | false       | Enable MaxCompute JDBC logger          |
+
+#### Advanced
+|   URL key        |  Property Key     | Required | Default value | Description                              |
+| :--------------: | :---------------: | :------: | :-----------: | :--------------------------------------- |
+| `stsToken`       | `sts_token`       | False    |               | The Alibaba Cloud STS token              |
+| `logConfFile`    | `log_conf_file`   | False    |               | The configuration path for SLF4J         |
+| `charset`        | `charset`         | False    | UTF-8         | The charset of the inputs and outputs    |
+| `executeProject` | `execute_project_name` | False |             | For MCQA, the name of the MaxCompute project in which actually execute the queries |
+| `alwaysFallback` | `always_fallback` | False    | false         | For MCQA, fall back to regular mode if any exception happened |
+| `instanceTunnelMaxRecord` | `instance_tunnel_max_record` | False | -1 (unlimited) | For MCQA, max number of records within a result set |
+| `instanceTunnelMaxSize`| `instance_tunnel_max_size` | False | -1 (unlimited) | For MCQA, max size of a result set in byte |
 
 ## Example
 
