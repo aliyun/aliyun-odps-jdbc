@@ -884,7 +884,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private void runSQLInSession(String sql, Map<String,String> settings) throws SQLException, OdpsException {
     long begin = System.currentTimeMillis();
     SQLExecutor executor = connHandle.getExecutor();
-    if (queryTimeout != -1) {
+    if (queryTimeout != -1 && !settings.containsKey("odps.sql.session.query.timeout")) {
       settings.put("odps.sql.session.query.timeout", String.valueOf(queryTimeout));
     }
     Long autoSelectLimit = connHandle.getAutoSelectLimit();
