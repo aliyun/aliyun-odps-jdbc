@@ -333,6 +333,8 @@ public class OdpsResultSetTest {
     {
       rs.next();
       timestampWithTimeZone = rs.getTimestamp(1).getTime();
+    } finally {
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
     }
 
     Assert.assertEquals(tz.getRawOffset(),timestampWithTimeZone - timestampWithoutTimeZone);
