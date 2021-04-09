@@ -655,8 +655,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
 
     TimeZone projectTimeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
-    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(
-        o, stmt.getConnection().getCharset(), cal, projectTimeZone);
+    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, projectTimeZone);
   }
 
   @Override
