@@ -797,8 +797,10 @@ public class ImplicitTypeConversionTest {
     assertEquals(expected, timestampRes);
 
     // Valid implicit conversions
+    // getString can only get milliseconds
     String stringRes = rs.getString(TIMESTAMP_COL);
-    assertEquals(expected, Timestamp.valueOf(stringRes));
+    assertEquals(expected.getTime(), Timestamp.valueOf(stringRes).getTime());
+    assertEquals(expected.getNanos() / 1000000, Timestamp.valueOf(stringRes).getNanos() / 1000000);
     byte[] byteArrayRes = rs.getBytes(TIMESTAMP_COL);
     assertEquals(expected, Timestamp.valueOf(new String(byteArrayRes, charset)));
     java.sql.Date dateRes = rs.getDate(TIMESTAMP_COL);

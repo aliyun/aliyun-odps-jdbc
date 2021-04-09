@@ -56,8 +56,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   private SQLWarning warningChain = null;
 
-  OdpsResultSet(OdpsConnection conn, OdpsStatement stmt, OdpsResultSetMetaData meta)
-      throws SQLException {
+  OdpsResultSet(OdpsConnection conn, OdpsStatement stmt, OdpsResultSetMetaData meta) {
     this.stmt = stmt;
     this.meta = meta;
     this.conn = conn;
@@ -430,7 +429,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public String getString(int columnIndex) throws SQLException {
     Object obj = getInnerObject(columnIndex);
-    return (String) transformToJdbcType(obj, String.class);
+    return (String) transformToJdbcType(obj, String.class, null);
   }
 
   @Override
@@ -656,8 +655,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
 
     TimeZone projectTimeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
-    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(
-        o, stmt.getConnection().getCharset(), cal, projectTimeZone);
+    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, projectTimeZone);
   }
 
   @Override

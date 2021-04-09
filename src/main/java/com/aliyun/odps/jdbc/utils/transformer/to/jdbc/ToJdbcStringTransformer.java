@@ -21,27 +21,49 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Calendar.Builder;
+import java.util.TimeZone;
 
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
-
-public class ToJdbcStringTransformer extends AbstractToJdbcTransformer {
+public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset) throws SQLException {
+  public Object transform(Object o, String charset, Calendar cal, TimeZone projectTimeZone)
+      throws SQLException {
     if (o == null) {
       return null;
     }
 
+    // The argument cal should always be ignored since MaxCompute stores timezone information.
     if (o instanceof byte[]) {
       return encodeBytes((byte[]) o, charset);
     } else if (java.util.Date.class.isInstance(o)) {
-      if (java.sql.Timestamp.class.isInstance(o)) {
-        return o.toString();
+      Builder calendarBuilder = new Calendar.Builder()
+          .setCalendarType("iso8601")
+          .setLenient(true);
+      if (projectTimeZone != null) {
+        calendarBuilder.setTimeZone(projectTimeZone);
       }
-      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      return dateFormat.format(((java.util.Date) o));
+      Calendar calendar = calendarBuilder.build();
+
+      try {
+        if (java.sql.Timestamp.class.isInstance(o)) {
+          // MaxCompute TIMESTAMP
+          TIMESTAMP_FORMAT.get().setCalendar(calendar);
+          return TIMESTAMP_FORMAT.get().format(o);
+        } else if (java.sql.Date.class.isInstance(o)) {
+          // MaxCompute DATE
+          DATE_FORMAT.get().setCalendar(calendar);
+          return DATE_FORMAT.get().format(o);
+        } else {
+          // MaxCompute DATETIME
+          DATETIME_FORMAT.get().setCalendar(calendar);
+          return DATETIME_FORMAT.get().format(o);
+        }
+      } finally {
+        restoreToDefaultCalendar();
+      }
     } else {
       return o.toString();
     }

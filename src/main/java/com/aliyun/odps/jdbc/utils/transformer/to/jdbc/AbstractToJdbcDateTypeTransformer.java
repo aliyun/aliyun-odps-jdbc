@@ -7,10 +7,12 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
+  static ThreadLocal<SimpleDateFormat> TIMESTAMP_FORMAT = new ThreadLocal<>();
   static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = new ThreadLocal<>();
   static ThreadLocal<SimpleDateFormat> DATE_FORMAT = new ThreadLocal<>();
   static ThreadLocal<SimpleDateFormat> TIME_FORMAT = new ThreadLocal<>();
   static {
+    TIMESTAMP_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
     DATETIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
     DATE_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
     TIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
@@ -36,6 +38,7 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
       TimeZone projectTimeZone) throws SQLException;
 
   void restoreToDefaultCalendar() {
+    TIMESTAMP_FORMAT.get().setCalendar(Calendar.getInstance());
     DATETIME_FORMAT.get().setCalendar(Calendar.getInstance());
     DATE_FORMAT.get().setCalendar(Calendar.getInstance());
     TIME_FORMAT.get().setCalendar(Calendar.getInstance());
