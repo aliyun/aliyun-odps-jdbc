@@ -634,8 +634,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           }
         }
 
-        resultSet =
-            isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(session.getSchema().getColumns()), session)
+        resultSet = isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(session.getSchema().getColumns()), session)
                 : new OdpsForwardResultSet(this, getResultMeta(session.getSchema().getColumns()), session, startTime);
       } else {
         if (sessionResultSet != null) {
@@ -928,4 +927,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   public static String getDefaultTaskName() { return JDBC_SQL_TASK_NAME; }
+
+  public Properties getSqlTaskProperties() {
+    return sqlTaskProperties;
+  }
 }
