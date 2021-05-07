@@ -29,7 +29,7 @@ import java.util.TimeZone;
 public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset, Calendar cal, TimeZone projectTimeZone)
+  public Object transform(Object o, String charset, Calendar cal, TimeZone timeZone)
       throws SQLException {
     if (o == null) {
       return null;
@@ -42,8 +42,8 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
       Builder calendarBuilder = new Calendar.Builder()
           .setCalendarType("iso8601")
           .setLenient(true);
-      if (projectTimeZone != null) {
-        calendarBuilder.setTimeZone(projectTimeZone);
+      if (timeZone != null) {
+        calendarBuilder.setTimeZone(timeZone);
       }
       Calendar calendar = calendarBuilder.build();
 

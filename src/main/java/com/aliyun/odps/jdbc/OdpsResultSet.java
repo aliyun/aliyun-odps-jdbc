@@ -664,8 +664,15 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal) throws SQLException {
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
 
-    TimeZone projectTimeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
-    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, projectTimeZone);
+    TimeZone timeZone;
+
+    String sessionTimeZoneId = stmt.getSqlTaskProperties().getProperty("odps.sql.timezone", null);
+    if (sessionTimeZoneId != null) {
+      timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
+    } else {
+      timeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
+    }
+    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, timeZone);
   }
 
   @Override
