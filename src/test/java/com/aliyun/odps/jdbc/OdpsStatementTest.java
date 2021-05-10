@@ -26,6 +26,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -402,6 +405,28 @@ public class OdpsStatementTest {
               System.out.print(", ");
             }
           }
+        }
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testSetTimeZone() {
+    Calendar jvmCalendar = Calendar.getInstance();
+    jvmCalendar.set(2020, Calendar.JANUARY, 1, 0, 0,0);
+    long localTimestampInSecond = jvmCalendar.toInstant().getEpochSecond();
+
+    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+      stmt.execute("SET odps.sql.timezone=UTC");
+      try (ResultSet rs = stmt.executeQuery("SELECT CAST('2020-01-01 00:00:00' AS DATETIME)")) {
+        while (rs.next()) {
+          Date utcDate = rs.getTimestamp(1);
+          long utcTimestampInSecond = utcDate.getTime() / 1000;
+          Assert.assertEquals(
+              utcTimestampInSecond - localTimestampInSecond,
+              TimeZone.getDefault().getOffset(utcDate.getTime()) / 1000);
         }
       }
     } catch (SQLException e) {
