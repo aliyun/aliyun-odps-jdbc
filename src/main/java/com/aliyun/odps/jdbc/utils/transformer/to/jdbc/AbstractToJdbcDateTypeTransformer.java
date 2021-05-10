@@ -35,7 +35,7 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
       Object o,
       String charset,
       Calendar cal,
-      TimeZone projectTimeZone) throws SQLException;
+      TimeZone timeZone) throws SQLException;
 
   void restoreToDefaultCalendar() {
     TIMESTAMP_FORMAT.get().setCalendar(Calendar.getInstance());

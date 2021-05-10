@@ -34,7 +34,7 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
       Object o,
       String charset,
       Calendar cal,
-      TimeZone projectTimeZone) throws SQLException {
+      TimeZone timeZone) throws SQLException {
 
     if (o == null) {
       return null;
@@ -42,8 +42,8 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
 
     if (java.util.Date.class.isInstance(o)) {
       long time = ((java.util.Date) o).getTime();
-      if (projectTimeZone != null) {
-        time += projectTimeZone.getOffset(time);
+      if (timeZone != null) {
+        time += timeZone.getOffset(time);
       }
       return new java.sql.Date(time);
     } else if (o instanceof byte[]) {
