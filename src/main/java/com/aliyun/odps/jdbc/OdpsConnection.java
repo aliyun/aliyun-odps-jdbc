@@ -223,7 +223,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .taskName(OdpsStatement.getDefaultTaskName());
     long startTime = System.currentTimeMillis();
     executor = builder.build();
-    if (interactiveMode) {
+    if (interactiveMode && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d", executor.getInstance().getId(), cost));
     }
