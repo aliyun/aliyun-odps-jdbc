@@ -494,10 +494,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         isResultSetScrollable = false;
         break;
       case ResultSet.TYPE_SCROLL_INSENSITIVE:
-        if (runningInInteractiveMode()) {
-          throw new SQLFeatureNotSupportedException(
-              "only support statement with ResultSet type: TYPE_FORWARD_ONLY in session mode");
-        }
         isResultSetScrollable = true;
         break;
       default:
@@ -684,4 +680,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public boolean disableConnSetting() { return disableConnSetting; }
 
   public boolean enableLimit() { return enableLimit; }
+
+  public void setEnableLimit(boolean enableLimit) { this.enableLimit = enableLimit; }
 }
