@@ -881,7 +881,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     executeInstance = executor.getInstance();
 
     connHandle.log.info("Run SQL: " + sql + ", LogView:" + logView);
-    warningChain = new SQLWarning(executor.getLogView());
+    warningChain = new SQLWarning(executor.getSummary());
 
     long end = System.currentTimeMillis();
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
