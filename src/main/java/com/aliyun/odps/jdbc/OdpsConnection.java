@@ -196,7 +196,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy) throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
-    hints.put(MAJOR_VERSION, majorVersion);
+    if (!StringUtils.isNullOrEmpty(majorVersion)) {
+      hints.put(MAJOR_VERSION, majorVersion);
+    }
     hints.put(LONG_TIME_TASK, "true");
     for (String key : info.stringPropertyNames()) {
       if (key.startsWith(ODPS_SETTING_PREFIX)) {
