@@ -94,6 +94,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private List<String> tableList = new ArrayList<>();
+
+  private Long autoSelectLimit = null;
   //Unit: result record row count, only applied in interactive mode
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
@@ -102,6 +104,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean disableConnSetting = false;
 
   private boolean useProjectTimeZone = false;
+
+  private boolean enableLimit = false;
 
   private SQLExecutor executor = null;
 
@@ -159,10 +163,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.interactiveMode = connRes.isInteractiveMode();
     this.tableList = connRes.getTableList();
     this.executeProject = connRes.getExecuteProject();
+    this.autoSelectLimit = connRes.getAutoSelectLimit();
     this.resultCountLimit = connRes.getCountLimit();
     this.resultSizeLimit = connRes.getSizeLimit();
     this.disableConnSetting = connRes.isDisableConnSetting();
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
+    this.enableLimit = connRes.isEnableLimit();
 
     try {
       long startTime = System.currentTimeMillis();
@@ -193,7 +199,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy) throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
-    hints.put(MAJOR_VERSION, majorVersion);
+    if (!StringUtils.isNullOrEmpty(majorVersion)) {
+      hints.put(MAJOR_VERSION, majorVersion);
+    }
     hints.put(LONG_TIME_TASK, "true");
     for (String key : info.stringPropertyNames()) {
       if (key.startsWith(ODPS_SETTING_PREFIX)) {
@@ -215,7 +223,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .taskName(OdpsStatement.getDefaultTaskName());
     long startTime = System.currentTimeMillis();
     executor = builder.build();
-    if (interactiveMode) {
+    if (interactiveMode && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d", executor.getInstance().getId(), cost));
     }
@@ -486,10 +494,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         isResultSetScrollable = false;
         break;
       case ResultSet.TYPE_SCROLL_INSENSITIVE:
-        if (runningInInteractiveMode()) {
-          throw new SQLFeatureNotSupportedException(
-              "only support statement with ResultSet type: TYPE_FORWARD_ONLY in session mode");
-        }
         isResultSetScrollable = true;
         break;
       default:
@@ -665,9 +669,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return executeProject;
   }
 
+  public Long getAutoSelectLimit() {
+    return autoSelectLimit;
+  }
+
   public Long getCountLimit() { return resultCountLimit; }
 
   public Long getSizeLimit() { return resultSizeLimit; }
 
   public boolean disableConnSetting() { return disableConnSetting; }
+
+  public boolean enableLimit() { return enableLimit; }
+
+  public void setEnableLimit(boolean enableLimit) { this.enableLimit = enableLimit; }
 }
