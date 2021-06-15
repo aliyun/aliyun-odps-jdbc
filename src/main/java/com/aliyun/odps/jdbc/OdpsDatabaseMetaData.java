@@ -24,12 +24,16 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.Project;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
@@ -48,6 +52,26 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   private static final String SCHEMA_TERM = "project";
   private static final String CATALOG_TERM = "project";
   private static final String PROCEDURE_TERM = "N/A";
+
+  // Table types
+  public static final String TABLE_TYPE_TABLE = "TABLE";
+  public static final String TABLE_TYPE_VIEW = "VIEW";
+
+  // Column names
+  public static final String COL_NAME_TABLE_CAT = "TABLE_CAT";
+  public static final String COL_NAME_TABLE_CATALOG = "TABLE_CATALOG";
+  public static final String COL_NAME_TABLE_SCHEM = "TABLE_SCHEM";
+  public static final String COL_NAME_TABLE_NAME = "TABLE_NAME";
+  public static final String COL_NAME_TABLE_TYPE = "TABLE_TYPE";
+  public static final String COL_NAME_REMARKS = "REMARKS";
+  public static final String COL_NAME_TYPE_CAT = "TYPE_CAT";
+  public static final String COL_NAME_TYPE_SCHEM = "TYPE_SCHEM";
+  public static final String COL_NAME_TYPE_NAME = "TYPE_NAME";
+  public static final String COL_NAME_SELF_REFERENCING_COL_NAME = "SELF_REFERENCING_COL_NAME";
+  public static final String COL_NAME_REF_GENERATION = "REF_GENERATION";
+
+  // MaxCompute public data set project
+  public static final String PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA = "MAXCOMPUTE_PUBLIC_DATA";
 
   private static final int TABLE_NAME_LENGTH = 128;
 
@@ -749,51 +773,65 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   }
 
   @Override
-  public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern,
+  public ResultSet getTables(
+      String catalog,
+      String schemaPattern,
+      String tableNamePattern,
       String[] types) throws SQLException {
     long begin = System.currentTimeMillis();
-    List<Object[]> rows = new ArrayList<Object[]>();
-    if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
-      try {
+    List<Object[]> rows = new ArrayList<>();
 
-        if (!conn.getTableList().isEmpty()) {
+    try {
+      if (!conn.getTables().isEmpty()) {
+        for (Entry<String, List<String>> entry : conn.getTables().entrySet()) {
           LinkedList<String> tables = new LinkedList<>();
-          for (String tableName : conn.getTableList()) {
-            if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
-              if (!Utils.matchPattern(tableName, tableNamePattern)) {
-                continue;
-              }
-            }
-            tables.add(tableName);
+          String projectName = entry.getKey();
+          if (!catalogMatches(catalog, projectName)
+              || !schemaMatches(schemaPattern, projectName)) {
+            continue;
           }
-          if (tables.size() > 0) {
-            convertTableNamesToRows(types, rows, tables);
-          }
-        } else {
-          LinkedList<Table> tables = new LinkedList<>();
-          Iterable<Table> it = conn.getOdps().tables().iterable(conn.getOdps().getDefaultProject(),
-              null,
-              true);
-          for (Table t : it) {
-            String tableName = t.getName();
-            if (!StringUtils.isNullOrEmpty(tableNamePattern)) {
-              if (!Utils.matchPattern(tableName, tableNamePattern)) {
-                continue;
-              }
-            }
-            tables.add(t);
-            if (tables.size() == 100) {
-              convertTablesToRows(types, rows, tables);
+          for (String tableName : entry.getValue()) {
+            if (Utils.matchPattern(tableName, tableNamePattern)
+                && conn.getOdps().tables().exists(projectName, tableName)) {
+              tables.add(tableName);
             }
           }
           if (tables.size() > 0) {
-            convertTablesToRows(types, rows, tables);
+            convertTableNamesToRows(types, rows, projectName, tables);
           }
         }
-      } catch (Exception e) {
-        log.error("getTables fails: ", e);
-        throw new SQLException("getTables fails: ", e);
+      } else {
+        ResultSet schemas = getSchemas(catalog, schemaPattern);
+        List<Table> tables = new LinkedList<>();
+
+        // Iterate through all the available catalog & schemas
+        while (schemas.next()) {
+          if (catalogMatches(catalog, schemas.getString(COL_NAME_TABLE_CATALOG))
+              && schemaMatches(schemaPattern, schemas.getString(COL_NAME_TABLE_SCHEM))) {
+            // Enable the argument 'extended' so that the returned table objects contains all the
+            // information needed by JDBC, like comment and type.
+            Iterator<Table> iter = conn.getOdps().tables().iterator(
+                schemas.getString(COL_NAME_TABLE_SCHEM), null, true);
+            while (iter.hasNext()) {
+              Table t = iter.next();
+              String tableName = t.getName();
+              if (!Utils.matchPattern(tableName, tableNamePattern)) {
+                continue;
+              }
+              tables.add(t);
+              if (tables.size() == 100) {
+                convertTablesToRows(types, rows, tables);
+              }
+            }
+          }
+        }
+        if (tables.size() > 0) {
+          convertTablesToRows(types, rows, tables);
+        }
+        schemas.close();
       }
+    } catch (Exception e) {
+      throw new SQLException(e);
     }
 
     long end = System.currentTimeMillis();
@@ -801,39 +839,67 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(
-            Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS",
-                          "TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME",
-                          "REF_GENERATION"),
-            Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                          TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                          TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                          TypeInfoFactory.STRING));
+            Arrays.asList(
+                COL_NAME_TABLE_CAT,
+                COL_NAME_TABLE_SCHEM,
+                COL_NAME_TABLE_NAME,
+                COL_NAME_TABLE_TYPE,
+                COL_NAME_REMARKS,
+                COL_NAME_TYPE_CAT,
+                COL_NAME_TYPE_SCHEM,
+                COL_NAME_TYPE_NAME,
+                COL_NAME_SELF_REFERENCING_COL_NAME,
+                COL_NAME_REF_GENERATION),
+            Arrays.asList(
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING,
+                TypeInfoFactory.STRING));
 
+    sortRows(rows, new int[] {3, 0, 1, 2});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
-  private void convertTableNamesToRows(String[] types, List<Object[]> rows, LinkedList<String> names)
+  private boolean catalogMatches(String catalog, String actual) {
+    return catalog == null || catalog.equalsIgnoreCase(actual);
+  }
+
+  private boolean schemaMatches(String schemaPattern, String actual) {
+    return Utils.matchPattern(actual, schemaPattern);
+  }
+
+  private void convertTableNamesToRows(
+      String[] types,
+      List<Object[]> rows,
+      String projectName,
+      List<String> names)
       throws OdpsException {
     LinkedList<Table> tables = new LinkedList<>();
-    for (Table t : conn.getOdps().tables().loadTables(names)) {
-      tables.add(t);
-    }
+    tables.addAll(conn.getOdps().tables().loadTables(projectName, names));
     convertTablesToRows(types, rows, tables);
   }
 
-  private void convertTablesToRows(String[] types, List<Object[]> rows, LinkedList<Table> tables)
-      throws OdpsException {
+  private void convertTablesToRows(String[] types, List<Object[]> rows, List<Table> tables) {
     for (Table t : tables) {
-      String tableType = t.isVirtualView() ? "VIEW" : "TABLE";
+      String tableType = t.isVirtualView() ? TABLE_TYPE_VIEW : TABLE_TYPE_TABLE;
       if (types != null && types.length != 0) {
         if (!Arrays.asList(types).contains(tableType)) {
           continue;
         }
       }
-      Object[] rowVals =
-          {t.getProject(), t.getProject(), t.getName(), tableType, t.getComment(), null, null,
-              null, null,
-              "USER"};
+      Object[] rowVals = {
+          t.getProject(),
+          t.getProject(),
+          t.getName(),
+          tableType,
+          t.getComment(),
+          null, null, null, null, null};
       rows.add(rowVals);
     }
     tables.clear();
@@ -841,55 +907,152 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public ResultSet getSchemas() throws SQLException {
-    OdpsResultSetMetaData meta =
-        new OdpsResultSetMetaData(Arrays.asList("TABLE_SCHEM", "TABLE_CATALOG"), Arrays.asList(
-            TypeInfoFactory.STRING, TypeInfoFactory.STRING));
-    List<Object[]> rows = new ArrayList<Object[]>();
-    String[] row = {conn.getOdps().getDefaultProject(), conn.getOdps().getDefaultProject()};
-    rows.add(row);
-    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
+    return getSchemas(null, null);
   }
 
   @Override
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-    OdpsResultSetMetaData meta =
-        new OdpsResultSetMetaData(Arrays.asList("TABLE_SCHEM", "TABLE_CATALOG"), Arrays.asList(
-            TypeInfoFactory.STRING, TypeInfoFactory.STRING));
-    List<Object[]> rows = new ArrayList<Object[]>();
-    if (Utils.matchPattern(conn.getOdps().getDefaultProject(), schemaPattern)) {
-      String[] row = {conn.getOdps().getDefaultProject(), conn.getOdps().getDefaultProject()};
-      rows.add(row);
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+            Arrays.asList(COL_NAME_TABLE_SCHEM, COL_NAME_TABLE_CATALOG),
+            Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING));
+    List<Object[]> rows = new ArrayList<>();
+
+    // In MaxCompute, catalog == schema == project.
+    String schema = catalog;
+
+    // Project MAXCOMPUTE_PUBLIC_DATA includes MaxCompute public data sets. It is available in
+    // almost all the regions of every public MaxCompute service, but may not be available in
+    // private services.
+    try {
+      if (catalogMatches(catalog, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)
+          && schemaMatches(schemaPattern, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)
+          && conn.getOdps().projects().exists(PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)) {
+        rows.add(new String[] {PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
+      }
+    } catch (OdpsException e) {
+      String errMsg = "Failed to access project: " + e.getMessage();
+      conn.log.debug(errMsg);
     }
+
+    try {
+      if (catalog == null) {
+        // The follow code block implements the actual interface DatabaseMetaData#getCatalogs. But
+        // since list projects is quite slow right now, this impl is commented out.
+//        for (Project p : conn.getOdps().projects().iterable(null)) {
+//          if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equals(p.getName())
+//              && Utils.matchPattern(p.getName(), schemaPattern)) {
+//            rows.add(new String[]{p.getName(), p.getName()});
+//          }
+//        }
+        if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(conn.getOdps().getDefaultProject())) {
+          rows.add(
+              new String[]{conn.getOdps().getDefaultProject(), conn.getOdps().getDefaultProject()});
+        }
+      } else {
+        if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(schema)
+            && Utils.matchPattern(schema, schemaPattern)
+            && conn.getOdps().projects().exists(schema)) {
+          rows.add(new String[]{schema, schema});
+        }
+      }
+    } catch (OdpsException | RuntimeException e) {
+      throw new SQLException(e);
+    }
+
+    sortRows(rows, new int[] {1, 0});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   @Override
   public ResultSet getCatalogs() throws SQLException {
-    OdpsResultSetMetaData meta =
-        new OdpsResultSetMetaData(Arrays.asList("TABLE_CAT"), Arrays.asList(TypeInfoFactory.STRING));
-    List<Object[]> rows = new ArrayList<Object[]>();
-    String[] row = {conn.getOdps().getDefaultProject()};
-    rows.add(row);
-    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Collections.singletonList(COL_NAME_TABLE_CAT),
+        Collections.singletonList(TypeInfoFactory.STRING));
+    List<Object[]> rows = new ArrayList<>();
 
+    // Project MAXCOMPUTE_PUBLIC_DATA includes MaxCompute public data sets. It is available in
+    // almost all the regions of every public MaxCompute service, but may not be available in
+    // private services.
+    try {
+      if (conn.getOdps().projects().exists(PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)) {
+        rows.add(new String[] {PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
+      }
+    } catch (OdpsException e) {
+      String errMsg = "Failed to access project: " + e.getMessage();
+      conn.log.debug(errMsg);
+    }
+
+    // The follow code block implements the actual interface DatabaseMetaData#getCatalogs. But since
+    // list projects is quite slow right now, this impl is commented out.
+//    try {
+//      for (Project p : conn.getOdps().projects().iterable(null)) {
+//        rows.add(new String[] {p.getName()});
+//      }
+//    } catch (RuntimeException e) {
+//      throw new SQLException(e);
+//    }
+
+    if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(conn.getOdps().getDefaultProject())) {
+      rows.add(new String[]{conn.getOdps().getDefaultProject()});
+    }
+
+    sortRows(rows, new int[] {0});
+    return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
+  }
+
+  /**
+   * Sort rows by specified columns.
+   *
+   * @param rows Rows. Elements in the list cannot be null and must have the same length.
+   * @param columnsToSort Indexes of columns to sort.
+   */
+  private void sortRows(List<Object[]> rows, int[] columnsToSort) {
+    rows.sort((row1, row2) -> {
+      Objects.requireNonNull(row1);
+      Objects.requireNonNull(row2);
+      if (row1.length != row2.length) {
+        throw new IllegalArgumentException("Rows have different length");
+      }
+
+      for (int i = 0; i < row1.length; i++) {
+        for (int idx : columnsToSort) {
+          if (row1[idx] != null && row2[idx] != null) {
+            int ret = ((String) row1[idx]).compareTo((String) row2[idx]);
+            if (ret == 0) {
+              continue;
+            }
+            return ret;
+          } else if (row1[idx] != null && row2[idx] == null) {
+            return 1;
+          } else if (row1[idx] == null && row2[idx] != null) {
+            return -1;
+          }
+        }
+      }
+
+      return 0;
+    });
   }
 
   @Override
   public ResultSet getTableTypes() throws SQLException {
-    List<Object[]> rows = new ArrayList<Object[]>();
-    String[] row = {"TABLE", "VIEW"};
-    rows.add(row);
+    List<Object[]> rows = new ArrayList<>();
 
-    // Build result set meta data
-    OdpsResultSetMetaData meta =
-        new OdpsResultSetMetaData(Arrays.asList("TABLE_TYPE"), Arrays.asList(TypeInfoFactory.STRING));
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList(COL_NAME_TABLE_TYPE),
+        Arrays.asList(TypeInfoFactory.STRING));
+
+    rows.add(new String[] {TABLE_TYPE_TABLE});
+    rows.add(new String[] {TABLE_TYPE_VIEW});
 
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
-
   }
 
   @Override
-  public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern,
+  public ResultSet getColumns(
+      String catalog,
+      String schemaPattern,
+      String tableNamePattern,
       String columnNamePattern) throws SQLException {
 
     long begin = System.currentTimeMillis();

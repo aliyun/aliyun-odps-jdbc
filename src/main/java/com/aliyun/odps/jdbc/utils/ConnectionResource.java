@@ -25,10 +25,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Collections;
 
 public class ConnectionResource {
 
@@ -123,7 +123,7 @@ public class ConnectionResource {
   private String interactiveServiceName;
   private String majorVersion;
   private boolean enableOdpsLogger = false;
-  private List<String> tableList = new ArrayList<>();
+  private Map<String, List<String>> tables = new HashMap<>();
   private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
   private Long autoSelectLimit;
   private Long countLimit;
@@ -259,10 +259,24 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
     );
 
-    String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
-        TABLE_LIST_URL_KEY);
-    if (!StringUtils.isNullOrEmpty(tableStr)) {
-      Collections.addAll(tableList, tableStr.split(","));
+    // The option 'tableList' accepts table names in pattern:
+    //   <project name>.<table name>(,<project name>.<table name>)*
+    //
+    // This option is used to accelerate table loading. For a project contains thousands of tables,
+    // BI software such as Tableau may load all the tables when the software starts and it could
+    // take several minutes before the user could really start using it. To avoid this situation,
+    // users could specify the table names they are going to use and the driver will only load
+    // these tables.
+    String tablesStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY, TABLE_LIST_URL_KEY);
+    if (!StringUtils.isNullOrEmpty(tablesStr)) {
+      for (String tableStr : tablesStr.split(",")) {
+        String[] parts = tableStr.split("\\.");
+        if (parts.length != 2) {
+          throw new IllegalArgumentException("Invalid table name: " + tableStr);
+        }
+        tables.computeIfAbsent(parts[0], p -> new LinkedList<>());
+        tables.get(parts[0]).add(parts[1]);
+      }
     }
   }
 
@@ -368,8 +382,8 @@ public class ConnectionResource {
     return interactiveMode;
   }
 
-  public List<String> getTableList() {
-    return tableList;
+  public Map<String, List<String>> getTables() {
+    return tables;
   }
 
   public FallbackPolicy getFallbackPolicy() {
