@@ -158,6 +158,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.logviewHost = logviewHost;
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<>();
+    this.sqlTaskProperties.putAll(connRes.getSettings());
 
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
