@@ -1,8 +1,9 @@
 
 # ODPS JDBC
 
-[![Build Status](https://travis-ci.org/aliyun/aliyun-odps-jdbc.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-odps-jdbc)
+![build](https://github.com/aliyun/aliyun-odps-jdbc/actions/workflows/maven.yml/badge.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc)
+
 
 ## Chinese Docs
 
