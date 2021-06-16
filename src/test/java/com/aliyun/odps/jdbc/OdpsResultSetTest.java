@@ -24,6 +24,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.TimeZone;
 
 import org.junit.AfterClass;
@@ -32,16 +33,23 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.aliyun.odps.PartitionSpec;
+import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsResultSetTest {
 
+  private static Calendar ISO8601_GMT_CALENDAR = new Calendar.Builder()
+      .setCalendarType("iso8601")
+      .setTimeZone(TimeZone.getTimeZone("GMT"))
+      .setLenient(true)
+      .build();
+
   static Statement stmt;
 
   static long unixTimeNow;
-  static SimpleDateFormat formatter;
+  static SimpleDateFormat DATETIME_FORMATTER;
   static String nowStr;
   static String odpsNowStr;
   static String decimalValue;
@@ -65,9 +73,25 @@ public class OdpsResultSetTest {
     writer.close();
     upload.commit(new Long[] {0L});
 
-    formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    stmt.execute("drop table if exists OdpsResultSetTestTestDate");
+    stmt.execute("create table OdpsResultSetTestTestDate(col1 timestamp, col2 datetime, col3 date)");
+
+    upload = TestManager.getInstance().tunnel.createUploadSession(
+        TestManager.getInstance().odps.getDefaultProject(), "OdpsResultSetTestTestDate");
+    writer = upload.openRecordWriter(0);
+    r = upload.newRecord();
+    // 2020-01-01 00:00:00 GMT +0
+    ((ArrayRecord) r).setTimestamp(0, new Timestamp(1577836800000L));
+    r.setDatetime(1, new java.util.Date(1577836800000L));
+    ((ArrayRecord) r).setDate(2, new java.sql.Date(1577836800000L), ISO8601_GMT_CALENDAR);
+    writer.write(r);
+    writer.close();
+    upload.commit(new Long[] {0L});
+
+    DATETIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    DATETIME_FORMATTER.setCalendar(ISO8601_GMT_CALENDAR);
     unixTimeNow = new java.util.Date().getTime();
-    nowStr = formatter.format(unixTimeNow);
+    nowStr = DATETIME_FORMATTER.format(unixTimeNow);
     odpsNowStr = "cast('" + nowStr + "' as datetime)";
 
     decimalValue = "55.123456789012345";
@@ -273,70 +297,123 @@ public class OdpsResultSetTest {
   }
 
   @Test
-  public void testGetTimeFormat() throws Exception {
-    // cast from STRING, DATETIME
-    ResultSet rs =
-        stmt.executeQuery(String.format("select DATETIME'%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
-    {
-      rs.next();
-      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
-      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(2).toString());
-
-      Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(1).toString());
-      Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(2).toString());
-
-      Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
-          formatter.format(rs.getTimestamp(1)));
-      Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
-          formatter.format(rs.getTimestamp(2)));
-    }
-    rs.close();
-  }
-
-  @Test
   public void testGetString() throws Exception {
     // cast from STRING, DOUBLE, BIGINT, DATETIME, DECIMAL
-    ResultSet rs =
-        stmt.executeQuery(String.format(
-            "select 'alibaba' c1, 0.5 c2, 1 c3, %s c4, %s c5, true c6 from dual;", odpsNowStr,
-            odpsDecimalStr));
-    {
-      rs.next();
-      Assert.assertEquals("alibaba", rs.getString(1));
-      Assert.assertEquals("alibaba", rs.getString("c1"));
-      Assert.assertEquals("0.5", rs.getString(2));
-      Assert.assertEquals("1", rs.getString(3));
-      Assert.assertEquals(nowStr, rs.getString(4));
-      Assert.assertEquals(decimalValue, rs.getString(5));
-      Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
-    }
+    String query = String.format(
+        "select 'alibaba' c1, 0.5 c2, 1 c3, %s c4, true c5 from dual;", odpsDecimalStr);
+    ResultSet rs = stmt.executeQuery(query);
+
+    rs.next();
+    Assert.assertEquals("alibaba", rs.getString(1));
+    Assert.assertEquals("0.5", rs.getString(2));
+    Assert.assertEquals("1", rs.getString(3));
+    Assert.assertEquals(decimalValue, rs.getString(4));
+    Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(5));
+
     rs.close();
   }
 
   @Test
-  public void testGetTimestampWithTimeZone() throws SQLException {
+  public void testGetTimestamp() throws SQLException {
     TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
 
     // Make sure the project's time zone is not UTC, or this test case will always pass.
     Assert.assertNotEquals(0, tz.getRawOffset());
+    Assert.assertFalse(((OdpsConnection) TestManager.getInstance().conn).isUseProjectTimeZone());
 
-    long timestampWithoutTimeZone;
-    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr)))
+    String query = "SELECT col1, TIMESTAMP'2020-01-01 00:00:00.123456789' FROM OdpsResultSetTestTestDate";
+    try (ResultSet rs = stmt.executeQuery(query))
     {
       rs.next();
-      timestampWithoutTimeZone = rs.getTimestamp(1).getTime();
-    }
+      // Should be in GMT +0 when isUseProjectTimeZone is false.
+      long timestampWithoutTimeZone = rs.getTimestamp(1).getTime();
+      Assert.assertEquals(1577836800000L, timestampWithoutTimeZone);
+      long timestampConstantWithoutTimeZone = rs.getTimestamp(2).getTime();
+      Assert.assertEquals(tz.getRawOffset(), 1577836800123L - timestampConstantWithoutTimeZone);
+      Assert.assertEquals(123456789, rs.getTimestamp(2).getNanos());
 
-    long timestampWithTimeZone;
-    ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
-    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr)))
-    {
-      rs.next();
-      timestampWithTimeZone = rs.getTimestamp(1).getTime();
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
+      long timestampWithTimeZone = rs.getTimestamp(1).getTime();
+      Assert.assertEquals(tz.getRawOffset(),timestampWithTimeZone - timestampWithoutTimeZone);
+      long timestampConstantWithTimeZone = rs.getTimestamp(2).getTime();
+      Assert.assertEquals(1577836800123L, timestampConstantWithTimeZone);
+      Assert.assertEquals(123456789, rs.getTimestamp(2).getNanos());
     } finally {
       ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
     }
+  }
 
-    Assert.assertEquals(tz.getRawOffset(),timestampWithTimeZone - timestampWithoutTimeZone);
+  @Test
+  public void testGetDatetime() throws SQLException {
+    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
+
+    // Make sure the project's time zone is not UTC, or this test case will always pass.
+    Assert.assertNotEquals(0, tz.getRawOffset());
+    Assert.assertFalse(((OdpsConnection) TestManager.getInstance().conn).isUseProjectTimeZone());
+
+    String query = "SELECT col2, DATETIME'2020-01-01 00:00:00' FROM OdpsResultSetTestTestDate";
+    try (ResultSet rs = stmt.executeQuery(query))
+    {
+      rs.next();
+      // Should be in GMT +0 when isUseProjectTimeZone is false.
+      long datetimeWithoutTimeZone = rs.getTimestamp(1).getTime();
+      Assert.assertEquals(1577836800000L, datetimeWithoutTimeZone);
+      long datetimeConstantWithoutTimeZone = rs.getTimestamp(2).getTime();
+      Assert.assertEquals(tz.getRawOffset(), 1577836800000L - datetimeConstantWithoutTimeZone);
+
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
+      long datetimeWithTimeZone = rs.getTimestamp(1).getTime();
+      Assert.assertEquals(tz.getRawOffset(),datetimeWithTimeZone - datetimeWithoutTimeZone);
+    } finally {
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
+    }
+  }
+
+  @Test
+  public void testGetTime() throws Exception {
+    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
+
+    // Make sure the project's time zone is not UTC, or this test case will always pass.
+    Assert.assertNotEquals(0, tz.getRawOffset());
+    Assert.assertFalse(((OdpsConnection) TestManager.getInstance().conn).isUseProjectTimeZone());
+
+
+    try (ResultSet rs = stmt.executeQuery("SELECT col2 FROM OdpsResultSetTestTestDate"))
+    {
+      rs.next();
+      // Should be in GMT +0 when isUseProjectTimeZone is false.
+      long timeWithoutTimeZone = rs.getTime(1).getTime();
+      Assert.assertEquals(1577836800000L, timeWithoutTimeZone);
+
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
+      long timeWithTimeZone = rs.getTimestamp(1).getTime();
+      Assert.assertEquals(tz.getRawOffset(), timeWithTimeZone - timeWithoutTimeZone);
+    } finally {
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
+    }
+  }
+
+  @Test
+  public void testGetDate() throws SQLException {
+    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
+
+    // Make sure the project's time zone is not UTC, or this test case will always pass.
+    Assert.assertNotEquals(0, tz.getRawOffset());
+    Assert.assertFalse(((OdpsConnection) TestManager.getInstance().conn).isUseProjectTimeZone());
+
+    try (ResultSet rs = stmt.executeQuery("SELECT col3 FROM OdpsResultSetTestTestDate"))
+    {
+      rs.next();
+      // Should be in GMT +0 when isUseProjectTimeZone is false.
+      long dateWithoutTimeZone = rs.getDate(1).getTime();
+      Assert.assertEquals(1577836800000L, dateWithoutTimeZone);
+
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
+      long dateWithTimeZone = rs.getDate(1).getTime();
+      System.out.println();
+      Assert.assertEquals(tz.getRawOffset(), dateWithTimeZone - dateWithoutTimeZone);
+    } finally {
+      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
+    }
   }
 }

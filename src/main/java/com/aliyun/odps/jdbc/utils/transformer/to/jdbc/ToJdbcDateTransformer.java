@@ -23,7 +23,9 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Calendar;
+import java.util.Calendar.Builder;
 import java.util.TimeZone;
 
 
@@ -33,7 +35,6 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
   public Object transform(
       Object o,
       String charset,
-      Calendar cal,
       TimeZone timeZone) throws SQLException {
 
     if (o == null) {
@@ -46,14 +47,23 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
         time += timeZone.getOffset(time);
       }
       return new java.sql.Date(time);
+    } else if (o instanceof LocalDate) {
+      LocalDate localDate = (LocalDate) o;
+      Calendar calendar = (Calendar) DEFAULT_CALENDAR.get().clone();
+      calendar.set(
+          localDate.getYear(),
+          // Starts from 0
+          localDate.getMonth().getValue() - 1,
+          localDate.getDayOfMonth());
+      long time = calendar.getTime().getTime();
+      if (timeZone != null) {
+        time += timeZone.getOffset(time);
+      }
+      return new java.sql.Date(time);
     } else if (o instanceof byte[]) {
       try {
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
         SimpleDateFormat dateFormat = DATE_FORMAT.get();
-        if (cal != null) {
-          datetimeFormat.setCalendar(cal);
-          dateFormat.setCalendar(cal);
-        }
         try {
           return new java.sql.Date(
               datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());

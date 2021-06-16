@@ -122,7 +122,11 @@ public class OdpsPreparedStatementTest {
         .setCalendarType("iso8601")
         .set(Calendar.YEAR, 2020)
         .set(Calendar.MONTH, Calendar.JANUARY)
-        .set(Calendar.DAY_OF_MONTH, 1).build();
+        .set(Calendar.DAY_OF_MONTH, 1)
+        .set(Calendar.HOUR, 0)
+        .set(Calendar.MINUTE, 0)
+        .set(Calendar.SECOND, 0)
+        .set(Calendar.MILLISECOND, 0).build();
     java.sql.Date date = new java.sql.Date(gmtCalendar.getTime().getTime());
 
     ps.setByte(1, new Byte("127"));
@@ -241,7 +245,11 @@ public class OdpsPreparedStatementTest {
         .setCalendarType("iso8601")
         .set(Calendar.YEAR, 2020)
         .set(Calendar.MONTH, Calendar.JANUARY)
-        .set(Calendar.DAY_OF_MONTH, 1).build();
+        .set(Calendar.DAY_OF_MONTH, 1)
+        .set(Calendar.HOUR, 0)
+        .set(Calendar.MINUTE, 0)
+        .set(Calendar.SECOND, 0)
+        .set(Calendar.MILLISECOND, 0).build();
     java.sql.Date date = new java.sql.Date(gmtCalendar.getTime().getTime());
 
     for (int i = 0; i < 10; i++) {

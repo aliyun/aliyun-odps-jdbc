@@ -654,6 +654,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (java.util.Date.class.isInstance(x)
         || java.sql.Date.class.isInstance(x)
         || java.sql.Time.class.isInstance(x)) {
+      // TODO: use SimpleDateFormat without a ISO_8601 Calendar
       SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return String.format("DATETIME\"%s\"", formatter.format(x));
     } else if (Boolean.class.isInstance(x)) {

@@ -666,7 +666,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       }
     }
 
-    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, timeZone);
+    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), timeZone);
   }
 
   @Override

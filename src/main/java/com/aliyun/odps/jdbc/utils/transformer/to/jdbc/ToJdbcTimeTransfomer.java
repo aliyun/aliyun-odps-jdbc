@@ -33,7 +33,6 @@ public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
   public Object transform(
       Object o,
       String charset,
-      Calendar cal,
       TimeZone timeZone) throws SQLException {
 
     if (o == null) {
@@ -50,10 +49,6 @@ public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
       try {
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
         SimpleDateFormat timeFormat = TIME_FORMAT.get();
-        if (cal != null) {
-          datetimeFormat.setCalendar(cal);
-          timeFormat.setCalendar(cal);
-        }
         try {
           return new java.sql.Time(
               datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());

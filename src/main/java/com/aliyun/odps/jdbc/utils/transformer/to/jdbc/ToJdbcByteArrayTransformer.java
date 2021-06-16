@@ -22,15 +22,18 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Calendar.Builder;
+import java.util.TimeZone;
 
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
-public class ToJdbcByteArrayTransformer extends AbstractToJdbcTransformer {
+public class ToJdbcByteArrayTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset) throws SQLException {
+  public Object transform(Object o, String charset, TimeZone timeZone) throws SQLException {
     if (o == null) {
       return null;
     }
@@ -38,11 +41,38 @@ public class ToJdbcByteArrayTransformer extends AbstractToJdbcTransformer {
     if (o instanceof byte[]) {
       return o;
     } else if (java.util.Date.class.isInstance(o)) {
-      if (java.sql.Timestamp.class.isInstance(o)) {
-        return o.toString().getBytes();
+      Calendar calendar = null;
+      if (timeZone != null) {
+        Builder calendarBuilder = new Calendar.Builder()
+            .setCalendarType("iso8601")
+            .setLenient(true);
+        calendarBuilder.setTimeZone(timeZone);
+        calendar = calendarBuilder.build();
       }
-      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      return dateFormat.format(((java.util.Date) o)).getBytes();
+
+      try {
+        if (java.sql.Timestamp.class.isInstance(o)) {
+          // MaxCompute TIMESTAMP
+          if (calendar != null) {
+            TIMESTAMP_FORMAT.get().setCalendar(calendar);
+          }
+          return TIMESTAMP_FORMAT.get().format(o).getBytes();
+        } else if (java.sql.Date.class.isInstance(o)) {
+          // MaxCompute DATE
+          if (calendar != null) {
+            DATE_FORMAT.get().setCalendar(calendar);
+          }
+          return DATE_FORMAT.get().format(o).getBytes();
+        } else {
+          // MaxCompute DATETIME
+          if (calendar != null) {
+            DATETIME_FORMAT.get().setCalendar(calendar);
+          }
+          return DATETIME_FORMAT.get().format(o).getBytes();
+        }
+      } finally {
+        restoreToDefaultCalendar();
+      }
     } else if (o instanceof Binary) {
       return ((Binary) o).data();
     } else {
