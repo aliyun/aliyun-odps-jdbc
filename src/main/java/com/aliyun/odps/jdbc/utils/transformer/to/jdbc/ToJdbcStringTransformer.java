@@ -29,7 +29,7 @@ import java.util.TimeZone;
 public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset, Calendar cal, TimeZone timeZone)
+  public Object transform(Object o, String charset, TimeZone timeZone)
       throws SQLException {
     if (o == null) {
       return null;
@@ -39,26 +39,33 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
     if (o instanceof byte[]) {
       return encodeBytes((byte[]) o, charset);
     } else if (java.util.Date.class.isInstance(o)) {
-      Builder calendarBuilder = new Calendar.Builder()
-          .setCalendarType("iso8601")
-          .setLenient(true);
+      Calendar calendar = null;
       if (timeZone != null) {
+        Builder calendarBuilder = new Calendar.Builder()
+            .setCalendarType("iso8601")
+            .setLenient(true);
         calendarBuilder.setTimeZone(timeZone);
+        calendar = calendarBuilder.build();
       }
-      Calendar calendar = calendarBuilder.build();
 
       try {
         if (java.sql.Timestamp.class.isInstance(o)) {
           // MaxCompute TIMESTAMP
-          TIMESTAMP_FORMAT.get().setCalendar(calendar);
+          if (calendar != null) {
+            TIMESTAMP_FORMAT.get().setCalendar(calendar);
+          }
           return TIMESTAMP_FORMAT.get().format(o);
         } else if (java.sql.Date.class.isInstance(o)) {
           // MaxCompute DATE
-          DATE_FORMAT.get().setCalendar(calendar);
+          if (calendar != null) {
+            DATE_FORMAT.get().setCalendar(calendar);
+          }
           return DATE_FORMAT.get().format(o);
         } else {
           // MaxCompute DATETIME
-          DATETIME_FORMAT.get().setCalendar(calendar);
+          if (calendar != null) {
+            DATETIME_FORMAT.get().setCalendar(calendar);
+          }
           return DATETIME_FORMAT.get().format(o);
         }
       } finally {

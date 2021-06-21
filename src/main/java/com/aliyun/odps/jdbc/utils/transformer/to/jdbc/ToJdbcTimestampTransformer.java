@@ -35,7 +35,6 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
   public Object transform(
       Object o,
       String charset,
-      Calendar cal,
       TimeZone timeZone) throws SQLException {
 
     if (o == null) {
@@ -61,9 +60,6 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       try {
         // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
-        if (cal != null) {
-          datetimeFormat.setCalendar(cal);
-        }
 
         // A timestamp string has two parts: datetime part and nano value part. We will firstly
         // process the datetime part and apply the timezone. The nano value part will be set to the
@@ -85,10 +81,7 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
         timestamp.setNanos(nanoValue);
 
         return timestamp;
-      } catch (IllegalArgumentException e) {
-        String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
-        throw new SQLException(errorMsg);
-      } catch (ParseException e) {
+      } catch (IllegalArgumentException | ParseException e) {
         String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
       } finally {

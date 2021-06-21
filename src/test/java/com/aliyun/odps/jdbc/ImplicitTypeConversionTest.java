@@ -46,7 +46,6 @@ import org.junit.Test;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
@@ -69,13 +68,14 @@ public class ImplicitTypeConversionTest {
   private static final String INT_COL = "t_int";
   private static final String BIGINT_COL = "t_bigint";
   private static final String FLOAT_COL = "t_float";
-  private static final String DOUBLT_COL = "t_double";
+  private static final String DOUBLE_COL = "t_double";
   private static final String DECIMAL_COL = "t_decimal";
   private static final String VARCHAR_COL = "t_varchar";
   private static final String STRING_COL_1 = "t_string_1";
   private static final String STRING_COL_2 = "t_string_2";
   private static final String DATETIME_COL = "t_datetime";
   private static final String TIMESTAMP_COL = "t_timestamp";
+  private static final String DATE_COL = "t_date";
   private static final String BOOLEAN_COL = "t_boolean";
 
   private static final String TINYINT_VAL = "1";
@@ -96,8 +96,19 @@ public class ImplicitTypeConversionTest {
   private static ResultSet rsNull;
   // The charset in configuration must be 'UTF-8', which is the default value, or the test may fail
   private static String charset = "UTF-8";
-  private static SimpleDateFormat dateFormat =
+  private static SimpleDateFormat DATETIME_FORMAT =
       new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
+  private static SimpleDateFormat TIMESTAMP_FORMAT =
+      new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT);
+  static {
+    Calendar calendar = new Calendar.Builder()
+        .setCalendarType("iso8601")
+        .setTimeZone(TimeZone.getTimeZone("GMT"))
+        .setLenient(true)
+        .build();
+    DATETIME_FORMAT.setCalendar(calendar);
+    TIMESTAMP_FORMAT.setCalendar(calendar);
+  }
 
   @BeforeClass
   public static void setUp() throws OdpsException, IOException, ParseException, SQLException {
@@ -132,14 +143,15 @@ public class ImplicitTypeConversionTest {
     r.set(INT_COL, Integer.parseInt(INT_VAL));
     r.set(BIGINT_COL, Long.parseLong(BIGINT_VAL));
     r.set(FLOAT_COL, Float.parseFloat(FLOAT_VAL));
-    r.set(DOUBLT_COL, Double.parseDouble(DOUBLE_VAL));
+    r.set(DOUBLE_COL, Double.parseDouble(DOUBLE_VAL));
     r.set(DECIMAL_COL, new BigDecimal(DECIMAL_VAL));
     r.set(VARCHAR_COL, new Varchar(VARCHAR_VAL));
     r.set(STRING_COL_1, STRING_VAL_1);
     r.set(STRING_COL_2, STRING_VAL_2);
-    DATETIME_VAL = dateFormat.parse("2019-05-23 00:00:00");
+    DATETIME_VAL = DATETIME_FORMAT.parse("2019-05-23 00:00:00");
     r.set(DATETIME_COL, DATETIME_VAL);
-    TIMESTAMP_VAL = Timestamp.valueOf("2019-05-23 00:00:00.123456789");
+    TIMESTAMP_VAL = new Timestamp(DATETIME_VAL.getTime());
+    TIMESTAMP_VAL.setNanos(123456789);
     r.set(TIMESTAMP_COL, TIMESTAMP_VAL);
     r.set(BOOLEAN_COL, BOOLEAN_VAL);
     writer.write(r);
@@ -180,7 +192,7 @@ public class ImplicitTypeConversionTest {
     r.set(INT_COL, null);
     r.set(BIGINT_COL, null);
     r.set(FLOAT_COL, null);
-    r.set(DOUBLT_COL, null);
+    r.set(DOUBLE_COL, null);
     r.set(DECIMAL_COL, null);
     r.set(VARCHAR_COL, null);
     r.set(STRING_COL_1, null);
@@ -202,32 +214,20 @@ public class ImplicitTypeConversionTest {
 
   private static TableSchema getTestTableSchema() {
     TableSchema schema = new TableSchema();
-    schema.addColumn(
-        new Column(TINYINT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.TINYINT)));
-    schema.addColumn(
-        new Column(SMALLINT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.SMALLINT)));
-    schema.addColumn(
-        new Column(INT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.INT)));
-    schema.addColumn(
-        new Column(BIGINT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.BIGINT)));
-    schema.addColumn(
-        new Column(FLOAT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.FLOAT)));
-    schema.addColumn(
-        new Column(DOUBLT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.DOUBLE)));
-    schema.addColumn(
-        new Column(DECIMAL_COL, TypeInfoFactory.getDecimalTypeInfo(54,18)));
-    schema.addColumn(
-        new Column(VARCHAR_COL, TypeInfoFactory.getVarcharTypeInfo(200)));
-    schema.addColumn(
-        new Column(STRING_COL_1, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.STRING)));
-    schema.addColumn(
-        new Column(STRING_COL_2, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.STRING)));
-    schema.addColumn(
-        new Column(DATETIME_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.DATETIME)));
-    schema.addColumn(
-        new Column(TIMESTAMP_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.TIMESTAMP)));
-    schema.addColumn(
-        new Column(BOOLEAN_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.BOOLEAN)));
+    schema.addColumn(new Column(TINYINT_COL, TypeInfoFactory.TINYINT));
+    schema.addColumn(new Column(SMALLINT_COL, TypeInfoFactory.SMALLINT));
+    schema.addColumn(new Column(INT_COL, TypeInfoFactory.INT));
+    schema.addColumn(new Column(BIGINT_COL, TypeInfoFactory.BIGINT));
+    schema.addColumn(new Column(FLOAT_COL, TypeInfoFactory.FLOAT));
+    schema.addColumn(new Column(DOUBLE_COL, TypeInfoFactory.DOUBLE));
+    schema.addColumn(new Column(DECIMAL_COL, TypeInfoFactory.getDecimalTypeInfo(54,18)));
+    schema.addColumn(new Column(VARCHAR_COL, TypeInfoFactory.getVarcharTypeInfo(200)));
+    schema.addColumn(new Column(STRING_COL_1, TypeInfoFactory.STRING));
+    schema.addColumn(new Column(STRING_COL_2, TypeInfoFactory.STRING));
+    schema.addColumn(new Column(DATETIME_COL, TypeInfoFactory.DATETIME));
+    schema.addColumn(new Column(TIMESTAMP_COL, TypeInfoFactory.TIMESTAMP));
+    schema.addColumn(new Column(DATE_COL, TypeInfoFactory.DATE));
+    schema.addColumn(new Column(BOOLEAN_COL, TypeInfoFactory.BOOLEAN));
     return schema;
   }
 
@@ -502,48 +502,48 @@ public class ImplicitTypeConversionTest {
   @Test
   public void testGetDouble() throws SQLException {
     Double expected = Double.parseDouble(DOUBLE_VAL);
-    double doubleRes = rs.getDouble(DOUBLT_COL);
+    double doubleRes = rs.getDouble(DOUBLE_COL);
     assertEquals(expected, doubleRes, 0.0001);
 
     // Valid implicit conversions
-    byte byteRes = rs.getByte(DOUBLT_COL);
+    byte byteRes = rs.getByte(DOUBLE_COL);
     assertEquals(expected.byteValue(), byteRes);
-    short shortRes = rs.getShort(DOUBLT_COL);
+    short shortRes = rs.getShort(DOUBLE_COL);
     assertEquals(expected.shortValue(), shortRes);
-    int intRes = rs.getInt(DOUBLT_COL);
+    int intRes = rs.getInt(DOUBLE_COL);
     assertEquals(expected.intValue(), intRes);
-    long longRes = rs.getLong(DOUBLT_COL);
+    long longRes = rs.getLong(DOUBLE_COL);
     assertEquals(expected.longValue(), longRes);
-    float floatRes = rs.getFloat(DOUBLT_COL);
+    float floatRes = rs.getFloat(DOUBLE_COL);
     assertEquals(expected.floatValue(), floatRes, 0.0001);
-    String stringRes = rs.getString(DOUBLT_COL);
+    String stringRes = rs.getString(DOUBLE_COL);
     assertEquals(expected.toString(), stringRes);
-    byte[] byteArrayRes = rs.getBytes(DOUBLT_COL);
+    byte[] byteArrayRes = rs.getBytes(DOUBLE_COL);
     assertEquals(new String(expected.toString().getBytes()), new String(byteArrayRes));
-    boolean booleanRes = rs.getBoolean(DOUBLT_COL);
+    boolean booleanRes = rs.getBoolean(DOUBLE_COL);
     assertEquals(BOOLEAN_VAL, booleanRes);
 
     // Invalid implicit conversions
     try {
-      rs.getBigDecimal(DOUBLT_COL);
+      rs.getBigDecimal(DOUBLE_COL);
       fail();
     } catch (SQLException e) {
       assertTrue(e.getMessage().contains("Cannot transform"));
     }
     try {
-      rs.getDate(DOUBLT_COL);
+      rs.getDate(DOUBLE_COL);
       fail();
     } catch (SQLException e) {
       assertTrue(e.getMessage().contains("Cannot transform"));
     }
     try {
-      rs.getTime(DOUBLT_COL);
+      rs.getTime(DOUBLE_COL);
       fail();
     } catch (SQLException e) {
       assertTrue(e.getMessage().contains("Cannot transform"));
     }
     try {
-      rs.getTimestamp(DOUBLT_COL);
+      rs.getTimestamp(DOUBLE_COL);
       fail();
     } catch (SQLException e) {
       assertTrue(e.getMessage().contains("Cannot transform"));
@@ -696,14 +696,14 @@ public class ImplicitTypeConversionTest {
     assertEquals(Double.parseDouble(expected1), doubleRes, 0.0001);
     byte[] byteArrayRes = rs.getBytes(STRING_COL_1);
     assertEquals(expected1, new String(byteArrayRes));
-    Date date = dateFormat.parse(expected2);
+    Date date = DATETIME_FORMAT.parse(expected2);
     java.sql.Date dateRes = rs.getDate(STRING_COL_2);
-    assertEquals(date, dateRes);
+    assertEquals(date.getTime(), dateRes.getTime());
     // Because of JdbcColumn.ODPS_DATETIME_FORMAT, the millisecond part will be removed
     java.sql.Time timeRes = rs.getTime(STRING_COL_2);
     assertEquals(date.getTime(), timeRes.getTime());
     java.sql.Timestamp timestampRes = rs.getTimestamp(STRING_COL_2);
-    assertEquals(Timestamp.valueOf(expected2), timestampRes);
+    assertEquals(DATETIME_FORMAT.parse(expected2).getTime(), timestampRes.getTime());
     boolean booleanRes = rs.getBoolean(STRING_COL_1);
     assertEquals(BOOLEAN_VAL, booleanRes);
 
@@ -729,9 +729,9 @@ public class ImplicitTypeConversionTest {
 
     // Valid implicit conversions
     String stringRes = rs.getString(DATETIME_COL);
-    assertEquals(dateFormat.format(expected), stringRes);
+    assertEquals(DATETIME_FORMAT.format(expected), stringRes);
     byte[] byteArrayRes = rs.getBytes(DATETIME_COL);
-    assertEquals(dateFormat.format(expected), new String(byteArrayRes, charset));
+    assertEquals(DATETIME_FORMAT.format(expected), new String(byteArrayRes, charset));
     java.sql.Date dateRes = rs.getDate(DATETIME_COL);
     assertEquals(expected, dateRes);
     java.sql.Time timeRes = rs.getTime(DATETIME_COL);
@@ -798,11 +798,12 @@ public class ImplicitTypeConversionTest {
 
     // Valid implicit conversions
     // getString can only get milliseconds
-    String stringRes = rs.getString(TIMESTAMP_COL);
-    assertEquals(expected.getTime(), Timestamp.valueOf(stringRes).getTime());
-    assertEquals(expected.getNanos() / 1000000, Timestamp.valueOf(stringRes).getNanos() / 1000000);
-    byte[] byteArrayRes = rs.getBytes(TIMESTAMP_COL);
-    assertEquals(expected, Timestamp.valueOf(new String(byteArrayRes, charset)));
+    Timestamp parsedStringRes =
+        new Timestamp(TIMESTAMP_FORMAT.parse(rs.getString(TIMESTAMP_COL)).getTime());
+    assertEquals(expected.getTime(), parsedStringRes.getTime());
+    Timestamp parsedByteArrayRes =
+        new Timestamp(TIMESTAMP_FORMAT.parse(new String(rs.getBytes(TIMESTAMP_COL))).getTime());
+    assertEquals(expected.getTime(), parsedByteArrayRes.getTime());
     java.sql.Date dateRes = rs.getDate(TIMESTAMP_COL);
     assertEquals(expected.getTime(), dateRes.getTime());
     java.sql.Time timeRes = rs.getTime(TIMESTAMP_COL);
@@ -932,28 +933,6 @@ public class ImplicitTypeConversionTest {
     } catch (SQLException e) {
       assertTrue(e.getMessage().contains("Cannot transform"));
     }
-  }
-
-  @Test
-  public void testGetStringWithCalendar() throws SQLException {
-    // Here we pass a calendar with timezone JSP (Japen Standard Time, GMT+9) to getTime, getDate,
-    // and getTimestamp. Expected return value should be one hour earlier. E.g. the string in ODPS
-    // is "2019-06-12 00:00:00", the expected return value should be "2019-06-11 23:00:00"
-
-    String expectedTime = "23:00:00";
-    String expectedDate = "2019-05-22";
-    String expectedTimestamp = "2019-05-22 23:00:00.0";
-
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
-
-    Date date = rs.getDate(STRING_COL_2, cal);
-    java.sql.Time time = rs.getTime(STRING_COL_2, cal);
-    Timestamp timestamp = rs.getTimestamp(STRING_COL_2, cal);
-
-    Assert.assertEquals(expectedDate, date.toString());
-    Assert.assertEquals(expectedTime, time.toString());
-    Assert.assertEquals(expectedTimestamp, timestamp.toString());
   }
 
   @Test

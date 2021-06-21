@@ -22,9 +22,35 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
+
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
 public abstract class AbstractToJdbcTransformer {
+  static ThreadLocal<Calendar> DEFAULT_CALENDAR = new ThreadLocal<>();
+  static ThreadLocal<SimpleDateFormat> TIMESTAMP_FORMAT = new ThreadLocal<>();
+  static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = new ThreadLocal<>();
+  static ThreadLocal<SimpleDateFormat> DATE_FORMAT = new ThreadLocal<>();
+  static ThreadLocal<SimpleDateFormat> TIME_FORMAT = new ThreadLocal<>();
+  static {
+    DEFAULT_CALENDAR.set(
+        new Calendar.Builder()
+            .setCalendarType("iso8601")
+            .setTimeZone(TimeZone.getTimeZone("GMT"))
+            .setLenient(true).build());
+    TIMESTAMP_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
+    DATETIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
+    DATE_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
+    TIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
+    TIMESTAMP_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+    DATETIME_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+    DATE_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+    TIME_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+  }
+
   static final String INVALID_TRANSFORMATION_ERROR_MSG =
       "Cannot transform ODPS-SDK Java class %s to %s";
   static final String ENCODING_ERR_MSG =
@@ -58,5 +84,12 @@ public abstract class AbstractToJdbcTransformer {
       }
     }
     return new String(bytes);
+  }
+
+  void restoreToDefaultCalendar() {
+    TIMESTAMP_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+    DATETIME_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+    DATE_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
+    TIME_FORMAT.get().setCalendar(DEFAULT_CALENDAR.get());
   }
 }

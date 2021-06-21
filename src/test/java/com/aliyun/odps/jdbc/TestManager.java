@@ -69,7 +69,7 @@ public class TestManager {
       String password = odpsConfig.getProperty("access_key");
       String loglevel = odpsConfig.getProperty("log_level");
       String logview = odpsConfig.getProperty("logview_host");
-      String url = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s", endpoint, project, loglevel, logview);
+      String url = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&enableOdpsLogger=true", endpoint, project, loglevel, logview);
 
       // pass project name via url
       conn = DriverManager.getConnection(url, username, password);
@@ -84,7 +84,7 @@ public class TestManager {
       stmt.execute("set odps.compiler.verify=true;");
       stmt.execute("set odps.compiler.output.format=lot,pot;");
 
-      String serviceName = odpsConfig.getProperty("interactive_service_name");
+      String serviceName = odpsConfig.getProperty("interactive_service_name", "public.default");
       String urlSession = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s", endpoint, project, loglevel, logview, serviceName);
 
       // pass project name via url
