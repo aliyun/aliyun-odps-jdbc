@@ -61,6 +61,7 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   private static final String ALWAYS_FALLBACK_URL_KEY = "alwaysFallback";
+  private static final String DISABLE_FALLBACK_URL_KEY = "disableFallback";
   private static final String AUTO_SELECT_LIMIT_URL_KEY = "autoSelectLimit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_URL_KEY = "instanceTunnelMaxRecord";
@@ -94,7 +95,8 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_UPGRADING_PROP_KEY = "fallback_for_upgrading";
   private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
-  private static final String ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "always_fallback";
+  private static final String ALWAYS_FALLBACK_PROP_KEY = "always_fallback";
+  private static final String DISABLE_FALLBACK_PROP_KEY = "disable_fallback";
   private static final String AUTO_SELECT_LIMIT_PROP_KEY = "auto_select_limit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY = "instance_tunnel_max_record";
@@ -124,7 +126,7 @@ public class ConnectionResource {
   private String majorVersion;
   private boolean enableOdpsLogger = false;
   private List<String> tableList = new ArrayList<>();
-  private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
+  private FallbackPolicy fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
   private Long autoSelectLimit;
   private Long countLimit;
   private Long sizeLimit;
@@ -205,27 +207,35 @@ public class ConnectionResource {
     );
 
     fallbackPolicy.fallback4ResourceNotEnough(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
     ));
     fallbackPolicy.fallback4RunningTimeout(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
     ));
     fallbackPolicy.fallback4Upgrading(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
     ));
     fallbackPolicy.fallback4UnsupportedFeature(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
     ));
     fallbackPolicy.fallback4UnknownError(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
     ));
 
     boolean alwaysFallback = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY, ALWAYS_FALLBACK_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_PROP_KEY, ALWAYS_FALLBACK_URL_KEY)
     );
     if (alwaysFallback) {
       fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
     }
+
+    boolean disableFallback = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_FALLBACK_PROP_KEY, DISABLE_FALLBACK_URL_KEY)
+    );
+    if (disableFallback) {
+      fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
+    }
+
     stsToken =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
