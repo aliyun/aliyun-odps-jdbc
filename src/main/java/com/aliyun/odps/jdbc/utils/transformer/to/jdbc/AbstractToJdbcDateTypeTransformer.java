@@ -7,16 +7,10 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
-  static ThreadLocal<SimpleDateFormat> TIMESTAMP_FORMAT = new ThreadLocal<>();
-  static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = new ThreadLocal<>();
-  static ThreadLocal<SimpleDateFormat> DATE_FORMAT = new ThreadLocal<>();
-  static ThreadLocal<SimpleDateFormat> TIME_FORMAT = new ThreadLocal<>();
-  static {
-    TIMESTAMP_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
-    DATETIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
-    DATE_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
-    TIME_FORMAT.set(new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
-  }
+  static ThreadLocal<SimpleDateFormat> TIMESTAMP_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
+  static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
+  static ThreadLocal<SimpleDateFormat> DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
+  static ThreadLocal<SimpleDateFormat> TIME_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
