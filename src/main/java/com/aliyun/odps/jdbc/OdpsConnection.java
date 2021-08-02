@@ -353,7 +353,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     MDC.remove("connectionId");
     if (!isClosed) {
       for (Statement stmt : stmtHandles) {
-        if (stmt != null) {
+        if (stmt != null && !stmt.isClosed()) {
           stmt.close();
         }
       }
