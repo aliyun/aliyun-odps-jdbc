@@ -51,6 +51,7 @@ public class ConnectionResource {
   private static final String LIFECYCLE_URL_KEY = "lifecycle";
   private static final String LOGLEVEL_URL_KEY = "loglevel";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
+  private static final String TUNNEL_RESULT_RETRY_TIME_URL_KEY = "tunnelRetryTime";
   private static final String LOGCONFFILE_URL_KEY = "logconffile";
   private static final String INTERACTIVE_MODE_URL_KEY = "interactiveMode";
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
@@ -87,6 +88,7 @@ public class ConnectionResource {
   public static final String LIFECYCLE_PROP_KEY = "lifecycle";
   public static final String LOGLEVEL_PROP_KEY = "log_level";
   public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
+  public static final String TUNNEL_RESULT_RETRY_TIME_PROP_KEY = "tunnel_retry_time";
   public static final String LOGCONFFILE_PROP_KEY = "log_conf_file";
   public static final String INTERACTIVE_MODE_PROP_KEY = "interactive_mode";
   public static final String SERVICE_NAME_PROP_KEY = "interactive_service_name";
@@ -135,6 +137,7 @@ public class ConnectionResource {
   private Long autoSelectLimit;
   private Long countLimit;
   private Long sizeLimit;
+  private int tunnelRetryTime;
   private String stsToken;
   private boolean disableConnSetting = false;
   private boolean enableLimit = false;
@@ -200,6 +203,10 @@ public class ConnectionResource {
 
     tunnelEndpoint =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
+
+    tunnelRetryTime = Integer.parseInt(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY, TUNNEL_RESULT_RETRY_TIME_URL_KEY)
+    );
 
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGCONFFILE_PROP_KEY,
@@ -351,6 +358,10 @@ public class ConnectionResource {
 
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
+  }
+
+  public int getTunnelRetryTime() {
+    return tunnelRetryTime;
   }
 
   public String getLogConfFile() {
