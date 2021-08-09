@@ -49,7 +49,8 @@ public class ConnectionResource {
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
-  private static final String LOG_CONF_FILE_URL_KEY = "logConfFile";
+  private static final String TUNNEL_RESULT_RETRY_TIME_URL_KEY = "tunnelRetryTime";
+  private static final String LOG_CONF_FILE_URL_KEY = "logconffile";
   private static final String INTERACTIVE_MODE_URL_KEY = "interactiveMode";
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
@@ -84,6 +85,7 @@ public class ConnectionResource {
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
   public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
+  public static final String TUNNEL_RESULT_RETRY_TIME_PROP_KEY = "tunnel_retry_time";
   public static final String LOG_CONF_FILE_PROP_KEY = "log_conf_file";
   public static final String INTERACTIVE_MODE_PROP_KEY = "interactive_mode";
   public static final String SERVICE_NAME_PROP_KEY = "interactive_service_name";
@@ -130,6 +132,7 @@ public class ConnectionResource {
   private Long autoSelectLimit;
   private Long countLimit;
   private Long sizeLimit;
+  private int tunnelRetryTime;
   private String stsToken;
   private boolean disableConnSetting = false;
   private boolean useProjectTimeZone = false;
@@ -189,6 +192,10 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY, LOGVIEW_URL_KEY);
     tunnelEndpoint =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
+
+    tunnelRetryTime = Integer.parseInt(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY, TUNNEL_RESULT_RETRY_TIME_URL_KEY)
+    );
 
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_CONF_FILE_PROP_KEY,
@@ -332,6 +339,10 @@ public class ConnectionResource {
 
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
+  }
+
+  public int getTunnelRetryTime() {
+    return tunnelRetryTime;
   }
 
   public String getLogConfFile() {

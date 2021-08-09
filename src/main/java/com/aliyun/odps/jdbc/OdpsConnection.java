@@ -100,6 +100,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
   private Long resultSizeLimit = null;
+  //Tunnel get result retry time, tunnel will retry every 10s
+  private int tunnelRetryTime;
 
   private boolean disableConnSetting = false;
 
@@ -159,6 +161,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<>();
 
+    this.tunnelRetryTime = connRes.getTunnelRetryTime();
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
     this.tableList = connRes.getTableList();
@@ -220,6 +223,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
         .tunnelEndpoint(tunnelEndpoint)
+        .tunnelGetResultMaxRetryTime(tunnelRetryTime)
         .taskName(OdpsStatement.getDefaultTaskName());
     long startTime = System.currentTimeMillis();
     executor = builder.build();
