@@ -14,6 +14,15 @@
         <url>http://www.aliyun.com</url>
     </organization>
 
+    <developers>
+        <developer>
+            <name>mc-java-sdk</name>
+            <email>mc-java-eco@alibabacloud.com</email>
+            <organization>Alibaba Cloud</organization>
+            <organizationUrl>http://alibabacloud.com</organizationUrl>
+        </developer>
+    </developers>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
