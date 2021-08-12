@@ -53,6 +53,7 @@ import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
@@ -186,8 +187,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       if (interactiveMode) {
         long cost = System.currentTimeMillis() - startTime;
         log.info(String.format("load project meta infos time cost=%d", cost));
-        initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       }
+
+      // 不管是不是interactiveMode都初始化。具体的mode在executor中做区分
+      initSQLExecutor(serviceName, connRes.getFallbackPolicy());
+
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
 
@@ -216,6 +220,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       executeOdps.setDefaultProject(executeProject);
     }
     builder.odps(executeOdps)
+        .executeMode(interactiveMode ? ExecuteMode.INTERACTIVE : ExecuteMode.OFFLINE)
+        .enableCommandApi(true)
         .properties(hints)
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
