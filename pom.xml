@@ -14,18 +14,21 @@
         <url>http://www.aliyun.com</url>
     </organization>
 
+    <developers>
+        <developer>
+            <name>mc-java-sdk</name>
+            <email>mc-java-eco@alibabacloud.com</email>
+            <organization>Alibaba Cloud</organization>
+            <organizationUrl>http://alibabacloud.com</organizationUrl>
+        </developer>
+    </developers>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
-
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
 
     <scm>
         <connection>scm:git:http://github.com/aliyun/aliyun-odps-jdbc.git</connection>
@@ -35,11 +38,11 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
+            <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </snapshotRepository>
         <repository>
-            <id>nexus-releases</id>
+            <id>ossrh</id>
             <name>Nexus Release Repository</name>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
@@ -174,7 +177,7 @@
                 <version>1.6.8</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <serverId>nexus-releases</serverId>
+                    <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>

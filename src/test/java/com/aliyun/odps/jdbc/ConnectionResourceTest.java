@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 
 import java.io.FileInputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.junit.Assert;
@@ -52,10 +53,17 @@ public class ConnectionResourceTest {
     Assert.assertEquals(false, resource.isInteractiveMode());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
     Assert.assertEquals("default1", resource.getMajorVersion());
-    List<String> tableList = resource.getTableList();
-    Assert.assertEquals(2, tableList.size());
-    Assert.assertEquals("table1", tableList.get(0));
-    Assert.assertEquals("table2", tableList.get(1));
+    Map<String, List<String>> tables = resource.getTables();
+    Assert.assertEquals(2, tables.size());
+    Assert.assertTrue(tables.containsKey("project1"));
+    Assert.assertEquals(2, tables.get("project1").size());
+    Assert.assertTrue(tables.get("project1").contains("table1"));
+    Assert.assertTrue(tables.get("project1").contains("table2"));
+    Assert.assertTrue(tables.containsKey("project2"));
+    Assert.assertEquals(3, tables.get("project2").size());
+    Assert.assertTrue(tables.get("project2").contains("table1"));
+    Assert.assertTrue(tables.get("project2").contains("table2"));
+    Assert.assertTrue(tables.get("project2").contains("table3"));
 
     String logConfigFile = getClass().getClassLoader().getResource("logback.xml").getPath();
     String url2 =
@@ -63,7 +71,7 @@ public class ConnectionResourceTest {
             "&accessKey=234%3D&logview_host=http://abc.com:8080" +
             "&tunnelEndpoint=http://1.1.1.1:8066&interactiveMode=true" +
             "&interactiveServiceName=sn&interactiveTimeout=11" +
-            "&table_list=table1,table2" +
+            "&tableList=project1.table1,project1.table2,project2.table1,project2.table2,project2.table3" +
             "&majorVersion=default1&logConfFile="
             + logConfigFile;
     resource = new ConnectionResource(url2, null);
@@ -77,10 +85,17 @@ public class ConnectionResourceTest {
     Assert.assertEquals(logConfigFile, resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-    tableList = resource.getTableList();
-    Assert.assertEquals(2, tableList.size());
-    Assert.assertEquals("table1", tableList.get(0));
-    Assert.assertEquals("table2", tableList.get(1));
+    tables = resource.getTables();
+    Assert.assertEquals(2, tables.size());
+    Assert.assertTrue(tables.containsKey("project1"));
+    Assert.assertEquals(2, tables.get("project1").size());
+    Assert.assertTrue(tables.get("project1").contains("table1"));
+    Assert.assertTrue(tables.get("project1").contains("table2"));
+    Assert.assertTrue(tables.containsKey("project2"));
+    Assert.assertEquals(3, tables.get("project2").size());
+    Assert.assertTrue(tables.get("project2").contains("table1"));
+    Assert.assertTrue(tables.get("project2").contains("table2"));
+    Assert.assertTrue(tables.get("project2").contains("table3"));
     Properties info = new Properties();
     info.load(new FileInputStream(odpsConfigFile));
     resource = new ConnectionResource(url2, info);
@@ -94,10 +109,17 @@ public class ConnectionResourceTest {
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
     Assert.assertEquals("default1", resource.getMajorVersion());
-    tableList = resource.getTableList();
-    Assert.assertEquals(2, tableList.size());
-    Assert.assertEquals("table1", tableList.get(0));
-    Assert.assertEquals("table2", tableList.get(1));
+    tables = resource.getTables();
+    Assert.assertEquals(2, tables.size());
+    Assert.assertTrue(tables.containsKey("project1"));
+    Assert.assertEquals(2, tables.get("project1").size());
+    Assert.assertTrue(tables.get("project1").contains("table1"));
+    Assert.assertTrue(tables.get("project1").contains("table2"));
+    Assert.assertTrue(tables.containsKey("project2"));
+    Assert.assertEquals(3, tables.get("project2").size());
+    Assert.assertTrue(tables.get("project2").contains("table1"));
+    Assert.assertTrue(tables.get("project2").contains("table2"));
+    Assert.assertTrue(tables.get("project2").contains("table3"));
   }
 
 

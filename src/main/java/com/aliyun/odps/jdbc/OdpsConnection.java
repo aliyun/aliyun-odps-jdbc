@@ -36,6 +36,7 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,9 +93,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static final String MAJOR_VERSION = "odps.task.major.version";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
-  private List<String> tableList = new ArrayList<>();
-
   private Long autoSelectLimit = null;
+  private Map<String, List<String>> tables;
   //Unit: result record row count, only applied in interactive mode
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
@@ -159,11 +159,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.logviewHost = logviewHost;
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<>();
+    this.sqlTaskProperties.putAll(connRes.getSettings());
 
     this.tunnelRetryTime = connRes.getTunnelRetryTime();
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
-    this.tableList = connRes.getTableList();
+    this.tables = Collections.unmodifiableMap(connRes.getTables());
     this.executeProject = connRes.getExecuteProject();
     this.autoSelectLimit = connRes.getAutoSelectLimit();
     this.resultCountLimit = connRes.getCountLimit();
@@ -663,8 +664,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean runningInInteractiveMode() { return interactiveMode; }
 
-  public List<String> getTableList() {
-    return tableList;
+  public Map<String, List<String>> getTables() {
+    return tables;
   }
 
   public String getExecuteProject() {
