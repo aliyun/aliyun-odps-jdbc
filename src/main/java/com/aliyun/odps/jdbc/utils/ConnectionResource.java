@@ -51,7 +51,8 @@ public class ConnectionResource {
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
-  private static final String LOG_CONF_FILE_URL_KEY = "logConfFile";
+  private static final String TUNNEL_RESULT_RETRY_TIME_URL_KEY = "tunnelRetryTime";
+  private static final String LOG_CONF_FILE_URL_KEY = "logconffile";
   private static final String INTERACTIVE_MODE_URL_KEY = "interactiveMode";
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
@@ -63,6 +64,7 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_TIMEOUT_URL_KEY = "fallbackForRunningTimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   private static final String ALWAYS_FALLBACK_URL_KEY = "alwaysFallback";
+  private static final String DISABLE_FALLBACK_URL_KEY = "disableFallback";
   private static final String AUTO_SELECT_LIMIT_URL_KEY = "autoSelectLimit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_URL_KEY = "instanceTunnelMaxRecord";
@@ -86,6 +88,7 @@ public class ConnectionResource {
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
   public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
+  public static final String TUNNEL_RESULT_RETRY_TIME_PROP_KEY = "tunnel_retry_time";
   public static final String LOG_CONF_FILE_PROP_KEY = "log_conf_file";
   public static final String INTERACTIVE_MODE_PROP_KEY = "interactive_mode";
   public static final String SERVICE_NAME_PROP_KEY = "interactive_service_name";
@@ -97,7 +100,8 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_UPGRADING_PROP_KEY = "fallback_for_upgrading";
   private static final String FALLBACK_FOR_TIMEOUT_PROP_KEY = "fallback_for_runningtimeout";
   private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
-  private static final String ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "always_fallback";
+  private static final String ALWAYS_FALLBACK_PROP_KEY = "always_fallback";
+  private static final String DISABLE_FALLBACK_PROP_KEY = "disable_fallback";
   private static final String AUTO_SELECT_LIMIT_PROP_KEY = "auto_select_limit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY = "instance_tunnel_max_record";
@@ -128,10 +132,11 @@ public class ConnectionResource {
   private String majorVersion;
   private boolean enableOdpsLogger = false;
   private Map<String, List<String>> tables = new HashMap<>();
-  private FallbackPolicy fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
+  private FallbackPolicy fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
   private Long autoSelectLimit;
   private Long countLimit;
   private Long sizeLimit;
+  private int tunnelRetryTime;
   private String stsToken;
   private boolean disableConnSetting = false;
   private boolean useProjectTimeZone = false;
@@ -191,6 +196,10 @@ public class ConnectionResource {
     tunnelEndpoint =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
 
+    tunnelRetryTime = Integer.parseInt(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY, TUNNEL_RESULT_RETRY_TIME_URL_KEY)
+    );
+
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_CONF_FILE_PROP_KEY,
                                                  LOG_CONF_FILE_URL_KEY);
@@ -208,27 +217,35 @@ public class ConnectionResource {
     );
 
     fallbackPolicy.fallback4ResourceNotEnough(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
     ));
     fallbackPolicy.fallback4RunningTimeout(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
     ));
     fallbackPolicy.fallback4Upgrading(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
     ));
     fallbackPolicy.fallback4UnsupportedFeature(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
     ));
     fallbackPolicy.fallback4UnknownError(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
     ));
 
     boolean alwaysFallback = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_FOR_UNSUPPORTED_PROP_KEY, ALWAYS_FALLBACK_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_PROP_KEY, ALWAYS_FALLBACK_URL_KEY)
     );
     if (alwaysFallback) {
       fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
     }
+
+    boolean disableFallback = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_FALLBACK_PROP_KEY, DISABLE_FALLBACK_URL_KEY)
+    );
+    if (disableFallback) {
+      fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
+    }
+
     stsToken =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
@@ -346,6 +363,10 @@ public class ConnectionResource {
 
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
+  }
+
+  public int getTunnelRetryTime() {
+    return tunnelRetryTime;
   }
 
   public String getLogConfFile() {

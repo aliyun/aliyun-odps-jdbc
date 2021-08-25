@@ -91,7 +91,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String majorVersion;
   private static final String MAJOR_VERSION = "odps.task.major.version";
-  private static final String LONG_TIME_TASK = "odps.longtime.instance";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private Long autoSelectLimit = null;
@@ -100,6 +99,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
   private Long resultSizeLimit = null;
+  //Tunnel get result retry time, tunnel will retry every 10s
+  private int tunnelRetryTime;
 
   private boolean disableConnSetting = false;
 
@@ -160,6 +161,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.stmtHandles = new ArrayList<>();
     this.sqlTaskProperties.putAll(connRes.getSettings());
 
+    this.tunnelRetryTime = connRes.getTunnelRetryTime();
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
     this.tables = Collections.unmodifiableMap(connRes.getTables());
@@ -203,7 +205,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (!StringUtils.isNullOrEmpty(majorVersion)) {
       hints.put(MAJOR_VERSION, majorVersion);
     }
-    hints.put(LONG_TIME_TASK, "true");
     for (String key : info.stringPropertyNames()) {
       if (key.startsWith(ODPS_SETTING_PREFIX)) {
         hints.put(key, info.getProperty(key));
@@ -221,6 +222,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
         .tunnelEndpoint(tunnelEndpoint)
+        .tunnelGetResultMaxRetryTime(tunnelRetryTime)
         .taskName(OdpsStatement.getDefaultTaskName());
     long startTime = System.currentTimeMillis();
     executor = builder.build();
