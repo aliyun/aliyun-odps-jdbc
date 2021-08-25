@@ -311,7 +311,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Matcher showPartitionsPatternMatcher = SHOW_PARTITIONS_PATTERN.matcher(sql);
 
     if (descTablePatternMatcher.matches()) {
-      descTablePartition(showPartitionsPatternMatcher.group(2));
+      descTablePartition(descTablePatternMatcher.group(2));
       return getResultSet();
     } else if (showTablesPatternMatcher.matches()) {
       showTables();
