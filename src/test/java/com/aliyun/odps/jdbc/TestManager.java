@@ -69,6 +69,8 @@ public class TestManager {
       String password = odpsConfig.getProperty("access_key");
       String loglevel = odpsConfig.getProperty("log_level");
       String logview = odpsConfig.getProperty("logview_host");
+      String enableLimit = odpsConfig.getProperty("enable_limit");
+      String autoSelectLimit = odpsConfig.getProperty("auto_select_limit");
       String url = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s", endpoint, project, loglevel, logview);
 
       // pass project name via url
@@ -85,7 +87,9 @@ public class TestManager {
       stmt.execute("set odps.compiler.output.format=lot,pot;");
 
       String serviceName = odpsConfig.getProperty("interactive_service_name");
-      String urlSession = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s", endpoint, project, loglevel, logview, serviceName);
+      String urlSession = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s"
+                                        + "&enableLimit=%s&autoSelectLimit=%s",
+                                        endpoint, project, loglevel, logview, serviceName, enableLimit, autoSelectLimit);
 
       // pass project name via url
       sessionConn = DriverManager.getConnection(urlSession, username, password);

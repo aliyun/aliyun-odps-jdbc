@@ -158,7 +158,7 @@ public class OdpsSessionStatementTest {
         Assert.assertEquals(i, rs.getInt(1));
         i++;
       }
-      Assert.assertEquals(10000, i);
+      Assert.assertEquals(11111, i);
     }
     rs.close();
     stmt.close();
