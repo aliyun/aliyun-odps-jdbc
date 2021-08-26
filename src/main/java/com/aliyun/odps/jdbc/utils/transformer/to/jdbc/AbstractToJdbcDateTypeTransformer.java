@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
+  static ThreadLocal<Calendar> DEFAULT_CALENDAR = ThreadLocal.withInitial(() -> new Calendar.Builder().setCalendarType("iso8601").setTimeZone(TimeZone.getTimeZone("GMT")).build());
   static ThreadLocal<SimpleDateFormat> TIMESTAMP_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
   static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
   static ThreadLocal<SimpleDateFormat> DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
