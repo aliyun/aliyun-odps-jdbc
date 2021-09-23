@@ -313,6 +313,19 @@ public class OdpsResultSetTest {
     rs.close();
   }
 
+
+  @Test
+  public void testGetStringForComplexType() throws  Exception {
+    // complex map column
+    String sql = "select map_from_entries(array(struct(1, \"a\"),struct(2, \"b\")))";
+    ResultSet rs = stmt.executeQuery(sql);
+    {
+      rs.next();
+      Assert.assertEquals("{\"2\":\"b\",\"1\":\"a\"}", rs.getString(1));
+    }
+    rs.close();
+  }
+
   @Test
   public void testGetTimestampWithTimeZone() throws SQLException {
     TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
