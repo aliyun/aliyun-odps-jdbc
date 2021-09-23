@@ -36,3 +36,14 @@ jobs:
           nexus_password: ${{ secrets.nexus_password }}
           server_id: ossrh
           maven_args: -DskipTests
+
+      - name: Publish to GitHub Packages
+        run: mvn clean package -DskipTests
+
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          omitName: true
+          artifacts: 'target/odps-jdbc-*.jar'
+          token: ${{ secrets.RELEASE_TOKEN }}
