@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -156,7 +156,7 @@ public class OdpsResultSetTest {
   public void testGetObject() throws Exception {
     ResultSet rs =
         stmt.executeQuery("select * from (select 1L id, 1.5 weight from dual"
-            + " union all select 2 id, 2.9 weight from dual) x order by id desc limit 2;");
+                          + " union all select 2 id, 2.9 weight from dual) x order by id desc limit 2;");
     {
       rs.next();
       Assert.assertEquals(2, ((Long) rs.getObject(1)).longValue());
@@ -181,7 +181,7 @@ public class OdpsResultSetTest {
     // cast from BOOLEAN, STRING, DOUBLE, BIGINT
     ResultSet rs =
         stmt.executeQuery("select true c1, false c2, '42' c3, '0' c4, "
-            + "3.14 c5, 0.0 c6, 95 c7, 0 c8 from dual;");
+                          + "3.14 c5, 0.0 c6, 95 c7, 0 c8 from dual;");
     {
       rs.next();
       Assert.assertEquals(true, rs.getBoolean(1));
@@ -201,7 +201,7 @@ public class OdpsResultSetTest {
     // cast from BIGINT, DOUBLE, DECIMAL
     ResultSet rs =
         stmt.executeQuery(String.format("select 1943 c1, 3.1415926 c2, %s c3 from dual;",
-            odpsDecimalStr));
+                                        odpsDecimalStr));
     {
       rs.next();
       Assert.assertEquals((byte) 1943, rs.getByte(1));
@@ -263,7 +263,7 @@ public class OdpsResultSetTest {
     // cast from STRING, DECIMAL
     ResultSet rs =
         stmt.executeQuery(String.format("select %s c1, %s c2 from dual;", decimalStr,
-            odpsDecimalStr));
+                                        odpsDecimalStr));
     {
       rs.next();
       Assert.assertEquals(bigDecimal, rs.getBigDecimal(1));
@@ -286,9 +286,9 @@ public class OdpsResultSetTest {
       Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(2).toString());
 
       Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
-          formatter.format(rs.getTimestamp(1)));
+                          formatter.format(rs.getTimestamp(1)));
       Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
-          formatter.format(rs.getTimestamp(2)));
+                          formatter.format(rs.getTimestamp(2)));
     }
     rs.close();
   }
@@ -309,6 +309,19 @@ public class OdpsResultSetTest {
       Assert.assertEquals(nowStr, rs.getString(4));
       Assert.assertEquals(decimalValue, rs.getString(5));
       Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
+    }
+    rs.close();
+  }
+
+
+  @Test
+  public void testGetStringForComplexType() throws  Exception {
+    // complex map column
+    String sql = "select map_from_entries(array(struct(1, \"a\"),struct(2, \"b\")))";
+    ResultSet rs = stmt.executeQuery(sql);
+    {
+      rs.next();
+      Assert.assertEquals("{\"2\":\"b\",\"1\":\"a\"}", rs.getString(1));
     }
     rs.close();
   }

@@ -97,6 +97,10 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
     return typeInfo.getTypeName();
   }
 
+  public TypeInfo getColumnOdpsType(int column) throws SQLException {
+    return typeInfos.get(toZeroIndex(column));
+  }
+
   @Override
   public int getPrecision(int column) throws SQLException {
     TypeInfo typeInfo = typeInfos.get(toZeroIndex(column));

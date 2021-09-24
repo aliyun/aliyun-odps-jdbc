@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.AfterClass;
@@ -130,5 +131,100 @@ public class OdpsDatabaseMetaDataTest {
     Assert.assertNotNull(rs);
     printRs(rs);
     rs.close();
+  }
+
+  @Test
+  public void testGetCatalogs() throws SQLException {
+    String projectName = TestManager.getInstance().odps.getDefaultProject();
+    try (ResultSet rs = databaseMetaData.getCatalogs()) {
+      int count = 0;
+      boolean includesDefaultProject = false;
+      boolean includesPublicDataSet = false;
+      while (rs.next()) {
+        String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CAT);
+        if (catalog.equalsIgnoreCase(projectName)) {
+          includesDefaultProject = true;
+        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
+          includesPublicDataSet = true;
+        }
+        count += 1;
+        System.out.println(catalog);
+      }
+      Assert.assertTrue(includesDefaultProject);
+      Assert.assertTrue(includesPublicDataSet);
+      Assert.assertEquals(2, count);
+    }
+  }
+
+  @Test
+  public void testGetSchemas() throws SQLException {
+    String projectName = TestManager.getInstance().odps.getDefaultProject();
+
+    // Without any filter
+    try (ResultSet rs = databaseMetaData.getSchemas(null, null)) {
+      int count = 0;
+      boolean includesDefaultProject = false;
+      boolean includesPublicDataSet = false;
+      while (rs.next()) {
+        String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
+        String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
+        Assert.assertEquals(schema, catalog);
+        if (catalog.equalsIgnoreCase(projectName)) {
+          includesDefaultProject = true;
+        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
+          includesPublicDataSet = true;
+        }
+        count += 1;
+        System.out.println(String.format("%s.%s", catalog, schema));
+      }
+      Assert.assertTrue(includesDefaultProject);
+      Assert.assertTrue(includesPublicDataSet);
+      Assert.assertEquals(2, count);
+    }
+
+    // Filtered by catalog name
+    try (ResultSet rs =
+             databaseMetaData.getSchemas(OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, null)) {
+      int count = 0;
+      boolean includesDefaultProject = false;
+      boolean includesPublicDataSet = false;
+      while (rs.next()) {
+        String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
+        String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
+        Assert.assertEquals(schema, catalog);
+        if (catalog.equalsIgnoreCase(projectName)) {
+          includesDefaultProject = true;
+        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
+          includesPublicDataSet = true;
+        }
+        count += 1;
+        System.out.println(String.format("%s.%s", catalog, schema));
+      }
+      Assert.assertFalse(includesDefaultProject);
+      Assert.assertTrue(includesPublicDataSet);
+      Assert.assertEquals(1, count);
+    }
+
+    try (ResultSet rs =
+             databaseMetaData.getSchemas(projectName, null)) {
+      int count = 0;
+      boolean includesDefaultProject = false;
+      boolean includesPublicDataSet = false;
+      while (rs.next()) {
+        String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
+        String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
+        Assert.assertEquals(schema, catalog);
+        if (catalog.equalsIgnoreCase(projectName)) {
+          includesDefaultProject = true;
+        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
+          includesPublicDataSet = true;
+        }
+        count += 1;
+        System.out.println(String.format("%s.%s", catalog, schema));
+      }
+      Assert.assertTrue(includesDefaultProject);
+      Assert.assertFalse(includesPublicDataSet);
+      Assert.assertEquals(1, count);
+    }
   }
 }

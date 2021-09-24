@@ -33,7 +33,12 @@ public class OdpsLogger {
    * @param enableOdpsLogger For odps logger, enable or not
    * @param configFilePath For sl4j logger, config file path
    */
-  public OdpsLogger(String name, String outputPath, String configFilePath, boolean toConsole, boolean enableOdpsLogger) {
+  public OdpsLogger(String name,
+                    String outputPath,
+                    String configFilePath,
+                    boolean toConsole,
+                    boolean enableOdpsLogger) {
+
     this.enableOdpsLogger = enableOdpsLogger;
 
     Objects.requireNonNull(name);
@@ -122,7 +127,7 @@ public class OdpsLogger {
     String outputPath;
     try {
       outputPath = new File(OdpsDriver.class.getProtectionDomain().getCodeSource()
-          .getLocation().toURI()).getParent();
+                                .getLocation().toURI()).getParent();
     } catch (Exception e) {
       outputPath = DEFAULT_OUTPUT_DIR;
     }

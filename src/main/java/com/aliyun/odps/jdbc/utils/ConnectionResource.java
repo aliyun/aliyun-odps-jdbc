@@ -15,20 +15,22 @@
 
 package com.aliyun.odps.jdbc.utils;
 
-import com.aliyun.odps.sqa.FallbackPolicy;
-import com.aliyun.odps.utils.StringUtils;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Collections;
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.utils.GsonObjectBuilder;
+import com.aliyun.odps.utils.StringUtils;
+import com.google.gson.reflect.TypeToken;
 
 public class ConnectionResource {
 
@@ -48,11 +50,9 @@ public class ConnectionResource {
   private static final String EXECUTE_PROJECT_URL_KEY = "executeProject";
   private static final String CHARSET_URL_KEY = "charset";
   private static final String LOGVIEW_URL_KEY = "logview";
-  private static final String LIFECYCLE_URL_KEY = "lifecycle";
-  private static final String LOGLEVEL_URL_KEY = "loglevel";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
   private static final String TUNNEL_RESULT_RETRY_TIME_URL_KEY = "tunnelRetryTime";
-  private static final String LOGCONFFILE_URL_KEY = "logconffile";
+  private static final String LOG_CONF_FILE_URL_KEY = "logConfFile";
   private static final String INTERACTIVE_MODE_URL_KEY = "interactiveMode";
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
@@ -74,6 +74,8 @@ public class ConnectionResource {
   private static final String DISABLE_CONN_SETTING_URL_KEY = "disableConnectionSetting";
   private static final String USE_PROJECT_TIME_ZONE_URL_KEY = "useProjectTimeZone";
   private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
+  private static final String SETTINGS_URL_KEY = "settings";
+
   /**
    * Keys to retrieve properties from info.
    *
@@ -85,11 +87,9 @@ public class ConnectionResource {
   public static final String EXECUTE_PROJECT_PROP_KEY = "execute_project_name";
   public static final String CHARSET_PROP_KEY = "charset";
   public static final String LOGVIEW_HOST_PROP_KEY = "logview_host";
-  public static final String LIFECYCLE_PROP_KEY = "lifecycle";
-  public static final String LOGLEVEL_PROP_KEY = "log_level";
   public static final String TUNNEL_ENDPOINT_PROP_KEY = "tunnel_endpoint";
   public static final String TUNNEL_RESULT_RETRY_TIME_PROP_KEY = "tunnel_retry_time";
-  public static final String LOGCONFFILE_PROP_KEY = "log_conf_file";
+  public static final String LOG_CONF_FILE_PROP_KEY = "log_conf_file";
   public static final String INTERACTIVE_MODE_PROP_KEY = "interactive_mode";
   public static final String SERVICE_NAME_PROP_KEY = "interactive_service_name";
   public static final String MAJOR_VERSION_PROP_KEY = "major_version";
@@ -111,6 +111,7 @@ public class ConnectionResource {
   private static final String DISABLE_CONN_SETTING_PROP_KEY = "disable_connection_setting";
   private static final String USE_PROJECT_TIME_ZONE_PROP_KEY = "use_project_time_zone";
   private static final String ENABLE_LIMIT_PROP_KEY = "enable_limit";
+  private static final String SETTINGS_PROP_KEY = "settings";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
   // So the `access_id` and `access_key` have aliases.
@@ -124,15 +125,13 @@ public class ConnectionResource {
   private String executeProject;
   private String charset;
   private String logview;
-  private String lifecycle;
-  private String logLevel;
   private String tunnelEndpoint;
   private String logConfFile;
   private boolean interactiveMode;
   private String interactiveServiceName;
   private String majorVersion;
   private boolean enableOdpsLogger = false;
-  private List<String> tableList = new ArrayList<>();
+  private Map<String, List<String>> tables = new HashMap<>();
   private FallbackPolicy fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
   private Long autoSelectLimit;
   private Long countLimit;
@@ -140,8 +139,9 @@ public class ConnectionResource {
   private int tunnelRetryTime;
   private String stsToken;
   private boolean disableConnSetting = false;
-  private boolean enableLimit = false;
   private boolean useProjectTimeZone = false;
+  private boolean enableLimit = false;
+  private Map<String, String> settings = new HashMap<>();
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -171,13 +171,11 @@ public class ConnectionResource {
       maps.add(paramsInURL);
     }
 
-    accessId =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, ACCESS_ID_PROP_KEY_ALT,
-            ACCESS_ID_PROP_KEY, ACCESS_ID_URL_KEY);
-    accessKey =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, ACCESS_KEY_PROP_KEY_ALT,
-            ACCESS_KEY_PROP_KEY, ACCESS_KEY_URL_KEY);
+    accessId = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, ACCESS_ID_PROP_KEY_ALT, ACCESS_ID_PROP_KEY, ACCESS_ID_URL_KEY);
 
+    accessKey = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, ACCESS_KEY_PROP_KEY_ALT, ACCESS_KEY_PROP_KEY, ACCESS_KEY_URL_KEY);
     if (accessKey != null) {
       try {
         accessKey = URLDecoder.decode(accessKey, CHARSET_DEFAULT_VALUE);
@@ -188,19 +186,13 @@ public class ConnectionResource {
 
     charset =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CHARSET_DEFAULT_VALUE, CHARSET_PROP_KEY,
-            CHARSET_URL_KEY);
+                                                 CHARSET_URL_KEY);
     project =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, PROJECT_PROP_KEY, PROJECT_URL_KEY);
     executeProject =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, EXECUTE_PROJECT_PROP_KEY, EXECUTE_PROJECT_URL_KEY);
     logview =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY, LOGVIEW_URL_KEY);
-    lifecycle =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, LIFECYCLE_DEFAULT_VALUE, LIFECYCLE_PROP_KEY,
-            LIFECYCLE_URL_KEY);
-    logLevel =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGLEVEL_PROP_KEY, LOGLEVEL_URL_KEY);
-
     tunnelEndpoint =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
 
@@ -209,17 +201,17 @@ public class ConnectionResource {
     );
 
     logConfFile =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGCONFFILE_PROP_KEY,
-            LOGCONFFILE_URL_KEY);
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_CONF_FILE_PROP_KEY,
+                                                 LOG_CONF_FILE_URL_KEY);
     interactiveMode = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", INTERACTIVE_MODE_PROP_KEY,
-            INTERACTIVE_MODE_URL_KEY));
+                                                 INTERACTIVE_MODE_URL_KEY));
     interactiveServiceName =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE, SERVICE_NAME_PROP_KEY,
-            SERVICE_NAME_URL_KEY);
+                                                 SERVICE_NAME_URL_KEY);
     majorVersion =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, MAJOR_VERSION_PROP_KEY,
-            MAJOR_VERSION_URL_KEY);
+                                                 MAJOR_VERSION_URL_KEY);
     enableOdpsLogger = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
     );
@@ -279,18 +271,39 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_CONN_SETTING_PROP_KEY, DISABLE_CONN_SETTING_URL_KEY)
     );
 
-    enableLimit = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
-    );
-
     useProjectTimeZone = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY, USE_PROJECT_TIME_ZONE_URL_KEY)
     );
 
-    String tableStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
-        TABLE_LIST_URL_KEY);
-    if (!StringUtils.isNullOrEmpty(tableStr)) {
-      Collections.addAll(tableList, tableStr.split(","));
+    enableLimit = Boolean.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
+    );
+
+    // The option 'tableList' accepts table names in pattern:
+    //   <project name>.<table name>(,<project name>.<table name>)*
+    //
+    // This option is used to accelerate table loading. For a project contains thousands of tables,
+    // BI software such as Tableau may load all the tables when the software starts and it could
+    // take several minutes before the user could really start using it. To avoid this situation,
+    // users could specify the table names they are going to use and the driver will only load
+    // these tables.
+    String tablesStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY, TABLE_LIST_URL_KEY);
+    if (!StringUtils.isNullOrEmpty(tablesStr)) {
+      for (String tableStr : tablesStr.split(",")) {
+        String[] parts = tableStr.split("\\.");
+        if (parts.length != 2) {
+          throw new IllegalArgumentException("Invalid table name: " + tableStr);
+        }
+        tables.computeIfAbsent(parts[0], p -> new LinkedList<>());
+        tables.get(parts[0]).add(parts[1]);
+      }
+    }
+
+    String globalSettingsInJson = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, SETTINGS_URL_KEY, SETTINGS_PROP_KEY);
+    if (globalSettingsInJson != null) {
+      Type type = new TypeToken<Map<String, String>>() {}.getType();
+      settings.putAll(GsonObjectBuilder.get().fromJson(globalSettingsInJson, type));
     }
   }
 
@@ -311,7 +324,7 @@ public class ConnectionResource {
         int pos = pair.indexOf("=");
         if (pos > 0) {
           paramsInURL.put(URLDecoder.decode(pair.substring(0, pos)),
-              URLDecoder.decode(pair.substring(pos + 1)));
+                          URLDecoder.decode(pair.substring(pos + 1)));
         } else {
           paramsInURL.put(URLDecoder.decode(pair), null);
         }
@@ -348,14 +361,6 @@ public class ConnectionResource {
     return logview;
   }
 
-  public String getLifecycle() {
-    return lifecycle;
-  }
-
-  public String getLogLevel() {
-    return logLevel;
-  }
-
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
   }
@@ -390,7 +395,7 @@ public class ConnectionResource {
 
   @SuppressWarnings("rawtypes")
   private static String tryGetFirstNonNullValueByAltMapAndAltKey(List<Map> maps,
-      String defaultValue, String... altKeys) {
+                                                                 String defaultValue, String... altKeys) {
     String value = null;
     for (Map map : maps) {
       if (map != null) {
@@ -408,8 +413,8 @@ public class ConnectionResource {
     return interactiveMode;
   }
 
-  public List<String> getTableList() {
-    return tableList;
+  public Map<String, List<String>> getTables() {
+    return tables;
   }
 
   public FallbackPolicy getFallbackPolicy() {
@@ -424,11 +429,15 @@ public class ConnectionResource {
     return disableConnSetting;
   }
 
+  public boolean isUseProjectTimeZone() {
+    return useProjectTimeZone;
+  }
+
   public boolean isEnableLimit() {
     return enableLimit;
   }
 
-  public boolean isUseProjectTimeZone() {
-    return useProjectTimeZone;
+  public Map<String, String> getSettings() {
+    return settings;
   }
 }

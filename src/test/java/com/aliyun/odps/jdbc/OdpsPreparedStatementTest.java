@@ -31,6 +31,8 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -106,14 +108,22 @@ public class OdpsPreparedStatementTest {
     ddl.execute("set odps.sql.decimal.odps2=true;");
     ddl.executeUpdate("drop table if exists insert_with_new_type;");
     ddl.executeUpdate("create table insert_with_new_type(c1 TINYINT, c2 SMALLINT, c3 INT,"
-                          + "c4 BIGINT, c5 FLOAT, c6 DOUBLE, c7 DECIMAL(38, 18), c8 VARCHAR(255),"
-                          + "c9 STRING, c10 DATETIME, c11 TIMESTAMP, c12 BOOLEAN);");
+                      + "c4 BIGINT, c5 FLOAT, c6 DOUBLE, c7 DECIMAL(38, 18), c8 VARCHAR(255),"
+                      + "c9 STRING, c10 DATETIME, c11 TIMESTAMP, c12 BOOLEAN, c13 DATE);");
     PreparedStatement ps = conn.prepareStatement("insert into insert_with_new_type values "
-                                                     + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                                                 + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 
     SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    java.util.Date date = datetimeFormat.parse("2019-09-23 14:25:00");
+    java.util.Date datetime = datetimeFormat.parse("2019-09-23 14:25:00");
     java.sql.Timestamp timestamp = java.sql.Timestamp.valueOf("2019-09-23 14:33:57.777");
+    Calendar gmtCalendar = new Calendar
+        .Builder()
+        .setTimeZone(TimeZone.getTimeZone("GMT"))
+        .setCalendarType("iso8601")
+        .set(Calendar.YEAR, 2020)
+        .set(Calendar.MONTH, Calendar.JANUARY)
+        .set(Calendar.DAY_OF_MONTH, 1).build();
+    java.sql.Date date = new java.sql.Date(gmtCalendar.getTime().getTime());
 
     ps.setByte(1, new Byte("127"));
     ps.setShort(2, new Short("32767"));
@@ -124,9 +134,10 @@ public class OdpsPreparedStatementTest {
     ps.setBigDecimal(7, new BigDecimal("3.1415926535897932"));
     ps.setString(8, "foo");
     ps.setString(9, "bar");
-    ps.setDate(10, new java.sql.Date(date.getTime()));
+    ps.setDate(10, new java.sql.Date(datetime.getTime()));
     ps.setTimestamp(11,timestamp);
     ps.setBoolean(12, true);
+    ps.setDate(13, date);
 
     ps.execute();
 
@@ -144,9 +155,10 @@ public class OdpsPreparedStatementTest {
                           rs.getObject(7));
       Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
       Assert.assertEquals("bar", rs.getObject(9));
-      Assert.assertEquals(date.toString(), rs.getObject(10).toString());
+      Assert.assertEquals(datetime.toString(), rs.getObject(10).toString());
       Assert.assertEquals(timestamp.toString(), rs.getObject(11).toString());
       Assert.assertEquals(true, rs.getObject(12));
+      Assert.assertEquals(date.getTime(), rs.getDate(13).getTime());
     }
 
     ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
@@ -213,16 +225,25 @@ public class OdpsPreparedStatementTest {
     ddl.execute("set odps.sql.decimal.odps2=true;");
     ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
     ddl.executeUpdate("create table batch_insert_with_new_type(c1 TINYINT, c2 SMALLINT, c3 INT, "
-                          + "c4 BIGINT, c5 FLOAT, c6 DOUBLE, c7 DECIMAL(38, 18), c8 VARCHAR(255), "
-                          + "c9 STRING, c10 DATETIME, c11 TIMESTAMP, c12 BOOLEAN);");
+                      + "c4 BIGINT, c5 FLOAT, c6 DOUBLE, c7 DECIMAL(38, 18), c8 VARCHAR(255), "
+                      + "c9 STRING, c10 DATETIME, c11 TIMESTAMP, c12 BOOLEAN, c13 DATE);");
 
     PreparedStatement ps = conn.prepareStatement("insert into batch_insert_with_new_type values "
-                                                     + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                                                 + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 
     // insert 10 rows
     SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    java.util.Date date = datetimeFormat.parse("2019-09-23 14:25:00");
+    java.util.Date datetime = datetimeFormat.parse("2019-09-23 14:25:00");
     java.sql.Timestamp timestamp = java.sql.Timestamp.valueOf("2019-09-23 14:33:57.777");
+    Calendar gmtCalendar = new Calendar
+        .Builder()
+        .setTimeZone(TimeZone.getTimeZone("GMT"))
+        .setCalendarType("iso8601")
+        .set(Calendar.YEAR, 2020)
+        .set(Calendar.MONTH, Calendar.JANUARY)
+        .set(Calendar.DAY_OF_MONTH, 1).build();
+    java.sql.Date date = new java.sql.Date(gmtCalendar.getTime().getTime());
+
     for (int i = 0; i < 10; i++) {
       ps.setByte(1, new Byte("127"));
       ps.setShort(2, new Short("32767"));
@@ -233,9 +254,10 @@ public class OdpsPreparedStatementTest {
       ps.setBigDecimal(7, new BigDecimal("3.141592653589793238"));
       ps.setString(8, "foo");
       ps.setString(9, "bar");
-      ps.setTimestamp(10, new java.sql.Timestamp(date.getTime()));
+      ps.setTimestamp(10, new java.sql.Timestamp(datetime.getTime()));
       ps.setTimestamp(11,timestamp);
       ps.setBoolean(12, true);
+      ps.setDate(13, date);
       ps.addBatch();
     }
 
@@ -260,13 +282,14 @@ public class OdpsPreparedStatementTest {
                           rs.getObject(7));
       Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
       Assert.assertEquals("bar", rs.getObject(9));
-      Assert.assertEquals(date.getTime(),
+      Assert.assertEquals(datetime.getTime(),
                           ((java.util.Date) rs.getObject(10)).getTime());
       Assert.assertEquals(timestamp.getTime(),
                           ((java.sql.Timestamp) rs.getObject(11)).getTime());
       Assert.assertEquals(timestamp.getNanos(),
                           ((java.sql.Timestamp) rs.getObject(11)).getNanos());
       Assert.assertEquals(true, rs.getObject(12));
+      Assert.assertEquals(date.getTime(), rs.getDate(13).getTime());
     }
 
     ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");

@@ -47,7 +47,7 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
         time += timeZone.getOffset(time);
       }
       return new java.sql.Date(time);
-    }  else if (o instanceof LocalDate) {
+    } else if (o instanceof LocalDate) {
       LocalDate localDate = (LocalDate) o;
       Calendar calendar = (Calendar) DEFAULT_CALENDAR.get().clone();
       calendar.clear();

@@ -20,6 +20,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -49,11 +50,14 @@ public class OdpsStatementTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    Statement stmt = conn.createStatement();
+    Statement stmt = TestManager.getInstance().conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
-    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
-    stmt.executeUpdate("create table if not exists "+ OUTPUT_TABLE_NAME +"(id bigint);");
+    stmt.executeUpdate("drop table if exists " + PARTITIONED_TABLE_NAME);
+    stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
+    stmt.executeUpdate("create table if not exists " + OUTPUT_TABLE_NAME + "(id bigint);");
+    stmt.executeUpdate("create table if not exists " + PARTITIONED_TABLE_NAME + "(foo bigint) partitioned by (bar string);");
+    stmt.executeUpdate("alter table " + PARTITIONED_TABLE_NAME + " add partition (bar='hello')");
     stmt.close();
 
     TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
@@ -109,7 +113,7 @@ public class OdpsStatementTest {
     stmt.close();
     Assert.assertTrue(stmt.isClosed());
   }
-  
+
   @Test
   public void testSelectNullQuery() throws Exception {
     Statement stmt = conn.createStatement();

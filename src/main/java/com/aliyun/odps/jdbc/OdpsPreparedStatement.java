@@ -120,7 +120,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     }
     this.parametersNum = counter;
 
-    conn.log.debug("create prepared statements: " + sql);
+    conn.log.info("create prepared statements: " + sql);
   }
 
   OdpsPreparedStatement(OdpsConnection conn, String sql, boolean isResultSetScrollable) {
@@ -188,7 +188,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       } catch (TunnelException e) {
         throw new SQLException(e);
       }
-      getConnection().log.debug("create upload session id=" + session.getId());
+      getConnection().log.info("create upload session id=" + session.getId());
       TableSchema schema = session.getSchema();
       reuseRecord = session.newRecord();
       int colNum = schema.getColumns().size();
@@ -208,8 +208,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       return new int[0];
     }
 
-    getConnection().log.debug(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
-                  + " in batch");
+    getConnection().log.info(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
+                             + " in batch");
 
     int[] updateCounts = new int[batchedSize];
     Arrays.fill(updateCounts, -1);
@@ -252,7 +252,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     if (isClosed()) {
       return;
     }
-
     if (session != null && blocks > 0) {
       Long[] blockList = new Long[blocks];
       getConnection().log.info("commit session: " + blocks + " blocks");
@@ -653,8 +652,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Timestamp.class.isInstance(x)) {
       return String.format("TIMESTAMP\"%s\"", x.toString());
     } else if (java.util.Date.class.isInstance(x)
-        || java.sql.Date.class.isInstance(x)
-        || java.sql.Time.class.isInstance(x)) {
+               || java.sql.Date.class.isInstance(x)
+               || java.sql.Time.class.isInstance(x)) {
       SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return String.format("DATETIME\"%s\"", formatter.format(x));
     } else if (Boolean.class.isInstance(x)) {

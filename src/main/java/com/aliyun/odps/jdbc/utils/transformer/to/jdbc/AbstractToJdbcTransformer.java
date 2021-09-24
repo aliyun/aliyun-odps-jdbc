@@ -23,6 +23,8 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 
+import com.aliyun.odps.type.TypeInfo;
+
 
 public abstract class AbstractToJdbcTransformer {
   static final String INVALID_TRANSFORMATION_ERROR_MSG =
@@ -40,6 +42,11 @@ public abstract class AbstractToJdbcTransformer {
    * @throws SQLException
    */
   public abstract Object transform(Object o, String charset) throws SQLException;
+
+  public Object transform(Object o, String charset, TypeInfo odpsType) throws SQLException {
+    // default implement
+    return transform(o, charset);
+  }
 
   static String getInvalidTransformationErrorMsg(Class odpsCls, Class jdbcCls) {
     return String.format(INVALID_TRANSFORMATION_ERROR_MSG, odpsCls.getName(), jdbcCls.getName());
