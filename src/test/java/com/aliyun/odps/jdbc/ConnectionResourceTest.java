@@ -38,7 +38,7 @@ public class ConnectionResourceTest {
     String odpsConfigFile = getClass().getClassLoader().getResource("odps_config.ini").getPath();
     String url1 =
         "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D" +
-            "&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logconffile=/Users/emerson/logback.xml" +
+            "&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logConfFile=/Users/emerson/logback.xml" +
             "&odps_config=" + odpsConfigFile;
     ConnectionResource resource = new ConnectionResource(url1, null);
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());

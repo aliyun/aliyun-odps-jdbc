@@ -52,7 +52,7 @@ public class ConnectionResource {
   private static final String LOGVIEW_URL_KEY = "logview";
   private static final String TUNNEL_ENDPOINT_URL_KEY = "tunnelEndpoint";
   private static final String TUNNEL_RESULT_RETRY_TIME_URL_KEY = "tunnelRetryTime";
-  private static final String LOG_CONF_FILE_URL_KEY = "logconffile";
+  private static final String LOG_CONF_FILE_URL_KEY = "logConfFile";
   private static final String INTERACTIVE_MODE_URL_KEY = "interactiveMode";
   private static final String SERVICE_NAME_URL_KEY = "interactiveServiceName";
   private static final String MAJOR_VERSION_URL_KEY = "majorVersion";
