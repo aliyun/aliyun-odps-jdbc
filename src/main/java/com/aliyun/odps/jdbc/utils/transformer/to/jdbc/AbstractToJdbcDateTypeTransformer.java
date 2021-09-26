@@ -1,20 +1,31 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
-import com.aliyun.odps.OdpsType;
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
-import com.aliyun.odps.type.TypeInfo;
-
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.type.TypeInfo;
+
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
-  static ThreadLocal<Calendar> DEFAULT_CALENDAR = ThreadLocal.withInitial(() -> new Calendar.Builder().setCalendarType("iso8601").setTimeZone(TimeZone.getTimeZone("GMT")).build());
-  static ThreadLocal<SimpleDateFormat> TIMESTAMP_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
-  static ThreadLocal<SimpleDateFormat> DATETIME_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
-  static ThreadLocal<SimpleDateFormat> DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
-  static ThreadLocal<SimpleDateFormat> TIME_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
+
+  static ThreadLocal<Calendar>
+      DEFAULT_CALENDAR =
+      ThreadLocal.withInitial(() -> new Calendar.Builder().setCalendarType("iso8601")
+          .setTimeZone(TimeZone.getTimeZone("GMT")).build());
+  static ThreadLocal<SimpleDateFormat>
+      TIMESTAMP_FORMAT =
+      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
+  static ThreadLocal<SimpleDateFormat>
+      DATETIME_FORMAT =
+      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
+  static ThreadLocal<SimpleDateFormat>
+      DATE_FORMAT =
+      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
+  static ThreadLocal<SimpleDateFormat>
+      TIME_FORMAT =
+      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
@@ -28,9 +39,10 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
 
   /**
    * Transform ODPS SDK object to an instance of java.util.Date subclass
-   * @param o java object from ODPS SDK
+   *
+   * @param o       java object from ODPS SDK
    * @param charset charset to encode byte array
-   * @param cal a calendar object to construct java.util.Date object
+   * @param cal     a calendar object to construct java.util.Date object
    * @return JDBC object
    * @throws SQLException
    */

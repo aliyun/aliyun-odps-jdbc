@@ -25,9 +25,9 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
@@ -48,7 +48,7 @@ public class OdpsScollResultSetTest {
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
-    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
+    stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
 
     TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
         TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);

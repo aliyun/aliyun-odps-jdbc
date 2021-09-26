@@ -85,7 +85,6 @@ public class OdpsNewTypeTest {
   static SimpleStruct v18;
 
 
-
   @BeforeClass
   public static void setUp() throws Exception {
     stmt = TestManager.getInstance().conn.createStatement();
@@ -96,10 +95,12 @@ public class OdpsNewTypeTest {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    if (rs != null)
+    if (rs != null) {
       rs.close();
-    if (stmt != null)
+    }
+    if (stmt != null) {
       stmt.close();
+    }
     // odps.tables().delete(table, true);
   }
 
@@ -177,7 +178,7 @@ public class OdpsNewTypeTest {
         System.out.println(fields.get(i));
         if (fields.get(i) instanceof Double) {
           Assert.assertEquals((Double) v18.getFieldValues().get(i), (Double) fields.get(i),
-              0.0000000001);
+                              0.0000000001);
         } else if (fields.get(i) instanceof Float) {
           Assert.assertEquals((Float) v18.getFieldValues().get(i), (Float) fields.get(i), 0.00001);
         } else if (fields.get(i) instanceof Map) {
@@ -255,11 +256,11 @@ public class OdpsNewTypeTest {
     writer.close();
     Long[] blocks = up.getBlockList();
     Assert.assertEquals(1, blocks.length);
-    up.commit(new Long[] {0L});
+    up.commit(new Long[]{0L});
   }
 
   private static void createTableWithAllNewTypes(Odps odps, String tableName) throws OdpsException,
-      SQLException {
+                                                                                     SQLException {
     TableSchema schema = new TableSchema();
     schema.addColumn(new Column("col0", OdpsType.INT));
     schema.addColumn(new Column("col1", OdpsType.BIGINT));
@@ -278,17 +279,18 @@ public class OdpsNewTypeTest {
     schema.addColumn(new Column("col15", OdpsType.BINARY));
     schema.addColumn(new Column("col16", TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.INT)));
     schema.addColumn(new Column("col17", TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.BIGINT,
-        TypeInfoFactory.STRING)));
+                                                                        TypeInfoFactory.STRING)));
     String[] names = {"name", "age", "parents", "salary", "hobbies"};
     TypeInfo[] types =
         {
             TypeInfoFactory.STRING,
             TypeInfoFactory.INT,
             TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.getVarcharTypeInfo(20),
-                TypeInfoFactory.getCharTypeInfo(20)), TypeInfoFactory.FLOAT,
+                                           TypeInfoFactory.getCharTypeInfo(20)),
+            TypeInfoFactory.FLOAT,
             TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.STRING)};
     schema.addColumn(new Column("col18", TypeInfoFactory.getStructTypeInfo(Arrays.asList(names),
-        Arrays.asList(types))));
+                                                                           Arrays.asList(types))));
 
     createTableWithHints(odps, tableName, schema);
   }
@@ -301,7 +303,7 @@ public class OdpsNewTypeTest {
   }
 
   private static String getSQLString(String projectName, String tableName, TableSchema schema,
-      String comment, boolean ifNotExists, Long lifeCycle) {
+                                     String comment, boolean ifNotExists, Long lifeCycle) {
     if (projectName == null || tableName == null || schema == null) {
       throw new IllegalArgumentException();
     }

@@ -63,7 +63,7 @@ public class OdpsResultSetTest {
     r.setBigint(0, 42L);
     writer.write(r);
     writer.close();
-    upload.commit(new Long[] {0L});
+    upload.commit(new Long[]{0L});
 
     formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     unixTimeNow = new java.util.Date().getTime();
@@ -86,7 +86,8 @@ public class OdpsResultSetTest {
   @Test
   public void testSelectFromPartition() throws Exception {
     stmt.executeUpdate("drop table if exists select_from_partition");
-    stmt.executeUpdate("create table if not exists select_from_partition(id bigint) partitioned by (par_col string)");
+    stmt.executeUpdate(
+        "create table if not exists select_from_partition(id bigint) partitioned by (par_col string)");
     stmt.executeUpdate("alter table select_from_partition add partition (par_col='a')");
 
     PartitionSpec ps = new PartitionSpec("par_col='a'");
@@ -98,7 +99,7 @@ public class OdpsResultSetTest {
     r.setBigint(0, 42L);
     writer.write(r);
     writer.close();
-    upload.commit(new Long[] {0L});
+    upload.commit(new Long[]{0L});
 
     ResultSet rs = stmt.executeQuery("select * from select_from_partition where par_col='a'");
     rs.next();
@@ -276,7 +277,8 @@ public class OdpsResultSetTest {
   public void testGetTimeFormat() throws Exception {
     // cast from STRING, DATETIME
     ResultSet rs =
-        stmt.executeQuery(String.format("select DATETIME'%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
+        stmt.executeQuery(
+            String.format("select DATETIME'%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
     {
       rs.next();
       Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
@@ -315,7 +317,7 @@ public class OdpsResultSetTest {
 
 
   @Test
-  public void testGetStringForComplexType() throws  Exception {
+  public void testGetStringForComplexType() throws Exception {
     // complex map column
     String sql = "select map_from_entries(array(struct(1, \"a\"),struct(2, \"b\")))";
     ResultSet rs = stmt.executeQuery(sql);
@@ -334,22 +336,20 @@ public class OdpsResultSetTest {
     Assert.assertNotEquals(0, tz.getRawOffset());
 
     long timestampWithoutTimeZone;
-    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr)))
-    {
+    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr))) {
       rs.next();
       timestampWithoutTimeZone = rs.getTimestamp(1).getTime();
     }
 
     long timestampWithTimeZone;
     ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
-    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr)))
-    {
+    try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr))) {
       rs.next();
       timestampWithTimeZone = rs.getTimestamp(1).getTime();
     } finally {
       ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
     }
 
-    Assert.assertEquals(tz.getRawOffset(),timestampWithTimeZone - timestampWithoutTimeZone);
+    Assert.assertEquals(tz.getRawOffset(), timestampWithTimeZone - timestampWithoutTimeZone);
   }
 }

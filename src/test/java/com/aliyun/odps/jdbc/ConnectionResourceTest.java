@@ -36,8 +36,10 @@ public class ConnectionResourceTest {
   @Test
   public void testConnectionResourceTest() throws Exception {
     String odpsConfigFile = getClass().getClassLoader().getResource("odps_config.ini").getPath();
-    String url1 =
-        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D" +
+    String
+        url1 =
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&loglevel=debug&accessId=123&accessKey=234%3D"
+        +
         "&tunnel_endpoint=http%3A%2F%2F1.1.1.1%3A8066&logConfFile=/Users/emerson/logback.xml" +
         "&odps_config=" + odpsConfigFile;
     ConnectionResource resource = new ConnectionResource(url1, null);
@@ -71,7 +73,8 @@ public class ConnectionResourceTest {
         "&accessKey=234%3D&logview_host=http://abc.com:8080" +
         "&tunnelEndpoint=http://1.1.1.1:8066&interactiveMode=true" +
         "&interactiveServiceName=sn&interactiveTimeout=11" +
-        "&tableList=project1.table1,project1.table2,project2.table1,project2.table2,project2.table3" +
+        "&tableList=project1.table1,project1.table2,project2.table1,project2.table2,project2.table3"
+        +
         "&majorVersion=default1&logConfFile="
         + logConfigFile;
     resource = new ConnectionResource(url2, null);

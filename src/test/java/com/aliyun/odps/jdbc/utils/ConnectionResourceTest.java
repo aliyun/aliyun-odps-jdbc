@@ -42,8 +42,10 @@ public class ConnectionResourceTest {
   @Test
   public void connectionURLFullTest() {
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL", null);
+    ConnectionResource
+        cr =
+        new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
+                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL", null);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("idid", cr.getAccessId());
@@ -84,8 +86,10 @@ public class ConnectionResourceTest {
     info.put("lifecycle", "100");
     info.put("log_level", "FATAL");
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO", info);
+    ConnectionResource
+        cr =
+        new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
+                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO", info);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("id", cr.getAccessId());

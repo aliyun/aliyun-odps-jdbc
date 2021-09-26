@@ -22,7 +22,6 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Calendar.Builder;
 import java.util.Date;
@@ -32,7 +31,6 @@ import java.util.TimeZone;
 
 import com.aliyun.odps.data.SimpleStruct;
 import com.aliyun.odps.data.Struct;
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.type.TypeInfo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -84,8 +82,7 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
         restoreToDefaultCalendar();
       }
     } else {
-      if (odpsType != null)
-      {
+      if (odpsType != null) {
         switch (odpsType.getOdpsType()) {
           case ARRAY:
           case MAP: {

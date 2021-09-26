@@ -27,6 +27,7 @@ import com.aliyun.odps.type.TypeInfo;
 
 
 public abstract class AbstractToJdbcTransformer {
+
   static final String INVALID_TRANSFORMATION_ERROR_MSG =
       "Cannot transform ODPS-SDK Java class %s to %s";
   static final String ENCODING_ERR_MSG =
@@ -36,7 +37,8 @@ public abstract class AbstractToJdbcTransformer {
 
   /**
    * Transform ODPS SDK object to JDBC object
-   * @param o java object from ODPS SDK
+   *
+   * @param o       java object from ODPS SDK
    * @param charset charset to encode byte array
    * @return JDBC object
    * @throws SQLException

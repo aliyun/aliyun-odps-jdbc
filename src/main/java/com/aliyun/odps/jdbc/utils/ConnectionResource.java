@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.utils.GsonObjectBuilder;
 import com.aliyun.odps.utils.StringUtils;
@@ -78,7 +79,7 @@ public class ConnectionResource {
 
   /**
    * Keys to retrieve properties from info.
-   *
+   * <p>
    * public since they are accessed in getPropInfo()
    */
   public static final String ACCESS_ID_PROP_KEY = "access_id";
@@ -190,14 +191,18 @@ public class ConnectionResource {
     project =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, PROJECT_PROP_KEY, PROJECT_URL_KEY);
     executeProject =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, EXECUTE_PROJECT_PROP_KEY, EXECUTE_PROJECT_URL_KEY);
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, EXECUTE_PROJECT_PROP_KEY,
+                                                 EXECUTE_PROJECT_URL_KEY);
     logview =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY, LOGVIEW_URL_KEY);
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY,
+                                                 LOGVIEW_URL_KEY);
     tunnelEndpoint =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY);
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY,
+                                                 TUNNEL_ENDPOINT_URL_KEY);
 
     tunnelRetryTime = Integer.parseInt(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY, TUNNEL_RESULT_RETRY_TIME_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY,
+                                                 TUNNEL_RESULT_RETRY_TIME_URL_KEY)
     );
 
     logConfFile =
@@ -207,40 +212,49 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", INTERACTIVE_MODE_PROP_KEY,
                                                  INTERACTIVE_MODE_URL_KEY));
     interactiveServiceName =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE, SERVICE_NAME_PROP_KEY,
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE,
+                                                 SERVICE_NAME_PROP_KEY,
                                                  SERVICE_NAME_URL_KEY);
     majorVersion =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, MAJOR_VERSION_PROP_KEY,
                                                  MAJOR_VERSION_URL_KEY);
     enableOdpsLogger = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY, ENABLE_ODPS_LOGGER_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_ODPS_LOGGER_PROP_KEY,
+                                                 ENABLE_ODPS_LOGGER_URL_KEY)
     );
 
     fallbackPolicy.fallback4ResourceNotEnough(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_RESOURCE_PROP_KEY, FALLBACK_FOR_RESOURCE_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_RESOURCE_PROP_KEY,
+                                                 FALLBACK_FOR_RESOURCE_URL_KEY)
     ));
     fallbackPolicy.fallback4RunningTimeout(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_TIMEOUT_PROP_KEY, FALLBACK_FOR_TIMEOUT_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_TIMEOUT_PROP_KEY,
+                                                 FALLBACK_FOR_TIMEOUT_URL_KEY)
     ));
     fallbackPolicy.fallback4Upgrading(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UPGRADING_PROP_KEY, FALLBACK_FOR_UPGRADING_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UPGRADING_PROP_KEY,
+                                                 FALLBACK_FOR_UPGRADING_URL_KEY)
     ));
     fallbackPolicy.fallback4UnsupportedFeature(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNSUPPORTED_PROP_KEY, FALLBACK_FOR_UNSUPPORTED_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNSUPPORTED_PROP_KEY,
+                                                 FALLBACK_FOR_UNSUPPORTED_URL_KEY)
     ));
     fallbackPolicy.fallback4UnknownError(Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNKNOWN_PROP_KEY, FALLBACK_FOR_UNKNOWN_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", FALLBACK_FOR_UNKNOWN_PROP_KEY,
+                                                 FALLBACK_FOR_UNKNOWN_URL_KEY)
     ));
 
     boolean alwaysFallback = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_PROP_KEY, ALWAYS_FALLBACK_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ALWAYS_FALLBACK_PROP_KEY,
+                                                 ALWAYS_FALLBACK_URL_KEY)
     );
     if (alwaysFallback) {
       fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
     }
 
     boolean disableFallback = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_FALLBACK_PROP_KEY, DISABLE_FALLBACK_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_FALLBACK_PROP_KEY,
+                                                 DISABLE_FALLBACK_URL_KEY)
     );
     if (disableFallback) {
       fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
@@ -250,33 +264,39 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
     autoSelectLimit = Long.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", AUTO_SELECT_LIMIT_PROP_KEY, AUTO_SELECT_LIMIT_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", AUTO_SELECT_LIMIT_PROP_KEY,
+                                                 AUTO_SELECT_LIMIT_URL_KEY)
     );
 
     countLimit = Long.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY, INSTANCE_TUNNEL_MAX_RECORD_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY,
+                                                 INSTANCE_TUNNEL_MAX_RECORD_URL_KEY)
     );
-    if (countLimit <= 0L){
+    if (countLimit <= 0L) {
       countLimit = null;
     }
 
     sizeLimit = Long.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY, INSTANCE_TUNNEL_MAX_SIZE_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY,
+                                                 INSTANCE_TUNNEL_MAX_SIZE_URL_KEY)
     );
-    if (sizeLimit <= 0L){
+    if (sizeLimit <= 0L) {
       sizeLimit = null;
     }
 
     disableConnSetting = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_CONN_SETTING_PROP_KEY, DISABLE_CONN_SETTING_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_CONN_SETTING_PROP_KEY,
+                                                 DISABLE_CONN_SETTING_URL_KEY)
     );
 
     useProjectTimeZone = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY, USE_PROJECT_TIME_ZONE_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY,
+                                                 USE_PROJECT_TIME_ZONE_URL_KEY)
     );
 
     enableLimit = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY,
+                                                 ENABLE_LIMIT_URL_KEY)
     );
 
     // The option 'tableList' accepts table names in pattern:
@@ -287,7 +307,10 @@ public class ConnectionResource {
     // take several minutes before the user could really start using it. To avoid this situation,
     // users could specify the table names they are going to use and the driver will only load
     // these tables.
-    String tablesStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY, TABLE_LIST_URL_KEY);
+    String
+        tablesStr =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
+                                                 TABLE_LIST_URL_KEY);
     if (!StringUtils.isNullOrEmpty(tablesStr)) {
       for (String tableStr : tablesStr.split(",")) {
         String[] parts = tableStr.split("\\.");
@@ -302,7 +325,8 @@ public class ConnectionResource {
     String globalSettingsInJson = tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, null, SETTINGS_URL_KEY, SETTINGS_PROP_KEY);
     if (globalSettingsInJson != null) {
-      Type type = new TypeToken<Map<String, String>>() {}.getType();
+      Type type = new TypeToken<Map<String, String>>() {
+      }.getType();
       settings.putAll(GsonObjectBuilder.get().fromJson(globalSettingsInJson, type));
     }
   }
@@ -377,7 +401,9 @@ public class ConnectionResource {
     return interactiveServiceName;
   }
 
-  public String getMajorVersion() { return majorVersion; }
+  public String getMajorVersion() {
+    return majorVersion;
+  }
 
   public boolean isEnableOdpsLogger() {
     return enableOdpsLogger;
@@ -387,7 +413,9 @@ public class ConnectionResource {
     return autoSelectLimit;
   }
 
-  public Long getCountLimit() { return countLimit; }
+  public Long getCountLimit() {
+    return countLimit;
+  }
 
   public Long getSizeLimit() {
     return sizeLimit;
@@ -395,7 +423,8 @@ public class ConnectionResource {
 
   @SuppressWarnings("rawtypes")
   private static String tryGetFirstNonNullValueByAltMapAndAltKey(List<Map> maps,
-                                                                 String defaultValue, String... altKeys) {
+                                                                 String defaultValue,
+                                                                 String... altKeys) {
     String value = null;
     for (Map map : maps) {
       if (map != null) {

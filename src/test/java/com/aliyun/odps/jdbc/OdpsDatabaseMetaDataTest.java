@@ -57,7 +57,7 @@ public class OdpsDatabaseMetaDataTest {
     }
     System.out.println();
 
-    while(rs.next()) {
+    while (rs.next()) {
       for (int i = 1; i <= meta.getColumnCount(); i++) {
         System.out.printf("\t" + rs.getObject(i));
       }
@@ -79,7 +79,7 @@ public class OdpsDatabaseMetaDataTest {
     }
 
     {
-      ResultSet rs = databaseMetaData.getTables(null, null, null, new String[] {"VIEW"});
+      ResultSet rs = databaseMetaData.getTables(null, null, null, new String[]{"VIEW"});
       Assert.assertNotNull(rs);
       while (rs.next()) {
         Assert.assertTrue(rs.getString("TABLE_TYPE").equals("VIEW"));
@@ -184,7 +184,8 @@ public class OdpsDatabaseMetaDataTest {
 
     // Filtered by catalog name
     try (ResultSet rs =
-             databaseMetaData.getSchemas(OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, null)) {
+             databaseMetaData
+                 .getSchemas(OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, null)) {
       int count = 0;
       boolean includesDefaultProject = false;
       boolean includesPublicDataSet = false;

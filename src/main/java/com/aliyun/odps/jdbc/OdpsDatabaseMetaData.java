@@ -33,7 +33,6 @@ import java.util.Objects;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
 import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.Project;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
@@ -752,18 +751,23 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     // Return an empty result set
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM",
-                                                "PROCEDURE_NAME", "RESERVERD", "RESERVERD", "RESERVERD", "REMARKS", "PROCEDURE_TYPE",
-                                                "SPECIFIC_NAME"), Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.BIGINT,
-                                                                                TypeInfoFactory.STRING));
+                                                "PROCEDURE_NAME", "RESERVERD", "RESERVERD",
+                                                "RESERVERD", "REMARKS", "PROCEDURE_TYPE",
+                                                "SPECIFIC_NAME"),
+                                  Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.STRING));
 
     return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
   public ResultSet getProcedureColumns(String catalog, String schemaPattern,
-                                       String procedureNamePattern, String columnNamePattern) throws SQLException {
+                                       String procedureNamePattern, String columnNamePattern)
+      throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("STUPID_PLACEHOLDERS", "USELESS_PLACEHOLDER"),
@@ -862,7 +866,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                 TypeInfoFactory.STRING,
                 TypeInfoFactory.STRING));
 
-    sortRows(rows, new int[] {3, 0, 1, 2});
+    sortRows(rows, new int[]{3, 0, 1, 2});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
@@ -927,7 +931,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       if (catalogMatches(catalog, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)
           && schemaMatches(schemaPattern, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)
           && conn.getOdps().projects().exists(PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)) {
-        rows.add(new String[] {PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
+        rows.add(new String[]{PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
       }
     } catch (OdpsException e) {
       String errMsg = "Failed to access project: " + e.getMessage();
@@ -959,7 +963,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       throw new SQLException(e);
     }
 
-    sortRows(rows, new int[] {1, 0});
+    sortRows(rows, new int[]{1, 0});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
@@ -975,7 +979,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     // private services.
     try {
       if (conn.getOdps().projects().exists(PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)) {
-        rows.add(new String[] {PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
+        rows.add(new String[]{PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
       }
     } catch (OdpsException e) {
       String errMsg = "Failed to access project: " + e.getMessage();
@@ -996,14 +1000,14 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       rows.add(new String[]{conn.getOdps().getDefaultProject()});
     }
 
-    sortRows(rows, new int[] {0});
+    sortRows(rows, new int[]{0});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   /**
    * Sort rows by specified columns.
    *
-   * @param rows Rows. Elements in the list cannot be null and must have the same length.
+   * @param rows          Rows. Elements in the list cannot be null and must have the same length.
    * @param columnsToSort Indexes of columns to sort.
    */
   private void sortRows(List<Object[]> rows, int[] columnsToSort) {
@@ -1042,8 +1046,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList(COL_NAME_TABLE_TYPE),
         Arrays.asList(TypeInfoFactory.STRING));
 
-    rows.add(new String[] {TABLE_TYPE_TABLE});
-    rows.add(new String[] {TABLE_TYPE_VIEW});
+    rows.add(new String[]{TABLE_TYPE_TABLE});
+    rows.add(new String[]{TABLE_TYPE_VIEW});
 
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
@@ -1099,7 +1103,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         }
       } catch (OdpsException e) {
         throw new SQLException("catalog=" + catalog + ",schemaPattern=" + schemaPattern
-                               + ",tableNamePattern=" + tableNamePattern + ",columnNamePattern" + columnNamePattern, e);
+                               + ",tableNamePattern=" + tableNamePattern + ",columnNamePattern"
+                               + columnNamePattern, e);
       }
     }
 
@@ -1109,17 +1114,28 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     // Build result set meta data
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
-                                                "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH",
-                                                "DECIMAL_DIGITS", "NUM_PERC_RADIX", "NULLABLE", "REMARKS", "COLUMN_DEF",
-                                                "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
-                                                "IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA", "SCOPE_TABLE", "SOURCE_DATA_TYPE"),
-                                  Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                TypeInfoFactory.STRING, TypeInfoFactory.BIGINT, TypeInfoFactory.STRING,
-                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
-                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT, TypeInfoFactory.STRING,
-                                                TypeInfoFactory.STRING, TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
-                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT, TypeInfoFactory.STRING,
-                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME",
+                                                "COLUMN_SIZE", "BUFFER_LENGTH",
+                                                "DECIMAL_DIGITS", "NUM_PERC_RADIX", "NULLABLE",
+                                                "REMARKS", "COLUMN_DEF",
+                                                "SQL_DATA_TYPE", "SQL_DATETIME_SUB",
+                                                "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
+                                                "IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA",
+                                                "SCOPE_TABLE", "SOURCE_DATA_TYPE"),
+                                  Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
                                                 TypeInfoFactory.BIGINT));
 
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
@@ -1159,38 +1175,49 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     // Return an empty result set
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
-                                                "COLUMN_NAME", "KEY_SEQ", "PK_NAME"), Arrays.asList(TypeInfoFactory.STRING,
-                                                                                                    TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                                                                    TypeInfoFactory.BIGINT, TypeInfoFactory.STRING));
+                                                "COLUMN_NAME", "KEY_SEQ", "PK_NAME"),
+                                  Arrays.asList(TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.STRING));
 
     return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
-  public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
+  public ResultSet getImportedKeys(String catalog, String schema, String table)
+      throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME",
-                                                "PKCOLUMN_NAME", "FKTABLE_CAT", "FKTABLE_SCHEM", "FKTABLE_NAME", "FKCOLUMN_NAME",
-                                                "KEY_SEQ", "UPDATE_RULE", "DELETE_RULE", "FK_NAME", "PK_NAME", "DEFERRABILITY"),
-                                  Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.BIGINT,
-                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT, TypeInfoFactory.STRING,
+                                                "PKCOLUMN_NAME", "FKTABLE_CAT", "FKTABLE_SCHEM",
+                                                "FKTABLE_NAME", "FKCOLUMN_NAME",
+                                                "KEY_SEQ", "UPDATE_RULE", "DELETE_RULE", "FK_NAME",
+                                                "PK_NAME", "DEFERRABILITY"),
+                                  Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
+                                                TypeInfoFactory.STRING,
                                                 TypeInfoFactory.STRING, TypeInfoFactory.STRING));
 
     return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override
-  public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
+  public ResultSet getExportedKeys(String catalog, String schema, String table)
+      throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable,
-                                     String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
+                                     String foreignCatalog, String foreignSchema,
+                                     String foreignTable) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
@@ -1214,99 +1241,99 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     OdpsResultSetMetaData meta = new OdpsResultSetMetaData(columnNames, columnTypes);
 
     List<Object[]> rows = new ArrayList<>();
-    rows.add(new Object[] {TypeInfoFactory.TINYINT.getTypeName(), Types.TINYINT, 3,
-                           null, "Y", null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, 0, 0,
-                           null, null, 10});
-    rows.add(new Object[] {TypeInfoFactory.SMALLINT.getTypeName(), Types.SMALLINT, 5,
-                           null, "S", null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, 0, 0,
-                           null, null, 10});
-    rows.add(new Object[] {TypeInfoFactory.INT.getTypeName(), Types.INTEGER, 10,
-                           null, null, null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, 0, 0,
-                           null, null, 10});
-    rows.add(new Object[] {TypeInfoFactory.BIGINT.getTypeName(), Types.BIGINT, 19,
-                           null, "L", null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, 0, 0,
-                           null, null, 10});
-    rows.add(new Object[] {TypeInfoFactory.BINARY.getTypeName(), Types.BINARY, 8 * 1024 * 1024,
-                           null, null, null,
-                           typeNullable, null, typePredNone,
-                           false, false, false,
-                           null, 0, 0,
-                           null, null, null});
-    rows.add(new Object[] {TypeInfoFactory.FLOAT.getTypeName(), Types.FLOAT, null,
-                           null, null, null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, null, null,
-                           null, null, 2});
-    rows.add(new Object[] {TypeInfoFactory.DOUBLE.getTypeName(), Types.DOUBLE, null,
-                           null, null, null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, null, null,
-                           null, null, 2});
-    rows.add(new Object[] {TypeInfoFactory.DECIMAL.getTypeName(), Types.DECIMAL, 38,
-                           null, "BD", null,
-                           typeNullable, null, typePredBasic,
-                           false, true, false,
-                           null, 18, 18,
-                           null, null, 10});
-    rows.add(new Object[] {"VARCHAR", Types.VARCHAR, null,
-                           null, null, "PRECISION",
-                           typeNullable, true, typePredChar,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
-    rows.add(new Object[] {"CHAR", Types.CHAR, null,
-                           null, null, "PRECISION",
-                           typeNullable, true, typePredChar,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
-    rows.add(new Object[] {TypeInfoFactory.STRING, Types.VARCHAR, 8 * 1024 * 1024,
-                           "\"", "\"", null,
-                           typeNullable, true, typePredChar,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.TINYINT.getTypeName(), Types.TINYINT, 3,
+                          null, "Y", null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, 0, 0,
+                          null, null, 10});
+    rows.add(new Object[]{TypeInfoFactory.SMALLINT.getTypeName(), Types.SMALLINT, 5,
+                          null, "S", null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, 0, 0,
+                          null, null, 10});
+    rows.add(new Object[]{TypeInfoFactory.INT.getTypeName(), Types.INTEGER, 10,
+                          null, null, null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, 0, 0,
+                          null, null, 10});
+    rows.add(new Object[]{TypeInfoFactory.BIGINT.getTypeName(), Types.BIGINT, 19,
+                          null, "L", null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, 0, 0,
+                          null, null, 10});
+    rows.add(new Object[]{TypeInfoFactory.BINARY.getTypeName(), Types.BINARY, 8 * 1024 * 1024,
+                          null, null, null,
+                          typeNullable, null, typePredNone,
+                          false, false, false,
+                          null, 0, 0,
+                          null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.FLOAT.getTypeName(), Types.FLOAT, null,
+                          null, null, null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, null, null,
+                          null, null, 2});
+    rows.add(new Object[]{TypeInfoFactory.DOUBLE.getTypeName(), Types.DOUBLE, null,
+                          null, null, null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, null, null,
+                          null, null, 2});
+    rows.add(new Object[]{TypeInfoFactory.DECIMAL.getTypeName(), Types.DECIMAL, 38,
+                          null, "BD", null,
+                          typeNullable, null, typePredBasic,
+                          false, true, false,
+                          null, 18, 18,
+                          null, null, 10});
+    rows.add(new Object[]{"VARCHAR", Types.VARCHAR, null,
+                          null, null, "PRECISION",
+                          typeNullable, true, typePredChar,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
+    rows.add(new Object[]{"CHAR", Types.CHAR, null,
+                          null, null, "PRECISION",
+                          typeNullable, true, typePredChar,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.STRING, Types.VARCHAR, 8 * 1024 * 1024,
+                          "\"", "\"", null,
+                          typeNullable, true, typePredChar,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
     // yyyy-mm-dd
-    rows.add(new Object[] {TypeInfoFactory.DATE, Types.DATE, 10,
-                           "DATE'", "'", null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.DATE, Types.DATE, 10,
+                          "DATE'", "'", null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
     // yyyy-mm-dd hh:MM:ss.SSS
-    rows.add(new Object[] {TypeInfoFactory.DATETIME, Types.TIMESTAMP, 23,
-                           "DATETIME'", "'", null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.DATETIME, Types.TIMESTAMP, 23,
+                          "DATETIME'", "'", null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
     // yyyy-mm-dd hh:MM:ss.SSSSSSSSS
-    rows.add(new Object[] {TypeInfoFactory.TIMESTAMP, Types.TIMESTAMP, 29,
-                           "TIMESTAMP'", "'", null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
-    rows.add(new Object[] {TypeInfoFactory.BOOLEAN, Types.BOOLEAN, null,
-                           null, null, null,
-                           typeNullable, null, typePredBasic,
-                           false, false, false,
-                           null, null, null,
-                           null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.TIMESTAMP, Types.TIMESTAMP, 29,
+                          "TIMESTAMP'", "'", null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
+    rows.add(new Object[]{TypeInfoFactory.BOOLEAN, Types.BOOLEAN, null,
+                          null, null, null,
+                          typeNullable, null, typePredBasic,
+                          false, false, false,
+                          null, null, null,
+                          null, null, null});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
@@ -1322,7 +1349,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                           "FILTER_CONDITION"),
             Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
                           TypeInfoFactory.BOOLEAN, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                          TypeInfoFactory.SMALLINT, TypeInfoFactory.SMALLINT, TypeInfoFactory.STRING,
+                          TypeInfoFactory.SMALLINT, TypeInfoFactory.SMALLINT,
+                          TypeInfoFactory.STRING,
                           TypeInfoFactory.STRING, TypeInfoFactory.BIGINT, TypeInfoFactory.BIGINT,
                           TypeInfoFactory.STRING));
 
@@ -1404,15 +1432,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   }
 
   @Override
-  public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types)
+  public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern,
+                           int[] types)
       throws SQLException {
     // Return an empty result set
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME",
-                                                "CLASS_NAME", "DATA_TYPE", "REMARKS", "BASE_TYPE"), Arrays.asList(
-            TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-            TypeInfoFactory.STRING, TypeInfoFactory.BIGINT, TypeInfoFactory.STRING,
-            TypeInfoFactory.BIGINT));
+                                                "CLASS_NAME", "DATA_TYPE", "REMARKS", "BASE_TYPE"),
+                                  Arrays.asList(
+                                      TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                      TypeInfoFactory.STRING,
+                                      TypeInfoFactory.STRING, TypeInfoFactory.BIGINT,
+                                      TypeInfoFactory.STRING,
+                                      TypeInfoFactory.BIGINT));
 
     return new OdpsStaticResultSet(getConnection(), meta);
   }
@@ -1564,16 +1596,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     OdpsResultSetMetaData meta =
         new OdpsResultSetMetaData(Arrays.asList("FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME",
-                                                "REMARKS", "FUNCTION_TYPE", "SPECIFIC_NAME"), Arrays.asList(TypeInfoFactory.STRING,
-                                                                                                            TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
-                                                                                                            TypeInfoFactory.BIGINT, TypeInfoFactory.STRING));
+                                                "REMARKS", "FUNCTION_TYPE", "SPECIFIC_NAME"),
+                                  Arrays.asList(TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING,
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.STRING));
 
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
   @Override
   public ResultSet getFunctionColumns(String catalog, String schemaPattern,
-                                      String functionNamePattern, String columnNamePattern) throws SQLException {
+                                      String functionNamePattern, String columnNamePattern)
+      throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }

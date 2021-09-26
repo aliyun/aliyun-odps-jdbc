@@ -135,7 +135,7 @@ public class OdpsPreparedStatementTest {
     ps.setString(8, "foo");
     ps.setString(9, "bar");
     ps.setDate(10, new java.sql.Date(datetime.getTime()));
-    ps.setTimestamp(11,timestamp);
+    ps.setTimestamp(11, timestamp);
     ps.setBoolean(12, true);
     ps.setDate(13, date);
 
@@ -182,7 +182,6 @@ public class OdpsPreparedStatementTest {
 
     long unixtime = new java.util.Date().getTime();
 
-
     for (int i = 0; i < 10; i++) {
       ps.setLong(1, 9999);
       ps.setString(2, "hello");
@@ -191,14 +190,14 @@ public class OdpsPreparedStatementTest {
       ps.setDouble(5, 3.141590261234F);
       ps.setBigDecimal(6, BigDecimal.TEN);
       ps.addBatch();
-      if(++count % batchSize == 0) {
+      if (++count % batchSize == 0) {
         ps.executeBatch();
       }
     }
     ps.executeBatch(); // insert remaining records
     ps.close();
 
-    Statement query =  conn.createStatement();
+    Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from employee_test");
 
     while (rs.next()) {
@@ -255,7 +254,7 @@ public class OdpsPreparedStatementTest {
       ps.setString(8, "foo");
       ps.setString(9, "bar");
       ps.setTimestamp(10, new java.sql.Timestamp(datetime.getTime()));
-      ps.setTimestamp(11,timestamp);
+      ps.setTimestamp(11, timestamp);
       ps.setBoolean(12, true);
       ps.setDate(13, date);
       ps.addBatch();
@@ -302,7 +301,8 @@ public class OdpsPreparedStatementTest {
     Connection conn = TestManager.getInstance().conn;
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
-    ddl.executeUpdate("create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
+    ddl.executeUpdate(
+        "create table employee_test(c1 bigint, c2 string, c3 datetime, c4 boolean, c5 double, c6 decimal);");
     ddl.close();
 
     PreparedStatement ps = conn.prepareStatement(
@@ -310,7 +310,6 @@ public class OdpsPreparedStatementTest {
 
     final int batchSize = 20;
     int count = 0;
-
 
     for (int i = 0; i < 120; i++) {
       ps.setNull(1, -1);
@@ -321,14 +320,14 @@ public class OdpsPreparedStatementTest {
       ps.setNull(6, -1);
 
       ps.addBatch();
-      if(++count % batchSize == 0) {
+      if (++count % batchSize == 0) {
         ps.executeBatch();
       }
     }
     ps.executeBatch(); // insert remaining records
     ps.close();
 
-    Statement query =  conn.createStatement();
+    Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from employee_test");
 
     while (rs.next()) {

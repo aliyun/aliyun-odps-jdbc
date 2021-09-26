@@ -15,9 +15,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.account.StsAccount;
-import com.aliyun.odps.jdbc.utils.OdpsLogger;
-
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -51,7 +48,9 @@ import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
+import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
@@ -144,8 +143,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     Account account;
     if (stsToken == null || stsToken.length() <= 0) {
       account = new AliyunAccount(accessId, accessKey);
-    }
-    else {
+    } else {
       account = new StsAccount(accessId, accessKey, stsToken);
     }
     log.debug("debug mode on");
@@ -199,7 +197,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy) throws OdpsException {
+  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy)
+      throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     if (!StringUtils.isNullOrEmpty(majorVersion)) {
@@ -228,7 +227,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     executor = builder.build();
     if (interactiveMode && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
-      log.info(String.format("Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d", executor.getInstance().getId(), cost));
+      log.info(String.format(
+          "Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d",
+          executor.getInstance().getId(), cost));
     }
   }
 
@@ -260,8 +261,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Only support the following type
    *
-   * @param sql the prepared sql
-   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param sql                  the prepared sql
+   * @param resultSetType        TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
    * @param resultSetConcurrency CONCUR_READ_ONLY
    * @return OdpsPreparedStatement
    * @throws SQLException wrong type
@@ -289,7 +290,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public PreparedStatement prepareStatement(String sql, int resultSetType,
-                                            int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+                                            int resultSetConcurrency, int resultSetHoldability)
+      throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
@@ -480,7 +482,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Only support the following type:
    *
-   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetType        TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
    * @param resultSetConcurrency CONCUR_READ_ONLY
    * @return OdpsStatement object
    * @throws SQLException wrong type
@@ -630,6 +632,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   /**
    * For test
+   *
    * @param useProjectTimeZone
    */
   public void setUseProjectTimeZone(boolean useProjectTimeZone) {
@@ -662,7 +665,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return executor;
   }
 
-  public boolean runningInInteractiveMode() { return interactiveMode; }
+  public boolean runningInInteractiveMode() {
+    return interactiveMode;
+  }
 
   public Map<String, List<String>> getTables() {
     return tables;
@@ -676,13 +681,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return autoSelectLimit;
   }
 
-  public Long getCountLimit() { return resultCountLimit; }
+  public Long getCountLimit() {
+    return resultCountLimit;
+  }
 
-  public Long getSizeLimit() { return resultSizeLimit; }
+  public Long getSizeLimit() {
+    return resultSizeLimit;
+  }
 
-  public boolean disableConnSetting() { return disableConnSetting; }
+  public boolean disableConnSetting() {
+    return disableConnSetting;
+  }
 
-  public boolean enableLimit() { return enableLimit; }
+  public boolean enableLimit() {
+    return enableLimit;
+  }
 
-  public void setEnableLimit(boolean enableLimit) { this.enableLimit = enableLimit; }
+  public void setEnableLimit(boolean enableLimit) {
+    this.enableLimit = enableLimit;
+  }
 }

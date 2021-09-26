@@ -39,7 +39,9 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
 
   public enum ResultMode {
     OFFLINE, INTERACTIVE
-  };
+  }
+
+  ;
 
   /**
    * Keeps in the memory a frame of rows which are likely be accessed in the near future.
@@ -47,21 +49,22 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
   private Object[][] rowsCache;
 
   /**
-   * The range of cursorRow is from -1 to totalRows. -1 indicates a beforeFirst row
-   * while totalRows indicates an afterLast row.
+   * The range of cursorRow is from -1 to totalRows. -1 indicates a beforeFirst row while totalRows
+   * indicates an afterLast row.
    */
   private long cursorRow;
 
   /**
    * Marks the upper bound of the record frame which has been cached.
-   *
+   * <p>
    * cachedUpperRow == totalRows simply means there are no cached records.
    */
   private long cachedUpperRow;
 
   private boolean isClosed = false;
 
-  OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, ResultMode mode)
+  OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
+                     ResultMode mode)
       throws SQLException, TunnelException, IOException {
     super(stmt.getConnection(), stmt, meta);
     this.mode = mode;
@@ -328,8 +331,9 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
       }
       long duration = System.currentTimeMillis() - start;
       long totalKBytes = reader.getTotalBytes() / 1024;
-      conn.log.info(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
-                                  count, totalKBytes, (float) totalKBytes / duration * 1000));
+      conn.log
+          .info(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
+                              count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException e) {
       throw new SQLException(e);

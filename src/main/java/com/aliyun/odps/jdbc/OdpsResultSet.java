@@ -153,8 +153,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   /**
    * The column index can be retrieved by name through the ResultSetMetaData.
    *
-   * @param columnLabel
-   *     the name of the column
+   * @param columnLabel the name of the column
    * @return the column index
    * @throws SQLException invalid label
    */
@@ -430,7 +429,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public String getString(int columnIndex) throws SQLException {
     Object obj = getInnerObject(columnIndex);
-    return (String) transformToJdbcType(obj, String.class, null, meta.getColumnOdpsType(columnIndex));
+    return (String) transformToJdbcType(obj, String.class, null,
+                                        meta.getColumnOdpsType(columnIndex));
   }
 
   @Override
@@ -652,7 +652,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     return transformer.transform(o, conn.getCharset());
   }
 
-  private Object transformToJdbcType(Object o, Class jdbcCls, TypeInfo typeInfo) throws SQLException {
+  private Object transformToJdbcType(Object o, Class jdbcCls, TypeInfo typeInfo)
+      throws SQLException {
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
     return transformer.transform(o, conn.getCharset(), typeInfo);
   }
@@ -661,7 +662,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     return transformToJdbcType(o, jdbcCls, cal, null);
   }
 
-  private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal, TypeInfo typeInfo) throws SQLException {
+  private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal, TypeInfo typeInfo)
+      throws SQLException {
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
 
     TimeZone timeZone = null;
@@ -676,7 +678,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       }
     }
 
-    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, timeZone, typeInfo);
+    return ((AbstractToJdbcDateTypeTransformer) transformer)
+        .transform(o, conn.getCharset(), cal, timeZone, typeInfo);
   }
 
   @Override
