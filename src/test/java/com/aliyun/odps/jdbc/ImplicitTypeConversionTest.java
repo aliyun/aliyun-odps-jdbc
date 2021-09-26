@@ -61,6 +61,7 @@ import com.aliyun.odps.type.TypeInfoFactory;
  * This test will create a table with all the data type of ODPS 2.0 and create
  */
 public class ImplicitTypeConversionTest {
+
   private static final String TEST_TABLE = "implicit_type_conversion_test";
   private static final String TEST_TABLE_NULL = "implicit_type_conversion_test_null";
 
@@ -119,7 +120,7 @@ public class ImplicitTypeConversionTest {
         schema,
         null,
         true,
-        null,hints, null);
+        null, hints, null);
 
     // Upload a record
     TableTunnel tunnel = new TableTunnel(tm.odps);
@@ -167,7 +168,7 @@ public class ImplicitTypeConversionTest {
         schema,
         null,
         true,
-        null,hints, null);
+        null, hints, null);
 
     // Upload a record
     TableTunnel tunnel = new TableTunnel(tm.odps);
@@ -215,7 +216,7 @@ public class ImplicitTypeConversionTest {
     schema.addColumn(
         new Column(DOUBLT_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.DOUBLE)));
     schema.addColumn(
-        new Column(DECIMAL_COL, TypeInfoFactory.getDecimalTypeInfo(54,18)));
+        new Column(DECIMAL_COL, TypeInfoFactory.getDecimalTypeInfo(54, 18)));
     schema.addColumn(
         new Column(VARCHAR_COL, TypeInfoFactory.getVarcharTypeInfo(200)));
     schema.addColumn(
@@ -242,6 +243,7 @@ public class ImplicitTypeConversionTest {
 
   /**
    * Test transformation from Byte object (from ODPS SDK) to JDBC types
+   *
    * @throws SQLException
    */
   @Test

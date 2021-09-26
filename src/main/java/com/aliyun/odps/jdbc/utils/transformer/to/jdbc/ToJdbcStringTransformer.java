@@ -21,16 +21,33 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Calendar.Builder;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.TimeZone;
+
+import com.aliyun.odps.data.SimpleStruct;
+import com.aliyun.odps.data.Struct;
+import com.aliyun.odps.type.TypeInfo;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 
 
 public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset, Calendar cal, TimeZone timeZone)
-      throws SQLException {
+  public Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone timeZone,
+      TypeInfo odpsType) throws SQLException {
     if (o == null) {
       return null;
     }
@@ -65,7 +82,69 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
         restoreToDefaultCalendar();
       }
     } else {
+      if (odpsType != null) {
+        switch (odpsType.getOdpsType()) {
+          case ARRAY:
+          case MAP: {
+            return GSON_FORMAT.get().toJson(o);
+          }
+          case STRUCT: {
+            return GSON_FORMAT.get().toJson(normalizeStruct(o));
+          }
+          default: {
+            return o.toString();
+          }
+        }
+      }
+
       return o.toString();
     }
   }
+
+  @Override
+  public Object transform(Object o, String charset, Calendar cal, TimeZone timeZone)
+      throws SQLException {
+    return transform(o, charset, cal, timeZone, null);
+  }
+
+  private static JsonElement normalizeStruct(Object object) {
+    Map<String, Object> values = new LinkedHashMap<>();
+    Struct struct = (Struct) object;
+    for (int i = 0; i < struct.getFieldCount(); i++) {
+      values.put(struct.getFieldName(i), struct.getFieldValue(i));
+    }
+
+    return new Gson().toJsonTree(values);
+  }
+
+  static ThreadLocal<Gson> GSON_FORMAT = ThreadLocal.withInitial(() -> {
+
+    JsonSerializer<Date> dateTimeSerializer = (date, type, jsonSerializationContext) -> {
+      if (date == null) {
+        return null;
+      }
+      return new JsonPrimitive(DATETIME_FORMAT.get().format(date));
+    };
+    JsonSerializer<Timestamp> timestampSerializer = (timestamp, type, jsonSerializationContext) -> {
+      if (timestamp == null) {
+        return null;
+      }
+      return new JsonPrimitive(TIMESTAMP_FORMAT.get().format(timestamp));
+    };
+
+    JsonSerializer<SimpleStruct> structSerializer = (struct, type, jsonSerializationContext) -> {
+      if (struct == null) {
+        return null;
+      }
+      return normalizeStruct(struct);
+    };
+
+    return new GsonBuilder()
+        .registerTypeAdapter(Date.class, dateTimeSerializer)
+        .registerTypeAdapter(Timestamp.class, timestampSerializer)
+        .registerTypeAdapter(SimpleStruct.class, structSerializer)
+        .serializeNulls()
+        .create();
+  });
+
 }

@@ -28,7 +28,6 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
-import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -46,9 +45,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   /**
    * For logging the time consumption for fetching 10000 rows
    */
-  private static final long ACCUM_FETCHED_ROWS = 10000;
-  long accumTime;
-  long accumKBytes = 0;
+  private static final long ACCUM_FETCHED_ROWS = 100000;
 
   /**
    * The maximum retry time we allow to tolerate the network problem
@@ -61,7 +58,8 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   }
 
 
-  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, long startTime)
+  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
+                       long startTime)
       throws SQLException {
     super(stmt.getConnection(), stmt, meta);
     this.sessionHandle = session;
@@ -114,7 +112,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
     } catch (IOException e) {
       throw new SQLException(e);
     }
-    conn.log.debug("the result set has been closed");
+    conn.log.info("the result set has been closed");
   }
 
   @Override
@@ -131,13 +129,13 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       try {
         if (reader == null) {
           rebuildReader();
-          accumTime = System.currentTimeMillis();
         }
         reuseRecord = reader.read(reuseRecord);
         if (reuseRecord == null) {
           // this means the end of stream
           long end = System.currentTimeMillis();
-          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records, count:" + fetchedRows);
+          conn.log.info(
+              "It took me " + (end - startTime) + " ms to fetch all records, count:" + fetchedRows);
           return false;
         }
         int columns = reuseRecord.getColumnCount();
@@ -149,13 +147,13 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         fetchedRows++;
         // Log the time consumption for fetching a bunch of rows
         if (fetchedRows % ACCUM_FETCHED_ROWS == 0 && fetchedRows != 0) {
-          long delta = reader.getTotalBytes() / 1024 - accumKBytes;
-          long duration = System.currentTimeMillis() - accumTime;
-          conn.log.debug(String.format("fetched %d rows, %d KB, %.2f KB/s", ACCUM_FETCHED_ROWS,
-                                  delta, (float) delta / duration * 1000));
-
-          accumKBytes = reader.getTotalBytes() / 1024;
-          accumTime = System.currentTimeMillis();
+          long current = System.currentTimeMillis();
+          conn.log.info(
+              String.format("fetched %d rows, %d KB, %.2f KB/s",
+                            fetchedRows,
+                            reader.getTotalBytes() / 1000,
+                            (float) reader.getTotalBytes() / (current - startTime))
+          );
         }
         return true;
       } catch (IOException e) {

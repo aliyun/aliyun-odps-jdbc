@@ -26,9 +26,9 @@ import java.sql.Statement;
 import java.sql.Types;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;

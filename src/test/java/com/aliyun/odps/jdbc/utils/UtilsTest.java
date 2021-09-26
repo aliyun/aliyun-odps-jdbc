@@ -20,18 +20,14 @@
 
 package com.aliyun.odps.jdbc.utils;
 
-import com.aliyun.odps.jdbc.OdpsStatement;
+import java.util.Properties;
+
 import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.aliyun.odps.Instance;
-import com.aliyun.odps.utils.StringUtils;
-
-import java.util.Properties;
-
 public class UtilsTest {
-  
+
   @Test
   public void matchPattern() throws Exception {
 
@@ -60,12 +56,14 @@ public class UtilsTest {
 
     String jsonSummary;
 
-    jsonSummary = "{\\n    \\\"Cost\\\": {\\n        \\\"CPU\\\": 100,\\n        \\\"GPU\\\": 0,\\n        \\\"Input\\\": 400,\\n        \\\"Memory\\\": 1024},\\n    \\\"Inputs\\\": {\\\"odpsdemo_dev.10_numbers\\\": [10,\\n            400]},\\n    \\\"Outputs\\\": {\\\"odpsdemo_dev.tmp\\\": [10,\\n            496]},\\n    \\\"Stages\\\": {\\\"M1_odpsdemo_dev_20190531085701523gkm1r3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"TableScan1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"TableScan1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"TableSink1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"TableSink1\\\": {\\\"TableSink1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"TableSink1\\\": {\\\"TableSink1\\\": 496}}}}}";
+    jsonSummary =
+        "{\\n    \\\"Cost\\\": {\\n        \\\"CPU\\\": 100,\\n        \\\"GPU\\\": 0,\\n        \\\"Input\\\": 400,\\n        \\\"Memory\\\": 1024},\\n    \\\"Inputs\\\": {\\\"odpsdemo_dev.10_numbers\\\": [10,\\n            400]},\\n    \\\"Outputs\\\": {\\\"odpsdemo_dev.tmp\\\": [10,\\n            496]},\\n    \\\"Stages\\\": {\\\"M1_odpsdemo_dev_20190531085701523gkm1r3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"TableScan1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"TableScan1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"TableSink1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"TableSink1\\\": {\\\"TableSink1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"TableSink1\\\": {\\\"TableSink1\\\": 496}}}}}";
     Assert.assertEquals(10, Utils.getSinkCountFromTaskSummary(
         StringEscapeUtils.unescapeJava(jsonSummary)));
 
     // no outputs
-    jsonSummary = "{\\n    \\\"Cost\\\": {\\n        \\\"CPU\\\": 200,\\n        \\\"GPU\\\": 0,\\n        \\\"Input\\\": 400,\\n        \\\"Memory\\\": 3584},\\n    \\\"Inputs\\\": {\\\"odpsdemo_dev.10_numbers\\\": [10,\\n            400]},\\n    \\\"Outputs\\\": {},\\n    \\\"Stages\\\": {\\n        \\\"M1_odpsdemo_dev_2019060403073279gbnoz3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"TableScan1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"TableScan1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"StreamLineWrite1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"StreamLineWrite1\\\": {\\\"StreamLineWrite1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"StreamLineWrite1\\\": {\\\"StreamLineWrite1\\\": 75}}},\\n        \\\"R2_1_odpsdemo_dev_2019060403073279gbnoz3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"StreamLineRead1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"StreamLineRead1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"AdhocSink1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"AdhocSink1\\\": {\\\"AdhocSink1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"AdhocSink1\\\": {\\\"AdhocSink1\\\": 496}}}}}";
+    jsonSummary =
+        "{\\n    \\\"Cost\\\": {\\n        \\\"CPU\\\": 200,\\n        \\\"GPU\\\": 0,\\n        \\\"Input\\\": 400,\\n        \\\"Memory\\\": 3584},\\n    \\\"Inputs\\\": {\\\"odpsdemo_dev.10_numbers\\\": [10,\\n            400]},\\n    \\\"Outputs\\\": {},\\n    \\\"Stages\\\": {\\n        \\\"M1_odpsdemo_dev_2019060403073279gbnoz3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"TableScan1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"TableScan1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"StreamLineWrite1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"StreamLineWrite1\\\": {\\\"StreamLineWrite1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"StreamLineWrite1\\\": {\\\"StreamLineWrite1\\\": 75}}},\\n        \\\"R2_1_odpsdemo_dev_2019060403073279gbnoz3pr2_SQL_0_0_0_job_0\\\": {\\n            \\\"InputRecordCountStats\\\": {\\\"StreamLineRead1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"InputRecordCounts\\\": {\\\"StreamLineRead1\\\": 10},\\n            \\\"OutputRecordCountStats\\\": {\\\"AdhocSink1\\\": [10,\\n                    10,\\n                    10]},\\n            \\\"OutputRecordCounts\\\": {\\\"AdhocSink1\\\": {\\\"AdhocSink1\\\": 10}},\\n            \\\"UserCounters\\\": {},\\n            \\\"WorkerCount\\\": 1,\\n            \\\"WriterBytes\\\": {\\\"AdhocSink1\\\": {\\\"AdhocSink1\\\": 496}}}}}";
     Assert.assertEquals(-1, Utils.getSinkCountFromTaskSummary(
         StringEscapeUtils.unescapeJava(jsonSummary)));
   }
@@ -80,10 +78,13 @@ public class UtilsTest {
       Assert.assertEquals(properties.size(), 0);
     }
     {
-      String sql = "set 1=1;select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;";
+      String
+          sql =
+          "set 1=1;select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;";
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
-      Assert.assertEquals(realQuery, "select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;");
+      Assert.assertEquals(realQuery,
+                          "select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;");
       Assert.assertEquals(properties.size(), 1);
       Assert.assertTrue(properties.getProperty("1").equals("1"));
     }

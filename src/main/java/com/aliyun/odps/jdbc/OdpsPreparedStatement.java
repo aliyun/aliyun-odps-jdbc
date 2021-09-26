@@ -84,8 +84,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       "INSERT INTO table VALUES (?, ?, ?);";
 
   /**
-   * The prepared sql template (immutable).
-   * e.g. insert into table FOO select * from BAR where id = ? and weight = ?
+   * The prepared sql template (immutable). e.g. insert into table FOO select * from BAR where id =
+   * ? and weight = ?
    */
   private final String sql;
 
@@ -99,9 +99,9 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   int blocks;
 
   /**
-   * The parameters for the prepared sql (index=>parameter).
-   * The parameter is stored as Java objects and lazily casted into String when submitting sql.
-   * The executeBatch() call will utilize it to upload data to ODPS via tunnel.
+   * The parameters for the prepared sql (index=>parameter). The parameter is stored as Java objects
+   * and lazily casted into String when submitting sql. The executeBatch() call will utilize it to
+   * upload data to ODPS via tunnel.
    */
   private HashMap<Integer, Object> parameters = new HashMap<Integer, Object>();
 
@@ -113,14 +113,14 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     this.sql = sql;
 
     int counter = 0;
-    for( int i = 0; i < sql.length(); i++ ) {
-      if( sql.charAt(i) == '?' ) {
+    for (int i = 0; i < sql.length(); i++) {
+      if (sql.charAt(i) == '?') {
         counter++;
       }
     }
     this.parametersNum = counter;
 
-    conn.log.debug("create prepared statements: " + sql);
+    conn.log.info("create prepared statements: " + sql);
   }
 
   OdpsPreparedStatement(OdpsConnection conn, String sql, boolean isResultSetScrollable) {
@@ -132,7 +132,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   public void addBatch() throws SQLException {
     Object[] arr = new Object[parametersNum];
     for (int i = 0; i < arr.length; i++) {
-      arr[i] = parameters.get(i+1);
+      arr[i] = parameters.get(i + 1);
     }
     batchedRows.add(arr);
     parameters.clear();
@@ -150,13 +150,13 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   /**
    * Only support DML like `INSERT INTO table_name values (e, f, g)` in batch execution
-   *
-   * Since ODPS SQL does not provide this functionality, we 1) hijack such kind of batched SQLs
-   * , 2) assemble the records by ourselves, and 3) call tunnel API to upload them.
-   *
+   * <p>
+   * Since ODPS SQL does not provide this functionality, we 1) hijack such kind of batched SQLs , 2)
+   * assemble the records by ourselves, and 3) call tunnel API to upload them.
+   * <p>
    * We verify and parse the SQL to extract table name in the first call to executeBatch(), so that
    * other kinds of statement can be executed in a non-batch way.
-   *
+   * <p>
    * Considering performance issue, We check it lazily in executeBatch() instead of addBatch().
    *
    * @throws SQLException when 1) wrong syntax 2) columns not match
@@ -188,7 +188,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       } catch (TunnelException e) {
         throw new SQLException(e);
       }
-      getConnection().log.debug("create upload session id=" + session.getId());
+      getConnection().log.info("create upload session id=" + session.getId());
       TableSchema schema = session.getSchema();
       reuseRecord = session.newRecord();
       int colNum = schema.getColumns().size();
@@ -208,8 +208,9 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       return new int[0];
     }
 
-    getConnection().log.debug(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
-                  + " in batch");
+    getConnection().log
+        .info(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
+              + " in batch");
 
     int[] updateCounts = new int[batchedSize];
     Arrays.fill(updateCounts, -1);
@@ -233,7 +234,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       float megaBytesPerSec = (float) recordWriter.getTotalBytes() / 1024 / 1024 / duration * 1000;
       recordWriter.close();
       getConnection().log.info(
-          String.format("It took me %d ms to insert %d records [%d], %.2f MiB/s", duration, batchedSize,
+          String.format("It took me %d ms to insert %d records [%d], %.2f MiB/s", duration,
+                        batchedSize,
                         blocks, megaBytesPerSec));
       blocks += 1;
     } catch (TunnelException e) {
@@ -252,7 +254,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     if (isClosed()) {
       return;
     }
-
     if (session != null && blocks > 0) {
       Long[] blockList = new Long[blocks];
       getConnection().log.info("commit session: " + blocks + " blocks");
@@ -653,8 +654,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Timestamp.class.isInstance(x)) {
       return String.format("TIMESTAMP\"%s\"", x.toString());
     } else if (java.util.Date.class.isInstance(x)
-        || java.sql.Date.class.isInstance(x)
-        || java.sql.Time.class.isInstance(x)) {
+               || java.sql.Date.class.isInstance(x)
+               || java.sql.Time.class.isInstance(x)) {
       SimpleDateFormat formatter = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return String.format("DATETIME\"%s\"", formatter.format(x));
     } else if (Boolean.class.isInstance(x)) {

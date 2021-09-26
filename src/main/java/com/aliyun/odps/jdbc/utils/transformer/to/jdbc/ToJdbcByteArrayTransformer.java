@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
+import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 
 
@@ -42,6 +43,8 @@ public class ToJdbcByteArrayTransformer extends AbstractToJdbcTransformer {
       }
       SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
       return dateFormat.format(((java.util.Date) o)).getBytes();
+    } else if (o instanceof Binary) {
+      return ((Binary) o).data();
     } else {
       return o.toString().getBytes();
     }

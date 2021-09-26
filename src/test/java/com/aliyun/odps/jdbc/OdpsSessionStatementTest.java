@@ -20,15 +20,20 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.data.Record;
-import com.aliyun.odps.data.RecordWriter;
-import com.aliyun.odps.tunnel.TableTunnel;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.sql.*;
+import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsSessionStatementTest {
 
@@ -44,8 +49,8 @@ public class OdpsSessionStatementTest {
     Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
-    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
-    stmt.executeUpdate("create table if not exists "+ OUTPUT_TABLE_NAME +"(id bigint);");
+    stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
+    stmt.executeUpdate("create table if not exists " + OUTPUT_TABLE_NAME + "(id bigint);");
     stmt.close();
 
     TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
@@ -101,7 +106,7 @@ public class OdpsSessionStatementTest {
     stmt.close();
     Assert.assertTrue(stmt.isClosed());
   }
-  
+
   @Test
   public void testSelectNullQuery() throws Exception {
     Statement stmt = sessionConn.createStatement();
@@ -163,7 +168,7 @@ public class OdpsSessionStatementTest {
     rs.close();
     stmt.close();
   }
-  
+
   /**
    * Thread for a sql to be cancelled
    */

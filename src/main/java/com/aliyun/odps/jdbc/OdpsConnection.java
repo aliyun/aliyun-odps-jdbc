@@ -15,9 +15,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.account.StsAccount;
-import com.aliyun.odps.jdbc.utils.OdpsLogger;
-
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -35,23 +32,34 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.aliyun.odps.sqa.FallbackPolicy;
-import com.aliyun.odps.sqa.SQLExecutor;
-import com.aliyun.odps.sqa.SQLExecutorBuilder;
-import com.aliyun.odps.utils.StringUtils;
 import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
+import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.FallbackPolicy;
+import com.aliyun.odps.sqa.SQLExecutor;
+import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
+
+  private static final AtomicLong CONNECTION_ID_GENERATOR = new AtomicLong(0);
 
   private final Odps odps;
   private final TimeZone tz;
@@ -64,11 +72,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private final String charset;
 
   private final String logviewHost;
-
-  /**
-   * The lifecycle of the temp table created when execute query
-   */
-  protected final int lifecycle;
 
   private boolean isClosed = false;
 
@@ -89,9 +92,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static final String MAJOR_VERSION = "odps.task.major.version";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
-  private List<String> tableList = new ArrayList<>();
-
   private Long autoSelectLimit = null;
+  private Map<String, List<String>> tables;
   //Unit: result record row count, only applied in interactive mode
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
@@ -101,8 +103,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean disableConnSetting = false;
 
-  private boolean enableLimit = false;
   private boolean useProjectTimeZone = false;
+
+  private boolean enableLimit = false;
 
   private SQLExecutor executor = null;
 
@@ -122,33 +125,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String serviceName = connRes.getInteractiveServiceName();
     String stsToken = connRes.getStsToken();
     sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
-    int lifecycle;
-    try {
-      lifecycle = Integer.parseInt(connRes.getLifecycle());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("lifecycle is expected to be an integer");
-    }
 
-    connectionId = UUID.randomUUID().toString().substring(24);
+    connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(getClass().getName(), null, logConfFile, false, connRes.isEnableOdpsLogger());
-
-    if (connRes.getLogLevel() != null) {
-      log.warn("The logLevel is deprecated, please set log level in log conf file!");
-    }
+    log = new OdpsLogger(connectionId,
+                         null,
+                         logConfFile,
+                         false,
+                         connRes.isEnableOdpsLogger());
 
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s", endpoint, project));
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
-    log.info(String
-        .format("charset=%s, logviewhost=%s, lifecycle=%d", charset, logviewHost, lifecycle));
+    log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
     if (stsToken == null || stsToken.length() <= 0) {
       account = new AliyunAccount(accessId, accessKey);
-    }
-    else {
+    } else {
       account = new StsAccount(accessId, accessKey, stsToken);
     }
     log.debug("debug mode on");
@@ -160,23 +155,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.info = info;
     this.charset = charset;
     this.logviewHost = logviewHost;
-    this.lifecycle = lifecycle;
     this.tunnelEndpoint = tunnelEndpoint;
     this.stmtHandles = new ArrayList<>();
+    this.sqlTaskProperties.putAll(connRes.getSettings());
 
     this.tunnelRetryTime = connRes.getTunnelRetryTime();
     this.majorVersion = connRes.getMajorVersion();
     this.interactiveMode = connRes.isInteractiveMode();
-    this.tableList = connRes.getTableList();
+    this.tables = Collections.unmodifiableMap(connRes.getTables());
     this.executeProject = connRes.getExecuteProject();
     this.autoSelectLimit = connRes.getAutoSelectLimit();
     this.resultCountLimit = connRes.getCountLimit();
     this.resultSizeLimit = connRes.getSizeLimit();
     this.disableConnSetting = connRes.isDisableConnSetting();
-    this.enableLimit = connRes.isEnableLimit();
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
+    this.enableLimit = connRes.isEnableLimit();
 
     try {
+      long startTime = System.currentTimeMillis();
+
       // Default value for odps.sql.timezone
       String timeZoneId = "Asia/Shanghai";
       String projectTimeZoneId = odps.projects().get().getProperty("odps.sql.timezone");
@@ -187,10 +184,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       log.info("Project timezone: " + timeZoneId);
       tz = TimeZone.getTimeZone(timeZoneId);
       if (interactiveMode) {
+        long cost = System.currentTimeMillis() - startTime;
+        log.info(String.format("load project meta infos time cost=%d", cost));
         initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       }
       String msg = "Connect to odps project %s successfully";
-      log.debug(String.format(msg, odps.getDefaultProject()));
+      log.info(String.format(msg, odps.getDefaultProject()));
 
     } catch (OdpsException e) {
       log.error("Connect to odps failed:" + e.getMessage());
@@ -198,7 +197,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy) throws OdpsException {
+  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy)
+      throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     if (!StringUtils.isNullOrEmpty(majorVersion)) {
@@ -227,7 +227,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     executor = builder.build();
     if (interactiveMode && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
-      log.info(String.format("Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d", executor.getInstance().getId(), cost));
+      log.info(String.format(
+          "Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d",
+          executor.getInstance().getId(), cost));
     }
   }
 
@@ -259,25 +261,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Only support the following type
    *
-   * @param sql the prepared sql
-   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param sql                  the prepared sql
+   * @param resultSetType        TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
    * @param resultSetConcurrency CONCUR_READ_ONLY
    * @return OdpsPreparedStatement
    * @throws SQLException wrong type
    */
   @Override
   public OdpsPreparedStatement prepareStatement(String sql, int resultSetType,
-      int resultSetConcurrency) throws SQLException {
+                                                int resultSetConcurrency) throws SQLException {
     checkClosed();
 
     if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
       throw new SQLFeatureNotSupportedException("Statement with resultset type: " + resultSetType
-          + " is not supported");
+                                                + " is not supported");
     }
 
     if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE) {
       throw new SQLFeatureNotSupportedException("Statement with resultset concurrency: "
-          + resultSetConcurrency + " is not supported");
+                                                + resultSetConcurrency + " is not supported");
     }
 
     boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
@@ -288,7 +290,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public PreparedStatement prepareStatement(String sql, int resultSetType,
-      int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+                                            int resultSetConcurrency, int resultSetHoldability)
+      throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
@@ -307,7 +310,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
-      int resultSetHoldability) throws SQLException {
+                                       int resultSetHoldability) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
@@ -322,8 +325,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public void setAutoCommit(boolean autoCommit) throws SQLException {
     if (!autoCommit) {
       log.error(Thread.currentThread().getStackTrace()[1].getMethodName()
-          + " to false is not supported!!!");
-      throw new SQLFeatureNotSupportedException("enabling autocommit is not supported");
+                + " to false is not supported!!!");
+      throw new SQLFeatureNotSupportedException("disabling autocommit is not supported");
     }
   }
 
@@ -360,7 +363,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         }
       }
       if (runningInInteractiveMode()) {
-          executor.close();
+        executor.close();
       }
     }
     isClosed = true;
@@ -479,7 +482,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   /**
    * Only support the following type:
    *
-   * @param resultSetType TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
+   * @param resultSetType        TYPE_SCROLL_INSENSITIVE or ResultSet.TYPE_FORWARD_ONLY
    * @param resultSetConcurrency CONCUR_READ_ONLY
    * @return OdpsStatement object
    * @throws SQLException wrong type
@@ -518,7 +521,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency,
-      int resultSetHoldability) throws SQLException {
+                                   int resultSetHoldability) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
@@ -629,6 +632,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   /**
    * For test
+   *
    * @param useProjectTimeZone
    */
   public void setUseProjectTimeZone(boolean useProjectTimeZone) {
@@ -661,10 +665,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return executor;
   }
 
-  public boolean runningInInteractiveMode() { return interactiveMode; }
+  public boolean runningInInteractiveMode() {
+    return interactiveMode;
+  }
 
-  public List<String> getTableList() {
-    return tableList;
+  public Map<String, List<String>> getTables() {
+    return tables;
   }
 
   public String getExecuteProject() {
@@ -675,13 +681,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return autoSelectLimit;
   }
 
-  public Long getCountLimit() { return resultCountLimit; }
+  public Long getCountLimit() {
+    return resultCountLimit;
+  }
 
-  public Long getSizeLimit() { return resultSizeLimit; }
+  public Long getSizeLimit() {
+    return resultSizeLimit;
+  }
 
-  public boolean disableConnSetting() { return disableConnSetting; }
+  public boolean disableConnSetting() {
+    return disableConnSetting;
+  }
 
-  public boolean enableLimit() { return enableLimit; }
+  public boolean enableLimit() {
+    return enableLimit;
+  }
 
-  public void setEnableLimit(boolean enableLimit) { this.enableLimit = enableLimit; }
+  public void setEnableLimit(boolean enableLimit) {
+    this.enableLimit = enableLimit;
+  }
 }

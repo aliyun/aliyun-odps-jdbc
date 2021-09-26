@@ -21,7 +21,6 @@
 package com.aliyun.odps.jdbc;
 
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -43,10 +42,10 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.ToJdbcTransformerFactory;
+import com.aliyun.odps.type.TypeInfo;
 
 
 public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet {
@@ -81,7 +80,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public void setFetchSize(int rows) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    conn.log.warn("Unsupported method call: OdpsResultSet#setFetchSize, ignored");
   }
 
   @Override
@@ -154,8 +153,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   /**
    * The column index can be retrieved by name through the ResultSetMetaData.
    *
-   * @param columnLabel
-   *     the name of the column
+   * @param columnLabel the name of the column
    * @return the column index
    * @throws SQLException invalid label
    */
@@ -238,20 +236,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public InputStream getBinaryStream(int columnIndex) throws SQLException {
-    Object obj = getInnerObject(columnIndex);
-    InputStream inputStrem = null;
-    if (obj instanceof byte[]) {
-      inputStrem = new ByteArrayInputStream((byte[])obj);
-    } else if (obj instanceof Binary) {
-      inputStrem = new ByteArrayInputStream(((Binary)obj).data());
-    }
-    return inputStrem;
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getBinaryStream(String columnLabel) throws SQLException {
-    int columnIndex = findColumn(columnLabel);
-    return getBinaryStream(columnIndex);
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -439,7 +429,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public String getString(int columnIndex) throws SQLException {
     Object obj = getInnerObject(columnIndex);
-    return (String) transformToJdbcType(obj, String.class, null);
+    return (String) transformToJdbcType(obj, String.class, null,
+                                        meta.getColumnOdpsType(columnIndex));
   }
 
   @Override
@@ -661,18 +652,34 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     return transformer.transform(o, conn.getCharset());
   }
 
+  private Object transformToJdbcType(Object o, Class jdbcCls, TypeInfo typeInfo)
+      throws SQLException {
+    AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
+    return transformer.transform(o, conn.getCharset(), typeInfo);
+  }
+
   private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal) throws SQLException {
+    return transformToJdbcType(o, jdbcCls, cal, null);
+  }
+
+  private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal, TypeInfo typeInfo)
+      throws SQLException {
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
 
-    TimeZone timeZone;
+    TimeZone timeZone = null;
 
-    String sessionTimeZoneId = stmt.getSqlTaskProperties().getProperty("odps.sql.timezone", null);
-    if (sessionTimeZoneId != null) {
-      timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
-    } else {
-      timeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
+    if (stmt != null) {
+      String sessionTimeZoneId =
+          stmt.getSqlTaskProperties().getProperty("odps.sql.timezone", null);
+      if (sessionTimeZoneId != null) {
+        timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
+      } else {
+        timeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
+      }
     }
-    return ((AbstractToJdbcDateTypeTransformer) transformer).transform(o, conn.getCharset(), cal, timeZone);
+
+    return ((AbstractToJdbcDateTypeTransformer) transformer)
+        .transform(o, conn.getCharset(), cal, timeZone, typeInfo);
   }
 
   @Override
@@ -1120,5 +1127,4 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   public boolean wasNull() throws SQLException {
     return wasNull;
   }
-
 }

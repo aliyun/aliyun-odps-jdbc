@@ -37,22 +37,21 @@ public class ConnectionResourceTest {
     Assert.assertEquals(null, cr.getAccessKey());
     Assert.assertEquals(null, cr.getLogview());
     Assert.assertEquals("UTF-8", cr.getCharset());
-    Assert.assertEquals("3", cr.getLifecycle());
   }
 
   @Test
   public void connectionURLFullTest() {
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL", null);
+    ConnectionResource
+        cr =
+        new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
+                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL", null);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("idid", cr.getAccessId());
     Assert.assertEquals("keykey", cr.getAccessKey());
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("5", cr.getLifecycle());
-    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 
   @Test
@@ -74,8 +73,6 @@ public class ConnectionResourceTest {
     Assert.assertEquals("keykey", cr.getAccessKey());
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("5", cr.getLifecycle());
-    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 
   @Test
@@ -89,15 +86,15 @@ public class ConnectionResourceTest {
     info.put("lifecycle", "100");
     info.put("log_level", "FATAL");
 
-    ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                                                   + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO", info);
+    ConnectionResource
+        cr =
+        new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
+                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO", info);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("id", cr.getAccessId());
     Assert.assertEquals("key", cr.getAccessKey());
     Assert.assertEquals("log", cr.getLogview());
     Assert.assertEquals("set", cr.getCharset());
-    Assert.assertEquals("100", cr.getLifecycle());
-    Assert.assertEquals("FATAL", cr.getLogLevel());
   }
 }

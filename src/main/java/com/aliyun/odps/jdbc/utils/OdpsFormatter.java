@@ -9,7 +9,12 @@ public class OdpsFormatter extends Formatter {
   @Override
   public synchronized String format(LogRecord record) {
     Timestamp timestamp = new Timestamp(record.getMillis());
-    String format = "[%s] [%s] %s\n";
-    return String.format(format, record.getLevel(), timestamp.toString(), record.getMessage());
+    String format = "[%s] [connection-%s] [%s] %s\n";
+    return String.format(
+        format,
+        record.getLevel(),
+        record.getLoggerName(),
+        timestamp.toString(),
+        record.getMessage());
   }
 }
