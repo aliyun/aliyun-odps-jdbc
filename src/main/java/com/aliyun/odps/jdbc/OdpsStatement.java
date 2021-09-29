@@ -653,11 +653,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 connHandle.getExecutor().getTaskName(),
                 connHandle.getExecutor().getSubqueryId(),
                 enableLimit);
-            OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
-            resultSet =
-                isResultSetScrollable ? new OdpsScollResultSet(this, meta, session,
+            if(sessionResultSet.getTableSchema() != null) {
+                OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
+                resultSet =
+                  isResultSetScrollable ? new OdpsScollResultSet(this, meta, session,
                                                                OdpsScollResultSet.ResultMode.INTERACTIVE)
                                       : new OdpsSessionForwardResultSet(this, meta, sessionResultSet, startTime);
+            }
             sessionResultSet = null;
           } catch (TunnelException e) {
             connHandle.log.error("create download session for session failed: " + e.getMessage());
