@@ -1,8 +1,9 @@
 
 # ODPS JDBC
 
-[![Build Status](https://travis-ci.org/aliyun/aliyun-odps-jdbc.svg?branch=master)](https://travis-ci.org/aliyun/aliyun-odps-jdbc)
+![build](https://github.com/aliyun/aliyun-odps-jdbc/actions/workflows/maven.yml/badge.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc)
+
 
 ## Chinese Docs
 
@@ -82,20 +83,32 @@ while (rs.next()) {
 
 
 
-### Connection String
+### Connection String Parameters
 
+#### Basic
 
-|   URL key   |  Property Key  | Description                              |
-| :---------: | :------------: | :--------------------------------------- |
-| `endpoint`  |  `end_point`   | the endpoint of the ODPS cluster         |
-|  `project`  | `project_name` | the current ODPS project                 |
-| `accessId`  |  `access_id`   | the id to access the ODPS service        |
-| `accessKey` |  `access_key`  | the authentication key                   |
-|  `logview`  | `logview_host` | the host domain of the log view appeared in the log history |
-| `lifecycle` |  `lifecycle`   | the lifecycle of the temp table using in query |
-|  `charset`  |   `charset`    | the charset of the string                |
-| `loglevel`  |  `log_level`   | the level of debug infomartion debug/info/fatal |
-| `tunnelEndpoint` | `tunnel_endpoint` | the endpoint of ODPS Tunnel service |
+|   URL key        |  Property Key     | Required | Default value | Description                              |
+| :--------------: | :---------------: | :------: | :-----------: | :--------------------------------------- |
+| `endpoint`       | `end_point`       | True     |               | The endpoint of your MaxCompute service  |
+| `project`        | `project_name`    | True     |               | The name of your MaxCompute project      |
+| `accessId`       | `access_id`       | True     |               | Your Alibaba Cloud access key ID         |
+| `accessKey`      | `access_key`      | True     |               | Your Alibaba Cloud access key secret     |
+| `interactiveMode`| `interactive_mode`| False    | false         | For MCQA, enable MCQA                    |
+| `logview`        | `logview_host`    | False    | Provided by MC | The endpoint of MaxCompute Logview       |
+| `tunnelEndpoint` | `tunnel_endpoint` | False    | Provided by MC | The endpoint of the MaxCompute Tunnel service |
+| `enableOdpsLogger` | `enable_odps_logger` | False | false       | Enable MaxCompute JDBC logger          |
+
+#### Advanced
+|   URL key        |  Property Key     | Required | Default value | Description                              |
+| :--------------: | :---------------: | :------: | :-----------: | :--------------------------------------- |
+| `stsToken`       | `sts_token`       | False    |               | The Alibaba Cloud STS token              |
+| `logConfFile`    | `log_conf_file`   | False    |               | The configuration path for SLF4J         |
+| `charset`        | `charset`         | False    | UTF-8         | The charset of the inputs and outputs    |
+| `executeProject` | `execute_project_name` | False |             | For MCQA, the name of the MaxCompute project in which actually execute the queries |
+| `alwaysFallback` | `always_fallback` | False    | false         | For MCQA, fall back to regular mode if any exception happened |
+| `instanceTunnelMaxRecord` | `instance_tunnel_max_record` | False | -1 (unlimited) | For MCQA, max number of records within a result set, enableLimit option should set to false |
+| `instanceTunnelMaxSize`| `instance_tunnel_max_size` | False | -1 (unlimited) | For MCQA, max size of a result set in byte |
+| `enableLimit`| `enable_limit` | False | true(limited) | For MCQA, download permission won't be checked if enableLimit is set true, but your result record count will be limited to 10000 |
 
 ## Example
 
@@ -239,48 +252,56 @@ mvn test
 
 ### Data Type Mapping
 
-Currenty, there are six kinds of ODPS data types can be accessed from ODPS JDBC. They can be accessed by the getters of `ResultSet` like `getInt()` and `getTime()`. The following table reflects the mapping between JDBC data type and ODPS data type:
+Currently, 13 ODPS data types are supported. Please see the following table for supported ODPS data 
+types and corresponding JDBC interfaces.
 
 
-| ODPS Type | Java Type       | JDBC Interface                    |   JDBC    |
-| :-------: | :-------------- | :-------------------------------- | :-------: |
-|  TINYINT  | Byte            | byte                              |  TINYINT  |
-|  SMALLINT | Short           | short                             |  SMALLINT |
-|  INT      | Integer         | int                               |  INTEGER  |
-|  BIGINT   | Long            | long                              |  BIGINT   |
-|  FLOAT    | Float           | float                             |  FLOAT    |
-|  DOUBLE   | Double          | double, float                     |  DOUBLE   |
-|  BOOLEAN  | Boolean         | boolean                           |  BOOLEAN  |
-|  DATETIME | util.Date       | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
-|  TIMESTAMP| sql.Timestamp   | sql.Date, sql.Time, sql.Timestamp |  TIMESTAMP|
-|  VARCHAR  | Varchar         | String                            |  VARCHAR  |
-|  STRING   | byte[]          | String                            |  VARCHAR  |
-|  DECIMAL  | math.BigDecimal | math.BigDecimal                   |  DECIMAL  |
+| ODPS Type | JDBC Interface                    |   JDBC Type |
+| :-------: | :-------------------------------: | :-------:   |
+|  TINYINT  | java.sql.ResultSet.getByte        |  TINYINT    |
+|  SMALLINT | java.sql.ResultSet.getShort       |  SMALLINT   |
+|  INT      | java.sql.ResultSet.getInt         |  INTEGER    |
+|  BIGINT   | java.sql.ResultSet.getLong        |  BIGINT     |
+|  FLOAT    | java.sql.ResultSet.getFloat       |  FLOAT      |
+|  DOUBLE   | java.sql.ResultSet.getDouble      |  DOUBLE     |
+|  BOOLEAN  | java.sql.ResultSet.getBoolean     |  BOOLEAN    |
+|  DATETIME | java.sql.ResultSet.getTimestamp   |  TIMESTAMP  |
+|  TIMESTAMP| java.sql.ResultSet.getTimestamp   |  TIMESTAMP  |
+|  VARCHAR  | java.sql.ResultSet.getString      |  VARCHAR    |
+|  STRING   | java.sql.ResultSet.getString      |  VARCHAR    |
+|  DECIMAL  | java.sql.ResultSet.getBigDecimal  |  DECIMAL    |
+|  BINARY   | java.sql.ResultSet.getBytes       |  BINARY     |
 
 NOTE: Possible timezone issue
 
-DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse or format action. When application that using JDBC display a DATETIME as a human-readable string format, it is the application itself did the format using application defined or OS defined timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid inconsistent datetime parse/format.
+DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is 
+TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse 
+or format action. When application that using JDBC display a DATETIME as a human-readable string 
+format, it is the application itself did the format using application defined or OS defined 
+timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid 
+inconsistent datetime parse/format.
 
 ### Type Conversion
 
-The implicit type conversion follows the rule:
+Implicit type conversion happens when accessing a ODPS data type with JDBC interfaces other than the
+recommended one. Please see the following table for supported implicit conversions.
 
 
-| JAVA\ODPS  |TINYINT |SMALLINT|INT      |BIGINT    |FLOAT   |DOUBLE   |DECIMAL  |VARCHAR  |STRING   |DATETIME |TIMESTAMP|BOOLEAN  |
-| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-|    byte    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |         |         |         |         |
-|   short    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|    int     |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|    long    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|   float    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-|   double   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |
-| BigDecimal |        |        |         |          |        |         |    Y    |         |         |         |         |         |
-|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
-|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
-|    Date    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
-|    Time    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
-| Timestamp  |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |
-|  boolean   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |    Y    |
+| JAVA\ODPS  |TINYINT |SMALLINT|INT      |BIGINT    |FLOAT   |DOUBLE   |DECIMAL  |VARCHAR  |STRING   |DATETIME |TIMESTAMP|BOOLEAN  |BINARY   |
+| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
+|    byte    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |         |         |         |         |         |
+|   short    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|    int     |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|    long    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|   float    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+|   double   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
+| BigDecimal |        |        |         |          |        |         |    Y    |         |         |         |         |         |         |
+|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |         |
+|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
+|    Date    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
+|    Time    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
+| Timestamp  |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
+|  boolean   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |    Y    |         |
 
 ## MaxCompute Service Compatibility and Recommended JDBC version
 
@@ -289,9 +310,9 @@ Since Sprint27, MaxCompute tunnel service supported a feature named instance tun
 However, for users using MaxCompute deploy that is earlier than Sprint27 (especially Private Cloud cases), please stick to the latest version before 2.0.
 
 | MaxCompute | JDBC |
-| :--------: | :--: |
-| Public Service | 2.4 |
-| Non PRC Public Service | 2.4.1-oversea |
+| :--------: | :---: |
+| Public Service | latest |
+| Non PRC Public Service | latest |
 | <= Sprint27 | 1.9.2 |
 
 ## Authors && Contributors
