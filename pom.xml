@@ -109,6 +109,30 @@
           </descriptorRefs>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <inherited>false</inherited>
+        <configuration>
+          <tasks>
+            <junitreport todir="target/surefire-reports">
+              <fileset dir="target/surefire-reports">
+                <include name="**/*.xml"/>
+              </fileset>
+              <report format="noframes" todir="target/junit-report"/>
+            </junitreport>
+          </tasks>
+        </configuration>
+        <goals>
+          <goal>run</goal>
+        </goals>
+        <dependencies>
+          <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-junit</artifactId>
+            <version>1.6.2</version>
+          </dependency>
+        </dependencies>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
