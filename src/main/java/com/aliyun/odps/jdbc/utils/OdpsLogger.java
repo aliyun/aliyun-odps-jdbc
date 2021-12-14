@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 import com.aliyun.odps.jdbc.OdpsDriver;
 
 public class OdpsLogger {
-
   private static final String DEFAULT_OUTPUT_DIR = "/tmp";
   private static Map<String, FileHandler> pathToFileHandler = new ConcurrentHashMap<>();
 
