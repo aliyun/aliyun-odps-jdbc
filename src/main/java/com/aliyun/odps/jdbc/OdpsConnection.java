@@ -129,7 +129,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
     MDC.put("connectionId", connectionId);
 
-    log = new OdpsLogger(connectionId,
+    log = new OdpsLogger(this.getClass().getName(),
+                         connectionId,
                          null,
                          logConfFile,
                          false,

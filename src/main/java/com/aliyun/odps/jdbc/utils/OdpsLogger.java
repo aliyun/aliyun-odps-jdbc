@@ -34,6 +34,7 @@ public class OdpsLogger {
    * @param configFilePath   For sl4j logger, config file path
    */
   public OdpsLogger(String name,
+                    String connectionId,
                     String outputPath,
                     String configFilePath,
                     boolean toConsole,
@@ -52,7 +53,7 @@ public class OdpsLogger {
       odpsLogger.setLevel(Level.ALL);
       if (toConsole) {
         Handler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(new OdpsFormatter());
+        consoleHandler.setFormatter(new OdpsFormatter(connectionId));
         consoleHandler.setLevel(Level.ALL);
         odpsLogger.addHandler(consoleHandler);
       }
@@ -63,7 +64,7 @@ public class OdpsLogger {
         fileHandler = pathToFileHandler.get(outputPath);
       } else {
         fileHandler = new FileHandler(outputPath, true);
-        fileHandler.setFormatter(new OdpsFormatter());
+        fileHandler.setFormatter(new OdpsFormatter(connectionId));
         fileHandler.setLevel(Level.ALL);
         pathToFileHandler.put(outputPath, fileHandler);
       }
