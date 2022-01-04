@@ -40,6 +40,28 @@ import com.google.gson.JsonSerializer;
 
 
 public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
+  private static final String ZEROS = "000000000";
+
+  private static String formatTimestamp(java.sql.Timestamp value) {
+    if (value.getNanos() == 0) {
+      return DATETIME_FORMAT.get().format(value);
+    } else {
+      String nanosValueStr = Integer.toString(value.getNanos());
+      nanosValueStr = ZEROS.substring(0, (9 - nanosValueStr.length())) + nanosValueStr;
+
+      // Truncate trailing zeros
+      char[] nanosChar = new char[nanosValueStr.length()];
+      nanosValueStr.getChars(0, nanosValueStr.length(), nanosChar, 0);
+      int truncIndex = 8;
+      while (nanosChar[truncIndex] == '0') {
+        truncIndex--;
+      }
+      nanosValueStr = new String(nanosChar, 0, truncIndex + 1);
+
+      return
+          String.format("%s.%s", DATETIME_FORMAT.get().format(value), nanosValueStr);
+    }
+  }
 
   @Override
   public Object transform(
@@ -52,23 +74,25 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
       return null;
     }
 
-    // The argument cal should always be ignored since MaxCompute stores timezone information.
-    if (o instanceof byte[]) {
-      return encodeBytes((byte[]) o, charset);
-    } else if (java.util.Date.class.isInstance(o)) {
-      Builder calendarBuilder = new Calendar.Builder()
-          .setCalendarType("iso8601")
-          .setLenient(true);
-      if (timeZone != null) {
-        calendarBuilder.setTimeZone(timeZone);
-      }
-      Calendar calendar = calendarBuilder.build();
+    Builder calendarBuilder = new Calendar.Builder()
+        .setCalendarType("iso8601")
+        .setLenient(true);
+    if (timeZone != null) {
+      calendarBuilder.setTimeZone(timeZone);
+    }
+    Calendar calendar = calendarBuilder.build();
 
-      try {
+
+    // The argument cal should always be ignored since MaxCompute stores timezone information.
+    try {
+      if (o instanceof byte[]) {
+        return encodeBytes((byte[]) o, charset);
+      } else if (java.util.Date.class.isInstance(o)) {
+
         if (java.sql.Timestamp.class.isInstance(o)) {
           // MaxCompute TIMESTAMP
-          TIMESTAMP_FORMAT.get().setCalendar(calendar);
-          return TIMESTAMP_FORMAT.get().format(o);
+          DATETIME_FORMAT.get().setCalendar(calendar);
+          return formatTimestamp((java.sql.Timestamp) o);
         } else if (java.sql.Date.class.isInstance(o)) {
           // MaxCompute DATE
           DATE_FORMAT.get().setCalendar(calendar);
@@ -78,26 +102,28 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
           DATETIME_FORMAT.get().setCalendar(calendar);
           return DATETIME_FORMAT.get().format(o);
         }
-      } finally {
-        restoreToDefaultCalendar();
-      }
-    } else {
-      if (odpsType != null) {
-        switch (odpsType.getOdpsType()) {
-          case ARRAY:
-          case MAP: {
-            return GSON_FORMAT.get().toJson(o);
-          }
-          case STRUCT: {
-            return GSON_FORMAT.get().toJson(normalizeStruct(o));
-          }
-          default: {
-            return o.toString();
+      } else {
+        if (odpsType != null) {
+          DATETIME_FORMAT.get().setCalendar(calendar);
+
+          switch (odpsType.getOdpsType()) {
+            case ARRAY:
+            case MAP: {
+              return GSON_FORMAT.get().toJson(o);
+            }
+            case STRUCT: {
+              return GSON_FORMAT.get().toJson(normalizeStruct(o));
+            }
+            default: {
+              return o.toString();
+            }
           }
         }
-      }
 
-      return o.toString();
+        return o.toString();
+      }
+    } finally {
+      restoreToDefaultCalendar();
     }
   }
 
@@ -129,7 +155,7 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
       if (timestamp == null) {
         return null;
       }
-      return new JsonPrimitive(TIMESTAMP_FORMAT.get().format(timestamp));
+      return new JsonPrimitive(formatTimestamp(timestamp));
     };
 
     JsonSerializer<SimpleStruct> structSerializer = (struct, type, jsonSerializationContext) -> {
