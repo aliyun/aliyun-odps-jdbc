@@ -84,7 +84,7 @@ while (rs.next()) {
 
 
 ### Connection String Parameters
-The key and value can be encoded by using java.net.URLEncoder#encode(java.lang.String). 
+It is recommended that the key and value in URL should be encoded by using java.net.URLEncoder#encode(java.lang.String). 
 
 #### Basic
 
