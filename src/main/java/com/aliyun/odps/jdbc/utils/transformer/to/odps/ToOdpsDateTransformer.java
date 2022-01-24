@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc.utils.transformer.to.odps;
 import java.sql.SQLException;
 
 public class ToOdpsDateTransformer extends AbstractToOdpsTransformer {
+
   @Override
   public Object transform(Object o, String charset) throws SQLException {
     if (o == null) {

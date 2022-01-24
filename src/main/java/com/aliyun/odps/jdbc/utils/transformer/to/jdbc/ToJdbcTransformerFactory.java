@@ -37,13 +37,21 @@ public class ToJdbcTransformerFactory {
   private static final ToJdbcLongTransformer LONG_TRANSFORMER = new ToJdbcLongTransformer();
   private static final ToJdbcFloatTransformer FLOAT_TRANSFORMER = new ToJdbcFloatTransformer();
   private static final ToJdbcDoubleTransformer DOUBLE_TRANSFORMER = new ToJdbcDoubleTransformer();
-  private static final ToJdbcBigDecimalTransformer BIG_DECIMAL_TRANSFORMER = new ToJdbcBigDecimalTransformer();
+  private static final ToJdbcBigDecimalTransformer
+      BIG_DECIMAL_TRANSFORMER =
+      new ToJdbcBigDecimalTransformer();
   private static final ToJdbcStringTransformer STRING_TRANSFORMER = new ToJdbcStringTransformer();
-  private static final ToJdbcByteArrayTransformer BYTE_ARRAY_TRANSFORMER = new ToJdbcByteArrayTransformer();
+  private static final ToJdbcByteArrayTransformer
+      BYTE_ARRAY_TRANSFORMER =
+      new ToJdbcByteArrayTransformer();
   private static final ToJdbcDateTransformer DATE_TRANSFORMER = new ToJdbcDateTransformer();
   private static final ToJdbcTimeTransfomer TIME_TRANSFORMER = new ToJdbcTimeTransfomer();
-  private static final ToJdbcTimestampTransformer TIMESTAMP_TRANSFORMER = new ToJdbcTimestampTransformer();
-  private static final ToJdbcBooleanTransformer BOOLEAN_TRANSFORMER = new ToJdbcBooleanTransformer();
+  private static final ToJdbcTimestampTransformer
+      TIMESTAMP_TRANSFORMER =
+      new ToJdbcTimestampTransformer();
+  private static final ToJdbcBooleanTransformer
+      BOOLEAN_TRANSFORMER =
+      new ToJdbcBooleanTransformer();
 
   private static final Map<Class, AbstractToJdbcTransformer> JDBC_CLASS_TO_TRANSFORMER =
       new HashMap<Class, AbstractToJdbcTransformer>();

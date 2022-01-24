@@ -35,8 +35,8 @@ import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 /**
- * This class manage a global JDBC connection and multiple testing instances
- * can access it simultaneously. It will also close the connection automatically.
+ * This class manage a global JDBC connection and multiple testing instances can access it
+ * simultaneously. It will also close the connection automatically.
  */
 public class TestManager {
 
@@ -47,7 +47,7 @@ public class TestManager {
 
   private static final TestManager cf = new TestManager();
 
-  protected void finalize() throws Throwable{
+  protected void finalize() throws Throwable {
     if (sessionConn != null) {
       sessionConn.close();
     }
@@ -71,7 +71,11 @@ public class TestManager {
       String logview = odpsConfig.getProperty("logview_host");
       String enableLimit = odpsConfig.getProperty("enable_limit");
       String autoSelectLimit = odpsConfig.getProperty("auto_select_limit");
-      String url = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s", endpoint, project, loglevel, logview);
+      String
+          url =
+          String
+              .format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s", endpoint, project, loglevel,
+                      logview);
 
       // pass project name via url
       conn = DriverManager.getConnection(url, username, password);
@@ -87,9 +91,12 @@ public class TestManager {
       stmt.execute("set odps.compiler.output.format=lot,pot;");
 
       String serviceName = odpsConfig.getProperty("interactive_service_name");
-      String urlSession = String.format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s"
-                                        + "&enableLimit=%s&autoSelectLimit=%s",
-                                        endpoint, project, loglevel, logview, serviceName, enableLimit, autoSelectLimit);
+      String
+          urlSession =
+          String.format(
+              "jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s"
+              + "&enableLimit=%s&autoSelectLimit=%s",
+              endpoint, project, loglevel, logview, serviceName, enableLimit, autoSelectLimit);
 
       // pass project name via url
       sessionConn = DriverManager.getConnection(urlSession, username, password);

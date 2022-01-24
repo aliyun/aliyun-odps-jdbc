@@ -23,20 +23,33 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.aliyun.odps.*;
-import com.aliyun.odps.Instance.Status;
-import com.aliyun.odps.Instance.TaskStatus;
-import com.aliyun.odps.sqa.SQLExecutor;
 import org.apache.commons.lang.StringEscapeUtils;
 
+import com.aliyun.odps.Column;
+import com.aliyun.odps.Instance;
+import com.aliyun.odps.Instance.Status;
+import com.aliyun.odps.Instance.TaskStatus;
+import com.aliyun.odps.LogView;
+import com.aliyun.odps.Odps;
+import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.Partition;
+import com.aliyun.odps.PartitionSpec;
+import com.aliyun.odps.Table;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.task.SQLTask;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
@@ -51,11 +64,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    * TODO: Hack, remove later
    */
   private static Pattern DESC_TABLE_PATTERN = Pattern.compile(
-      "\\s*(DESCRIBE|DESC)\\s+([^;]+);?", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+      "\\s*(DESCRIBE|DESC)\\s+([^;]+);?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static Pattern SHOW_TABLES_PATTERN = Pattern.compile(
-      "\\s*SHOW\\s+TABLES\\s*;?", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+      "\\s*SHOW\\s+TABLES\\s*;?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static Pattern SHOW_PARTITIONS_PATTERN = Pattern.compile(
-      "\\s*SHOW\\s+PARTITIONS\\s+([^;]+);?", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+      "\\s*SHOW\\s+PARTITIONS\\s+([^;]+);?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   private static final Pattern TABLE_PARTITION_PATTERN = Pattern.compile(
       "\\s*([\\w\\.]+)(\\s*|(\\s+PARTITION\\s*\\((.*)\\)))\\s*", Pattern.CASE_INSENSITIVE);
@@ -94,27 +107,29 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       addColumnDesc(t.getSchema().getPartitionColumns(), rows);
 
       if (t.isPartitioned()) {
-        rows.add(new String[] {"", null, null});
-        rows.add(new String[] {"# Partition Information", null, null});
-        rows.add(new String[] {"# col_name", "data_type", "comment"});
-        rows.add(new String[] {"", null, null});
+        rows.add(new String[]{"", null, null});
+        rows.add(new String[]{"# Partition Information", null, null});
+        rows.add(new String[]{"# col_name", "data_type", "comment"});
+        rows.add(new String[]{"", null, null});
         addColumnDesc(t.getSchema().getPartitionColumns(), rows);
 
         if (parsedTablePartition[1] != null) {
           Partition partition = t.getPartition(new PartitionSpec(parsedTablePartition[1]));
           PartitionSpec spec = partition.getPartitionSpec();
-          rows.add(new String[] {"", null, null});
-          rows.add(new String[] {"# Detailed Partition Information", null, null});
+          rows.add(new String[]{"", null, null});
+          rows.add(new String[]{"# Detailed Partition Information", null, null});
           List<String> partitionValues = partition.getPartitionSpec().keys()
-                                                  .stream()
-                                                  .map(spec::get)
-                                                  .collect(Collectors.toList());
-          rows.add(new String[] {"Partition Value:", String.join(", ",partitionValues), null});
-          rows.add(new String[] {"Database:", connHandle.getOdps().getDefaultProject(), null});
-          rows.add(new String[] {"Table:", parsedTablePartition[0], null});
-          rows.add(new String[] {"CreateTime:", partition.getCreatedTime().toString(), null});
-          rows.add(new String[] {"LastDDLTime:", partition.getLastMetaModifiedTime().toString(), null});
-          rows.add(new String[] {"LastModifiedTime:", partition.getLastDataModifiedTime().toString(), null});
+              .stream()
+              .map(spec::get)
+              .collect(Collectors.toList());
+          rows.add(new String[]{"Partition Value:", String.join(", ", partitionValues), null});
+          rows.add(new String[]{"Database:", connHandle.getOdps().getDefaultProject(), null});
+          rows.add(new String[]{"Table:", parsedTablePartition[0], null});
+          rows.add(new String[]{"CreateTime:", partition.getCreatedTime().toString(), null});
+          rows.add(
+              new String[]{"LastDDLTime:", partition.getLastMetaModifiedTime().toString(), null});
+          rows.add(new String[]{"LastModifiedTime:", partition.getLastDataModifiedTime().toString(),
+                                null});
         }
       }
     } catch (Exception e) {
@@ -140,7 +155,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                   Collections.singletonList(TypeInfoFactory.STRING));
     List<Object[]> rows = new LinkedList<>();
     for (Table table : connHandle.getOdps().tables()) {
-      rows.add(new String[] {table.getName()});
+      rows.add(new String[]{table.getName()});
     }
     resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
   }
@@ -151,7 +166,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                   Collections.singletonList(TypeInfoFactory.STRING));
     List<Object[]> rows = new LinkedList<>();
     for (Partition partition : connHandle.getOdps().tables().get(table).getPartitions()) {
-      rows.add(new String[] {partition.getPartitionSpec().toString(false, true)});
+      rows.add(new String[]{partition.getPartitionSpec().toString(false, true)});
     }
 
     resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
@@ -178,6 +193,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private static final int POLLING_INTERVAL = 3000;
   private static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
   private static ResultSet EMPTY_RESULT_SET = null;
+
   static {
     try {
       OdpsResultSetMetaData meta =
@@ -355,7 +371,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // otherwise those properties is just for this query
 
     if (connHandle.runningInInteractiveMode()) {
-      throw new SQLFeatureNotSupportedException("executeUpdate() is not supported in session mode.");
+      throw new SQLFeatureNotSupportedException(
+          "executeUpdate() is not supported in session mode.");
     }
     checkClosed();
     beforeExecute();
@@ -439,7 +456,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   /**
-   *
    * @param sql sql statement
    * @return if the input sql statement is a query statement
    * @throws SQLException
@@ -612,22 +628,30 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         // Create a download session through tunnel
         try {
           try {
-            session =
-                tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                    executeInstance.getId());
+            session = tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                                   executeInstance.getId());
           } catch (TunnelException e1) {
             connHandle.log.error("create download session failed: " + e1.getMessage());
-            connHandle.log.error("fallback to limit mode");
-            session =
-                tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                    executeInstance.getId(), true);
+            connHandle.log.error("enableLimitFallback: " + connHandle.isAutoLimitFallback());
+            boolean isAuthDownloadFail = e1.getErrorCode().contains("NoPermission") &&
+                                         e1.getMessage().contains("odps:Download");
+            if (connHandle.isAutoLimitFallback() && isAuthDownloadFail) {
+              connHandle.log.error("fallback to limit mode");
+              session = tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                                     executeInstance.getId(), true);
+            } else {
+              connHandle.log.error("no fallback");
+              throw e1;
+            }
           }
 
           connHandle.log.debug("create download session id=" + session.getId());
           resultSet =
-              isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(session.getSchema().getColumns()), session,
+              isResultSetScrollable ? new OdpsScollResultSet(this, getResultMeta(
+                  session.getSchema().getColumns()), session,
                                                              OdpsScollResultSet.ResultMode.OFFLINE)
-                                    : new OdpsForwardResultSet(this, getResultMeta(session.getSchema().getColumns()), session, startTime);
+                                    : new OdpsForwardResultSet(this, getResultMeta(
+                                        session.getSchema().getColumns()), session, startTime);
         } catch (TunnelException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
@@ -653,22 +677,28 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 connHandle.getExecutor().getTaskName(),
                 connHandle.getExecutor().getSubqueryId(),
                 enableLimit);
-            OdpsResultSetMetaData meta = getResultMeta(sessionResultSet.getTableSchema().getColumns());
+            OdpsResultSetMetaData
+                meta =
+                getResultMeta(sessionResultSet.getTableSchema().getColumns());
             resultSet =
                 isResultSetScrollable ? new OdpsScollResultSet(this, meta, session,
                                                                OdpsScollResultSet.ResultMode.INTERACTIVE)
-                                      : new OdpsSessionForwardResultSet(this, meta, sessionResultSet, startTime);
+                                      : new OdpsSessionForwardResultSet(this, meta,
+                                                                        sessionResultSet,
+                                                                        startTime);
             sessionResultSet = null;
           } catch (TunnelException e) {
             connHandle.log.error("create download session for session failed: " + e.getMessage());
             e.printStackTrace();
             throw new SQLException("create session resultset failed: instance id="
-                                   + connHandle.getExecutor().getInstance().getId() + ", Error:" + e.getMessage(), e);
+                                   + connHandle.getExecutor().getInstance().getId() + ", Error:" + e
+                                       .getMessage(), e);
           } catch (IOException e) {
             connHandle.log.error("create download session for session failed: " + e.getMessage());
             e.printStackTrace();
             throw new SQLException("create session resultset failed: instance id="
-                                   + connHandle.getExecutor().getInstance().getId() + ", Error:" + e.getMessage(), e);
+                                   + connHandle.getExecutor().getInstance().getId() + ", Error:" + e
+                                       .getMessage(), e);
           }
         }
       }
@@ -706,7 +736,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public synchronized int getUpdateCount() throws SQLException {
     checkClosed();
-    if (updateCountFetched){
+    if (updateCountFetched) {
       return -1;
     }
     updateCountFetched = true;
@@ -802,7 +832,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   private void runSQLOffline(
       String sql,
-      Odps odps, Map<String,String> settings)
+      Odps odps, Map<String, String> settings)
       throws SQLException, OdpsException {
 
     long begin = System.currentTimeMillis();
@@ -833,7 +863,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     TaskStatus taskStatus = executeInstance.getTaskStatus().get(JDBC_SQL_TASK_NAME);
     if (taskStatus == null) {
       connHandle.log.warn("Failed to get task status. "
-                              + "The instance may have been killed before its task was created.");
+                          + "The instance may have been killed before its task was created.");
     } else {
       switch (taskStatus.getStatus()) {
         case SUCCESS:
@@ -869,7 +899,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       taskSummary = executeInstance.getTaskSummary(JDBC_SQL_TASK_NAME);
     } catch (OdpsException e) {
       // update count become uncertain here
-      connHandle.log.warn("Failed to get TaskSummary: instance_id=" + executeInstance.getId() + ", taskname=" + JDBC_SQL_TASK_NAME);
+      connHandle.log.warn(
+          "Failed to get TaskSummary: instance_id=" + executeInstance.getId() + ", taskname="
+          + JDBC_SQL_TASK_NAME);
     }
 
     if (taskSummary != null) {
@@ -881,7 +913,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     connHandle.log.debug("successfully updated " + updateCount + " records");
   }
 
-  private void runSQLInSession(String sql, Map<String,String> settings) throws SQLException, OdpsException {
+  private void runSQLInSession(String sql, Map<String, String> settings)
+      throws SQLException, OdpsException {
     long begin = System.currentTimeMillis();
     SQLExecutor executor = connHandle.getExecutor();
     if (queryTimeout != -1 && !settings.containsKey("odps.sql.session.query.timeout")) {
@@ -903,11 +936,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     } catch (IOException e) {
       connHandle.log.error("Run SQL failed", e);
       throw new SQLException("execute sql [" + sql + "] instance:["
-          + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
+                             + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
     } catch (OdpsException e) {
       connHandle.log.error("Run SQL failed", e);
       throw new SQLException("execute sql [" + sql + "] instance:["
-          + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
+                             + executor.getInstance().getId() + "] failed: " + e.getMessage(), e);
     }
     long end = System.currentTimeMillis();
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
@@ -929,7 +962,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
       Odps odps = connHandle.getOdps();
 
-      Map<String,String> settings = new HashMap<>();
+      Map<String, String> settings = new HashMap<>();
       for (String key : sqlTaskProperties.stringPropertyNames()) {
         settings.put(key, sqlTaskProperties.getProperty(key));
       }
@@ -958,7 +991,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return executeInstance;
   }
 
-  public static String getDefaultTaskName() { return JDBC_SQL_TASK_NAME; }
+  public static String getDefaultTaskName() {
+    return JDBC_SQL_TASK_NAME;
+  }
 
   public Properties getSqlTaskProperties() {
     return sqlTaskProperties;

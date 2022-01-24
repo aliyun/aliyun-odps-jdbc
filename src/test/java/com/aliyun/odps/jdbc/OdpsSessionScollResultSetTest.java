@@ -25,9 +25,9 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
@@ -40,7 +40,10 @@ public class OdpsSessionScollResultSetTest {
   private static Statement stmt;
   private static ResultSet rs;
   private static String INPUT_TABLE_NAME = "statement_test_table_input";
-  private static final String SQL = "set odps.sql.select.auto.limit=-1;set odps.sql.session.result.cache.enable=false;select * from " + INPUT_TABLE_NAME;
+  private static final String
+      SQL =
+      "set odps.sql.select.auto.limit=-1;set odps.sql.session.result.cache.enable=false;select * from "
+      + INPUT_TABLE_NAME;
   private static final int ROWS = 100000;
 
   @BeforeClass
@@ -52,7 +55,7 @@ public class OdpsSessionScollResultSetTest {
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
-    stmt.executeUpdate("create table if not exists "+ INPUT_TABLE_NAME +"(id bigint);");
+    stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
 
     TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
         TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
@@ -88,7 +91,7 @@ public class OdpsSessionScollResultSetTest {
 
   @Test
   public void testSetFetchDirection() throws Exception {
-    
+
     rs.setFetchDirection(ResultSet.FETCH_FORWARD);
     Assert.assertEquals(ResultSet.FETCH_FORWARD, rs.getFetchDirection());
 

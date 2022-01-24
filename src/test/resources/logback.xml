@@ -3,7 +3,8 @@
     <file>${HOME:-${USERPROFILE}}/logs/odps.log</file>
 
     <encoder>
-      <pattern>%date %level [%thread] %logger{10}  %X{connectionId} [%file:%line] %msg%n</pattern>
+      <pattern>%date %level [%thread] %logger{10} %X{connectionId} [%file:%line] %msg%n
+      </pattern>
     </encoder>
   </appender>
 
@@ -13,10 +14,10 @@
     </encoder>
   </appender>
 
-<logger name="com.aliyun.odps" level="debug"/>
+  <logger name="com.aliyun.odps" level="debug"/>
 
   <root level="debug">
-    <appender-ref ref="FILE" />
-    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

@@ -20,8 +20,9 @@
 
 package com.aliyun.odps.jdbc.utils.transformer.to.odps;
 
-import com.aliyun.odps.data.Varchar;
 import java.sql.SQLException;
+
+import com.aliyun.odps.data.Varchar;
 
 public class ToOdpsVarcharTransformer extends AbstractToOdpsTransformer {
 

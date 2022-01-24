@@ -20,12 +20,10 @@
 
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.data.Record;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+
+import com.aliyun.odps.data.Record;
 
 public class OdpsSessionForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -39,7 +37,8 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
   private long startTime;
 
 
-  OdpsSessionForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, com.aliyun.odps.data.ResultSet resultSet, long startTime)
+  OdpsSessionForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta,
+                              com.aliyun.odps.data.ResultSet resultSet, long startTime)
       throws SQLException {
     super(stmt.getConnection(), stmt, meta);
 

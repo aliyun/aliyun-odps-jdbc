@@ -32,7 +32,7 @@ public class ToOdpsStringTransformer extends AbstractToOdpsTransformer {
 
     if (String.class.isInstance(o)) {
       return o;
-    } else if(byte[].class.isInstance(o)) {
+    } else if (byte[].class.isInstance(o)) {
       return encodeBytes((byte[]) o, charset);
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), String.class);

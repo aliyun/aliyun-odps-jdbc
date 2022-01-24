@@ -28,7 +28,6 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
-import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -59,7 +58,8 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
   }
 
 
-  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session, long startTime)
+  OdpsForwardResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
+                       long startTime)
       throws SQLException {
     super(stmt.getConnection(), stmt, meta);
     this.sessionHandle = session;
@@ -134,7 +134,8 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         if (reuseRecord == null) {
           // this means the end of stream
           long end = System.currentTimeMillis();
-          conn.log.info("It took me " + (end - startTime) + " ms to fetch all records, count:" + fetchedRows);
+          conn.log.info(
+              "It took me " + (end - startTime) + " ms to fetch all records, count:" + fetchedRows);
           return false;
         }
         int columns = reuseRecord.getColumnCount();

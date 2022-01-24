@@ -1,24 +1,22 @@
 package com.aliyun.odps.jdbc;
 
-import com.aliyun.odps.jdbc.utils.OdpsLogger;
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.reflect.SourceLocation;
+
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 
 public aspect PublicMethodAspect {
-  pointcut Include() : execution(public * com.aliyun.odps.jdbc.Odps*.*(..));
+  pointcut Include(): execution(public * com.aliyun.odps.jdbc.Odps*.*(..));
 
   private OdpsLogger logger;
+
   public PublicMethodAspect() throws IOException, URISyntaxException {
-    logger = new OdpsLogger(getClass().getName(), null, null, false, false);
+    logger = new OdpsLogger(getClass().getName(), null, null, null, false, false);
   }
 
-  before() : Include() {
+  before(): Include() {
     int lineNumber = getCurrentLineNumber(thisJoinPoint);
     String classname = getCurrentClassname(thisJoinPoint);
     String methodName = getCurrentMethodName(thisJoinPoint);
@@ -28,7 +26,7 @@ public aspect PublicMethodAspect {
     logger.debug(msg);
   }
 
-  after() returning(Object ret) : Include() {
+  after() returning(Object ret): Include() {
     int lineNumber = getCurrentLineNumber(thisJoinPoint);
     String classname = getCurrentClassname(thisJoinPoint);
     String methodName = getCurrentMethodName(thisJoinPoint);
@@ -37,7 +35,7 @@ public aspect PublicMethodAspect {
     logger.debug(msg);
   }
 
-  after() throwing(Exception e) : Include() {
+  after() throwing(Exception e): Include() {
     logger.error("exception happened: ", e);
   }
 
@@ -74,9 +72,9 @@ public aspect PublicMethodAspect {
     StringBuilder sb = new StringBuilder();
     if (o instanceof Object[]) {
       sb.append("[");
-      int l = ((Object[])o).length;
+      int l = ((Object[]) o).length;
       for (int i = 0; i < l; i++) {
-        Object oi = ((Object[])o)[i];
+        Object oi = ((Object[]) o)[i];
         sb.append(formatObject(oi));
         if (i != l - 1) {
           sb.append(", ");

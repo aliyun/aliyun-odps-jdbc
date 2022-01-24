@@ -20,10 +20,11 @@
 
 package com.aliyun.odps.jdbc.utils.transformer.to.odps;
 
-import com.aliyun.odps.OdpsType;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.aliyun.odps.OdpsType;
 
 public class ToOdpsTransformerFactory {
 
@@ -40,12 +41,15 @@ public class ToOdpsTransformerFactory {
   private static ToOdpsVarcharTransformer VARCHAR_TRANSFORMER = new ToOdpsVarcharTransformer();
   private static ToOdpsStringTransformer STRING_TRANSFORMER = new ToOdpsStringTransformer();
   private static ToOdpsDatetimeTransformer DATETIME_TRANSFORMER = new ToOdpsDatetimeTransformer();
-  private static ToOdpsTimeStampTransformer TIMESTAMP_TRANSFORMER = new ToOdpsTimeStampTransformer();
+  private static ToOdpsTimeStampTransformer
+      TIMESTAMP_TRANSFORMER =
+      new ToOdpsTimeStampTransformer();
   private static ToOdpsDateTransformer DATE_TRANSFORMER = new ToOdpsDateTransformer();
   private static ToOdpsBooleanTransformer BOOLEAN_TRANSFORMER = new ToOdpsBooleanTransformer();
 
   private static final Map<OdpsType, AbstractToOdpsTransformer> ODPS_TYPE_TO_TRANSFORMER =
       new HashMap<>();
+
   static {
     ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.TINYINT, TINYINT_TRANSFORMER);
     ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.SMALLINT, SMALLINT_TRANSFORMER);

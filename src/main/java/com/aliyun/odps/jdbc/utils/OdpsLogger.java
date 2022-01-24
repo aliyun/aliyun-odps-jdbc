@@ -27,11 +27,11 @@ public class OdpsLogger {
   /**
    * Constructor
    *
-   * @param name For both odps and sl4j logger, name of the logger
-   * @param outputPath For odps logger, output path for file handler
-   * @param toConsole For odps logger, output to console or not
+   * @param name             For both odps and sl4j logger, name of the logger
+   * @param outputPath       For odps logger, output path for file handler
+   * @param toConsole        For odps logger, output to console or not
    * @param enableOdpsLogger For odps logger, enable or not
-   * @param configFilePath For sl4j logger, config file path
+   * @param configFilePath   For sl4j logger, config file path
    */
   public OdpsLogger(String name,
                     String connectionId,
@@ -128,7 +128,7 @@ public class OdpsLogger {
     String outputPath;
     try {
       outputPath = new File(OdpsDriver.class.getProtectionDomain().getCodeSource()
-          .getLocation().toURI()).getParent();
+                                .getLocation().toURI()).getParent();
     } catch (Exception e) {
       outputPath = DEFAULT_OUTPUT_DIR;
     }

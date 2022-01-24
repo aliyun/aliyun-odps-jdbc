@@ -187,8 +187,7 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
   /**
    * Used by other classes for querying the index from column name
    *
-   * @param name
-   *     column name
+   * @param name column name
    * @return column index
    */
   public int getColumnIndex(String name) {

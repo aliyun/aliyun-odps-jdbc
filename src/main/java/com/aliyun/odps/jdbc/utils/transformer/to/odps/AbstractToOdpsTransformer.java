@@ -34,6 +34,7 @@ public abstract class AbstractToOdpsTransformer {
 
   /**
    * Transform JDBC object to ODPS SDK object
+   *
    * @param o JDBC object
    * @return ODPS SDK object
    * @throws SQLException
