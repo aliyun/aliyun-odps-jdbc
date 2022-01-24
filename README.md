@@ -109,6 +109,7 @@ while (rs.next()) {
 | `instanceTunnelMaxRecord` | `instance_tunnel_max_record` | False | -1 (unlimited) | For MCQA, max number of records within a result set, enableLimit option should set to false |
 | `instanceTunnelMaxSize`| `instance_tunnel_max_size` | False | -1 (unlimited) | For MCQA, max size of a result set in byte |
 | `enableLimit`| `enable_limit` | False | true(limited) | For MCQA, download permission won't be checked if enableLimit is set true, but your result record count will be limited to 10000 |
+| `autoLimitFallback`| `auto_limit_fallback` | False | False(no auto fallback) | For non-MCQA mode, result record count will be limited to 10000 when no download permission exception happened and autoLimitFallback is set to true |
 
 ## Example
 

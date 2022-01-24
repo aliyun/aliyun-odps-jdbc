@@ -628,15 +628,21 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         // Create a download session through tunnel
         try {
           try {
-            session =
-                tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                                             executeInstance.getId());
+            session = tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                                   executeInstance.getId());
           } catch (TunnelException e1) {
             connHandle.log.error("create download session failed: " + e1.getMessage());
-            connHandle.log.error("fallback to limit mode");
-            session =
-                tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
-                                             executeInstance.getId(), true);
+            connHandle.log.error("enableLimitFallback: " + connHandle.isAutoLimitFallback());
+            boolean isAuthDownloadFail = e1.getErrorCode().contains("NoPermission") &&
+                                         e1.getMessage().contains("odps:Download");
+            if (connHandle.isAutoLimitFallback() && isAuthDownloadFail) {
+              connHandle.log.error("fallback to limit mode");
+              session = tunnel.createDownloadSession(connHandle.getOdps().getDefaultProject(),
+                                                     executeInstance.getId(), true);
+            } else {
+              connHandle.log.error("no fallback");
+              throw e1;
+            }
           }
 
           connHandle.log.debug("create download session id=" + session.getId());
