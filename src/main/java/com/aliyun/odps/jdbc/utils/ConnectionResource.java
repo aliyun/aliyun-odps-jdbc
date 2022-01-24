@@ -75,6 +75,7 @@ public class ConnectionResource {
   private static final String DISABLE_CONN_SETTING_URL_KEY = "disableConnectionSetting";
   private static final String USE_PROJECT_TIME_ZONE_URL_KEY = "useProjectTimeZone";
   private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
+  private static final String ENABLE_LIMIT_FALLBACK_URL_KEY = "enableLimitFallback";
   private static final String SETTINGS_URL_KEY = "settings";
 
   /**
@@ -112,6 +113,7 @@ public class ConnectionResource {
   private static final String DISABLE_CONN_SETTING_PROP_KEY = "disable_connection_setting";
   private static final String USE_PROJECT_TIME_ZONE_PROP_KEY = "use_project_time_zone";
   private static final String ENABLE_LIMIT_PROP_KEY = "enable_limit";
+  private static final String ENABLE_FALLBACK_PROP_KEY = "enable_limit_fallback";
   private static final String SETTINGS_PROP_KEY = "settings";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
@@ -142,6 +144,7 @@ public class ConnectionResource {
   private boolean disableConnSetting = false;
   private boolean useProjectTimeZone = false;
   private boolean enableLimit = false;
+  private boolean enableLimitFallback = false;
   private Map<String, String> settings = new HashMap<>();
 
   public static boolean acceptURL(String url) {
@@ -284,20 +287,20 @@ public class ConnectionResource {
       sizeLimit = null;
     }
 
-    disableConnSetting = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_CONN_SETTING_PROP_KEY,
-                                                 DISABLE_CONN_SETTING_URL_KEY)
+    disableConnSetting = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "false", DISABLE_CONN_SETTING_PROP_KEY, DISABLE_CONN_SETTING_URL_KEY)
     );
 
-    useProjectTimeZone = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY,
-                                                 USE_PROJECT_TIME_ZONE_URL_KEY)
+    useProjectTimeZone = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY, USE_PROJECT_TIME_ZONE_URL_KEY)
     );
 
-    enableLimit = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", ENABLE_LIMIT_PROP_KEY,
-                                                 ENABLE_LIMIT_URL_KEY)
+    enableLimit = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
     );
+
+    enableLimitFallback = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "false", ENABLE_FALLBACK_PROP_KEY, ENABLE_LIMIT_FALLBACK_URL_KEY));
 
     // The option 'tableList' accepts table names in pattern:
     //   <project name>.<table name>(,<project name>.<table name>)*
@@ -464,6 +467,10 @@ public class ConnectionResource {
 
   public boolean isEnableLimit() {
     return enableLimit;
+  }
+
+  public boolean isEnableLimitFallback() {
+    return enableLimitFallback;
   }
 
   public Map<String, String> getSettings() {

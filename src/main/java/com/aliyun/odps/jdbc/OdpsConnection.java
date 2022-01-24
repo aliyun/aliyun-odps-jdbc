@@ -107,6 +107,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean enableLimit = false;
 
+  private boolean enableLimitFallback = false;
+
   private SQLExecutor executor = null;
 
   private String executeProject = null;
@@ -171,6 +173,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.disableConnSetting = connRes.isDisableConnSetting();
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
     this.enableLimit = connRes.isEnableLimit();
+    this.enableLimitFallback = connRes.isEnableLimitFallback();
 
     try {
       long startTime = System.currentTimeMillis();
@@ -696,6 +699,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean enableLimit() {
     return enableLimit;
+  }
+
+  public boolean enableLimitFallback() {
+    return enableLimitFallback;
   }
 
   public void setEnableLimit(boolean enableLimit) {
