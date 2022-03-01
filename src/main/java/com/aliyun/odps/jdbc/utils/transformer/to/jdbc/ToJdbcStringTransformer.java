@@ -74,20 +74,20 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
       return null;
     }
 
-    Builder calendarBuilder = new Calendar.Builder()
-        .setCalendarType("iso8601")
-        .setLenient(true);
-    if (timeZone != null) {
-      calendarBuilder.setTimeZone(timeZone);
+    if (o instanceof byte[]) {
+      return encodeBytes((byte[]) o, charset);
     }
-    Calendar calendar = calendarBuilder.build();
-
 
     // The argument cal should always be ignored since MaxCompute stores timezone information.
     try {
-      if (o instanceof byte[]) {
-        return encodeBytes((byte[]) o, charset);
-      } else if (java.util.Date.class.isInstance(o)) {
+      if (java.util.Date.class.isInstance(o)) {
+        Builder calendarBuilder = new Calendar.Builder()
+            .setCalendarType("iso8601")
+            .setLenient(true);
+        if (timeZone != null) {
+          calendarBuilder.setTimeZone(timeZone);
+        }
+        Calendar calendar = calendarBuilder.build();
 
         if (java.sql.Timestamp.class.isInstance(o)) {
           // MaxCompute TIMESTAMP
@@ -104,6 +104,13 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
         }
       } else {
         if (odpsType != null) {
+          Builder calendarBuilder = new Calendar.Builder()
+              .setCalendarType("iso8601")
+              .setLenient(true);
+          if (timeZone != null) {
+            calendarBuilder.setTimeZone(timeZone);
+          }
+          Calendar calendar = calendarBuilder.build();
           DATETIME_FORMAT.get().setCalendar(calendar);
 
           switch (odpsType.getOdpsType()) {
