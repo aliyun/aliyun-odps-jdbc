@@ -78,7 +78,7 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
       return encodeBytes((byte[]) o, charset);
     }
 
-      // The argument cal should always be ignored since MaxCompute stores timezone information.
+    // The argument cal should always be ignored since MaxCompute stores timezone information.
     try {
       if (java.util.Date.class.isInstance(o)) {
         Builder calendarBuilder = new Calendar.Builder()

@@ -13,11 +13,16 @@
       <maxFileSize>100MB</maxFileSize>
     </rollingPolicy>
   </appender>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="com.aliyun.odps" level="debug"/>
 
-  <logger name="com.aliyun.odps" level="info"/>
-
-  <root level="info">
+  <root level="debug">
     <appender-ref ref="FILE" />
+    <appender-ref ref="STDOUT" />
   </root>
 </configuration>
 
