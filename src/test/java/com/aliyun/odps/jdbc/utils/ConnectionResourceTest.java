@@ -75,6 +75,7 @@ public class ConnectionResourceTest {
     info.put("charset", "setset");
     info.put("lifecycle", "5");
     info.put("log_level", "FATAL");
+    info.put("settings", "{\"enable_limit\":\"True\"}");
     info.put("read_timeout", "20");
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", info);
@@ -134,17 +135,17 @@ public class ConnectionResourceTest {
     Assert.assertEquals(false, resource.isInteractiveMode());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
     Assert.assertEquals("default1", resource.getMajorVersion());
-    Map<String, List<String>> tables = resource.getTables();
+    Map<String, Map<String, List<String>>> tables = resource.getTables();
     Assert.assertEquals(2, tables.size());
     Assert.assertTrue(tables.containsKey("project1"));
     Assert.assertEquals(2, tables.get("project1").size());
-    Assert.assertTrue(tables.get("project1").contains("table1"));
-    Assert.assertTrue(tables.get("project1").contains("table2"));
+    Assert.assertTrue(tables.get("project1").get("project1").contains("table1"));
+    Assert.assertTrue(tables.get("project1").get("project1").contains("table2"));
     Assert.assertTrue(tables.containsKey("project2"));
     Assert.assertEquals(3, tables.get("project2").size());
-    Assert.assertTrue(tables.get("project2").contains("table1"));
-    Assert.assertTrue(tables.get("project2").contains("table2"));
-    Assert.assertTrue(tables.get("project2").contains("table3"));
+    Assert.assertTrue(tables.get("project2").get("project2").contains("table1"));
+    Assert.assertTrue(tables.get("project2").get("project2").contains("table2"));
+    Assert.assertTrue(tables.get("project2").get("project2").contains("table3"));
     Assert.assertEquals("21", resource.getReadTimeout());
   }
 
@@ -171,17 +172,17 @@ public class ConnectionResourceTest {
     Assert.assertEquals(logConfigFile, resource.getLogConfFile());
     Assert.assertEquals("http://abc.com:8080", resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-    Map<String, List<String>> tables = resource.getTables();
-    Assert.assertEquals(2, tables.size());
-    Assert.assertTrue(tables.containsKey("project1"));
-    Assert.assertEquals(2, tables.get("project1").size());
-    Assert.assertTrue(tables.get("project1").contains("table1"));
-    Assert.assertTrue(tables.get("project1").contains("table2"));
-    Assert.assertTrue(tables.containsKey("project2"));
-    Assert.assertEquals(3, tables.get("project2").size());
-    Assert.assertTrue(tables.get("project2").contains("table1"));
-    Assert.assertTrue(tables.get("project2").contains("table2"));
-    Assert.assertTrue(tables.get("project2").contains("table3"));
+    // Map<String, List<String>> tables = resource.getTables();
+    // Assert.assertEquals(2, tables.size());
+    // Assert.assertTrue(tables.containsKey("project1"));
+    // Assert.assertEquals(2, tables.get("project1").size());
+    // Assert.assertTrue(tables.get("project1").contains("table1"));
+    // Assert.assertTrue(tables.get("project1").contains("table2"));
+    // Assert.assertTrue(tables.containsKey("project2"));
+    // Assert.assertEquals(3, tables.get("project2").size());
+    // Assert.assertTrue(tables.get("project2").contains("table1"));
+    // Assert.assertTrue(tables.get("project2").contains("table2"));
+    // Assert.assertTrue(tables.get("project2").contains("table3"));
     Properties info = new Properties();
     info.load(new FileInputStream(odpsConfigFile));
     resource = new ConnectionResource(url2, info);
@@ -195,16 +196,36 @@ public class ConnectionResourceTest {
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
     Assert.assertEquals("default1", resource.getMajorVersion());
+    // tables = resource.getTables();
+    // Assert.assertEquals(2, tables.size());
+    // Assert.assertTrue(tables.containsKey("project1"));
+    // Assert.assertEquals(2, tables.get("project1").size());
+    // Assert.assertTrue(tables.get("project1").contains("table1"));
+    // Assert.assertTrue(tables.get("project1").contains("table2"));
+    // Assert.assertTrue(tables.containsKey("project2"));
+    // Assert.assertEquals(3, tables.get("project2").size());
+    // Assert.assertTrue(tables.get("project2").contains("table1"));
+    // Assert.assertTrue(tables.get("project2").contains("table2"));
+    // Assert.assertTrue(tables.get("project2").contains("table3"));
+  }
+
+  @Test
+  public void testTables() throws IOException {
+    String url1 =
+        "jdbc:odps:http://1.1.1.1:8100/api?project=p1&accessId=123&accessKey=234%3D"
+        + "&logConfFile=/Users/emerson/logback.xml";
+    String url2 = url1 + "&tableList=project1.table1,project1.table2,project2.table1,project2.table2,project2.table3";
+    ConnectionResource resource = new ConnectionResource(url2, null);
+    Map<String, Map<String, List<String>>> tables = resource.getTables();
+    Assert.assertTrue(tables.get("project1").get(null).contains("table1"));
+    Assert.assertEquals(2, tables.get("project1").get(null).size());
+
+    String url3 = url1 + "&tableList=p1.s1.t1,p1.s1.t2,p2.s2.t1,p2.s2.t2,p2.s2.t3"
+                  + "&odpsNamespaceSchema=true&schema=s1";
+    resource = new ConnectionResource(url3, null);
     tables = resource.getTables();
-    Assert.assertEquals(2, tables.size());
-    Assert.assertTrue(tables.containsKey("project1"));
-    Assert.assertEquals(2, tables.get("project1").size());
-    Assert.assertTrue(tables.get("project1").contains("table1"));
-    Assert.assertTrue(tables.get("project1").contains("table2"));
-    Assert.assertTrue(tables.containsKey("project2"));
-    Assert.assertEquals(3, tables.get("project2").size());
-    Assert.assertTrue(tables.get("project2").contains("table1"));
-    Assert.assertTrue(tables.get("project2").contains("table2"));
-    Assert.assertTrue(tables.get("project2").contains("table3"));
+    Assert.assertTrue(tables.get("p1").get("s1").contains("t2"));
+    Assert.assertEquals(3, tables.get("p2").get("s2").size());
+
   }
 }

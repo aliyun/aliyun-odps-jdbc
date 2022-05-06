@@ -47,6 +47,7 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Partition;
 import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.Table;
+import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.SQLExecutor;
@@ -65,8 +66,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    */
   private static Pattern DESC_TABLE_PATTERN = Pattern.compile(
       "\\s*(DESCRIBE|DESC)\\s+([^;]+);?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static Pattern DESC_SCHEMA_PATTERN = Pattern.compile(
+      "\\s*(DESCRIBE|DESC)\\s+SCHEMA([^;]+);?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static Pattern SHOW_TABLES_PATTERN = Pattern.compile(
       "\\s*SHOW\\s+TABLES\\s*;?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static Pattern SHOW_SCHEMAS_PATTERN = Pattern.compile(
+      "\\s*SHOW\\s+SCHEMAS\\s*;?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static Pattern SHOW_PARTITIONS_PATTERN = Pattern.compile(
       "\\s*SHOW\\s+PARTITIONS\\s+([^;]+);?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
@@ -88,6 +93,26 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     return ret;
+  }
+
+  private void descSchema(String sql) throws SQLException {
+    try {
+      sql = sql.trim();
+      if (!sql.endsWith(";")) {
+        sql += ";";
+      }
+      Instance i = SQLTask.run(connHandle.getOdps(), sql);
+      i.waitForSuccess();
+      List<Instance.InstanceResultModel.TaskResult> results = i.getRawTaskResults();
+
+      OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+          Collections.singletonList("schema_desc"), Collections.singletonList(TypeInfoFactory.STRING));
+      List<Object[]> rows = new LinkedList<>();
+      rows.add(new String[]{results.get(0).getResult().getString()});
+      resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
   }
 
   private void descTablePartition(String tablePartition) throws SQLException {
@@ -147,6 +172,22 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       row[2] = c.getComment();
       rows.add(row);
     }
+  }
+
+  private void showSchemas(String sql) throws SQLException {
+    sql = sql.trim();
+    if (!sql.endsWith(";")) {
+      sql += ";";
+    }
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Collections.singletonList("schema_name"),
+        Collections.singletonList(TypeInfoFactory.STRING));
+    List<String> schemas = Utils.getSchemaList(connHandle.getOdps(), sql);
+    List<Object[]> rows = new LinkedList<>();
+    for (String s: schemas) {
+      rows.add(new String[]{s});
+    }
+    resultSet = new OdpsStaticResultSet(connHandle, meta, rows.iterator());
   }
 
   private void showTables() throws SQLException {
@@ -322,12 +363,20 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Properties properties = new Properties();
 
     // TODO: hack, remove later
+    Matcher descSchemaMatcher = DESC_SCHEMA_PATTERN.matcher(sql);
     Matcher descTablePatternMatcher = DESC_TABLE_PATTERN.matcher(sql);
+    Matcher showSchemasPatternMatcher = SHOW_SCHEMAS_PATTERN.matcher(sql);
     Matcher showTablesPatternMatcher = SHOW_TABLES_PATTERN.matcher(sql);
     Matcher showPartitionsPatternMatcher = SHOW_PARTITIONS_PATTERN.matcher(sql);
 
-    if (descTablePatternMatcher.matches()) {
+    if (descSchemaMatcher.matches()) {
+      descSchema(sql);
+      return getResultSet();
+    } else if (descTablePatternMatcher.matches()) {
       descTablePartition(descTablePatternMatcher.group(2));
+      return getResultSet();
+    } else if (showSchemasPatternMatcher.matches()) {
+      showSchemas(sql);
       return getResultSet();
     } else if (showTablesPatternMatcher.matches()) {
       showTables();
@@ -408,12 +457,20 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Properties properties = new Properties();
 
     // TODO: hack, remove later
+    Matcher descSchemaMatcher = DESC_SCHEMA_PATTERN.matcher(sql);
     Matcher descTablePatternMatcher = DESC_TABLE_PATTERN.matcher(sql);
+    Matcher showSchemasPatternMatcher = SHOW_SCHEMAS_PATTERN.matcher(sql);
     Matcher showTablesPatternMatcher = SHOW_TABLES_PATTERN.matcher(sql);
     Matcher showPartitionsPatternMatcher = SHOW_PARTITIONS_PATTERN.matcher(sql);
 
-    if (descTablePatternMatcher.matches()) {
+    if (descSchemaMatcher.matches()) {
+      descSchema(sql);
+      return true;
+    } else if (descTablePatternMatcher.matches()) {
       descTablePartition(descTablePatternMatcher.group(2));
+      return true;
+    } else if (showSchemasPatternMatcher.matches()) {
+      showSchemas(sql);
       return true;
     } else if (showTablesPatternMatcher.matches()) {
       showTables();

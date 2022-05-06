@@ -49,6 +49,9 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
+import com.aliyun.odps.internal.Tenant;
+import com.aliyun.odps.internal.Tenants;
+import com.aliyun.odps.jdbc.utils.CatalogSchema;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
@@ -95,7 +98,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private Long autoSelectLimit = null;
-  private Map<String, List<String>> tables;
+  private Map<String, Map<String, List<String>>> tables;
   //Unit: result record row count, only applied in interactive mode
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
@@ -117,6 +120,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String executeProject = null;
 
+  private CatalogSchema catalogSchema = null;
+
+  public boolean isOdpsNamespaceSchema() {
+    return odpsNamespaceSchema;
+  }
+
+  private boolean odpsNamespaceSchema = false;
+
   private int readTimeout = -1;
   private int connectTimeout = -1;
 
@@ -127,6 +138,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String accessKey = connRes.getAccessKey();
     String charset = connRes.getCharset();
     String project = connRes.getProject();
+    String schema = connRes.getSchema();
     String endpoint = connRes.getEndpoint();
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
@@ -161,7 +173,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
-    log.info(String.format("endpoint=%s, project=%s", endpoint, project));
+    log.info(String.format("endpoint=%s, project=%s, schema=%s", endpoint, project, schema));
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
@@ -174,6 +186,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
+    odps.setCurrentSchema(schema);
     odps.setUserAgent("odps-jdbc-" + version);
 
     if (readTimeout > 0) {
@@ -207,6 +220,20 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.enableLimit = connRes.isEnableLimit();
     this.fallbackQuota = connRes.getFallbackQuota();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
+
+    if (connRes.isOdpsNamespaceSchema() == null) {
+      try {
+        Tenants tenants = new Tenants(odps);
+        Tenant tenant = tenants.getDefaultTenant();
+        this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty("odps.namespace.schema"));
+      } catch (OdpsException e) {
+        e.printStackTrace();
+        log.warn("Failed to get tenant odps.namespace.schema, use default value: false");
+      }
+    } else {
+      this.odpsNamespaceSchema = connRes.isOdpsNamespaceSchema();
+    }
+    this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     try {
       long startTime = System.currentTimeMillis();
@@ -439,12 +466,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    */
   @Override
   public void setCatalog(String catalog) throws SQLException {
-
+    catalogSchema.setCatalog(catalog);
   }
 
   @Override
   public String getCatalog() throws SQLException {
-    return null;
+    return catalogSchema.getCatalog();
   }
 
   @Override
@@ -630,13 +657,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public void setSchema(String schema) throws SQLException {
     checkClosed();
-    odps.setDefaultProject(schema);
+    catalogSchema.setSchema(schema);
   }
 
   @Override
   public String getSchema() throws SQLException {
     checkClosed();
-    return odps.getDefaultProject();
+    return catalogSchema.getSchema();
   }
 
   @Override
@@ -708,7 +735,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return interactiveMode;
   }
 
-  public Map<String, List<String>> getTables() {
+  public Map<String, Map<String, List<String>>> getTables() {
     return tables;
   }
 
