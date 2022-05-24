@@ -889,6 +889,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     convertTablesToRows(types, rows, tables);
   }
 
+
   private void convertTablesToRows(String[] types, List<Object[]> rows, List<Table> tables) {
     for (Table t : tables) {
       String tableType = t.isVirtualView() ? TABLE_TYPE_VIEW : TABLE_TYPE_TABLE;
