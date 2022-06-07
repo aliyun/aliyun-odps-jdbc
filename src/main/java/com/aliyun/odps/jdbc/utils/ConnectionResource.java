@@ -300,6 +300,11 @@ public class ConnectionResource {
         maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
     );
 
+    // cancel enableLimit hint if autoSelectLimit turns on
+    if (autoSelectLimit > 0) {
+      enableLimit = false;
+    }
+
     autoLimitFallback = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, "false", AUTO_FALLBACK_PROP_KEY, AUTO_LIMIT_FALLBACK_URL_KEY));
 
