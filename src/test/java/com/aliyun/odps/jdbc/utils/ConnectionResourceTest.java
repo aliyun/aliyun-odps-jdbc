@@ -44,6 +44,8 @@ public class ConnectionResourceTest {
     Assert.assertEquals(null, cr.getAccessKey());
     Assert.assertEquals(null, cr.getLogview());
     Assert.assertEquals("UTF-8", cr.getCharset());
+    Assert.assertEquals("-1", cr.getConnectTimeout());
+    Assert.assertEquals("-1", cr.getReadTimeout());
   }
 
   @Test
@@ -52,13 +54,15 @@ public class ConnectionResourceTest {
     ConnectionResource
         cr =
         new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL", null);
+                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL&readTimeout=20&connectTimeout=30", null);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("idid", cr.getAccessId());
     Assert.assertEquals("keykey", cr.getAccessKey());
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
+    Assert.assertEquals("20", cr.getReadTimeout());
+    Assert.assertEquals("30", cr.getConnectTimeout());
   }
 
   @Test
@@ -71,6 +75,7 @@ public class ConnectionResourceTest {
     info.put("charset", "setset");
     info.put("lifecycle", "5");
     info.put("log_level", "FATAL");
+    info.put("read_timeout", "20");
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", info);
 
@@ -80,6 +85,7 @@ public class ConnectionResourceTest {
     Assert.assertEquals("keykey", cr.getAccessKey());
     Assert.assertEquals("loglog", cr.getLogview());
     Assert.assertEquals("setset", cr.getCharset());
+    Assert.assertEquals("20", cr.getReadTimeout());
   }
 
   @Test
@@ -92,17 +98,20 @@ public class ConnectionResourceTest {
     info.put("charset", "set");
     info.put("lifecycle", "100");
     info.put("log_level", "FATAL");
+    info.put("connect_timeout", "300");
 
     ConnectionResource
         cr =
         new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
-                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO", info);
+                               + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO&readTimeout=20&connectTimeout=30", info);
     Assert.assertEquals("haha", cr.getEndpoint());
     Assert.assertEquals("xixi", cr.getProject());
     Assert.assertEquals("id", cr.getAccessId());
     Assert.assertEquals("key", cr.getAccessKey());
     Assert.assertEquals("log", cr.getLogview());
     Assert.assertEquals("set", cr.getCharset());
+    Assert.assertEquals("20", cr.getReadTimeout());
+    Assert.assertEquals("300", cr.getConnectTimeout());
   }
 
   @Test
@@ -136,6 +145,7 @@ public class ConnectionResourceTest {
     Assert.assertTrue(tables.get("project2").contains("table1"));
     Assert.assertTrue(tables.get("project2").contains("table2"));
     Assert.assertTrue(tables.get("project2").contains("table3"));
+    Assert.assertEquals("21", resource.getReadTimeout());
   }
 
   @Test

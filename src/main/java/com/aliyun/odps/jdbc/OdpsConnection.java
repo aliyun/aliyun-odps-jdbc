@@ -113,6 +113,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String executeProject = null;
 
+  private int readTimeout = -1;
+  private int connectTimeout = -1;
+
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -130,6 +133,20 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
     MDC.put("connectionId", connectionId);
+
+    int readTimeout;
+    try {
+      readTimeout = Integer.parseInt(connRes.getReadTimeout());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("read-timeout is expected to be an integer");
+    }
+
+    int connectTimeout;
+    try {
+      connectTimeout = Integer.parseInt(connRes.getConnectTimeout());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("connect-timeout is expected to be an integer");
+    }
 
     log = new OdpsLogger(this.getClass().getName(),
                          connectionId,
@@ -154,6 +171,16 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
     odps.setUserAgent("odps-jdbc-" + version);
+
+    if (readTimeout > 0) {
+      this.readTimeout = readTimeout;
+      odps.getRestClient().setReadTimeout(this.readTimeout);
+    }
+
+    if (connectTimeout > 0) {
+      this.connectTimeout = connectTimeout;
+      odps.getRestClient().setConnectTimeout(this.connectTimeout);
+    }
 
     this.info = info;
     this.charset = charset;
@@ -707,5 +734,37 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public void setEnableLimit(boolean enableLimit) {
     this.enableLimit = enableLimit;
+  }
+
+  public int getReadTimeout() {
+    if (readTimeout == -1) {
+      return odps.getRestClient().getReadTimeout();
+    }
+
+    return readTimeout;
+  }
+
+  public void setReadTimeout(int readTimeout) {
+    if (readTimeout <= 0) {
+      throw new IllegalArgumentException("read-timeout should be positive.");
+    }
+    this.readTimeout = readTimeout;
+    odps.getRestClient().setReadTimeout(this.readTimeout);
+  }
+
+  public int getConnectTimeout() {
+    if (connectTimeout == -1) {
+      return odps.getRestClient().getConnectTimeout();
+    }
+
+    return connectTimeout;
+  }
+
+  public void setConnectTimeout(int connectTimeout) {
+    if (connectTimeout <= 0) {
+      throw new IllegalArgumentException("connect-timeout should be positive.");
+    }
+    this.connectTimeout = connectTimeout;
+    odps.getRestClient().setConnectTimeout(this.connectTimeout);
   }
 }
