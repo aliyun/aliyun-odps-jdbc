@@ -89,6 +89,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String tunnelEndpoint;
 
   private String majorVersion;
+
+  private String fallbackQuota;
   private static final String MAJOR_VERSION = "odps.task.major.version";
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
@@ -100,6 +102,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private Long resultSizeLimit = null;
   //Tunnel get result retry time, tunnel will retry every 10s
   private int tunnelRetryTime;
+  //Unit: seconds, only applied in interactive mode
+  private Long attachTimeout;
 
   private boolean disableConnSetting = false;
 
@@ -170,9 +174,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.autoSelectLimit = connRes.getAutoSelectLimit();
     this.resultCountLimit = connRes.getCountLimit();
     this.resultSizeLimit = connRes.getSizeLimit();
+    this.attachTimeout = connRes.getAttachTimeout();
     this.disableConnSetting = connRes.isDisableConnSetting();
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
     this.enableLimit = connRes.isEnableLimit();
+    this.fallbackQuota = connRes.getFallbackQuota();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
 
     try {
@@ -224,6 +230,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
         .enableReattach(true)
+        .attachTimeout(attachTimeout)
+        .quotaName(fallbackQuota)
         .tunnelEndpoint(tunnelEndpoint)
         .tunnelGetResultMaxRetryTime(tunnelRetryTime)
         .taskName(OdpsStatement.getDefaultTaskName());

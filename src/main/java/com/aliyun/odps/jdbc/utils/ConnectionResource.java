@@ -66,6 +66,8 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_UNSUPPORTED_URL_KEY = "fallbackForUnsupportedFeature";
   private static final String ALWAYS_FALLBACK_URL_KEY = "alwaysFallback";
   private static final String DISABLE_FALLBACK_URL_KEY = "disableFallback";
+  private static final String FALLBACK_QUOTA_URL_KEY = "fallbackQuota";
+  private static final String ATTACH_TIMEOUT_URL_KEY = "attachTimeout";
   private static final String AUTO_SELECT_LIMIT_URL_KEY = "autoSelectLimit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_URL_KEY = "instanceTunnelMaxRecord";
@@ -104,6 +106,8 @@ public class ConnectionResource {
   private static final String FALLBACK_FOR_UNSUPPORTED_PROP_KEY = "fallback_for_unsupportedfeature";
   private static final String ALWAYS_FALLBACK_PROP_KEY = "always_fallback";
   private static final String DISABLE_FALLBACK_PROP_KEY = "disable_fallback";
+  private static final String FALLBACK_QUOTA_PROP_KEY = "fallback_quota";
+  private static final String ATTACH_TIMEOUT_PROP_KEY = "attach_timeout";
   private static final String AUTO_SELECT_LIMIT_PROP_KEY = "auto_select_limit";
   //Unit: result record row count, only applied in interactive mode
   private static final String INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY = "instance_tunnel_max_record";
@@ -134,12 +138,14 @@ public class ConnectionResource {
   private boolean interactiveMode;
   private String interactiveServiceName;
   private String majorVersion;
+  private String fallbackQuota;
   private boolean enableOdpsLogger = false;
   private Map<String, List<String>> tables = new HashMap<>();
   private FallbackPolicy fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
   private Long autoSelectLimit;
   private Long countLimit;
   private Long sizeLimit;
+  private Long attachTimeout;
   private int tunnelRetryTime;
   private String stsToken;
   private boolean disableConnSetting = false;
@@ -264,6 +270,9 @@ public class ConnectionResource {
       fallbackPolicy = FallbackPolicy.nonFallbackPolicy();
     }
 
+    fallbackQuota =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, FALLBACK_QUOTA_PROP_KEY, FALLBACK_QUOTA_URL_KEY);
+
     stsToken =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
@@ -286,6 +295,14 @@ public class ConnectionResource {
     );
     if (sizeLimit <= 0L) {
       sizeLimit = null;
+    }
+
+    attachTimeout = Long.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", ATTACH_TIMEOUT_PROP_KEY,
+                                                 ATTACH_TIMEOUT_URL_KEY)
+    );
+    if (attachTimeout <= 0L) {
+      attachTimeout = null;
     }
 
     disableConnSetting = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
@@ -414,6 +431,10 @@ public class ConnectionResource {
     return majorVersion;
   }
 
+  public String getFallbackQuota() {
+    return fallbackQuota;
+  }
+
   public boolean isEnableOdpsLogger() {
     return enableOdpsLogger;
   }
@@ -428,6 +449,10 @@ public class ConnectionResource {
 
   public Long getSizeLimit() {
     return sizeLimit;
+  }
+
+  public Long getAttachTimeout() {
+    return attachTimeout;
   }
 
   @SuppressWarnings("rawtypes")
