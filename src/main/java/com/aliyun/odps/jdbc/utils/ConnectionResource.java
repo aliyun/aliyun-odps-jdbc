@@ -40,6 +40,8 @@ public class ConnectionResource {
   private static final String LIFECYCLE_DEFAULT_VALUE = "3";
   private static final String MAJOR_VERSION_DEFAULT_VALUE = "default";
   private static final String INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE = "public.default";
+  private static final String READ_TIMEOUT_DEFAULT_VALUE = "-1";
+  private static final String CONNECT_TIMEOUT_DEFAULT_VALUE = "-1";
 
   /**
    * keys to retrieve properties from url.
@@ -79,6 +81,8 @@ public class ConnectionResource {
   private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
   private static final String AUTO_LIMIT_FALLBACK_URL_KEY = "autoLimitFallback";
   private static final String SETTINGS_URL_KEY = "settings";
+  private static final String READ_TIMEOUT_URL_KEY = "readTimeout";
+  private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
 
   /**
    * Keys to retrieve properties from info.
@@ -125,6 +129,8 @@ public class ConnectionResource {
   // So the `access_id` and `access_key` have aliases.
   private static final String ACCESS_ID_PROP_KEY_ALT = "user";
   private static final String ACCESS_KEY_PROP_KEY_ALT = "password";
+  private static final String READ_TIMEOUT_PROP_KEY = "read_timeout";
+  private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
 
   private String endpoint;
   private String accessId;
@@ -153,6 +159,8 @@ public class ConnectionResource {
   private boolean enableLimit = false;
   private boolean autoLimitFallback = false;
   private Map<String, String> settings = new HashMap<>();
+  private String readTimeout;
+  private String connectTimeout;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -316,6 +324,11 @@ public class ConnectionResource {
     enableLimit = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
     );
+
+    readTimeout =
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, READ_TIMEOUT_PROP_KEY, READ_TIMEOUT_URL_KEY);
+    connectTimeout =
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, CONNECT_TIMEOUT_PROP_KEY, CONNECT_TIMEOUT_URL_KRY);
 
     // cancel enableLimit hint if autoSelectLimit turns on
     if (autoSelectLimit > 0) {
@@ -506,5 +519,13 @@ public class ConnectionResource {
 
   public Map<String, String> getSettings() {
     return settings;
+  }
+
+  public String getReadTimeout() {
+    return readTimeout;
+  }
+
+  public String getConnectTimeout() {
+    return connectTimeout;
   }
 }
