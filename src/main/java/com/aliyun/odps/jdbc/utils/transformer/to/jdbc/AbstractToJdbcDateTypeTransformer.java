@@ -2,6 +2,8 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -26,6 +28,13 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
   static ThreadLocal<SimpleDateFormat>
       TIME_FORMAT =
       ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
+
+
+  static ThreadLocal<DateTimeFormatter>
+      ZONED_DATETIME_FORMAT =
+      ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_DATETIME_FORMAT)
+          .withZone(ZoneId.systemDefault()));
+
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
