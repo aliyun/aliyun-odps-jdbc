@@ -50,7 +50,6 @@ import com.aliyun.odps.Tenant;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
-import com.aliyun.odps.jdbc.utils.CatalogSchema;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
@@ -729,7 +728,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return interactiveMode;
   }
 
-  public Map<String, Map<String, List<String>>> getTables() {
+  Map<String, Map<String, List<String>>> getTables() {
     return tables;
   }
 
@@ -795,5 +794,50 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
     this.connectTimeout = connectTimeout;
     odps.getRestClient().setConnectTimeout(this.connectTimeout);
+  }
+
+  /**
+   * get/set catalog/schema depends on odpsNamespaceSchema flag
+   */
+  static class CatalogSchema {
+
+    private Odps odps;
+    private boolean twoTier = true;
+
+    CatalogSchema(Odps odps, boolean odpsNamespaceSchema) {
+      this.odps = odps;
+      this.twoTier = !odpsNamespaceSchema;
+    }
+
+    String getCatalog() {
+      if (twoTier) {
+        return null;
+      } else {
+        return odps.getDefaultProject();
+      }
+    }
+
+    String getSchema() {
+      if (twoTier) {
+        return odps.getDefaultProject();
+      } else {
+        return odps.getCurrentSchema();
+      }
+    }
+
+    void setCatalog(String catalog) {
+      if (!twoTier) {
+        odps.setDefaultProject(catalog);
+      }
+    }
+
+    void setSchema(String schema) {
+      if (twoTier) {
+        this.odps.setDefaultProject(schema);
+      } else {
+        this.odps.setCurrentSchema(schema);
+      }
+    }
+
   }
 }

@@ -375,6 +375,13 @@ public class ConnectionResource {
         maps, null, SCHEMA_PROP_KEY, SCHEMA_URL_KEY);
 
     if (schema != null) {
+      if (odpsNamespaceSchema == null) {
+        odpsNamespaceSchema = true;
+        settings.put("odps.namespace.schema", "true");
+      } else if (odpsNamespaceSchema == false) {
+        throw new RuntimeException("ERROR: connection config invalid: schema can not be set when odpsNamespaceSchema=false");
+      }
+
       settings.put("odps.default.schema", schema);
     }
     // The option 'tableList' accepts table names in pattern:
