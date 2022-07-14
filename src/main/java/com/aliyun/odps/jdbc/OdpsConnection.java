@@ -46,11 +46,10 @@ import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.Tenant;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
-import com.aliyun.odps.internal.Tenant;
-import com.aliyun.odps.internal.Tenants;
 import com.aliyun.odps.jdbc.utils.CatalogSchema;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
@@ -58,6 +57,7 @@ import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.utils.OdpsConstants;
 import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -221,15 +221,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fallbackQuota = connRes.getFallbackQuota();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
 
-    if (connRes.isOdpsNamespaceSchema() == null) {
-      try {
-        Tenants tenants = new Tenants(odps);
-        Tenant tenant = tenants.getDefaultTenant();
-        this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty("odps.namespace.schema"));
-      } catch (OdpsException e) {
-        e.printStackTrace();
-        log.warn("Failed to get tenant odps.namespace.schema, use default value: false");
-      }
+    if (null == connRes.isOdpsNamespaceSchema()) {
+      Tenant tenant = odps.tenant();
+      this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
     } else {
       this.odpsNamespaceSchema = connRes.isOdpsNamespaceSchema();
     }
