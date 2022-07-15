@@ -21,9 +21,16 @@
 package com.aliyun.odps.jdbc.utils;
 
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.aliyun.odps.Instance;
+import com.aliyun.odps.Odps;
+import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.task.SQLTask;
 import com.aliyun.odps.utils.StringUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,6 +43,20 @@ public class Utils {
   public static final String SDKKey = "sdk.version";
   public static String JDBCVersion = "JDBC-Version:" + retrieveVersion(JDBCKey);
   public static String SDKVersion = "SDK-Version:" + retrieveVersion(SDKKey);
+
+  public static List<String> getSchemaList(Odps odps, String sql) throws SQLException {
+    return Arrays.asList(getRawResult(odps, sql).split("\n"));
+  }
+
+  private static String getRawResult(Odps odps, String sql) throws SQLException {
+    try {
+      Instance i = SQLTask.run(odps, sql);
+      i.waitForSuccess();
+      return i.getTaskResults().get("AnonymousSQLTask");
+    } catch (OdpsException e) {
+      throw new SQLException(e);
+    }
+  }
 
   // see http://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
   public static String retrieveVersion(String key) {
