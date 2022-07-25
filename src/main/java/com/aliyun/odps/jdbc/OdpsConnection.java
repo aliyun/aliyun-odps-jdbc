@@ -46,6 +46,7 @@ import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.ReloadException;
 import com.aliyun.odps.Tenant;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
@@ -221,8 +222,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.autoLimitFallback = connRes.isAutoLimitFallback();
 
     if (null == connRes.isOdpsNamespaceSchema()) {
-      Tenant tenant = odps.tenant();
-      this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
+      try {
+        Tenant tenant = odps.tenant();
+        this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
+      } catch (ReloadException e) {
+        log.info("tenant doesn't exist, this project cannot support odpsNamespaceSchema.");
+        this.odpsNamespaceSchema = false;
+      }
     } else {
       this.odpsNamespaceSchema = connRes.isOdpsNamespaceSchema();
     }
