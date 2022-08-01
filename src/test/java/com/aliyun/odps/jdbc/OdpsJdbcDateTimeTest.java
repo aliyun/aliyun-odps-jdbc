@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -27,6 +29,12 @@ public class OdpsJdbcDateTimeTest {
   static final String PREPARED_DATETIME_BATCH_TABLE_NAME = "odps_jdbc_prepared_datetime_batch_test";
 
   static Connection conn;
+
+  static final Calendar ISO8601_LOCAL_CALENDAR = new Calendar.Builder()
+      .setCalendarType("iso8601")
+      .setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+      .setLenient(true)
+      .build();
 
   @BeforeClass
   public static void prepare() {
@@ -75,7 +83,7 @@ public class OdpsJdbcDateTimeTest {
   @Test
   public void dateTimeTest() throws SQLException {
     Statement stmt = conn.createStatement();
-    stmt.execute("drop table if exists " + DATETIME_TABLE_NAME);
+    //stmt.execute("drop table if exists " + DATETIME_TABLE_NAME);
     stmt.execute("create table " + DATETIME_TABLE_NAME + " (key string, value datetime)");
 
     String sql;
@@ -127,7 +135,7 @@ public class OdpsJdbcDateTimeTest {
     OdpsPreparedStatement statement = (OdpsPreparedStatement) conn.prepareStatement(sql);
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    simpleDateFormat.setCalendar(TimeTest.ISO8601_LOCAL_CALENDAR);
+    simpleDateFormat.setCalendar(ISO8601_LOCAL_CALENDAR);
     statement.setString(1, "test");
     statement.setDate(2,
                       new java.sql.Date(simpleDateFormat.parse(str1584).getTime()));
@@ -207,7 +215,7 @@ public class OdpsJdbcDateTimeTest {
     String sql = "INSERT INTO odps_jdbc_prepared_datetime_test VALUES (?, ?);";
     OdpsPreparedStatement statement = (OdpsPreparedStatement) conn.prepareStatement(sql);
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    simpleDateFormat.setCalendar(TimeTest.ISO8601_LOCAL_CALENDAR);
+    simpleDateFormat.setCalendar(ISO8601_LOCAL_CALENDAR);
     statement.setString(1, "test");
     statement.setDate(2,
                       new java.sql.Date(simpleDateFormat.parse("0001-01-01 00:00:00").getTime()));
