@@ -83,7 +83,7 @@ public class OdpsJdbcDateTimeTest {
   @Test
   public void dateTimeTest() throws SQLException {
     Statement stmt = conn.createStatement();
-    //stmt.execute("drop table if exists " + DATETIME_TABLE_NAME);
+    stmt.execute("drop table if exists " + DATETIME_TABLE_NAME);
     stmt.execute("create table " + DATETIME_TABLE_NAME + " (key string, value datetime)");
 
     String sql;
