@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Calendar.Builder;
 import java.util.Date;
@@ -102,6 +103,8 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
           DATETIME_FORMAT.get().setCalendar(calendar);
           return DATETIME_FORMAT.get().format(o);
         }
+      } else if (o instanceof ZonedDateTime) {
+        return ZONED_DATETIME_FORMAT.get().format(((ZonedDateTime) o).toInstant());
       } else {
         if (odpsType != null) {
           Builder calendarBuilder = new Calendar.Builder()
