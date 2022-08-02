@@ -40,6 +40,8 @@ public class ConnectionResource {
   private static final String LIFECYCLE_DEFAULT_VALUE = "3";
   private static final String MAJOR_VERSION_DEFAULT_VALUE = "default";
   private static final String INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE = "public.default";
+  private static final String READ_TIMEOUT_DEFAULT_VALUE = "-1";
+  private static final String CONNECT_TIMEOUT_DEFAULT_VALUE = "-1";
 
   /**
    * keys to retrieve properties from url.
@@ -79,6 +81,10 @@ public class ConnectionResource {
   private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
   private static final String AUTO_LIMIT_FALLBACK_URL_KEY = "autoLimitFallback";
   private static final String SETTINGS_URL_KEY = "settings";
+  private static final String ODPS_NAMESPACE_SCHEMA_URL_KEY = "odpsNamespaceSchema";
+  private static final String SCHEMA_URL_KEY = "schema";
+  private static final String READ_TIMEOUT_URL_KEY = "readTimeout";
+  private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
 
   /**
    * Keys to retrieve properties from info.
@@ -125,6 +131,10 @@ public class ConnectionResource {
   // So the `access_id` and `access_key` have aliases.
   private static final String ACCESS_ID_PROP_KEY_ALT = "user";
   private static final String ACCESS_KEY_PROP_KEY_ALT = "password";
+  private static final String ODPS_NAMESPACE_SCHEMA_PROP_KEY = "odps_namespace_schema";
+  private static final String SCHEMA_PROP_KEY = "schema";
+  private static final String READ_TIMEOUT_PROP_KEY = "read_timeout";
+  private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
 
   private String endpoint;
   private String accessId;
@@ -140,7 +150,7 @@ public class ConnectionResource {
   private String majorVersion;
   private String fallbackQuota;
   private boolean enableOdpsLogger = false;
-  private Map<String, List<String>> tables = new HashMap<>();
+  private Map<String, Map<String, List<String>>> tables = new HashMap<>();
   private FallbackPolicy fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
   private Long autoSelectLimit;
   private Long countLimit;
@@ -152,7 +162,22 @@ public class ConnectionResource {
   private boolean useProjectTimeZone = false;
   private boolean enableLimit = false;
   private boolean autoLimitFallback = false;
+
+  public Boolean isOdpsNamespaceSchema() {
+    return odpsNamespaceSchema;
+  }
+
+  public String getSchema() {
+    return schema;
+  }
+
+  // null => use tenant flag
+  // true/false => use session flag
+  private Boolean odpsNamespaceSchema = null;
+  private String schema;
   private Map<String, String> settings = new HashMap<>();
+  private String readTimeout;
+  private String connectTimeout;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -317,6 +342,11 @@ public class ConnectionResource {
         maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
     );
 
+    readTimeout =
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, READ_TIMEOUT_PROP_KEY, READ_TIMEOUT_URL_KEY);
+    connectTimeout =
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, CONNECT_TIMEOUT_PROP_KEY, CONNECT_TIMEOUT_URL_KRY);
+
     // cancel enableLimit hint if autoSelectLimit turns on
     if (autoSelectLimit > 0) {
       enableLimit = false;
@@ -325,6 +355,35 @@ public class ConnectionResource {
     autoLimitFallback = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, "false", AUTO_FALLBACK_PROP_KEY, AUTO_LIMIT_FALLBACK_URL_KEY));
 
+
+    // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
+    // key not exists                     |      not set                       | null
+    // true/false                         |      true/false                    | true/false
+    String odpsNamespaceSchemaStr = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, ODPS_NAMESPACE_SCHEMA_PROP_KEY, ODPS_NAMESPACE_SCHEMA_URL_KEY);
+
+    checkValueIsValidBoolean(ODPS_NAMESPACE_SCHEMA_URL_KEY, odpsNamespaceSchemaStr);
+
+    // not set => use tenant flag in sql
+    // set true/false => use set value as session flag
+    if (odpsNamespaceSchemaStr != null) {
+      odpsNamespaceSchema = Boolean.parseBoolean(odpsNamespaceSchemaStr);
+      settings.put("odps.namespace.schema", odpsNamespaceSchemaStr);
+    }
+
+    schema = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, SCHEMA_PROP_KEY, SCHEMA_URL_KEY);
+
+    if (schema != null) {
+      if (odpsNamespaceSchema == null) {
+        odpsNamespaceSchema = true;
+        settings.put("odps.namespace.schema", "true");
+      } else if (odpsNamespaceSchema == false) {
+        throw new RuntimeException("ERROR: connection config invalid: schema can not be set when odpsNamespaceSchema=false");
+      }
+
+      settings.put("odps.default.schema", schema);
+    }
     // The option 'tableList' accepts table names in pattern:
     //   <project name>.<table name>(,<project name>.<table name>)*
     //
@@ -333,18 +392,24 @@ public class ConnectionResource {
     // take several minutes before the user could really start using it. To avoid this situation,
     // users could specify the table names they are going to use and the driver will only load
     // these tables.
-    String
-        tablesStr =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TABLE_LIST_PROP_KEY,
-                                                 TABLE_LIST_URL_KEY);
+    String tablesStr = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, TABLE_LIST_PROP_KEY, TABLE_LIST_URL_KEY);
+    String[] reusedParts = new String[3];
     if (!StringUtils.isNullOrEmpty(tablesStr)) {
       for (String tableStr : tablesStr.split(",")) {
         String[] parts = tableStr.split("\\.");
-        if (parts.length != 2) {
+        if (parts.length == 2) {
+          reusedParts[0] = parts[0];
+          reusedParts[1] = null;
+          reusedParts[2] = parts[1];
+        } else if (parts.length == 3) {
+          reusedParts = parts;
+        } else {
           throw new IllegalArgumentException("Invalid table name: " + tableStr);
         }
-        tables.computeIfAbsent(parts[0], p -> new LinkedList<>());
-        tables.get(parts[0]).add(parts[1]);
+        tables.computeIfAbsent(reusedParts[0], p -> new HashMap<>());
+        tables.get(reusedParts[0]).computeIfAbsent(reusedParts[1], p -> new LinkedList<>());
+        tables.get(reusedParts[0]).get(reusedParts[1]).add(reusedParts[2]);
       }
     }
 
@@ -472,11 +537,21 @@ public class ConnectionResource {
     return defaultValue;
   }
 
+  private void checkValueIsValidBoolean(String key, String value) {
+    if (null == value) {
+      return;
+    }
+    if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+      return;
+    }
+    throw new IllegalArgumentException("key " + key + " value should be true/false. current value " + value + " is not valid");
+  }
+
   public boolean isInteractiveMode() {
     return interactiveMode;
   }
 
-  public Map<String, List<String>> getTables() {
+  public Map<String, Map<String, List<String>>> getTables() {
     return tables;
   }
 
@@ -506,5 +581,13 @@ public class ConnectionResource {
 
   public Map<String, String> getSettings() {
     return settings;
+  }
+
+  public String getReadTimeout() {
+    return readTimeout;
+  }
+
+  public String getConnectTimeout() {
+    return connectTimeout;
   }
 }

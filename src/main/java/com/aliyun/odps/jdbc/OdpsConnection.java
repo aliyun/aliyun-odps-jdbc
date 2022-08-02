@@ -46,6 +46,8 @@ import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.ReloadException;
+import com.aliyun.odps.Tenant;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
@@ -55,6 +57,7 @@ import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.utils.OdpsConstants;
 import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsConnection extends WrapperAdapter implements Connection {
@@ -95,7 +98,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private static String ODPS_SETTING_PREFIX = "odps.";
   private boolean interactiveMode = false;
   private Long autoSelectLimit = null;
-  private Map<String, List<String>> tables;
+  private Map<String, Map<String, List<String>>> tables;
   //Unit: result record row count, only applied in interactive mode
   private Long resultCountLimit = null;
   //Unit: Bytes, only applied in interactive mode
@@ -117,6 +120,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private String executeProject = null;
 
+  private CatalogSchema catalogSchema = null;
+
+  public boolean isOdpsNamespaceSchema() {
+    return odpsNamespaceSchema;
+  }
+
+  private boolean odpsNamespaceSchema = false;
+
+  private int readTimeout = -1;
+  private int connectTimeout = -1;
+
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -124,6 +138,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String accessKey = connRes.getAccessKey();
     String charset = connRes.getCharset();
     String project = connRes.getProject();
+    String schema = connRes.getSchema();
     String endpoint = connRes.getEndpoint();
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
@@ -135,6 +150,20 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
     MDC.put("connectionId", connectionId);
 
+    int readTimeout;
+    try {
+      readTimeout = Integer.parseInt(connRes.getReadTimeout());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("read-timeout is expected to be an integer");
+    }
+
+    int connectTimeout;
+    try {
+      connectTimeout = Integer.parseInt(connRes.getConnectTimeout());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("connect-timeout is expected to be an integer");
+    }
+
     log = new OdpsLogger(this.getClass().getName(),
                          connectionId,
                          null,
@@ -144,7 +173,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
-    log.info(String.format("endpoint=%s, project=%s", endpoint, project));
+    log.info(String.format("endpoint=%s, project=%s, schema=%s", endpoint, project, schema));
     log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
@@ -157,7 +186,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
     odps.setDefaultProject(project);
+    odps.setCurrentSchema(schema);
     odps.setUserAgent("odps-jdbc-" + version);
+
+    if (readTimeout > 0) {
+      this.readTimeout = readTimeout;
+      odps.getRestClient().setReadTimeout(this.readTimeout);
+    }
+
+    if (connectTimeout > 0) {
+      this.connectTimeout = connectTimeout;
+      odps.getRestClient().setConnectTimeout(this.connectTimeout);
+    }
 
     this.info = info;
     this.charset = charset;
@@ -180,6 +220,19 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.enableLimit = connRes.isEnableLimit();
     this.fallbackQuota = connRes.getFallbackQuota();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
+
+    if (null == connRes.isOdpsNamespaceSchema()) {
+      try {
+        Tenant tenant = odps.tenant();
+        this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
+      } catch (ReloadException e) {
+        log.info("tenant doesn't exist, this project cannot support odpsNamespaceSchema.");
+        this.odpsNamespaceSchema = false;
+      }
+    } else {
+      this.odpsNamespaceSchema = connRes.isOdpsNamespaceSchema();
+    }
+    this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     try {
       long startTime = System.currentTimeMillis();
@@ -412,12 +465,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    */
   @Override
   public void setCatalog(String catalog) throws SQLException {
-
+    catalogSchema.setCatalog(catalog);
   }
 
   @Override
   public String getCatalog() throws SQLException {
-    return null;
+    return catalogSchema.getCatalog();
   }
 
   @Override
@@ -603,13 +656,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public void setSchema(String schema) throws SQLException {
     checkClosed();
-    odps.setDefaultProject(schema);
+    catalogSchema.setSchema(schema);
   }
 
   @Override
   public String getSchema() throws SQLException {
     checkClosed();
-    return odps.getDefaultProject();
+    return catalogSchema.getSchema();
   }
 
   @Override
@@ -681,7 +734,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return interactiveMode;
   }
 
-  public Map<String, List<String>> getTables() {
+  Map<String, Map<String, List<String>>> getTables() {
     return tables;
   }
 
@@ -715,5 +768,82 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public void setEnableLimit(boolean enableLimit) {
     this.enableLimit = enableLimit;
+  }
+
+  public int getReadTimeout() {
+    if (readTimeout == -1) {
+      return odps.getRestClient().getReadTimeout();
+    }
+
+    return readTimeout;
+  }
+
+  public void setReadTimeout(int readTimeout) {
+    if (readTimeout <= 0) {
+      throw new IllegalArgumentException("read-timeout should be positive.");
+    }
+    this.readTimeout = readTimeout;
+    odps.getRestClient().setReadTimeout(this.readTimeout);
+  }
+
+  public int getConnectTimeout() {
+    if (connectTimeout == -1) {
+      return odps.getRestClient().getConnectTimeout();
+    }
+
+    return connectTimeout;
+  }
+
+  public void setConnectTimeout(int connectTimeout) {
+    if (connectTimeout <= 0) {
+      throw new IllegalArgumentException("connect-timeout should be positive.");
+    }
+    this.connectTimeout = connectTimeout;
+    odps.getRestClient().setConnectTimeout(this.connectTimeout);
+  }
+
+  /**
+   * get/set catalog/schema depends on odpsNamespaceSchema flag
+   */
+  static class CatalogSchema {
+
+    private Odps odps;
+    private boolean twoTier = true;
+
+    CatalogSchema(Odps odps, boolean odpsNamespaceSchema) {
+      this.odps = odps;
+      this.twoTier = !odpsNamespaceSchema;
+    }
+
+    String getCatalog() {
+      if (twoTier) {
+        return null;
+      } else {
+        return odps.getDefaultProject();
+      }
+    }
+
+    String getSchema() {
+      if (twoTier) {
+        return odps.getDefaultProject();
+      } else {
+        return odps.getCurrentSchema();
+      }
+    }
+
+    void setCatalog(String catalog) {
+      if (!twoTier) {
+        odps.setDefaultProject(catalog);
+      }
+    }
+
+    void setSchema(String schema) {
+      if (twoTier) {
+        this.odps.setDefaultProject(schema);
+      } else {
+        this.odps.setCurrentSchema(schema);
+      }
+    }
+
   }
 }
