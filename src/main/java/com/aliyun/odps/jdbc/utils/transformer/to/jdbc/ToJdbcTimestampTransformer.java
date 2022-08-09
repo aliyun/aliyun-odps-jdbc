@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -57,6 +58,8 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       ts.setNanos(nanos);
 
       return ts;
+    } else if (o instanceof ZonedDateTime) {
+      return java.sql.Timestamp.valueOf(((ZonedDateTime) o).toLocalDateTime());
     } else if (o instanceof byte[]) {
       try {
         // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
