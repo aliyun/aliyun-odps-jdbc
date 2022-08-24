@@ -362,6 +362,81 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
+  public void testUploadTableWithPartition() throws SQLException {
+    Connection conn = TestManager.getInstance().conn;
+    String tableName = "shuzuo_prepared_upload_partition_table";
+
+    Statement stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+    stmt.executeUpdate(
+        "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
+        + "partitioned by (p1 STRING);");
+
+    PreparedStatement
+        ps =
+        conn.prepareStatement(
+            "insert into " + tableName + " partition(p1='1234')" + " values (?, ?, ?);");
+
+    ps.setString(1, "value1");
+    ps.setDouble(2, new Double("3.141592653589"));
+    ps.setBoolean(3, true);
+
+    ps.execute();
+
+    Statement query = conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from " + tableName + ";");
+    while (rs.next()) {
+      Assert.assertEquals("value1", rs.getString(1));
+      Assert.assertEquals(3.141592653589,
+                          (double) rs.getObject(2), 0.0000000000001);
+      Assert.assertTrue(rs.getBoolean(3));
+    }
+
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+
+  }
+
+
+  @Test
+  public void testBatchUploadTableWithPartition() throws SQLException {
+    Connection conn = TestManager.getInstance().conn;
+    String tableName = "shuzuo_prepared_batch_upload_partition_table";
+
+    Statement stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+    stmt.executeUpdate(
+        "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
+        + "partitioned by (p1 STRING);");
+
+    PreparedStatement
+        ps =
+        conn.prepareStatement(
+            "insert into " + tableName + " partition(p1='1234')" + " values (?, ?, ?);");
+
+    for (int i = 0; i < 10; i++) {
+      ps.setString(1, "value1");
+      ps.setDouble(2, new Double("3.141592653589"));
+      ps.setBoolean(3, true);
+      ps.addBatch();
+    }
+
+    ps.executeBatch();
+    ps.close();
+
+    Statement query = conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from " + tableName + ";");
+    while (rs.next()) {
+      Assert.assertEquals("value1", rs.getString(1));
+      Assert.assertEquals(3.141592653589,
+                          (double) rs.getObject(2), 0.0000000000001);
+      Assert.assertTrue(rs.getBoolean(3));
+    }
+
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+
+  }
+
+  @Test
   public void testSqlInjection() throws SQLException {
     Connection connection = TestManager.getInstance().conn;
     Statement ddl = connection.createStatement();
