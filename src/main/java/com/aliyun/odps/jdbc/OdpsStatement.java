@@ -1053,4 +1053,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public Properties getSqlTaskProperties() {
     return sqlTaskProperties;
   }
+
+  public String getLogView() throws OdpsException {
+    return getLogView(24 * 7);
+  }
+
+  public String getLogView(int lifeCycleHour) throws OdpsException {
+    LogView logView = new LogView(connHandle.getOdps());
+    return logView.generateLogView(executeInstance, lifeCycleHour);
+  }
+
+  public String getInstanceId() {
+    return executeInstance.getId();
+  }
 }
