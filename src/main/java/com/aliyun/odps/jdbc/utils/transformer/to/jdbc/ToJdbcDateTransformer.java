@@ -23,6 +23,8 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -49,6 +51,17 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
       return new java.sql.Date(time);
     } else if (o instanceof ZonedDateTime) {
       return java.sql.Date.valueOf(((ZonedDateTime) o).toLocalDate());
+    } else if (o instanceof Instant) {
+      if (timeZone != null) {
+        ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId());
+      }
+      // 转换
+      ZonedDateTime
+          zonedDateTime =
+          ZonedDateTime.ofInstant((Instant) o, ZONED_DATETIME_FORMAT.get().getZone());
+      return java.sql.Date.valueOf(zonedDateTime.toLocalDate());
+    } else if (o instanceof LocalDate) {
+      return java.sql.Date.valueOf((LocalDate) o);
     } else if (o instanceof byte[]) {
       try {
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
