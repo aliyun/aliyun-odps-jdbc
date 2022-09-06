@@ -113,7 +113,11 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
         if (timeZone != null) {
           ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId());
         }
-        return ZONED_DATETIME_FORMAT.get().format((Instant) o);
+        // 转换
+        ZonedDateTime
+            zonedDateTime =
+            ZonedDateTime.ofInstant((Instant) o, ZONED_DATETIME_FORMAT.get().getZone());
+        return java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime()).toString();
       } else {
         if (odpsType != null) {
           Builder calendarBuilder = new Calendar.Builder()

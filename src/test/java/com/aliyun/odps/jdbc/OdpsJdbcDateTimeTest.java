@@ -198,13 +198,13 @@ public class OdpsJdbcDateTimeTest {
       Assert.assertEquals(res.getDate(2).toString(), "0001-01-01");
       Assert.assertEquals(res.getTime(2).toString(), "00:00:00");
       Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:00:00.0");
-      Assert.assertEquals(res.getString(2), "0001-01-01 00:00:00");
+      Assert.assertEquals(res.getString(2), "0001-01-01 00:00:00.0");
     }
     if (res.next()) {
       Assert.assertEquals(res.getDate(2).toString(), "2022-07-10");
       Assert.assertEquals(res.getTime(2).toString(), "10:10:00");
       Assert.assertEquals(res.getTimestamp(2).toString(), "2022-07-10 10:10:00.123456789");
-      Assert.assertEquals(res.getString(2), "2022-07-10 10:10:00");
+      Assert.assertEquals(res.getString(2), "2022-07-10 10:10:00.123456789");
     }
   }
 
@@ -354,7 +354,7 @@ public class OdpsJdbcDateTimeTest {
       Assert.assertEquals("2041-03-14 00:00:00.0", res.getTimestamp(1).toString());
       Assert.assertEquals("00:00:00", res.getTime(1).toString());
       Assert.assertEquals("2041-03-14", res.getDate(1).toString());
-      Assert.assertEquals("2041-03-14 00:00:00", res.getString(1));
+      Assert.assertEquals("2041-03-14 00:00:00.0", res.getString(1));
     }
 
     res = stmt.executeQuery("SELECT cast(to_date('20410314','yyyymmdd') as DATETIME);");
