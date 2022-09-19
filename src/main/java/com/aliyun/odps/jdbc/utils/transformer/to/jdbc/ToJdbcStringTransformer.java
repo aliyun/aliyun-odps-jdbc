@@ -106,17 +106,14 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
         }
       } else if (o instanceof ZonedDateTime) {
         if (timeZone != null) {
-          ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId());
+          return ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId()).format(((ZonedDateTime) o).toInstant());
         }
         return ZONED_DATETIME_FORMAT.get().format(((ZonedDateTime) o).toInstant());
       } else if (o instanceof Instant) {
-        if (timeZone != null) {
-          ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId());
-        }
         // 转换
         ZonedDateTime
             zonedDateTime =
-            ZonedDateTime.ofInstant((Instant) o, ZONED_DATETIME_FORMAT.get().getZone());
+            ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
         return java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime()).toString();
       } else {
         if (odpsType != null) {

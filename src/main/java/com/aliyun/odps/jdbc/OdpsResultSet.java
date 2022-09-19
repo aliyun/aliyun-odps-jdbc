@@ -671,6 +671,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
     if (stmt != null) {
       String sessionTimeZoneId =
           stmt.getSqlTaskProperties().getProperty("odps.sql.timezone", null);
+      sessionTimeZoneId = stmt.getInputProperties().getProperty("odps.sql.timezone", sessionTimeZoneId);
       if (sessionTimeZoneId != null) {
         timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
       } else {

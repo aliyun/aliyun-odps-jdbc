@@ -50,15 +50,15 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
       }
       return new java.sql.Date(time);
     } else if (o instanceof ZonedDateTime) {
+      if (timeZone != null) {
+        o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
+      }
       return java.sql.Date.valueOf(((ZonedDateTime) o).toLocalDate());
     } else if (o instanceof Instant) {
-      if (timeZone != null) {
-        ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId());
-      }
       // 转换
       ZonedDateTime
           zonedDateTime =
-          ZonedDateTime.ofInstant((Instant) o, ZONED_DATETIME_FORMAT.get().getZone());
+          ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
       return java.sql.Date.valueOf(zonedDateTime.toLocalDate());
     } else if (o instanceof LocalDate) {
       return java.sql.Date.valueOf((LocalDate) o);
