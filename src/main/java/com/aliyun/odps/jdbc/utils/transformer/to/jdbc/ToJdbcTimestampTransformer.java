@@ -60,15 +60,15 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
 
       return ts;
     } else if (o instanceof ZonedDateTime) {
+      if (timeZone != null) {
+        o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
+      }
       return java.sql.Timestamp.valueOf(((ZonedDateTime) o).toLocalDateTime());
     } else if (o instanceof Instant) {
-      if (timeZone != null) {
-        ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId());
-      }
       // 转换
       ZonedDateTime
           zonedDateTime =
-          ZonedDateTime.ofInstant((Instant) o, ZONED_DATETIME_FORMAT.get().getZone());
+          ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
       return java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime());
     } else if (o instanceof byte[]) {
       try {

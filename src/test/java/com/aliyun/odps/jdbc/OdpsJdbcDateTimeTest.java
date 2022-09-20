@@ -393,4 +393,31 @@ public class OdpsJdbcDateTimeTest {
 
   }
 
+  @Test
+  public void zoneTest() throws SQLException {
+    Statement statement = conn.createStatement();
+
+    ResultSet res;
+    res =
+        statement.executeQuery(
+            "SET odps.sql.timezone=America/Mexico_City; select FROM_UNIXTIME(1663567200);");
+
+    while (res.next()) {
+      Assert.assertEquals("2022-09-19 01:00:00", res.getString(1));
+      Assert.assertEquals("2022-09-19 01:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("01:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2022-09-19", res.getDate(1).toString());
+    }
+
+    res = statement.executeQuery("select FROM_UNIXTIME(1663567200);");
+    while (res.next()) {
+      Assert.assertEquals("2022-09-19 14:00:00", res.getString(1));
+      Assert.assertEquals("2022-09-19 14:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("14:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2022-09-19", res.getDate(1).toString());
+    }
+
+
+  }
+
 }

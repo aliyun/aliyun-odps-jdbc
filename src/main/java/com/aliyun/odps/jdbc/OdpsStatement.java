@@ -251,6 +251,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected boolean isResultSetScrollable = false;
 
   private Properties sqlTaskProperties;
+  private Properties inputProperties;
 
   /**
    * The suggestion of fetch direction which might be ignored by the resultSet generated
@@ -1021,9 +1022,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       for (String key : sqlTaskProperties.stringPropertyNames()) {
         settings.put(key, sqlTaskProperties.getProperty(key));
       }
+
+      inputProperties = new Properties();
       if (properties != null && !properties.isEmpty()) {
         for (String key : properties.stringPropertyNames()) {
           settings.put(key, properties.getProperty(key));
+          inputProperties.put(key, properties.getProperty(key));
         }
       }
       if (!settings.isEmpty()) {
@@ -1052,5 +1056,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   public Properties getSqlTaskProperties() {
     return sqlTaskProperties;
+  }
+
+  public Properties getInputProperties() {
+    return inputProperties;
   }
 }
