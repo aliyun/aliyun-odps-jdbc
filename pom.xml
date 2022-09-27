@@ -223,14 +223,8 @@
     </dependency>
     <dependency>
       <groupId>com.alibaba.security</groupId>
-      <artifactId>security-all</artifactId>
-      <version>2.0.6-SNAPSHOT</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.alibaba.security</groupId>
-          <artifactId>open-security-resource</artifactId>
-        </exclusion>
-      </exclusions>
+      <artifactId>security-all-open</artifactId>
+      <version>2.0.7-OUT-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>
