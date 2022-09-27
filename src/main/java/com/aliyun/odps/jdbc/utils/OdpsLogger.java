@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 import com.aliyun.odps.jdbc.OdpsDriver;
 
 public class OdpsLogger {
+
   private static final String DEFAULT_OUTPUT_DIR = "/tmp";
   private static Map<String, FileHandler> pathToFileHandler = new ConcurrentHashMap<>();
 
@@ -57,22 +58,21 @@ public class OdpsLogger {
         consoleHandler.setLevel(Level.ALL);
         odpsLogger.addHandler(consoleHandler);
       }
-    }
-    try {
-      FileHandler fileHandler;
-      if (pathToFileHandler.containsKey(outputPath)) {
-        fileHandler = pathToFileHandler.get(outputPath);
-      } else {
-        fileHandler = new FileHandler(outputPath, true);
-        fileHandler.setFormatter(new OdpsFormatter(connectionId));
-        fileHandler.setLevel(Level.ALL);
-        pathToFileHandler.put(outputPath, fileHandler);
-      }
-      if (enableOdpsLogger) {
+
+      try {
+        FileHandler fileHandler;
+        if (pathToFileHandler.containsKey(outputPath)) {
+          fileHandler = pathToFileHandler.get(outputPath);
+        } else {
+          fileHandler = new FileHandler(outputPath, true);
+          fileHandler.setFormatter(new OdpsFormatter(connectionId));
+          fileHandler.setLevel(Level.ALL);
+          pathToFileHandler.put(outputPath, fileHandler);
+        }
         odpsLogger.addHandler(fileHandler);
+      } catch (IOException e) {
+        // ignore
       }
-    } catch (IOException e) {
-      // ignore
     }
 
     // Init sl4j logger

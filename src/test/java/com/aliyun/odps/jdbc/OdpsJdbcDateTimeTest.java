@@ -25,6 +25,8 @@ import org.junit.Test;
 public class OdpsJdbcDateTimeTest {
 
   static final String DATETIME_TABLE_NAME = "odps_jdbc_datetime_test";
+  static final String DATE_TABLE_NAME = "odps_jdbc_date_test";
+  static final String TIMESTAMP_TABLE_NAME = "odps_jdbc_timestamp_test";
   static final String PREPARED_DATETIME_TABLE_NAME = "odps_jdbc_prepared_datetime_test";
   static final String PREPARED_DATETIME_BATCH_TABLE_NAME = "odps_jdbc_prepared_datetime_batch_test";
 
@@ -76,6 +78,8 @@ public class OdpsJdbcDateTimeTest {
   public static void after() throws SQLException {
     Statement stmt = conn.createStatement();
     stmt.execute("drop table if exists " + DATETIME_TABLE_NAME);
+    stmt.execute("drop table if exists " + DATE_TABLE_NAME);
+    stmt.execute("drop table if exists " + TIMESTAMP_TABLE_NAME);
     stmt.execute("drop table if exists " + PREPARED_DATETIME_TABLE_NAME);
     stmt.execute("drop table if exists " + PREPARED_DATETIME_BATCH_TABLE_NAME);
   }
@@ -91,14 +95,14 @@ public class OdpsJdbcDateTimeTest {
 
     // insert a record
     sql =
-        String.format("insert into %s values ('test' , '0001-01-01 00:00:00');",
+        String.format("insert into %s values ('test' , datetime('0001-01-01 00:00:00'));",
                       DATETIME_TABLE_NAME);
     System.out.println("Running: " + sql);
     int count = stmt.executeUpdate(sql);
     System.out.println("updated records: " + count);
 
     sql =
-        String.format("insert into %s values ('testnow' , '2022-07-10 10:10:00');",
+        String.format("insert into %s values ('testnow' , datetime('2022-07-10 10:10:00'));",
                       DATETIME_TABLE_NAME);
     System.out.println("Running: " + sql);
     count = stmt.executeUpdate(sql);
@@ -112,11 +116,95 @@ public class OdpsJdbcDateTimeTest {
       Assert.assertEquals(res.getDate(2).toString(), "0001-01-01");
       Assert.assertEquals(res.getTime(2).toString(), "00:00:00");
       Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:00:00.0");
+      Assert.assertEquals(res.getString(2), "0001-01-01 00:00:00");
     }
     if (res.next()) {
       Assert.assertEquals(res.getDate(2).toString(), "2022-07-10");
       Assert.assertEquals(res.getTime(2).toString(), "10:10:00");
       Assert.assertEquals(res.getTimestamp(2).toString(), "2022-07-10 10:10:00.0");
+      Assert.assertEquals(res.getString(2), "2022-07-10 10:10:00");
+    }
+  }
+
+  @Test
+  public void dateTest() throws SQLException {
+    Statement stmt = conn.createStatement();
+    stmt.execute("drop table if exists " + DATE_TABLE_NAME);
+    stmt.execute("create table " + DATE_TABLE_NAME + " (key string, value date)");
+
+    String sql;
+    ResultSet res;
+
+    // insert a record
+    sql =
+        String.format("insert into %s values ('test' , date('0001-01-01'));",
+                      DATE_TABLE_NAME);
+    System.out.println("Running: " + sql);
+    int count = stmt.executeUpdate(sql);
+    System.out.println("updated records: " + count);
+
+    sql =
+        String.format("insert into %s values ('testnow' , date('2022-07-10'));",
+                      DATE_TABLE_NAME);
+    System.out.println("Running: " + sql);
+    count = stmt.executeUpdate(sql);
+    System.out.println("updated records: " + count);
+
+    sql = "select * from " + DATE_TABLE_NAME;
+    System.out.println("Running: " + sql);
+    res = stmt.executeQuery(sql);
+
+    if (res.next()) {
+      Assert.assertEquals("0001-01-01", res.getDate(2).toString());
+      Assert.assertEquals("0001-01-01", res.getString(2));
+    }
+    if (res.next()) {
+      Assert.assertEquals("2022-07-10", res.getDate(2).toString());
+      Assert.assertEquals("2022-07-10", res.getString(2));
+    }
+  }
+
+  @Test
+  public void timeStampTest() throws SQLException {
+    Statement stmt = conn.createStatement();
+    stmt.execute("drop table if exists " + TIMESTAMP_TABLE_NAME);
+    stmt.execute("create table " + TIMESTAMP_TABLE_NAME + " (key string, value TIMESTAMP)");
+
+    String sql;
+    ResultSet res;
+
+    // insert a record
+    sql =
+        String.format(
+            "insert into %s values ('test' , TIMESTAMP('0001-01-01 00:00:00.000000000'));",
+            TIMESTAMP_TABLE_NAME);
+    System.out.println("Running: " + sql);
+    int count = stmt.executeUpdate(sql);
+    System.out.println("updated records: " + count);
+
+    sql =
+        String.format(
+            "insert into %s values ('testnow' , TIMESTAMP('2022-07-10 10:10:00.123456789'));",
+            TIMESTAMP_TABLE_NAME);
+    System.out.println("Running: " + sql);
+    count = stmt.executeUpdate(sql);
+    System.out.println("updated records: " + count);
+
+    sql = "select * from " + TIMESTAMP_TABLE_NAME;
+    System.out.println("Running: " + sql);
+    res = stmt.executeQuery(sql);
+
+    if (res.next()) {
+      Assert.assertEquals(res.getDate(2).toString(), "0001-01-01");
+      Assert.assertEquals(res.getTime(2).toString(), "00:00:00");
+      Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:00:00.0");
+      Assert.assertEquals(res.getString(2), "0001-01-01 00:00:00.0");
+    }
+    if (res.next()) {
+      Assert.assertEquals(res.getDate(2).toString(), "2022-07-10");
+      Assert.assertEquals(res.getTime(2).toString(), "10:10:00");
+      Assert.assertEquals(res.getTimestamp(2).toString(), "2022-07-10 10:10:00.123456789");
+      Assert.assertEquals(res.getString(2), "2022-07-10 10:10:00.123456789");
     }
   }
 
@@ -131,7 +219,7 @@ public class OdpsJdbcDateTimeTest {
     stmt.execute(
         "create table " + PREPARED_DATETIME_BATCH_TABLE_NAME + " (key string, value datetime)");
 
-    String sql = "INSERT INTO odps_jdbc_prepared_datetime_batch_test VALUES (?, ?);";
+    String sql = "INSERT INTO " + PREPARED_DATETIME_BATCH_TABLE_NAME + " VALUES (?, ?);";
     OdpsPreparedStatement statement = (OdpsPreparedStatement) conn.prepareStatement(sql);
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -212,7 +300,7 @@ public class OdpsJdbcDateTimeTest {
 
     ResultSet res;
 
-    String sql = "INSERT INTO odps_jdbc_prepared_datetime_test VALUES (?, ?);";
+    String sql = "INSERT INTO " + PREPARED_DATETIME_TABLE_NAME + " VALUES (?, ?);";
     OdpsPreparedStatement statement = (OdpsPreparedStatement) conn.prepareStatement(sql);
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     simpleDateFormat.setCalendar(ISO8601_LOCAL_CALENDAR);
@@ -246,6 +334,90 @@ public class OdpsJdbcDateTimeTest {
       Assert.assertEquals(res.getTime(2).toString(), "00:00:00");
       Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:00:00.0");
     }
+  }
+
+
+  @Test
+  public void toJdbcTimeTypeTest() throws SQLException {
+
+    Statement stmt = conn.createStatement();
+    ResultSet res;
+
+    res = stmt.executeQuery("SELECT cast(to_date('20410314','yyyymmdd') as DATE);");
+    if (res.next()) {
+      Assert.assertEquals("2041-03-14", res.getDate(1).toString());
+      Assert.assertEquals("2041-03-14", res.getString(1));
+    }
+
+    res = stmt.executeQuery("SELECT cast(to_date('20410314','yyyymmdd') as TIMESTAMP);");
+    if (res.next()) {
+      Assert.assertEquals("2041-03-14 00:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("00:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2041-03-14", res.getDate(1).toString());
+      Assert.assertEquals("2041-03-14 00:00:00.0", res.getString(1));
+    }
+
+    res = stmt.executeQuery("SELECT cast(to_date('20410314','yyyymmdd') as DATETIME);");
+    if (res.next()) {
+      Assert.assertEquals("2041-03-14 00:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("00:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2041-03-14", res.getDate(1).toString());
+      Assert.assertEquals("2041-03-14 00:00:00", res.getString(1));
+    }
+
+    res = stmt.executeQuery("SELECT to_date('20410314','yyyymmdd');");
+    while (res.next()) {
+      Object time = res.getString(1);
+      Assert.assertEquals("2041-03-14 00:00:00", time.toString());
+      Assert.assertEquals("2041-03-14 00:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("00:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2041-03-14", res.getDate(1).toString());
+    }
+
+    res = stmt.executeQuery("SELECT cast(to_date('00010101','yyyymmdd') as DATETIME);");
+    if (res.next()) {
+      Assert.assertEquals("0001-01-01 00:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("00:00:00", res.getTime(1).toString());
+      Assert.assertEquals("0001-01-01", res.getDate(1).toString());
+      Assert.assertEquals("0001-01-01 00:00:00", res.getString(1));
+    }
+
+    res = stmt.executeQuery("SELECT to_date('00010101','yyyymmdd');");
+    while (res.next()) {
+      Object time = res.getString(1);
+      Assert.assertEquals("0001-01-01 00:00:00", time.toString());
+      Assert.assertEquals("0001-01-01 00:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("00:00:00", res.getTime(1).toString());
+      Assert.assertEquals("0001-01-01", res.getDate(1).toString());
+    }
+
+  }
+
+  @Test
+  public void zoneTest() throws SQLException {
+    Statement statement = conn.createStatement();
+
+    ResultSet res;
+    res =
+        statement.executeQuery(
+            "SET odps.sql.timezone=America/Mexico_City; select FROM_UNIXTIME(1663567200);");
+
+    while (res.next()) {
+      Assert.assertEquals("2022-09-19 01:00:00", res.getString(1));
+      Assert.assertEquals("2022-09-19 01:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("01:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2022-09-19", res.getDate(1).toString());
+    }
+
+    res = statement.executeQuery("select FROM_UNIXTIME(1663567200);");
+    while (res.next()) {
+      Assert.assertEquals("2022-09-19 14:00:00", res.getString(1));
+      Assert.assertEquals("2022-09-19 14:00:00.0", res.getTimestamp(1).toString());
+      Assert.assertEquals("14:00:00", res.getTime(1).toString());
+      Assert.assertEquals("2022-09-19", res.getDate(1).toString());
+    }
+
+
   }
 
 }

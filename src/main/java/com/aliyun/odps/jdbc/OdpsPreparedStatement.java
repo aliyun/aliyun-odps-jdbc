@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.alibaba.security.SecurityUtil;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.Record;
@@ -639,12 +640,12 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Varchar.class.isInstance(x)) {
       return x.toString();
     } else if (String.class.isInstance(x)) {
-      return "'" + (String) x + "'";
+      return "'" + SecurityUtil.escapeSql((String) x) + "'";
     } else if (byte[].class.isInstance(x)) {
       try {
         String charset = getConnection().getCharset();
         if (charset != null) {
-          return "'" + new String((byte[]) x, charset) + "'";
+          return "'" + SecurityUtil.escapeSql(new String((byte[]) x, charset)) + "'";
         } else {
           throw new SQLException("charset is null");
         }

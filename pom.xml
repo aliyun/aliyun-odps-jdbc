@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.aliyun.odps</groupId>
   <artifactId>odps-jdbc</artifactId>
-  <version>3.3.3</version>
+  <version>3.3.4</version>
   <name>odps-jdbc</name>
   <description>Aliyun ODPS JDBC driver</description>
   <url>http://odps.aliyun.com</url>
@@ -220,6 +220,17 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.alibaba.security</groupId>
+      <artifactId>security-all</artifactId>
+      <version>2.0.6-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.alibaba.security</groupId>
+          <artifactId>open-security-resource</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 </project>

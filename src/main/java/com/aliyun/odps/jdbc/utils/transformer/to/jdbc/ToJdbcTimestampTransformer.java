@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,7 +60,16 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
 
       return ts;
     } else if (o instanceof ZonedDateTime) {
+      if (timeZone != null) {
+        o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
+      }
       return java.sql.Timestamp.valueOf(((ZonedDateTime) o).toLocalDateTime());
+    } else if (o instanceof Instant) {
+      // 转换
+      ZonedDateTime
+          zonedDateTime =
+          ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
+      return java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime());
     } else if (o instanceof byte[]) {
       try {
         // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
