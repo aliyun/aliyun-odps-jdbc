@@ -57,22 +57,23 @@ public class OdpsLogger {
         consoleHandler.setLevel(Level.ALL);
         odpsLogger.addHandler(consoleHandler);
       }
-    }
-    try {
-      FileHandler fileHandler;
-      if (pathToFileHandler.containsKey(outputPath)) {
-        fileHandler = pathToFileHandler.get(outputPath);
-      } else {
-        fileHandler = new FileHandler(outputPath, true);
-        fileHandler.setFormatter(new OdpsFormatter(connectionId));
-        fileHandler.setLevel(Level.ALL);
-        pathToFileHandler.put(outputPath, fileHandler);
+
+      try {
+        FileHandler fileHandler;
+        if (pathToFileHandler.containsKey(outputPath)) {
+          fileHandler = pathToFileHandler.get(outputPath);
+        } else {
+          fileHandler = new FileHandler(outputPath, true);
+          fileHandler.setFormatter(new OdpsFormatter(connectionId));
+          fileHandler.setLevel(Level.ALL);
+          pathToFileHandler.put(outputPath, fileHandler);
+        }
+        if (enableOdpsLogger) {
+          odpsLogger.addHandler(fileHandler);
+        }
+      } catch (IOException e) {
+        // ignore
       }
-      if (enableOdpsLogger) {
-        odpsLogger.addHandler(fileHandler);
-      }
-    } catch (IOException e) {
-      // ignore
     }
 
     // Init sl4j logger
