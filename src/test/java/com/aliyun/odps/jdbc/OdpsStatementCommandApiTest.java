@@ -81,15 +81,33 @@ public class OdpsStatementCommandApiTest {
     }
 
     sql = "whoami;";
-    System.out.println("Running: " + sql);
-    res = stmt.executeQuery(sql);
+    stmt.execute(sql);
+    res = stmt.getResultSet();
 
     while (res.next()) {
       int count = res.getMetaData().getColumnCount();
-      for (int i = 1; i < count; i++) {
+      for (int i = 1; i <= count; i++) {
         System.out.println(res.getMetaData().getColumnName(i) + " : " + res.getString(i));
       }
     }
+
+    sql =
+        String.format("insert into %s values ('testnow' , datetime('2022-07-10 10:10:00'));",
+                      tableName);
+    int updateCount = stmt.executeUpdate(sql);
+    System.out.println(updateCount);
+    System.out.println("update sql resultSet: " + stmt.getResultSet());
+
+
+    sql = "select * from " + tableName;
+    res = stmt.executeQuery(sql);
+    while (res.next()) {
+      int count = res.getMetaData().getColumnCount();
+      for (int i = 1; i <= count; i++) {
+        System.out.println(res.getMetaData().getColumnName(i) + " : " + res.getString(i));
+      }
+    }
+
   }
 
 }
