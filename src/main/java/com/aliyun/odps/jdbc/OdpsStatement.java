@@ -55,6 +55,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   // result cache in session mode
   com.aliyun.odps.data.ResultSet odpsResultSet = null;
+  private String logviewUrl = null;
 
   // when the update count is fetched by the client, set this true
   // Then the next call the getUpdateCount() will return -1, indicating there's no more results.
@@ -661,6 +662,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
     executor.run(sql, settings);
     executeInstance = executor.getInstance();
+    logviewUrl = executor.getLogView();
 
     if (isUpdate) {
       if (executeInstance != null) {
@@ -708,9 +710,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     long end = System.currentTimeMillis();
     connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
-
-    String logView = executor.getLogView();
-    connHandle.log.info("Run SQL: " + sql + ", LogView:" + logView);
+    connHandle.log.info("Run SQL: " + sql + ", LogView:" + logviewUrl);
     warningChain = new SQLWarning(executor.getSummary());
   }
 
@@ -764,5 +764,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   public Properties getInputProperties() {
     return inputProperties;
+  }
+
+  public String getLogViewUrl() {
+    return logviewUrl;
   }
 }

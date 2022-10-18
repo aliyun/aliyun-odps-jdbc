@@ -97,6 +97,7 @@ public class OdpsStatementCommandApiTest {
     int updateCount = stmt.executeUpdate(sql);
     System.out.println(updateCount);
     System.out.println("update sql resultSet: " + stmt.getResultSet());
+    System.out.println(((OdpsStatement) stmt).getLogViewUrl());
 
 
     sql = "select * from " + tableName;
@@ -107,6 +108,7 @@ public class OdpsStatementCommandApiTest {
         System.out.println(res.getMetaData().getColumnName(i) + " : " + res.getString(i));
       }
     }
+    System.out.println(((OdpsStatement) stmt).getLogViewUrl());
 
   }
 
