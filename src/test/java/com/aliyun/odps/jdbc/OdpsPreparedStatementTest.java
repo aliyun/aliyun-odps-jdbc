@@ -155,6 +155,7 @@ public class OdpsPreparedStatementTest {
                           rs.getObject(7));
       Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
       Assert.assertEquals("bar", rs.getObject(9));
+      // TODO fix later
       Assert.assertEquals(datetime.toString(), rs.getObject(10).toString());
       Assert.assertEquals(timestamp.toString(), rs.getObject(11).toString());
       Assert.assertEquals(true, rs.getObject(12));
@@ -202,6 +203,7 @@ public class OdpsPreparedStatementTest {
 
     while (rs.next()) {
       Assert.assertEquals(rs.getInt(1), 9999);
+      // TODO fix later
       Assert.assertEquals(rs.getString(2), "hello");
       Assert.assertEquals(rs.getTime(3), new Time(unixtime));
       Assert.assertTrue(rs.getBoolean(4));
@@ -260,6 +262,7 @@ public class OdpsPreparedStatementTest {
       ps.addBatch();
     }
 
+    // TODO fix later
     int[] results = ps.executeBatch();
     ps.close();
 
@@ -356,5 +359,37 @@ public class OdpsPreparedStatementTest {
 
     rs.close();
     query.close();
+  }
+
+  @Test
+  public void testSqlInjection() throws SQLException {
+    Connection connection = TestManager.getInstance().conn;
+    Statement ddl = connection.createStatement();
+
+    ddl.executeUpdate("drop table if exists sql_injection;");
+    ddl.executeUpdate(
+        "create table sql_injection(c1 int, c2 string, c3 boolean);");
+    ddl.close();
+
+    PreparedStatement ps = connection.prepareStatement(
+        "insert into sql_injection values (?, ?, ?);");
+    ps.setInt(1, 10);
+    ps.setString(2, "test");
+    ps.setBoolean(3, true);
+    ps.execute();
+
+    ps = connection.prepareStatement("select * from sql_injection where c3 = ?;");
+    ps.setObject(3, false);
+    ResultSet resultSet = ps.executeQuery();
+    Assert.assertFalse(resultSet.next());
+
+
+    ps.setObject(3, "false', 'or 1=1");
+    try {
+      ps.execute();
+      Assert.fail();
+    } catch (Exception ignored) {
+    }
+
   }
 }

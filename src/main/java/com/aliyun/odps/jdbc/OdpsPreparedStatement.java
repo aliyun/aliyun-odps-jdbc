@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.alibaba.security.SecurityUtil;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.Record;
@@ -83,6 +82,12 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   private final String PREP_INSERT_WITHOUT_SPEC_COLS_EXAMPLE =
       "INSERT INTO table VALUES (?, ?, ?);";
+
+  private static final String
+      SQL_REGEX =
+      "(')|(--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\\b(select|update|and|or|delete|insert|trancate|char|substr|ascii|declare|exec|count|master|into|drop|execute)\\b)";
+
+  private static final Pattern SQL_PATTERN = Pattern.compile(SQL_REGEX, Pattern.CASE_INSENSITIVE);
 
   /**
    * The prepared sql template (immutable). e.g. insert into table FOO select * from BAR where id =
@@ -640,12 +645,19 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Varchar.class.isInstance(x)) {
       return x.toString();
     } else if (String.class.isInstance(x)) {
-      return "'" + SecurityUtil.escapeSql((String) x) + "'";
+      if (isIllegal((String) x)) {
+        throw new IllegalArgumentException("");
+      }
+      return "'" + x + "'";
     } else if (byte[].class.isInstance(x)) {
       try {
         String charset = getConnection().getCharset();
         if (charset != null) {
-          return "'" + SecurityUtil.escapeSql(new String((byte[]) x, charset)) + "'";
+          String str = new String((byte[]) x, charset);
+          if (isIllegal(str)) {
+            throw new IllegalArgumentException("");
+          }
+          return "'" + str + "'";
         } else {
           throw new SQLException("charset is null");
         }
@@ -666,6 +678,11 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else {
       throw new SQLException("unrecognized Java class: " + x.getClass().getName());
     }
+  }
+
+  private boolean isIllegal(String str) {
+    Matcher matcher = SQL_PATTERN.matcher(str);
+    return matcher.find();
   }
 
 }

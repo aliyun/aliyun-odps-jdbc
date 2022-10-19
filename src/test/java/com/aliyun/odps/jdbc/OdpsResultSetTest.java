@@ -120,6 +120,7 @@ public class OdpsResultSetTest {
   public void testGetSelectCountStar() throws Exception {
     ResultSet rs = stmt.executeQuery("select count(*) from dual;");
     rs.next();
+    // TODO fix later
     Assert.assertEquals(1, rs.getInt(1));
     rs.close();
   }
@@ -168,6 +169,7 @@ public class OdpsResultSetTest {
 
     {
       rs.next();
+      // TODO fix later
       Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
       Assert.assertEquals(1, ((Long) rs.getObject("id")).longValue());
       Assert.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
@@ -350,6 +352,7 @@ public class OdpsResultSetTest {
       ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
     }
 
+    // TODO fix later
     Assert.assertEquals(tz.getRawOffset(), timestampWithTimeZone - timestampWithoutTimeZone);
   }
 }
