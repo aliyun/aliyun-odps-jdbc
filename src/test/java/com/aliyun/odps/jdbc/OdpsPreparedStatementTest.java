@@ -370,12 +370,12 @@ public class OdpsPreparedStatementTest {
     stmt.executeUpdate("drop table if exists " + tableName + ";");
     stmt.executeUpdate(
         "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
-        + "partitioned by (p1 STRING);");
+        + " partitioned by (p1 STRING, p2 STRING);");
 
     PreparedStatement
         ps =
         conn.prepareStatement(
-            "insert into " + tableName + " partition(p1='1234')" + " values (?, ?, ?);");
+            "insert into " + tableName + " partition(p1='1234', p2=2345)" + " values (?, ?, ?);");
 
     ps.setString(1, "value1");
     ps.setDouble(2, new Double("3.141592653589"));
@@ -384,7 +384,7 @@ public class OdpsPreparedStatementTest {
     ps.execute();
 
     Statement query = conn.createStatement();
-    ResultSet rs = query.executeQuery("select * from " + tableName + ";");
+    ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");
     while (rs.next()) {
       Assert.assertEquals("value1", rs.getString(1));
       Assert.assertEquals(3.141592653589,
@@ -411,7 +411,7 @@ public class OdpsPreparedStatementTest {
     PreparedStatement
         ps =
         conn.prepareStatement(
-            "insert into " + tableName + " partition(p1='1234')" + " values (?, ?, ?);");
+            "insert into " + tableName + " partition(p1=1234)" + " values (?, ?, ?);");
 
     for (int i = 0; i < 10; i++) {
       ps.setString(1, "value1");
@@ -424,7 +424,7 @@ public class OdpsPreparedStatementTest {
     ps.close();
 
     Statement query = conn.createStatement();
-    ResultSet rs = query.executeQuery("select * from " + tableName + ";");
+    ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");
     while (rs.next()) {
       Assert.assertEquals("value1", rs.getString(1));
       Assert.assertEquals(3.141592653589,

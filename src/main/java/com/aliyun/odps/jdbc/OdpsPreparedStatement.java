@@ -70,8 +70,10 @@ import com.aliyun.odps.utils.StringUtils;
 public class OdpsPreparedStatement extends OdpsStatement implements PreparedStatement {
 
   private final String TABLE_NAME = "((\\w+\\.)?\\w+)";      // "proj.name" or "name"
-  private final String PREP_VALUES = "\\([\\?,?\\s*]+\\)"; // "(?, ?, ?)" or "(?)"
-  private final String SPEC_COLS = "\\(((\\w+)=(.\\w+.),?\\s*)+\\)";
+  private final String PREP_VALUES = "\\((\\s*\\?\\s*)(,\\s*\\?\\s*)*\\)"; // "(?)" or "(?,?,...)"
+  private final String
+      SPEC_COLS =
+      "\\(((\\s*\\w+\\s*)=((\\s*\\w+\\s*)|(\\s*'\\s*\\w+\\s*'\\s*)))(,(\\s*\\w+\\s*)=((\\s*\\w+\\s*)|(\\s*'\\s*\\w+\\s*'\\s*)))*\\)"; // (p1=a) or (p1=a,p2=b,...) or (p1='a') ...
 
 
   private final String PREP_INSERT_WITH_SPEC_COLS =
