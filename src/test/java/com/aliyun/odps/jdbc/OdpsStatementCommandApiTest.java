@@ -66,6 +66,38 @@ public class OdpsStatementCommandApiTest {
   }
 
   @Test
+  public void showCreateTableTest() throws SQLException {
+    Statement statement = conn.createStatement();
+
+    String sql = "show create table " + tableName;
+    ResultSet resultSet;
+
+    resultSet = statement.executeQuery(sql);
+    while (resultSet.next()) {
+      int count = resultSet.getMetaData().getColumnCount();
+      for (int i = 1; i <= count; i++) {
+        System.out.println(resultSet.getMetaData().getColumnName(i) + " : " + resultSet.getString(i));
+      }
+    }
+  }
+
+  @Test
+  public void showSchemaTest() throws SQLException {
+    Statement statement = conn.createStatement();
+
+    String sql = "show schemas ;";
+    ResultSet resultSet;
+
+    resultSet = statement.executeQuery(sql);
+    while (resultSet.next()) {
+      int count = resultSet.getMetaData().getColumnCount();
+      for (int i = 1; i <= count; i++) {
+        System.out.println(resultSet.getMetaData().getColumnName(i) + " : " + resultSet.getString(i));
+      }
+    }
+  }
+
+  @Test
   public void commandApiTest() throws SQLException {
     Statement stmt = conn.createStatement();
 

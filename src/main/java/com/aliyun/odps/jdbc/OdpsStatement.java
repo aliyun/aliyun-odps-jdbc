@@ -294,6 +294,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (connHandle.getExecutor() == null) {
       return false;
     }
+
+    if (odpsResultSet != null) {
+      return true;
+    }
+
     return connHandle.getExecutor().hasResultSet();
   }
 
