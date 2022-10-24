@@ -54,6 +54,7 @@ import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
@@ -281,6 +282,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       executeOdps.setDefaultProject(executeProject);
     }
     builder.odps(executeOdps)
+        .executeMode(interactiveMode ? ExecuteMode.INTERACTIVE : ExecuteMode.OFFLINE)
         .properties(hints)
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
