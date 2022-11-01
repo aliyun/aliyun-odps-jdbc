@@ -155,6 +155,7 @@ public class OdpsPreparedStatementTest {
                           rs.getObject(7));
       Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
       Assert.assertEquals("bar", rs.getObject(9));
+      // TODO fix later
       Assert.assertEquals(datetime.toString(), rs.getObject(10).toString());
       Assert.assertEquals(timestamp.toString(), rs.getObject(11).toString());
       Assert.assertEquals(true, rs.getObject(12));
@@ -202,6 +203,7 @@ public class OdpsPreparedStatementTest {
 
     while (rs.next()) {
       Assert.assertEquals(rs.getInt(1), 9999);
+      // TODO fix later
       Assert.assertEquals(rs.getString(2), "hello");
       Assert.assertEquals(rs.getTime(3), new Time(unixtime));
       Assert.assertTrue(rs.getBoolean(4));
@@ -260,6 +262,7 @@ public class OdpsPreparedStatementTest {
       ps.addBatch();
     }
 
+    // TODO fix later
     int[] results = ps.executeBatch();
     ps.close();
 
@@ -356,5 +359,112 @@ public class OdpsPreparedStatementTest {
 
     rs.close();
     query.close();
+  }
+
+  @Test
+  public void testUploadTableWithPartition() throws SQLException {
+    Connection conn = TestManager.getInstance().conn;
+    String tableName = "shuzuo_prepared_upload_partition_table";
+
+    Statement stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+    stmt.executeUpdate(
+        "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
+        + " partitioned by (p1 STRING, p2 STRING);");
+
+    PreparedStatement
+        ps =
+        conn.prepareStatement(
+            "insert into " + tableName + " partition(p1='1234', p2=2345)" + " values (?, ?, ?);");
+
+    ps.setString(1, "value1");
+    ps.setDouble(2, new Double("3.141592653589"));
+    ps.setBoolean(3, true);
+
+    ps.execute();
+
+    Statement query = conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");
+    while (rs.next()) {
+      Assert.assertEquals("value1", rs.getString(1));
+      Assert.assertEquals(3.141592653589,
+                          (double) rs.getObject(2), 0.0000000000001);
+      Assert.assertTrue(rs.getBoolean(3));
+    }
+
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+
+  }
+
+
+  @Test
+  public void testBatchUploadTableWithPartition() throws SQLException {
+    Connection conn = TestManager.getInstance().conn;
+    String tableName = "shuzuo_prepared_batch_upload_partition_table";
+
+    Statement stmt = TestManager.getInstance().conn.createStatement();
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+    stmt.executeUpdate(
+        "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
+        + "partitioned by (p1 STRING);");
+
+    PreparedStatement
+        ps =
+        conn.prepareStatement(
+            "insert into " + tableName + " partition(p1=1234)" + " values (?, ?, ?);");
+
+    for (int i = 0; i < 10; i++) {
+      ps.setString(1, "value1");
+      ps.setDouble(2, new Double("3.141592653589"));
+      ps.setBoolean(3, true);
+      ps.addBatch();
+    }
+
+    ps.executeBatch();
+    ps.close();
+
+    Statement query = conn.createStatement();
+    ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");
+    while (rs.next()) {
+      Assert.assertEquals("value1", rs.getString(1));
+      Assert.assertEquals(3.141592653589,
+                          (double) rs.getObject(2), 0.0000000000001);
+      Assert.assertTrue(rs.getBoolean(3));
+    }
+
+    stmt.executeUpdate("drop table if exists " + tableName + ";");
+
+  }
+
+  @Test
+  public void testSqlInjection() throws SQLException {
+    Connection connection = TestManager.getInstance().conn;
+    Statement ddl = connection.createStatement();
+
+    ddl.executeUpdate("drop table if exists sql_injection;");
+    ddl.executeUpdate(
+        "create table sql_injection(c1 int, c2 string, c3 boolean);");
+    ddl.close();
+
+    PreparedStatement ps = connection.prepareStatement(
+        "insert into sql_injection values (?, ?, ?);");
+    ps.setInt(1, 10);
+    ps.setString(2, "test");
+    ps.setBoolean(3, true);
+    ps.execute();
+
+    ps = connection.prepareStatement("select * from sql_injection where c3 = ?;");
+    ps.setObject(3, false);
+    ResultSet resultSet = ps.executeQuery();
+    Assert.assertFalse(resultSet.next());
+
+
+    ps.setObject(3, "false', 'or 1=1");
+    try {
+      ps.execute();
+      Assert.fail();
+    } catch (Exception ignored) {
+    }
+
   }
 }

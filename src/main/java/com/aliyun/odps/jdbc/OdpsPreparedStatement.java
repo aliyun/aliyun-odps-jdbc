@@ -52,8 +52,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.alibaba.security.SecurityUtil;
 import com.aliyun.odps.Column;
+import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.PartitionSpec;
+import com.aliyun.odps.Table;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.Varchar;
@@ -63,19 +65,23 @@ import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordWriter;
+import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsPreparedStatement extends OdpsStatement implements PreparedStatement {
 
   private final String TABLE_NAME = "((\\w+\\.)?\\w+)";      // "proj.name" or "name"
-  private final String PREP_VALUES = "\\([\\?,?\\s*]+\\)"; // "(?, ?, ?)" or "(?)"
-  private final String SPEC_COLS = "\\([\\w+,?\\s*]+\\)";  // "(name1, name2, name3)"
+  private final String PREP_VALUES = "\\((\\s*\\?\\s*)(,\\s*\\?\\s*)*\\)"; // "(?)" or "(?,?,...)"
+  private final String
+      SPEC_COLS =
+      "\\(((\\s*\\w+\\s*)=((\\s*\\w+\\s*)|(\\s*'\\s*\\w+\\s*'\\s*)))(,(\\s*\\w+\\s*)=((\\s*\\w+\\s*)|(\\s*'\\s*\\w+\\s*'\\s*)))*\\)"; // (p1=a) or (p1=a,p2=b,...) or (p1='a') ...
+
 
   private final String PREP_INSERT_WITH_SPEC_COLS =
-      "(?i)^" + "\\s*" + "insert" + "\\s+" + "into" + "\\s+" + TABLE_NAME + "\\s+" +
+      "(?i)^" + "\\s*" + "insert" + "\\s+" + "into" + "\\s+" + TABLE_NAME + "\\s+" + "partition" +
       SPEC_COLS + "\\s+" + "values" + "\\s*" + PREP_VALUES + "\\s*" + ";?\\s*$";
 
   private final String PREP_INSERT_WITH_SPEC_COLS_EXAMPLE =
-      "INSERT INTO table (field1, field2) VALUES (?, ?);";
+      "INSERT INTO table (key1=value1, key2=value2) VALUES (?, ?);";
 
   private final String PREP_INSERT_WITHOUT_SPEC_COLS =
       "(?i)^" + "\\s*" + "insert" + "\\s+" + "into" + "\\s+" + TABLE_NAME + "\\s+" +
@@ -83,6 +89,12 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   private final String PREP_INSERT_WITHOUT_SPEC_COLS_EXAMPLE =
       "INSERT INTO table VALUES (?, ?, ?);";
+
+  private static final String
+      SQL_REGEX =
+      "(')|(--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\\b(select|update|and|or|delete|insert|trancate|char|substr|ascii|declare|exec|count|master|into|drop|execute)\\b)";
+
+  private static final Pattern SQL_PATTERN = Pattern.compile(SQL_REGEX, Pattern.CASE_INSENSITIVE);
 
   /**
    * The prepared sql template (immutable). e.g. insert into table FOO select * from BAR where id =
@@ -92,6 +104,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
   private boolean verified = false;
   private String tableBatchInsertTo;
+
+  private String partitionSpec;
 
   private int parametersNum;
 
@@ -165,42 +179,22 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   @Override
   public int[] executeBatch() throws SQLException {
     if (!verified) {
-      if (!sql.matches(PREP_INSERT_WITHOUT_SPEC_COLS)) {
-        throw new SQLException("batched statement only support following syntax: " +
-                               PREP_INSERT_WITHOUT_SPEC_COLS_EXAMPLE);
+      boolean withSpecCols = sql.matches(PREP_INSERT_WITH_SPEC_COLS);
+      boolean withoutSpecCols = sql.matches(PREP_INSERT_WITHOUT_SPEC_COLS);
+
+      if (!withoutSpecCols && !withSpecCols) {
+        throw new SQLException("batched statement only support following syntax: "
+                               + PREP_INSERT_WITHOUT_SPEC_COLS_EXAMPLE + " or "
+                               + PREP_INSERT_WITH_SPEC_COLS_EXAMPLE);
       }
 
-      Matcher matcher = Pattern.compile(PREP_INSERT_WITHOUT_SPEC_COLS).matcher(sql);
-      if (matcher.find()) {
-        tableBatchInsertTo = matcher.group(1);
-      } else {
-        throw new SQLException("cannot extract table name in SQL: " + sql);
+      if (withoutSpecCols) {
+        setSession(Pattern.compile(PREP_INSERT_WITHOUT_SPEC_COLS).matcher(sql), false);
       }
 
-      TableTunnel tunnel = new TableTunnel(getConnection().getOdps());
-      try {
-        if (tableBatchInsertTo.contains(".")) {
-          String[] splited = tableBatchInsertTo.split("\\.");
-          session = tunnel.createUploadSession(splited[0], splited[1]);
-        } else {
-          String defaultProject = getConnection().getOdps().getDefaultProject();
-          session = tunnel.createUploadSession(defaultProject, tableBatchInsertTo);
-        }
-      } catch (TunnelException e) {
-        throw new SQLException(e);
+      if (withSpecCols) {
+        setSession(Pattern.compile(PREP_INSERT_WITH_SPEC_COLS).matcher(sql), true);
       }
-      getConnection().log.info("create upload session id=" + session.getId());
-      TableSchema schema = session.getSchema();
-      reuseRecord = session.newRecord();
-      int colNum = schema.getColumns().size();
-      int valNum = batchedRows.get(0).length;
-      if (valNum != colNum) {
-        throw new SQLException(
-            "the table has " + colNum + " columns, but insert " + valNum + " values");
-      }
-
-      blocks = 0;
-      verified = true;
     }
 
     int batchedSize = batchedRows.size();
@@ -247,6 +241,66 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
 
     clearBatch();
     return updateCounts;
+  }
+
+  private void setSession(Matcher matcher, boolean hasPartition) throws SQLException {
+    if (matcher.find()) {
+      tableBatchInsertTo = matcher.group(1);
+      if (hasPartition) {
+          partitionSpec = matcher.group(3);
+      }
+    } else {
+      throw new SQLException("cannot extract table name or partition name in SQL: " + sql);
+    }
+
+    TableTunnel tunnel = new TableTunnel(getConnection().getOdps());
+    // TODO 三层模型
+    try {
+      if (tableBatchInsertTo.contains(".")) {
+        String[] splited = tableBatchInsertTo.split("\\.");
+        String projectName = splited[0];
+        String tableName = splited[1];
+
+        if (hasPartition && !StringUtils.isNullOrEmpty(partitionSpec)) {
+          Table table = getConnection().getOdps().tables().get(projectName, tableName);
+          PartitionSpec partition = new PartitionSpec(partitionSpec);
+          if (!table.hasPartition(partition)) {
+            table.createPartition(partition);
+          }
+          session = tunnel.createUploadSession(projectName, tableName, partition);
+        } else {
+          session = tunnel.createUploadSession(projectName, tableName);
+        }
+      } else {
+        String defaultProject = getConnection().getOdps().getDefaultProject();
+        if (hasPartition && !StringUtils.isNullOrEmpty(partitionSpec)) {
+          Table table = getConnection().getOdps().tables().get(defaultProject, tableBatchInsertTo);
+          PartitionSpec partition = new PartitionSpec(partitionSpec);
+          if (!table.hasPartition(partition)) {
+            table.createPartition(partition);
+          }
+          session = tunnel.createUploadSession(defaultProject, tableBatchInsertTo, partition);
+        } else {
+          session = tunnel.createUploadSession(defaultProject, tableBatchInsertTo);
+        }
+      }
+    } catch (TunnelException e) {
+      throw new SQLException(e);
+    } catch (OdpsException e) {
+      throw new RuntimeException(e);
+    }
+    getConnection().log.info("create upload session id=" + session.getId());
+    TableSchema schema = session.getSchema();
+    reuseRecord = session.newRecord();
+    int colNum = schema.getColumns().size();
+    int valNum = batchedRows.get(0).length;
+    if (valNum != colNum) {
+      throw new SQLException(
+          "the table has " + colNum + " columns, but insert " + valNum + " values");
+    }
+
+    blocks = 0;
+    verified = true;
   }
 
   // Commit on close
@@ -640,12 +694,19 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Varchar.class.isInstance(x)) {
       return x.toString();
     } else if (String.class.isInstance(x)) {
-      return "'" + SecurityUtil.escapeSql((String) x) + "'";
+      if (isIllegal((String) x)) {
+        throw new IllegalArgumentException("");
+      }
+      return "'" + x + "'";
     } else if (byte[].class.isInstance(x)) {
       try {
         String charset = getConnection().getCharset();
         if (charset != null) {
-          return "'" + SecurityUtil.escapeSql(new String((byte[]) x, charset)) + "'";
+          String str = new String((byte[]) x, charset);
+          if (isIllegal(str)) {
+            throw new IllegalArgumentException("");
+          }
+          return "'" + str + "'";
         } else {
           throw new SQLException("charset is null");
         }
@@ -666,6 +727,11 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else {
       throw new SQLException("unrecognized Java class: " + x.getClass().getName());
     }
+  }
+
+  private boolean isIllegal(String str) {
+    Matcher matcher = SQL_PATTERN.matcher(str);
+    return matcher.find();
   }
 
 }
