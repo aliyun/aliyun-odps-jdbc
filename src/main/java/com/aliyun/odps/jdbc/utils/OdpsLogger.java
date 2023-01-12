@@ -24,6 +24,8 @@ public class OdpsLogger {
   private boolean enableOdpsLogger = false;
   private Logger odpsLogger;
   private org.slf4j.Logger sl4jLogger;
+  private String connectionId;
+  private boolean toConsole = false;
 
   /**
    * Constructor
@@ -41,6 +43,8 @@ public class OdpsLogger {
                     boolean toConsole,
                     boolean enableOdpsLogger) {
 
+    this.connectionId = connectionId;
+
     this.enableOdpsLogger = enableOdpsLogger;
 
     Objects.requireNonNull(name);
@@ -53,23 +57,24 @@ public class OdpsLogger {
       odpsLogger = Logger.getLogger(name);
       odpsLogger.setLevel(Level.ALL);
       if (toConsole) {
-        Handler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(new OdpsFormatter(connectionId));
-        consoleHandler.setLevel(Level.ALL);
-        odpsLogger.addHandler(consoleHandler);
+        if (!this.toConsole) {
+          Handler consoleHandler = new ConsoleHandler();
+          consoleHandler.setFormatter(new OdpsFormatter());
+          consoleHandler.setLevel(Level.ALL);
+          odpsLogger.addHandler(consoleHandler);
+          this.toConsole = true;
+        }
       }
 
       try {
         FileHandler fileHandler;
-        if (pathToFileHandler.containsKey(outputPath)) {
-          fileHandler = pathToFileHandler.get(outputPath);
-        } else {
+        if (!pathToFileHandler.containsKey(outputPath)) {
           fileHandler = new FileHandler(outputPath, true);
-          fileHandler.setFormatter(new OdpsFormatter(connectionId));
+          fileHandler.setFormatter(new OdpsFormatter());
           fileHandler.setLevel(Level.ALL);
           pathToFileHandler.put(outputPath, fileHandler);
+          odpsLogger.addHandler(fileHandler);
         }
-        odpsLogger.addHandler(fileHandler);
       } catch (IOException e) {
         // ignore
       }
@@ -81,28 +86,28 @@ public class OdpsLogger {
 
   public synchronized void debug(String msg) {
     if (enableOdpsLogger) {
-      odpsLogger.fine(msg);
+      odpsLogger.fine(String.format("[connection-%s] %s", connectionId, msg));
     }
     sl4jLogger.debug(msg);
   }
 
   public synchronized void info(String msg) {
     if (enableOdpsLogger) {
-      odpsLogger.info(msg);
+      odpsLogger.info(String.format("[connection-%s] %s", connectionId, msg));
     }
     sl4jLogger.info(msg);
   }
 
   public synchronized void warn(String msg) {
     if (enableOdpsLogger) {
-      odpsLogger.warning(msg);
+      odpsLogger.warning(String.format("[connection-%s] %s", connectionId, msg));
     }
     sl4jLogger.warn(msg);
   }
 
   public synchronized void error(String msg) {
     if (enableOdpsLogger) {
-      odpsLogger.severe(msg);
+      odpsLogger.severe(String.format("[connection-%s] %s", connectionId, msg));
     }
     sl4jLogger.error(msg);
   }
@@ -112,8 +117,8 @@ public class OdpsLogger {
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
     if (enableOdpsLogger) {
-      odpsLogger.severe(msg);
-      odpsLogger.severe(sw.toString());
+      odpsLogger.severe(String.format("[connection-%s] %s", connectionId, msg));
+      odpsLogger.severe(String.format("[connection-%s] %s", connectionId, sw.toString()));
     }
     sl4jLogger.error(msg, e);
   }

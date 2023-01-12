@@ -665,9 +665,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (autoSelectLimit != null && autoSelectLimit > 0) {
       settings.put("odps.sql.select.auto.limit", autoSelectLimit.toString());
     }
+    connHandle.log.info("Run SQL: " + sql + ", Begin time: " + begin);
     executor.run(sql, settings);
     executeInstance = executor.getInstance();
+    connHandle.log.info("InstanceId: " + executeInstance.getId());
     logviewUrl = executor.getLogView();
+    connHandle.log.info("LogView: " + logviewUrl);
 
     if (isUpdate) {
       if (executeInstance != null) {
@@ -714,8 +717,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     long end = System.currentTimeMillis();
-    connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
-    connHandle.log.info("Run SQL: " + sql + ", LogView:" + logviewUrl);
+    connHandle.log.info("It took me " + (end - begin) + " ms to run sql, instanceId: "
+                        + executeInstance.getId());
+//    connHandle.log.info("Run SQL: " + sql + ", LogView:" + logviewUrl);
     warningChain = new SQLWarning(executor.getSummary());
   }
 
