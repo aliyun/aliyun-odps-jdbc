@@ -668,9 +668,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     connHandle.log.info("Run SQL: " + sql + ", Begin time: " + begin);
     executor.run(sql, settings);
     executeInstance = executor.getInstance();
-    connHandle.log.info("InstanceId: " + executeInstance.getId());
+    if (executeInstance != null) {
+      connHandle.log.info("InstanceId: " + executeInstance.getId());
+    }
     logviewUrl = executor.getLogView();
-    connHandle.log.info("LogView: " + logviewUrl);
+    if (logviewUrl != null) {
+      connHandle.log.info("LogView: " + logviewUrl);
+    }
 
     if (isUpdate) {
       if (executeInstance != null) {
@@ -717,9 +721,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     long end = System.currentTimeMillis();
-    connHandle.log.info("It took me " + (end - begin) + " ms to run sql, instanceId: "
-                        + executeInstance.getId());
-//    connHandle.log.info("Run SQL: " + sql + ", LogView:" + logviewUrl);
+    if (executeInstance != null) {
+      connHandle.log.info("It took me " + (end - begin) + " ms to run sql, instanceId: "
+                          + executeInstance.getId());
+    } else {
+      connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
+    }
     warningChain = new SQLWarning(executor.getSummary());
   }
 
