@@ -134,6 +134,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean enableCommandApi;
 
+  private boolean httpsCheck;
+
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -224,6 +226,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fallbackQuota = connRes.getFallbackQuota();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
     this.enableCommandApi = connRes.isEnableCommandApi();
+    this.httpsCheck = connRes.isHttpsCheck();
+
+    if (!httpsCheck) {
+      odps.getRestClient().setIgnoreCerts(true);
+    }
 
     if (null == connRes.isOdpsNamespaceSchema()) {
       try {
@@ -809,6 +816,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isEnableCommandApi() {
     return enableCommandApi;
+  }
+
+  public boolean isHttpsCheck() {
+    return httpsCheck;
   }
 
   /**

@@ -86,6 +86,7 @@ public class ConnectionResource {
   private static final String READ_TIMEOUT_URL_KEY = "readTimeout";
   private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
   private static final String ENABLE_COMMAND_API_URL_KEY = "enableCommandApi";
+  private static final String HTTPS_CHECK_URL_KEY = "httpsCheck";
 
   /**
    * Keys to retrieve properties from info.
@@ -137,6 +138,7 @@ public class ConnectionResource {
   private static final String READ_TIMEOUT_PROP_KEY = "read_timeout";
   private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
   private static final String ENABLE_COMMAND_API_PROP_KEY = "enable_command_api";
+  private static final String HTTPS_CHECK_PROP_KEY = "https_check";
 
   private String endpoint;
   private String accessId;
@@ -165,6 +167,7 @@ public class ConnectionResource {
   private boolean enableLimit = false;
   private boolean autoLimitFallback = false;
   private boolean enableCommandApi = false;
+  private boolean httpsCheck = false;
 
   public Boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
@@ -362,6 +365,10 @@ public class ConnectionResource {
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", ENABLE_COMMAND_API_PROP_KEY,
                                                      ENABLE_COMMAND_API_URL_KEY));
+
+    httpsCheck = Boolean.parseBoolean(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", HTTPS_CHECK_PROP_KEY,
+                                                 HTTPS_CHECK_URL_KEY));
 
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
@@ -600,5 +607,9 @@ public class ConnectionResource {
 
   public boolean isEnableCommandApi() {
     return enableCommandApi;
+  }
+
+  public boolean isHttpsCheck() {
+    return httpsCheck;
   }
 }
