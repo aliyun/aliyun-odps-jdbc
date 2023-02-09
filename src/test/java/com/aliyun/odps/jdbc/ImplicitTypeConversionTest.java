@@ -733,6 +733,7 @@ public class ImplicitTypeConversionTest {
     String stringRes = rs.getString(DATETIME_COL);
     assertEquals(dateFormat.format(expected), stringRes);
     byte[] byteArrayRes = rs.getBytes(DATETIME_COL);
+    // TODO fix later
     assertEquals(dateFormat.format(expected), new String(byteArrayRes, charset));
     java.sql.Date dateRes = rs.getDate(DATETIME_COL);
     assertEquals(expected, dateRes);
@@ -804,6 +805,7 @@ public class ImplicitTypeConversionTest {
     assertEquals(expected.getTime(), Timestamp.valueOf(stringRes).getTime());
     assertEquals(expected.getNanos() / 1000000, Timestamp.valueOf(stringRes).getNanos() / 1000000);
     byte[] byteArrayRes = rs.getBytes(TIMESTAMP_COL);
+    // TODO fix later
     assertEquals(expected, Timestamp.valueOf(new String(byteArrayRes, charset)));
     java.sql.Date dateRes = rs.getDate(TIMESTAMP_COL);
     assertEquals(expected.getTime(), dateRes.getTime());

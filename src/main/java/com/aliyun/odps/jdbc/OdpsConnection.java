@@ -54,6 +54,7 @@ import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
@@ -130,6 +131,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private int readTimeout = -1;
   private int connectTimeout = -1;
+
+  private boolean enableCommandApi;
+
+  private boolean httpsCheck;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -220,11 +225,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.enableLimit = connRes.isEnableLimit();
     this.fallbackQuota = connRes.getFallbackQuota();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
+    this.enableCommandApi = connRes.isEnableCommandApi();
+    this.httpsCheck = connRes.isHttpsCheck();
+
+    if (!httpsCheck) {
+      odps.getRestClient().setIgnoreCerts(true);
+    }
 
     if (null == connRes.isOdpsNamespaceSchema()) {
       try {
         Tenant tenant = odps.tenant();
-        this.odpsNamespaceSchema = Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
+        this.odpsNamespaceSchema =
+            Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
       } catch (ReloadException e) {
         log.info("tenant doesn't exist, this project cannot support odpsNamespaceSchema.");
         this.odpsNamespaceSchema = false;
@@ -246,11 +258,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
       log.info("Project timezone: " + timeZoneId);
       tz = TimeZone.getTimeZone(timeZoneId);
-      if (interactiveMode) {
-        long cost = System.currentTimeMillis() - startTime;
-        log.info(String.format("load project meta infos time cost=%d", cost));
-        initSQLExecutor(serviceName, connRes.getFallbackPolicy());
-      }
+      long cost = System.currentTimeMillis() - startTime;
+      log.info(String.format("load project meta infos time cost=%d", cost));
+      initSQLExecutor(serviceName, connRes.getFallbackPolicy());
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
 
@@ -279,6 +289,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       executeOdps.setDefaultProject(executeProject);
     }
     builder.odps(executeOdps)
+        .executeMode(interactiveMode ? ExecuteMode.INTERACTIVE : ExecuteMode.OFFLINE)
         .properties(hints)
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
@@ -287,7 +298,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .quotaName(fallbackQuota)
         .tunnelEndpoint(tunnelEndpoint)
         .tunnelGetResultMaxRetryTime(tunnelRetryTime)
-        .taskName(OdpsStatement.getDefaultTaskName());
+        .taskName(OdpsStatement.getDefaultTaskName())
+        .enableCommandApi(enableCommandApi);
     long startTime = System.currentTimeMillis();
     executor = builder.build();
     if (interactiveMode && executor.getInstance() != null) {
@@ -800,6 +812,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
     this.connectTimeout = connectTimeout;
     odps.getRestClient().setConnectTimeout(this.connectTimeout);
+  }
+
+  public boolean isEnableCommandApi() {
+    return enableCommandApi;
+  }
+
+  public boolean isHttpsCheck() {
+    return httpsCheck;
   }
 
   /**
