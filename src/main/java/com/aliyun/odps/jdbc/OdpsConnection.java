@@ -41,6 +41,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 
 import org.slf4j.MDC;
 
@@ -136,6 +137,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean httpsCheck;
 
+  private Level logLevel = Level.INFO;
+
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -150,6 +153,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String logConfFile = connRes.getLogConfFile();
     String serviceName = connRes.getInteractiveServiceName();
     String stsToken = connRes.getStsToken();
+    String logLevel = connRes.getLogLevel();
     sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
 
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
@@ -169,12 +173,21 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       throw new IllegalArgumentException("connect-timeout is expected to be an integer");
     }
 
+    if (logLevel != null) {
+      try {
+        this.logLevel = Level.parse(logLevel.toUpperCase());
+      } catch (Exception e) {
+        this.logLevel = Level.INFO;
+      }
+    }
+
     log = new OdpsLogger(this.getClass().getName(),
                          connectionId,
                          null,
                          logConfFile,
                          false,
-                         connRes.isEnableOdpsLogger());
+                         connRes.isEnableOdpsLogger(),
+                         this.logLevel);
 
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);

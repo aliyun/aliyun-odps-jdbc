@@ -27,6 +27,16 @@ public class OdpsLogger {
   private String connectionId;
   private boolean toConsole = false;
 
+  public OdpsLogger(String name,
+                    String connectionId,
+                    String outputPath,
+                    String configFilePath,
+                    boolean toConsole,
+                    boolean enableOdpsLogger) {
+    this(name, connectionId, outputPath, configFilePath, toConsole, enableOdpsLogger,
+                   Level.INFO);
+  }
+
   /**
    * Constructor
    *
@@ -41,7 +51,8 @@ public class OdpsLogger {
                     String outputPath,
                     String configFilePath,
                     boolean toConsole,
-                    boolean enableOdpsLogger) {
+                    boolean enableOdpsLogger,
+                    Level level) {
 
     this.connectionId = connectionId;
 
@@ -55,12 +66,12 @@ public class OdpsLogger {
     }
     if (enableOdpsLogger) {
       odpsLogger = Logger.getLogger(name);
-      odpsLogger.setLevel(Level.ALL);
+      odpsLogger.setLevel(level);
       if (toConsole) {
         if (!this.toConsole) {
           Handler consoleHandler = new ConsoleHandler();
           consoleHandler.setFormatter(new OdpsFormatter());
-          consoleHandler.setLevel(Level.ALL);
+          consoleHandler.setLevel(level);
           odpsLogger.addHandler(consoleHandler);
           this.toConsole = true;
         }
@@ -71,7 +82,7 @@ public class OdpsLogger {
         if (!pathToFileHandler.containsKey(outputPath)) {
           fileHandler = new FileHandler(outputPath, true);
           fileHandler.setFormatter(new OdpsFormatter());
-          fileHandler.setLevel(Level.ALL);
+          fileHandler.setLevel(level);
           pathToFileHandler.put(outputPath, fileHandler);
           odpsLogger.addHandler(fileHandler);
         }

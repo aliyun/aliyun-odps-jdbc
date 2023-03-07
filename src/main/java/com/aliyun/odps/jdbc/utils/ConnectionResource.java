@@ -87,6 +87,7 @@ public class ConnectionResource {
   private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
   private static final String ENABLE_COMMAND_API_URL_KEY = "enableCommandApi";
   private static final String HTTPS_CHECK_URL_KEY = "httpsCheck";
+  private static final String LOG_LEVEL_URL_KEY = "logLevel";
 
   /**
    * Keys to retrieve properties from info.
@@ -139,6 +140,7 @@ public class ConnectionResource {
   private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
   private static final String ENABLE_COMMAND_API_PROP_KEY = "enable_command_api";
   private static final String HTTPS_CHECK_PROP_KEY = "https_check";
+  private static final String LOG_LEVEL_PROP_KEY = "log_level";
 
   private String endpoint;
   private String accessId;
@@ -184,6 +186,7 @@ public class ConnectionResource {
   private Map<String, String> settings = new HashMap<>();
   private String readTimeout;
   private String connectTimeout;
+  private String logLevel;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -369,6 +372,8 @@ public class ConnectionResource {
     httpsCheck = Boolean.parseBoolean(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", HTTPS_CHECK_PROP_KEY,
                                                  HTTPS_CHECK_URL_KEY));
+
+    logLevel = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_LEVEL_PROP_KEY, LOG_LEVEL_URL_KEY);
 
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
@@ -611,5 +616,9 @@ public class ConnectionResource {
 
   public boolean isHttpsCheck() {
     return httpsCheck;
+  }
+
+  public String getLogLevel() {
+    return logLevel;
   }
 }
