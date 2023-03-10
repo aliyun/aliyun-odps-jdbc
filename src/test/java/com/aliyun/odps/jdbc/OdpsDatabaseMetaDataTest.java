@@ -151,6 +151,7 @@ public class OdpsDatabaseMetaDataTest {
         System.out.println(catalog);
       }
       Assert.assertTrue(includesDefaultProject);
+      // TODO fix later
       Assert.assertTrue(includesPublicDataSet);
       Assert.assertEquals(2, count);
     }
@@ -178,6 +179,7 @@ public class OdpsDatabaseMetaDataTest {
         System.out.println(String.format("%s.%s", catalog, schema));
       }
       Assert.assertTrue(includesDefaultProject);
+      // TODO fix later
       Assert.assertTrue(includesPublicDataSet);
       Assert.assertEquals(2, count);
     }

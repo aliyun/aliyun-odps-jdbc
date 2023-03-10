@@ -90,13 +90,9 @@ public class TestManager {
       stmt.execute("set odps.compiler.verify=true;");
       stmt.execute("set odps.compiler.output.format=lot,pot;");
 
-      String serviceName = odpsConfig.getProperty("interactive_service_name");
       String
           urlSession =
-          String.format(
-              "jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&interactiveMode=true&interactiveServiceName=%s"
-              + "&enableLimit=%s&autoSelectLimit=%s",
-              endpoint, project, loglevel, logview, serviceName, enableLimit, autoSelectLimit);
+          String.format("jdbc:odps:%s?project=%s&interactiveMode=true&enableCommandApi=true", endpoint, project);
 
       // pass project name via url
       sessionConn = DriverManager.getConnection(urlSession, username, password);

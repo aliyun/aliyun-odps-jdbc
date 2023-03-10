@@ -424,6 +424,7 @@ public class OdpsStatementTest {
         while (rs.next()) {
           Date utcDate = rs.getTimestamp(1);
           long utcTimestampInSecond = utcDate.getTime() / 1000;
+          // TODO fix later
           Assert.assertEquals(
               utcTimestampInSecond - localTimestampInSecond,
               TimeZone.getDefault().getOffset(utcDate.getTime()) / 1000);
