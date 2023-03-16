@@ -37,9 +37,10 @@ public class ToOdpsDatetimeTransformer extends AbstractToOdpsTransformer {
     if (Timestamp.class.isInstance(o)
         || java.sql.Date.class.isInstance(o)
         || Time.class.isInstance(o)) {
-      return new java.util.Date(((Date) o).getTime()).toInstant().atZone(ZoneId.systemDefault());
+      return o;
     } else if (Date.class.isInstance(o)) {
-      return ((java.util.Date) o).toInstant().atZone(ZoneId.systemDefault());
+      return new java.sql.Date(((Date) o).toInstant().atZone(ZoneId.systemDefault()).toInstant()
+                                   .toEpochMilli());
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Date.class);
       throw new SQLException(errorMsg);

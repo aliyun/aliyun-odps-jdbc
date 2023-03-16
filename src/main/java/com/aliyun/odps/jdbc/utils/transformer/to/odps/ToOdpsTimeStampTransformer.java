@@ -33,7 +33,7 @@ public class ToOdpsTimeStampTransformer extends AbstractToOdpsTransformer {
     }
 
     if (Timestamp.class.isInstance(o)) {
-      return ((Timestamp) o).toInstant().atZone(ZoneId.systemDefault());
+      return o;
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Timestamp.class);
       throw new SQLException(errorMsg);
