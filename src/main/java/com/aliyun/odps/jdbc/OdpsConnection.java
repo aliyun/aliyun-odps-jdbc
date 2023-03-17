@@ -174,11 +174,22 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
 
     if (logLevel != null) {
-      try {
-        this.logLevel = Level.parse(logLevel.toUpperCase());
-      } catch (Exception e) {
-        this.logLevel = Level.INFO;
+      logLevel = logLevel.toUpperCase();
+
+      switch (logLevel) {
+        case "DEBUG":
+          logLevel = "FINE";
+          break;
+        case "WARN":
+          logLevel = "WARNING";
+          break;
+        case "ERROR":
+          logLevel = "SEVERE";
+          break;
+        default:
+          logLevel = "INFO";
       }
+      this.logLevel = Level.parse(logLevel);
     }
 
     log = new OdpsLogger(this.getClass().getName(),
