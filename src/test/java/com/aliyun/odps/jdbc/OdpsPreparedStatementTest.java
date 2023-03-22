@@ -129,7 +129,9 @@ public class OdpsPreparedStatementTest {
         .set(Calendar.MONTH, Calendar.JANUARY)
         .set(Calendar.DAY_OF_MONTH, 1).build();
     java.sql.Date date = new java.sql.Date(gmtCalendar.getTime().getTime());
-    ZonedDateTime zonedDateTime = ZonedDateTime.of(2023, 3, 16, 14,44,2, 0, ZoneId.systemDefault());
+    ZonedDateTime
+        zonedDateTime =
+        ZonedDateTime.of(2023, 3, 16, 14, 44, 2, 0, ZoneId.systemDefault());
 
     ps.setByte(1, new Byte("127"));
     ps.setShort(2, new Short("32767"));
@@ -149,7 +151,7 @@ public class OdpsPreparedStatementTest {
     ps.setObject(15, zonedDateTime);
     ps.setObject(16, zonedDateTime.toInstant());
 
-    ps.execute();
+    ps.executeUpdate();
 
     Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from insert_with_new_type;");
@@ -375,13 +377,14 @@ public class OdpsPreparedStatementTest {
     PreparedStatement
         ps =
         conn.prepareStatement(
-            "insert into " + tableName + " partition(p1='1234', p2=2345)" + " values (?, ?, ?);");
+            "insert into " + tableName + " partition( p1='1234', p2= 2345 )"
+            + " values (?, ?, ?);");
 
     ps.setString(1, "value1");
     ps.setDouble(2, new Double("3.141592653589"));
     ps.setBoolean(3, true);
 
-    ps.execute();
+    ps.executeUpdate();
 
     Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");

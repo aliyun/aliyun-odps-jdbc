@@ -61,9 +61,9 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.TableSchema;
+import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.data.Char;
-import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
@@ -79,7 +79,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   private final String PREP_VALUES = "\\((\\s*\\?\\s*)(,\\s*\\?\\s*)*\\)"; // "(?)" or "(?,?,...)"
   private final String
       SPEC_COLS =
-      "\\(((\\s*\\w+\\s*)=((\\s*\\w+\\s*)|(\\s*'\\s*\\w+\\s*'\\s*)))(,(\\s*\\w+\\s*)=((\\s*\\w+\\s*)|(\\s*'\\s*\\w+\\s*'\\s*)))*\\)";
+      "\\((\\s*\\w+\\s*=\\s*(\\w+|'\\w+')(\\s*,\\s*\\w+\\s*=\\s*(\\w+|'\\w+')\\s*)*\\s*)\\)";
   // (p1=a) or (p1=a,p2=b,...) or (p1='a') ...
 
 
@@ -114,6 +114,11 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       ZONED_DATETIME_FORMAT =
       ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_DATETIME_FORMAT)
           .withZone(ZoneId.systemDefault()));
+  static ThreadLocal<DateTimeFormatter>
+      ZONED_TIMESTAMP_FORMAT =
+      ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_TIMESTAMP_FORMAT)
+          .withZone(ZoneId.systemDefault()));
+
 
   /**
    * The prepared sql template (immutable). e.g. insert into table FOO select * from BAR where id =
@@ -129,7 +134,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   private int parametersNum;
 
   TableTunnel.UploadSession session;
-  Record reuseRecord;
+  ArrayRecord reuseRecord;
   int blocks;
 
   /**
@@ -310,7 +315,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     }
     getConnection().log.info("create upload session id=" + session.getId());
     TableSchema schema = session.getSchema();
-    reuseRecord = session.newRecord();
+    reuseRecord = (ArrayRecord) session.newRecord();
     int colNum = schema.getColumns().size();
     int valNum = batchedRows.get(0).length;
     if (valNum != colNum) {
@@ -345,19 +350,41 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     super.close();
   }
 
+  /**
+   * 解析后通过SQLExecutor作为query执行
+   * 这种方式执行写入时间数据的时候，1900年前的时间可能会触发Java的时区问题，因此建议采用executeUpdate()方式
+   * Java时区问题：https://programminghints.com/2017/05/still-using-java-util-date-dont/
+   * https://stackoverflow.com/questions/41723123/java-timezone-what-transitions-mean
+   * @return
+   * @throws SQLException
+   */
   @Override
   public boolean execute() throws SQLException {
     return super.execute(updateSql(sql, parameters));
   }
 
+  /**
+   * 解析后通过SQLExecutor作为query执行，同execute()
+   * @return
+   * @throws SQLException
+   */
   @Override
   public ResultSet executeQuery() throws SQLException {
     return super.executeQuery(updateSql(sql, parameters));
   }
 
+  /**
+   * 解析后通过table tunnel执行，只支持insert命令
+   * 该方式采用java.time类型写入时间数据的时候，可以避免Java的时区问题
+   * Java时区问题：https://programminghints.com/2017/05/still-using-java-util-date-dont/
+   * https://stackoverflow.com/questions/41723123/java-timezone-what-transitions-mean
+   * @return
+   * @throws SQLException
+   */
   @Override
   public int executeUpdate() throws SQLException {
-    return super.executeUpdate(updateSql(sql, parameters));
+    addBatch();
+    return executeBatch().length;
   }
 
   @Override
@@ -512,6 +539,14 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     parameters.put(parameterIndex, null);
   }
 
+  /**
+   * 1. 对于prepareStatement本身支持的类型，setObject直接调用相关的接口
+   * 2. 对于prepareStatement本身不支持的类型，例如java.util.Date, java.time, odps类型，直接保留类型进行透传
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2, ...
+   * @param x              the object containing the input parameter value
+   * @throws SQLException
+   */
   @Override
   public void setObject(int parameterIndex, Object x) throws SQLException {
     if (x == null) {
@@ -707,6 +742,20 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     return newSql.toString();
   }
 
+  /**
+   * 将输入的java类型转成odps认识的sql类型，见https://help.aliyun.com/document_detail/159541.html
+   * 需要额外指出的是：
+   * java.sql.Date -> odps Date
+   * java.sql.Time -> odps DateTime
+   * java.sql.Timestamp -> odps Timestamp
+   * java.util.Date -> odps Date
+   * java.time.ZonedDateTime -> odps DateTime
+   * java.time.Instant -> odps Timestamp
+   *
+   * @param x
+   * @return
+   * @throws SQLException
+   */
   private String convertJavaTypeToSqlString(Object x) throws SQLException {
     if (Byte.class.isInstance(x)) {
       return String.format("%sY", x.toString());
@@ -720,7 +769,7 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       return String.format("%sf", x.toString());
     } else if (Double.class.isInstance(x)) {
       return String.format("%s", x.toString());
-    }else if (BigDecimal.class.isInstance(x)) {
+    } else if (BigDecimal.class.isInstance(x)) {
       return String.format("%sBD", x.toString());
     } else if (Varchar.class.isInstance(x)) {
       return x.toString();
@@ -766,13 +815,10 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       }
     } else if (x instanceof ZonedDateTime) {
       return String.format("DATETIME'%s'",
-                           ZONED_DATETIME_FORMAT.get().format(((ZonedDateTime) x).toLocalDateTime()));
+                           ZONED_DATETIME_FORMAT.get().format((ZonedDateTime) x));
     } else if (x instanceof Instant) {
-      ZonedDateTime
-          zonedDateTime =
-          ZonedDateTime.ofInstant((Instant) x, ZONED_DATETIME_FORMAT.get().getZone());
       return String.format("TIMESTAMP'%s'",
-                           java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime()).toString());
+                           ZONED_TIMESTAMP_FORMAT.get().format((Instant) x));
     } else if (Boolean.class.isInstance(x)) {
       return x.toString().toUpperCase();
     } else if (x == null || x.equals(Types.NULL)) {
