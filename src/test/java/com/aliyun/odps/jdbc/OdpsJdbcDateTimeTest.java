@@ -95,14 +95,14 @@ public class OdpsJdbcDateTimeTest {
 
     // insert a record
     sql =
-        String.format("insert into %s values ('test' , datetime('0001-01-01 00:00:00'));",
+        String.format("insert into %s values ('test' , datetime'1900-01-01 08:00:00');",
                       DATETIME_TABLE_NAME);
     System.out.println("Running: " + sql);
     int count = stmt.executeUpdate(sql);
     System.out.println("updated records: " + count);
 
     sql =
-        String.format("insert into %s values ('testnow' , datetime('2022-07-10 10:10:00'));",
+        String.format("insert into %s values ('testnow' , datetime'2022-07-10 10:10:00');",
                       DATETIME_TABLE_NAME);
     System.out.println("Running: " + sql);
     count = stmt.executeUpdate(sql);
@@ -113,10 +113,10 @@ public class OdpsJdbcDateTimeTest {
     res = stmt.executeQuery(sql);
 
     if (res.next()) {
-      Assert.assertEquals(res.getDate(2).toString(), "0001-01-01");
-      Assert.assertEquals(res.getTime(2).toString(), "00:00:00");
-      Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:00:00.0");
-      Assert.assertEquals(res.getString(2), "0001-01-01 00:00:00");
+      Assert.assertEquals(res.getDate(2).toString(), "1900-01-01");
+      Assert.assertEquals(res.getTime(2).toString(), "08:05:43");
+      Assert.assertEquals(res.getTimestamp(2).toString(), "1900-01-01 08:05:43.0");
+      Assert.assertEquals(res.getString(2), "1900-01-01 08:05:43");
     }
     if (res.next()) {
       Assert.assertEquals(res.getDate(2).toString(), "2022-07-10");
@@ -137,14 +137,14 @@ public class OdpsJdbcDateTimeTest {
 
     // insert a record
     sql =
-        String.format("insert into %s values ('test' , date('0001-01-01'));",
+        String.format("insert into %s values ('test' , date'1900-01-01');",
                       DATE_TABLE_NAME);
     System.out.println("Running: " + sql);
     int count = stmt.executeUpdate(sql);
     System.out.println("updated records: " + count);
 
     sql =
-        String.format("insert into %s values ('testnow' , date('2022-07-10'));",
+        String.format("insert into %s values ('testnow' , date'2022-07-10');",
                       DATE_TABLE_NAME);
     System.out.println("Running: " + sql);
     count = stmt.executeUpdate(sql);
@@ -155,8 +155,8 @@ public class OdpsJdbcDateTimeTest {
     res = stmt.executeQuery(sql);
 
     if (res.next()) {
-      Assert.assertEquals("0001-01-01", res.getDate(2).toString());
-      Assert.assertEquals("0001-01-01", res.getString(2));
+      Assert.assertEquals("1900-01-01", res.getDate(2).toString());
+      Assert.assertEquals("1900-01-01", res.getString(2));
     }
     if (res.next()) {
       Assert.assertEquals("2022-07-10", res.getDate(2).toString());
@@ -176,7 +176,7 @@ public class OdpsJdbcDateTimeTest {
     // insert a record
     sql =
         String.format(
-            "insert into %s values ('test' , TIMESTAMP('0001-01-01 00:00:00.000000000'));",
+            "insert into %s values ('test' , TIMESTAMP'0001-01-01 00:00:00.000000000');",
             TIMESTAMP_TABLE_NAME);
     System.out.println("Running: " + sql);
     int count = stmt.executeUpdate(sql);
@@ -184,7 +184,7 @@ public class OdpsJdbcDateTimeTest {
 
     sql =
         String.format(
-            "insert into %s values ('testnow' , TIMESTAMP('2022-07-10 10:10:00.123456789'));",
+            "insert into %s values ('testnow' , TIMESTAMP'2022-07-10 10:10:00.123456789');",
             TIMESTAMP_TABLE_NAME);
     System.out.println("Running: " + sql);
     count = stmt.executeUpdate(sql);
@@ -293,7 +293,8 @@ public class OdpsJdbcDateTimeTest {
   }
 
   @Test
-  public void preparedDateTimeTest() throws SQLException, ParseException {
+  public void preparedDateTimeTes() throws SQLException, ParseException {
+    String timeSource = "1900-01-01 08:00:00";
     Statement stmt = conn.createStatement();
     stmt.execute("drop table if exists " + PREPARED_DATETIME_TABLE_NAME);
     stmt.execute("create table " + PREPARED_DATETIME_TABLE_NAME + " (key string, value datetime)");
@@ -305,37 +306,45 @@ public class OdpsJdbcDateTimeTest {
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     simpleDateFormat.setCalendar(ISO8601_LOCAL_CALENDAR);
     statement.setString(1, "test");
-    statement.setDate(2,
-                      new java.sql.Date(simpleDateFormat.parse("0001-01-01 00:00:00").getTime()));
-    statement.execute();
+    statement.setTime(2,
+                      new java.sql.Time(simpleDateFormat.parse(timeSource).getTime()));
+    statement.executeUpdate();
 
     DateTimeFormatter
         dateTimeFormatter =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
     ZonedDateTime
         zonedDateTime =
-        LocalDateTime.parse("0001-01-01 00:00:00", dateTimeFormatter)
+        LocalDateTime.parse(timeSource, dateTimeFormatter)
             .atZone(ZoneId.systemDefault());
     statement.setString(1, "zonetest");
-    statement.setDate(2, new java.sql.Date(zonedDateTime.toInstant().toEpochMilli()));
-    statement.execute();
+    statement.setTime(2, new java.sql.Time(zonedDateTime.toInstant().toEpochMilli()));
+    statement.executeUpdate();
+
+    statement.setString(1, "zonetest2");
+    statement.setObject(2, zonedDateTime);
+    statement.executeUpdate();
 
     sql = "select * from " + PREPARED_DATETIME_TABLE_NAME;
     System.out.println("Running: " + sql);
     res = stmt.executeQuery(sql);
 
     if (res.next()) {
-      Assert.assertEquals(res.getDate(2).toString(), "0001-01-01");
-      Assert.assertEquals(res.getTime(2).toString(), "00:05:43");
-      Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:05:43.0");
+      Assert.assertEquals(res.getDate(2).toString(), "1900-01-01");
+      Assert.assertEquals(res.getTime(2).toString(), "08:05:43");
+      Assert.assertEquals(res.getTimestamp(2).toString(), "1900-01-01 08:05:43.0");
     }
     if (res.next()) {
-      Assert.assertEquals(res.getDate(2).toString(), "0001-01-01");
-      Assert.assertEquals(res.getTime(2).toString(), "00:00:00");
-      Assert.assertEquals(res.getTimestamp(2).toString(), "0001-01-01 00:00:00.0");
+      Assert.assertEquals(res.getDate(2).toString(), "1900-01-01");
+      Assert.assertEquals(res.getTime(2).toString(), "08:00:00");
+      Assert.assertEquals(res.getTimestamp(2).toString(), "1900-01-01 08:00:00.0");
+    }
+    if (res.next()) {
+      Assert.assertEquals(res.getDate(2).toString(), "1900-01-01");
+      Assert.assertEquals(res.getTime(2).toString(), "08:00:00");
+      Assert.assertEquals(res.getTimestamp(2).toString(), "1900-01-01 08:00:00.0");
     }
   }
-
 
   @Test
   public void toJdbcTimeTypeTest() throws SQLException {

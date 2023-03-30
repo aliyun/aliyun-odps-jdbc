@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 public class ToOdpsDatetimeTransformer extends AbstractToOdpsTransformer {
@@ -40,6 +41,8 @@ public class ToOdpsDatetimeTransformer extends AbstractToOdpsTransformer {
       return new java.util.Date(((Date) o).getTime()).toInstant().atZone(ZoneId.systemDefault());
     } else if (Date.class.isInstance(o)) {
       return ((java.util.Date) o).toInstant().atZone(ZoneId.systemDefault());
+    } else if (ZonedDateTime.class.isInstance(o)) {
+      return o;
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Date.class);
       throw new SQLException(errorMsg);

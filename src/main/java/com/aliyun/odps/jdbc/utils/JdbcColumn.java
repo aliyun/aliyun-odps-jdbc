@@ -34,7 +34,7 @@ import com.aliyun.odps.type.VarcharTypeInfo;
  */
 public class JdbcColumn {
 
-  public static final String ODPS_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
+  public static final String ODPS_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSSSSSSSS";
   public static final String ODPS_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
   public static final String ODPS_DATE_FORMAT = "yyyy-MM-dd";
   public static final String ODPS_TIME_FORMAT = "HH:mm:ss";
