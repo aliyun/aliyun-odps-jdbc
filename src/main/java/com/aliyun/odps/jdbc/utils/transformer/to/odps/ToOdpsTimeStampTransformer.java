@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc.utils.transformer.to.odps;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZoneId;
 
 public class ToOdpsTimeStampTransformer extends AbstractToOdpsTransformer {
@@ -33,7 +34,9 @@ public class ToOdpsTimeStampTransformer extends AbstractToOdpsTransformer {
     }
 
     if (Timestamp.class.isInstance(o)) {
-      return ((Timestamp) o).toInstant().atZone(ZoneId.systemDefault());
+      return ((Timestamp) o).toInstant().atZone(ZoneId.systemDefault()).toInstant();
+    } else if (Instant.class.isInstance(o)) {
+      return o;
     } else {
       String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Timestamp.class);
       throw new SQLException(errorMsg);
