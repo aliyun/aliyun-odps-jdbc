@@ -154,4 +154,24 @@ public class UtilsTest {
       Assert.assertTrue(properties.isEmpty());
     }
   }
+
+  @Test
+  public void testParseSettingWithComments() {
+    String comment1 = "-- I am Comment1;\n";
+    String comment2 = "-- I am Comment2\n";
+    String setting1 = "set 1= 1;\n";
+    String setting2 = "set 2=2;";
+    String query = "select 1;";
+
+    String sql = comment1 + comment2 + setting1 + comment1 + setting2 + comment2 + query;
+
+    Properties properties = new Properties();
+    String res = Utils.parseSetting(sql, properties);
+
+    Assert.assertEquals(query, res);
+    Assert.assertEquals(properties.size(), 2);
+    Assert.assertEquals(properties.getProperty("1"), "1");
+    Assert.assertEquals(properties.getProperty("2"), "2");
+  }
+
 }

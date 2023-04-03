@@ -130,7 +130,8 @@ public class Utils {
       throw new IllegalArgumentException("Invalid query :" + sql);
     }
 
-    sql = sql.trim();
+    //移除comments
+    sql = removeComments(sql);
     if (!sql.endsWith(";")) {
       sql += ";";
     }
@@ -158,4 +159,31 @@ public class Utils {
       return sql.substring(index).trim();
     }
   }
+
+  private static String removeComments(String sql) {
+    String[] sqlArray = sql.trim().split(";");
+
+    StringBuilder sb = new StringBuilder();
+    for (String s : sqlArray) {
+      int index;
+      boolean isComments = false;
+      s = s.trim();
+
+      while (!StringUtils.isEmpty(s) && s.startsWith("--")) {
+        index = s.indexOf("\n");
+        if (index == -1) {
+          isComments = true;
+          break;
+        }
+        s = s.substring(index + 1).trim();
+      }
+
+      if (!isComments) {
+        sb.append(s).append(";");
+      }
+    }
+    return sb.toString();
+  }
+
+
 }
