@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Odps;
@@ -161,28 +163,15 @@ public class Utils {
   }
 
   private static String removeComments(String sql) {
-    String[] sqlArray = sql.trim().split(";");
+    String res = null;
+    Pattern p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/|#.*?$");
 
-    StringBuilder sb = new StringBuilder();
-    for (String s : sqlArray) {
-      int index;
-      boolean isComments = false;
-      s = s.trim();
-
-      while (!StringUtils.isEmpty(s) && s.startsWith("--")) {
-        index = s.indexOf("\n");
-        if (index == -1) {
-          isComments = true;
-          break;
-        }
-        s = s.substring(index + 1).trim();
-      }
-
-      if (!isComments) {
-        sb.append(s).append(";");
-      }
+    Matcher matcher = p.matcher(sql);
+    if (matcher.find()) {
+      res = matcher.replaceAll("$1");
     }
-    return sb.toString();
+
+    return res == null ? sql : res;
   }
 
 

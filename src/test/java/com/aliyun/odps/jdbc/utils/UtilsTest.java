@@ -157,13 +157,14 @@ public class UtilsTest {
 
   @Test
   public void testParseSettingWithComments() {
-    String comment1 = "-- I am Comment1;\n";
+    String comment1 = "-- I am Comment1; not over, over now.\n";
     String comment2 = "-- I am Comment2\n";
-    String setting1 = "set 1= 1;\n";
-    String setting2 = "set 2=2;";
+    String comment3 = "/* 我是多行注释; \n" + "多行注释结束 */ ";
+    String setting1 = "set 1= 1;\n --comments\n";
+    String setting2 = "set 2='2'; -- set 3=3; \n";
     String query = "select 1;";
 
-    String sql = comment1 + comment2 + setting1 + comment1 + setting2 + comment2 + query;
+    String sql = comment1 + comment2 + setting1 + comment3 + setting2 + comment2 + query;
 
     Properties properties = new Properties();
     String res = Utils.parseSetting(sql, properties);
@@ -171,7 +172,97 @@ public class UtilsTest {
     Assert.assertEquals(query, res);
     Assert.assertEquals(properties.size(), 2);
     Assert.assertEquals(properties.getProperty("1"), "1");
-    Assert.assertEquals(properties.getProperty("2"), "2");
+    Assert.assertEquals(properties.getProperty("2"), "'2'");
   }
 
+  @Test
+  public void testParseSqlWithComments() {
+    String sql = "set odps.namespace.schema=true; --test \n"
+                 + "SET odps.sql.validate.orderby.limit = false;\n"
+                 + "-- MaxComputeTutorial: Better Github Analytics Query \n"
+                 + "-- ********************************************************************--\n"
+                 + "-- 大量开发人员在GitHub上进行开源项目的开发工作，并在项目的开发过程中产生海量事件。GitHub会记录每次事件的类型及详情、开发者、代码仓库等信息，并开放其中的公开事件，包括加星标、提交代码等，具体事件类型请参见https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads。\n"
+                 + "\n"
+                 + "-- MaxCompute将GH Archive提供的海量公开事件数据进行离线处理并开发，生成一张事实表dwd_github_events_odps;一张聚合表dws_overview_by_repo_by_month_dailyupdate\n"
+                 + "-- dwd_github_events_odps:存储了每一条事件的主干信息，T+1小时更新\n"
+                 + "-- dws_overview_by_repo_by_month_dailyupdate：存储了项目维度每月事件指标汇总T+1天更新\n"
+                 + "-- 感谢数据源提供方GH Archive：https://www.gharchive.org/与Github API：https://docs.github.com/en/rest/activity/events。\n"
+                 + "\n"
+                 + "-- 公开数据集的数据均存储在一个名为MAXCOMPUTE_PUBLIC_DATA的项目中，但所有用户并未被加入到该项目中，即非项目空间成员。\n"
+                 + "-- 因此，用户需要跨项目访问数据，在编写SQL脚本时，必须在表名前指定项目名称及Schema名称，本query查询的数据存储的Schema名称为：github_evnets。\n"
+                 + "\n"
+                 + "--  如果您未开启租户级别Schema语法，需要在运行query前通过session flag的方式设置 SET odps.namespace.schema = true;\n"
+                 + "\n"
+                 + "\n"
+                 + "-- Better Github Analytics Query 1：统计过去一年获星标数项目排行榜（前10）\n"
+                 + "SELECT\n"
+                 + "    repo_id,\n"
+                 + "    repo_name,\n"
+                 + "    COUNT(actor_login) total\n"
+                 + "FROM\n"
+                 + "    maxcompute_public_data.github_events.dwd_github_events_odps\n --test\n"
+                 + "WHERE\n"
+                 + "    ds>=date_add(getdate(), -365)\n"
+                 + "    AND type = 'WatchEvent'\n"
+                 + "    AND c = 'a'\n"
+                 + "    AND d = \"e\" \n"
+                 + "GROUP BY\n"
+                 + "    repo_id,\n"
+                 + "    repo_name\n"
+                 + "ORDER BY\n"
+                 + "    total DESC\n"
+                 + "LIMIT 10;";
+
+    String sqlExpect = "SELECT\n"
+                       + "    repo_id,\n"
+                       + "    repo_name,\n"
+                       + "    COUNT(actor_login) total\n"
+                       + "FROM\n"
+                       + "    maxcompute_public_data.github_events.dwd_github_events_odps\n"
+                       + " \n"
+                       + "WHERE\n"
+                       + "    ds>=date_add(getdate(), -365)\n"
+                       + "    AND type = 'WatchEvent'\n"
+                       + "    AND c = 'a'\n"
+                       + "    AND d = \"e\" \n"
+                       + "GROUP BY\n"
+                       + "    repo_id,\n"
+                       + "    repo_name\n"
+                       + "ORDER BY\n"
+                       + "    total DESC\n"
+                       + "LIMIT 10;";
+
+    Properties properties = new Properties();
+    String res = Utils.parseSetting(sql, properties);
+
+    Assert.assertEquals(sqlExpect, res);
+    Assert.assertEquals(properties.size(), 2);
+    Assert.assertEquals(properties.getProperty("odps.namespace.schema"), "true");
+    Assert.assertEquals(properties.getProperty("odps.sql.validate.orderby.limit"), "false");
+
+  }
+
+  @Test
+  public void testParseSettingWithoutComments() {
+    String setting1 = "set 1= 1;\n";
+    String setting2 = "set 2='2';\n";
+    String query = "select 1;";
+
+    String sqlWithSet = setting1 + setting2 + query;
+    String sqlWithoutSet = query;
+
+    Properties properties = new Properties();
+    String res = Utils.parseSetting(sqlWithSet, properties);
+
+    Assert.assertEquals(query, res);
+    Assert.assertEquals(properties.size(), 2);
+    Assert.assertEquals(properties.getProperty("1"), "1");
+    Assert.assertEquals(properties.getProperty("2"), "'2'");
+
+    properties = new Properties();
+    res = Utils.parseSetting(sqlWithoutSet, properties);
+    Assert.assertEquals(query, res);
+    Assert.assertEquals(properties.size(), 0);
+
+  }
 }
