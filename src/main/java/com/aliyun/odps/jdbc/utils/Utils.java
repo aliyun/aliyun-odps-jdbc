@@ -134,7 +134,7 @@ public class Utils {
 
     //移除comments
     sql = removeComments(sql);
-    if (!sql.endsWith(";")) {
+    if (!sql.trim().endsWith(";")) {
       sql += ";";
     }
     int index = 0;
