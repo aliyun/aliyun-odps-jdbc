@@ -493,7 +493,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
               connHandle.log.info("using tunnel endpoint: " + te);
               tunnel.setEndpoint(te);
             }
-
+            if (connHandle.getTunnelConnectTimeout() >= 0) {
+              tunnel.getConfig().setSocketConnectTimeout(connHandle.getTunnelConnectTimeout());
+            }
+            if (connHandle.getTunnelReadTimeout() >= 0) {
+              tunnel.getConfig().setSocketTimeout(connHandle.getTunnelReadTimeout());
+            }
             session = tunnel.createDirectDownloadSession(
                 connHandle.getOdps().getDefaultProject(),
                 connHandle.getExecutor().getInstance().getId(),
