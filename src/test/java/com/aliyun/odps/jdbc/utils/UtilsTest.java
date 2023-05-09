@@ -71,6 +71,13 @@ public class UtilsTest {
   @Test
   public void testParseSetting() {
     {
+      String sql = "cost sql select 1; \n";
+      Properties properties = new Properties();
+      String realSql = Utils.parseSetting(sql, properties);
+      Assert.assertEquals(realSql, sql.trim());
+      Assert.assertEquals(properties.size(), 0);
+    }
+    {
       String sql = "select keyvalue(f1,\";\",\":\",\"mktActivityType\") f1 from test_dirty;";
       Properties properties = new Properties();
       String realQuery = Utils.parseSetting(sql, properties);
