@@ -139,6 +139,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private Level logLevel = Level.INFO;
 
+  private int tunnelReadTimeout = -1;
+  private int tunnelConnectTimeout = -1;
+
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -171,6 +174,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       connectTimeout = Integer.parseInt(connRes.getConnectTimeout());
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("connect-timeout is expected to be an integer");
+    }
+
+    try {
+      this.tunnelReadTimeout = Integer.parseInt(connRes.getTunnelReadTimeout());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("tunnel-read-timeout is expected to be an integer");
+    }
+
+    try {
+      this.tunnelConnectTimeout = Integer.parseInt(connRes.getTunnelConnectTimeout());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("tunnel-connect-timeout is expected to be an integer");
     }
 
     if (logLevel != null) {
@@ -323,7 +338,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .tunnelEndpoint(tunnelEndpoint)
         .tunnelGetResultMaxRetryTime(tunnelRetryTime)
         .taskName(OdpsStatement.getDefaultTaskName())
-        .enableCommandApi(enableCommandApi);
+        .enableCommandApi(enableCommandApi)
+        .tunnelSocketTimeout(tunnelConnectTimeout)
+        .tunnelReadTimeout(tunnelReadTimeout);
     long startTime = System.currentTimeMillis();
     executor = builder.build();
     if (interactiveMode && executor.getInstance() != null) {
@@ -836,6 +853,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
     this.connectTimeout = connectTimeout;
     odps.getRestClient().setConnectTimeout(this.connectTimeout);
+  }
+
+  public int getTunnelReadTimeout() {
+    return tunnelReadTimeout;
+  }
+
+  public int getTunnelConnectTimeout() {
+    return tunnelConnectTimeout;
   }
 
   public boolean isEnableCommandApi() {

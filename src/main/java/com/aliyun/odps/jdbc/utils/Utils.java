@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Odps;
@@ -130,8 +132,9 @@ public class Utils {
       throw new IllegalArgumentException("Invalid query :" + sql);
     }
 
-    sql = sql.trim();
-    if (!sql.endsWith(";")) {
+    //移除comments
+    sql = removeComments(sql);
+    if (!sql.trim().endsWith(";")) {
       sql += ";";
     }
     int index = 0;
@@ -158,4 +161,18 @@ public class Utils {
       return sql.substring(index).trim();
     }
   }
+
+  private static String removeComments(String sql) {
+    String res = null;
+    Pattern p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/|#.*?$");
+
+    Matcher matcher = p.matcher(sql);
+    if (matcher.find()) {
+      res = matcher.replaceAll("$1");
+    }
+
+    return res == null ? sql : res;
+  }
+
+
 }

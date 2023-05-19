@@ -88,6 +88,8 @@ public class ConnectionResource {
   private static final String ENABLE_COMMAND_API_URL_KEY = "enableCommandApi";
   private static final String HTTPS_CHECK_URL_KEY = "httpsCheck";
   private static final String LOG_LEVEL_URL_KEY = "logLevel";
+  private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
+  private static final String TUNNEL_CONNECT_TIMEOUT_URL_KRY = "tunnelConnectTimeout";
 
   /**
    * Keys to retrieve properties from info.
@@ -141,6 +143,8 @@ public class ConnectionResource {
   private static final String ENABLE_COMMAND_API_PROP_KEY = "enable_command_api";
   private static final String HTTPS_CHECK_PROP_KEY = "https_check";
   private static final String LOG_LEVEL_PROP_KEY = "log_level";
+  private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
+  private static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
 
   private String endpoint;
   private String accessId;
@@ -187,6 +191,8 @@ public class ConnectionResource {
   private String readTimeout;
   private String connectTimeout;
   private String logLevel;
+  private String tunnelReadTimeout;
+  private String tunnelConnectTimeout;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -355,6 +361,11 @@ public class ConnectionResource {
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, READ_TIMEOUT_PROP_KEY, READ_TIMEOUT_URL_KEY);
     connectTimeout =
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, CONNECT_TIMEOUT_PROP_KEY, CONNECT_TIMEOUT_URL_KRY);
+
+    tunnelReadTimeout =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, TUNNEL_READ_TIMEOUT_PROP_KEY, TUNNEL_READ_TIMEOUT_URL_KEY);
+    tunnelConnectTimeout =
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, TUNNEL_CONNECT_TIMEOUT_PROP_KEY, TUNNEL_CONNECT_TIMEOUT_URL_KRY);
 
     // cancel enableLimit hint if autoSelectLimit turns on
     if (autoSelectLimit > 0) {
@@ -620,5 +631,13 @@ public class ConnectionResource {
 
   public String getLogLevel() {
     return logLevel;
+  }
+
+  public String getTunnelReadTimeout() {
+    return tunnelReadTimeout;
+  }
+
+  public String getTunnelConnectTimeout() {
+    return tunnelConnectTimeout;
   }
 }
