@@ -13,7 +13,7 @@ public class ToOdpsJsonTransformer extends AbstractToOdpsTransformer {
     }
 
     if (String.class.isInstance(o)) {
-      return new SimpleJsonValue("123");
+      return new SimpleJsonValue((String) o);
     } else if (byte[].class.isInstance(o)) {
       return new SimpleJsonValue(encodeBytes((byte[]) o, charset));
     } else {
