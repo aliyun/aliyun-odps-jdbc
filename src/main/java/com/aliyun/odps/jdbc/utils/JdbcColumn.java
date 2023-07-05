@@ -65,6 +65,7 @@ public class JdbcColumn {
     ODPS_SQLTYPE_MAPPER.put(OdpsType.VARCHAR, java.sql.Types.VARCHAR);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.INTERVAL_YEAR_MONTH, java.sql.Types.OTHER);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.INTERVAL_DAY_TIME, java.sql.Types.OTHER);
+    ODPS_SQLTYPE_MAPPER.put(OdpsType.JSON, Types.VARCHAR);
   }
 
   private final String columnName;
