@@ -68,6 +68,7 @@ import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
+import com.aliyun.odps.sqa.commandapi.utils.SqlParserUtil;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordWriter;
@@ -716,27 +717,26 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
    * Returns a new sql replacing the '?'s in the prepared sql to parameters.
    */
   private String updateSql(String sql, HashMap<Integer, Object> parameters) throws SQLException {
-    if (!sql.contains("?")) {
+    List<Integer> indexList = SqlParserUtil.getPlaceholderIndexList(sql);
+    if (indexList.size() == 0) {
       return sql;
     }
 
+    if (parameters == null || parameters.size() != indexList.size()) {
+      throw new SQLException("wrong number of parameters.");
+    }
+
     StringBuilder newSql = new StringBuilder(sql);
-
-    int paramIndex = 1;
     int pos = 0;
+    int paramIndex = 1;
 
-    while (pos < newSql.length()) {
-      if (newSql.charAt(pos) == '?') {
-        if (parameters.containsKey(paramIndex)) {
-          newSql.deleteCharAt(pos);
-          String str = convertJavaTypeToSqlString(parameters.get(paramIndex));
-          newSql.insert(pos, str);
-          pos += str.length() - 1;
-        }
-        paramIndex++;
-      } else {
-        pos++;
-      }
+    for (Integer index : indexList) {
+      index += pos;
+      newSql.deleteCharAt(index);
+      String str = convertJavaTypeToSqlString(parameters.get(paramIndex));
+      newSql.insert(index, str);
+      pos += str.length() - 1;
+      paramIndex++;
     }
 
     return newSql.toString();
