@@ -525,12 +525,12 @@ public class OdpsPreparedStatementTest {
     ddl.close();
 
     PreparedStatement ps = connection.prepareStatement(
-        "insert into sql_with_constant_mark values ('?', ?, ?);");
+        "insert into sql_with_constant_mark values ('?', ?, ?); --我是后面注释里的?");
     ps.setString(1, "??");
     ps.setString(2, "test");
     ps.execute();
 
-    ps = connection.prepareStatement("select c3 from sql_with_constant_mark where c1 = ? AND c2 = '??';");
+    ps = connection.prepareStatement("--我是前面注释的? \n select c3 from sql_with_constant_mark where c1 = ? AND c2 = \"??\";");
     ps.setObject(1, "?");
     ResultSet resultSet = ps.executeQuery();
     while (resultSet.next()) {
