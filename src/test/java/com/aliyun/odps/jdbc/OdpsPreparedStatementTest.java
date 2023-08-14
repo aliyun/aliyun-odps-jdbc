@@ -501,16 +501,40 @@ public class OdpsPreparedStatementTest {
     ps.execute();
 
     ps = connection.prepareStatement("select * from sql_injection where c3 = ?;");
-    ps.setObject(3, false);
+    ps.setObject(1, false);
     ResultSet resultSet = ps.executeQuery();
     Assert.assertFalse(resultSet.next());
 
-    ps.setObject(3, "false', 'or 1=1");
+    ps.setObject(1, "false', 'or 1=1");
     try {
       ps.execute();
       Assert.fail();
     } catch (Exception ignored) {
     }
 
+  }
+
+  @Test
+  public void testSqlWithConstantMark() throws SQLException {
+    Connection connection = TestManager.getInstance().conn;
+    Statement ddl = connection.createStatement();
+
+    ddl.executeUpdate("drop table if exists sql_with_constant_mark;");
+    ddl.executeUpdate(
+        "create table sql_with_constant_mark(c1 string, c2 string, c3 string);");
+    ddl.close();
+
+    PreparedStatement ps = connection.prepareStatement(
+        "insert into sql_with_constant_mark values ('?', ?, ?); --我是后面注释里的?");
+    ps.setString(1, "??");
+    ps.setString(2, "test");
+    ps.execute();
+
+    ps = connection.prepareStatement("--我是前面注释的? \n select c3 from sql_with_constant_mark where c1 = ? AND c2 = \"??\";");
+    ps.setObject(1, "?");
+    ResultSet resultSet = ps.executeQuery();
+    while (resultSet.next()) {
+      Assert.assertEquals("test", resultSet.getString(1));
+    }
   }
 }
