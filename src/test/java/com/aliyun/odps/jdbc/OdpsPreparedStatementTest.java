@@ -43,6 +43,7 @@ import org.junit.Test;
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.data.SimpleJsonValue;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.tunnel.TableTunnel;
 
@@ -174,7 +175,8 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals(date.toString(), rs.getDate(13).toString());
       Assert.assertEquals("=FA4=E1=02=93=CBB=84=85s=A4=E3=997=F4y", rs.getObject(14).toString());
       Assert.assertEquals(zonedDateTime.toString(), rs.getObject(15).toString());
-      Assert.assertEquals(zonedDateTime.toInstant().toEpochMilli(), ((Instant) rs.getObject(16)).toEpochMilli());
+      Assert.assertEquals(zonedDateTime.toInstant().toEpochMilli(),
+                          ((Instant) rs.getObject(16)).toEpochMilli());
     }
 
     ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
@@ -298,6 +300,48 @@ public class OdpsPreparedStatementTest {
     }
 
     ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
+    ddl.close();
+  }
+
+  @Test
+  public void test() throws SQLException, ParseException {
+    Connection conn = TestManager.getInstance().conn;
+    Statement ddl = conn.createStatement();
+    ddl.execute("set odps.sql.type.system.odps2=true;");
+    ddl.execute("set odps.sql.decimal.odps2=true;");
+    ddl.execute("set odps.sql.type.json.enable=true;");
+    ddl.executeUpdate("drop table if exists json_test;");
+    ddl.executeUpdate("create table json_test(c1 JSON);");
+
+    PreparedStatement ps = conn.prepareStatement("insert into json_test values "
+                                                 + "(?);");
+
+    ps.setString(1, "123");
+    ps.addBatch();
+    ps.setObject(1, "{\"id\":123,\"name\":\"MaxCompute\"}");
+    ps.addBatch();
+
+    int[] results = ps.executeBatch();
+    ps.close();
+
+    for (int i : results) {
+      Assert.assertEquals(1, i);
+    }
+
+    Statement query = conn.createStatement();
+    ResultSet
+        rs =
+        query.executeQuery("set odps.sql.type.json.enable=true; select * from json_test;");
+    rs.next();
+    Assert.assertEquals(rs.getMetaData().getColumnType(1), 12);
+    Assert.assertEquals(((SimpleJsonValue) rs.getObject(1)).getAsNumber().intValue(), 123);
+    rs.next();
+    Assert.assertEquals(rs.getMetaData().getColumnType(1), 12);
+    SimpleJsonValue jsonValue = (SimpleJsonValue) rs.getObject(1);
+    Assert.assertEquals(jsonValue.get("id").getAsNumber().intValue(), 123);
+    Assert.assertEquals(jsonValue.get("name").getAsString(), "MaxCompute");
+
+    ddl.executeUpdate("drop table if exists json_test;");
     ddl.close();
   }
 
@@ -458,16 +502,40 @@ public class OdpsPreparedStatementTest {
     ps.execute();
 
     ps = connection.prepareStatement("select * from sql_injection where c3 = ?;");
-    ps.setObject(3, false);
+    ps.setObject(1, false);
     ResultSet resultSet = ps.executeQuery();
     Assert.assertFalse(resultSet.next());
 
-    ps.setObject(3, "false', 'or 1=1");
+    ps.setObject(1, "false', 'or 1=1");
     try {
       ps.execute();
       Assert.fail();
     } catch (Exception ignored) {
     }
 
+  }
+
+  @Test
+  public void testSqlWithConstantMark() throws SQLException {
+    Connection connection = TestManager.getInstance().conn;
+    Statement ddl = connection.createStatement();
+
+    ddl.executeUpdate("drop table if exists sql_with_constant_mark;");
+    ddl.executeUpdate(
+        "create table sql_with_constant_mark(c1 string, c2 string, c3 string);");
+    ddl.close();
+
+    PreparedStatement ps = connection.prepareStatement(
+        "insert into sql_with_constant_mark values ('?', ?, ?); --我是后面注释里的?");
+    ps.setString(1, "??");
+    ps.setString(2, "test");
+    ps.execute();
+
+    ps = connection.prepareStatement("--我是前面注释的? \n select c3 from sql_with_constant_mark where c1 = ? AND c2 = \"??\";");
+    ps.setObject(1, "?");
+    ResultSet resultSet = ps.executeQuery();
+    while (resultSet.next()) {
+      Assert.assertEquals("test", resultSet.getString(1));
+    }
   }
 }

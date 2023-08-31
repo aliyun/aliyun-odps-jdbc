@@ -64,7 +64,7 @@ public class Utils {
   public static String retrieveVersion(String key) {
     Properties prop = new Properties();
     try {
-      prop.load(Utils.class.getResourceAsStream("/version.properties"));
+      prop.load(Utils.class.getResourceAsStream("/maxcompute-version.properties"));
       return prop.getProperty(key);
     } catch (IOException e) {
       return "unknown";
