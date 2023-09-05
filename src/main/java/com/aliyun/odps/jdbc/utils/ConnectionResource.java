@@ -90,6 +90,7 @@ public class ConnectionResource {
   private static final String LOG_LEVEL_URL_KEY = "logLevel";
   private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
   private static final String TUNNEL_CONNECT_TIMEOUT_URL_KRY = "tunnelConnectTimeout";
+  private static final String RETRY_TIME_URL_KEY = "retryTime";
 
   /**
    * Keys to retrieve properties from info.
@@ -145,6 +146,7 @@ public class ConnectionResource {
   private static final String LOG_LEVEL_PROP_KEY = "log_level";
   private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
   private static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
+  private static final String RETRY_TIME_PROP_KEY = "retry_time";
 
   private String endpoint;
   private String accessId;
@@ -193,6 +195,7 @@ public class ConnectionResource {
   private String logLevel;
   private String tunnelReadTimeout;
   private String tunnelConnectTimeout;
+  private int retryTime;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -383,6 +386,10 @@ public class ConnectionResource {
     httpsCheck = Boolean.parseBoolean(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", HTTPS_CHECK_PROP_KEY,
                                                  HTTPS_CHECK_URL_KEY));
+
+    retryTime = Integer.parseInt(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY)
+    );
 
     logLevel = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_LEVEL_PROP_KEY, LOG_LEVEL_URL_KEY);
 
@@ -639,5 +646,9 @@ public class ConnectionResource {
 
   public String getTunnelConnectTimeout() {
     return tunnelConnectTimeout;
+  }
+
+  public int getRetryTime() {
+    return retryTime;
   }
 }
