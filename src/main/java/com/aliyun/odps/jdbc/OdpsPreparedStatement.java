@@ -585,9 +585,9 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (x instanceof Instant) {
       parameters.put(parameterIndex, x);
     } else if (x instanceof Varchar) {
-      parameters.put(parameterIndex, x);
+      setString(parameterIndex, x.toString());
     } else if (x instanceof Char) {
-      parameters.put(parameterIndex, x);
+      setString(parameterIndex, x.toString());
     } else if (x instanceof Binary) {
       parameters.put(parameterIndex, x);
     } else {
@@ -771,8 +771,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       return String.format("%s", x.toString());
     } else if (BigDecimal.class.isInstance(x)) {
       return String.format("%sBD", x.toString());
-    } else if (Varchar.class.isInstance(x)) {
-      return x.toString();
     } else if (String.class.isInstance(x)) {
       if (isIllegal((String) x)) {
         throw new IllegalArgumentException("");
@@ -826,9 +824,15 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     } else if (Binary.class.isInstance(x)) {
       return String.format("unhex('%s')", x);
     } else if (Varchar.class.isInstance(x)) {
-      return x.toString();
+      if (isIllegal(x.toString())) {
+        throw new IllegalArgumentException("");
+      }
+      return "'" + x.toString() + "'";
     } else if (Char.class.isInstance(x)) {
-      return x.toString();
+      if (isIllegal(x.toString())) {
+        throw new IllegalArgumentException("");
+      }
+      return "'" + x.toString() + "'";
     } else {
       throw new SQLException("unrecognized Java class: " + x.getClass().getName());
     }
