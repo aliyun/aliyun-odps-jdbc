@@ -130,6 +130,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean odpsNamespaceSchema = false;
 
+  private int retryTime = -1;
   private int readTimeout = -1;
   private int connectTimeout = -1;
 
@@ -232,6 +233,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps.setDefaultProject(project);
     odps.setCurrentSchema(schema);
     odps.setUserAgent("odps-jdbc-" + version);
+
+    int retryTime = connRes.getRetryTime();
+    if (retryTime > 0) {
+      this.retryTime = retryTime;
+      odps.getRestClient().setRetryTimes(this.retryTime);
+    }
 
     if (readTimeout > 0) {
       this.readTimeout = readTimeout;
@@ -821,6 +828,21 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public void setEnableLimit(boolean enableLimit) {
     this.enableLimit = enableLimit;
+  }
+
+  public int getRetryTime() {
+    if (retryTime <= 0) {
+      return odps.getRestClient().getRetryTimes();
+    }
+    return retryTime;
+  }
+
+  public void setRetryTime(int retryTime) {
+    if (retryTime <= 0) {
+      throw new IllegalArgumentException("retry-times should be positive.");
+    }
+    this.retryTime = retryTime;
+    odps.getRestClient().setRetryTimes(this.retryTime);
   }
 
   public int getReadTimeout() {

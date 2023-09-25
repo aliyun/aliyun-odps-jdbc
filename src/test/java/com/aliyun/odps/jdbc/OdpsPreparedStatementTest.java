@@ -271,7 +271,6 @@ public class OdpsPreparedStatementTest {
       ps.addBatch();
     }
 
-    // TODO fix later
     int[] results = ps.executeBatch();
     ps.close();
 
