@@ -20,6 +20,7 @@
 
 package com.aliyun.odps.jdbc;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -35,19 +36,82 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
+import java.util.Optional;
 import java.util.TimeZone;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.data.RecordReader;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.data.SimpleJsonValue;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsPreparedStatementTest {
+
+  @Test
+  public void testSetPartialWithoutPartition() throws SQLException, OdpsException, IOException {
+    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+    Statement stmt = connection.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(c1 bigint, c2 bigint, c3 bigint);");
+
+    testExecuteBatch("insert into dual(c3, c1, c2) values(? ,?, ?);");
+    show("dual");
+
+    testExecuteBatch("insert into dual values(? ,?, ?);");
+    show("dual");
+  }
+
+  @Test
+  public void testSetPartialWithPartition() throws SQLException, OdpsException, IOException {
+    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+    Statement stmt = connection.createStatement();
+    stmt.executeUpdate("drop table if exists dual;");
+    stmt.executeUpdate("create table if not exists dual(c1 bigint, c2 bigint, c3 bigint) partitioned by (c4 int);");
+
+    testExecuteBatch("insert into dual(c3, c1, c2) partition(c4=1) values(? ,?, ?);");
+    show("dual");
+
+    testExecuteBatch("insert into dual partition(c4=1) values(? ,?, ?);");
+    show("dual");
+  }
+
+  private void testExecuteBatch(String sql) throws SQLException {
+    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+    PreparedStatement pstmt = connection.prepareStatement(sql);
+    pstmt.setLong(1, 100L);
+    pstmt.setLong(2, 200L);
+    pstmt.setLong(3, 300L);
+    pstmt.addBatch();
+    pstmt.setLong(1, 200L);
+    pstmt.setLong(2, 200L);
+    pstmt.setLong(3, 300L);
+    pstmt.addBatch();
+    pstmt.setLong(1, 300L);
+    pstmt.setLong(2, 200L);
+    pstmt.setLong(3, 300L);
+    pstmt.addBatch();
+    pstmt.executeBatch();
+    pstmt.close();
+  }
+
+  private void show(String tableName) throws IOException, OdpsException {
+    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+    RecordReader reader = connection.getOdps().tables().get(tableName).read(10);
+    Record r;
+    while((r = reader.read()) != null) {
+      for(int i = 0; i < r.getColumnCount(); i++) {
+        System.out.print(Optional.ofNullable(r.get(i)).map(Object::toString).orElse("NULL") + " ");
+      }
+      System.out.println();
+    }
+  }
+
 
   @Test
   public void testSetAll() throws Exception {
