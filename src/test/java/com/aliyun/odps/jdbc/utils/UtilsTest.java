@@ -169,14 +169,15 @@ public class UtilsTest {
     String comment3 = "/* 我是多行注释; \n" + "多行注释结束 */ ";
     String setting1 = "set 1= 1;\n --comments\n";
     String setting2 = "set 2='2'; -- set 3=3; \n";
+    String comment4 = "/*+ 我不是多行注释, 我是hints */ ";
     String query = "select 1;";
 
-    String sql = comment1 + comment2 + setting1 + comment3 + setting2 + comment2 + query;
+    String sql = comment1 + comment2 + setting1 + comment3 + setting2 + comment2 + comment4 + query;
 
     Properties properties = new Properties();
     String res = Utils.parseSetting(sql, properties);
 
-    Assert.assertEquals(query, res);
+    Assert.assertEquals(comment4 + query, res);
     Assert.assertEquals(properties.size(), 2);
     Assert.assertEquals(properties.getProperty("1"), "1");
     Assert.assertEquals(properties.getProperty("2"), "'2'");
