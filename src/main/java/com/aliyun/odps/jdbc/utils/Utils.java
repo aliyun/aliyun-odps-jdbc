@@ -164,7 +164,7 @@ public class Utils {
 
   private static String removeComments(String sql) {
     String res = null;
-    Pattern p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/|#.*?$");
+    Pattern p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*(?!\\+).*?\\*/|#.*?$");
 
     Matcher matcher = p.matcher(sql);
     if (matcher.find()) {
