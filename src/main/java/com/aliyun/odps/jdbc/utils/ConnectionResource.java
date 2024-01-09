@@ -91,6 +91,7 @@ public class ConnectionResource {
   private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
   private static final String TUNNEL_CONNECT_TIMEOUT_URL_KRY = "tunnelConnectTimeout";
   private static final String RETRY_TIME_URL_KEY = "retryTime";
+  private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
 
   /**
    * Keys to retrieve properties from info.
@@ -147,6 +148,7 @@ public class ConnectionResource {
   private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
   private static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
   private static final String RETRY_TIME_PROP_KEY = "retry_time";
+  private static final String SKIP_SQL_REWRITE_PROP_KEY = "skip_sql_rewrite";
 
   private String endpoint;
   private String accessId;
@@ -176,6 +178,7 @@ public class ConnectionResource {
   private boolean autoLimitFallback = false;
   private boolean enableCommandApi = false;
   private boolean httpsCheck = false;
+  private boolean skipSqlRewrite = false;
 
   public Boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
@@ -386,6 +389,10 @@ public class ConnectionResource {
     httpsCheck = Boolean.parseBoolean(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", HTTPS_CHECK_PROP_KEY,
                                                  HTTPS_CHECK_URL_KEY));
+
+    skipSqlRewrite = Boolean.parseBoolean(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_SQL_REWRITE_PROP_KEY,
+                                                 SKIP_SQL_REWRITE_URL_KEY));
 
     retryTime = Integer.parseInt(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY)
@@ -634,6 +641,10 @@ public class ConnectionResource {
 
   public boolean isHttpsCheck() {
     return httpsCheck;
+  }
+
+  public boolean isSkipSqlRewrite() {
+    return skipSqlRewrite;
   }
 
   public String getLogLevel() {
