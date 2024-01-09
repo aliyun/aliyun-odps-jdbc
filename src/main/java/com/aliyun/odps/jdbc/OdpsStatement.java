@@ -195,10 +195,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   @Override
-  public synchronized ResultSet executeQuery(String sql) throws SQLException {
+  public synchronized ResultSet executeQuery(String query) throws SQLException {
     Properties properties = new Properties();
 
-    String query = Utils.parseSetting(sql, properties);
+    if (!connHandle.isSkipSqlCheck()) {
+      query = Utils.parseSetting(query, properties);
+    }
 
     if (StringUtils.isNullOrEmpty(query)) {
       // only settings, just set properties
@@ -218,11 +220,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   @Override
-  public synchronized int executeUpdate(String sql) throws SQLException {
+  public synchronized int executeUpdate(String query) throws SQLException {
 
     Properties properties = new Properties();
-
-    String query = Utils.parseSetting(sql, properties);
+    if (!connHandle.isSkipSqlCheck()) {
+      query = Utils.parseSetting(query, properties);
+    }
 
     if (StringUtils.isNullOrEmpty(query)) {
       // only settings, just set properties
@@ -260,16 +263,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   /**
    * 执行SQL
    *
-   * @param sql any SQL statement
+   * @param query any SQL statement
    * @return if it has resultSet
    * @throws SQLException
    */
   @Override
-  public boolean execute(String sql) throws SQLException {
+  public boolean execute(String query) throws SQLException {
     // short cut for SET clause
     Properties properties = new Properties();
 
-    String query = Utils.parseSetting(sql, properties);
+    if (!connHandle.isSkipSqlCheck()) {
+      query = Utils.parseSetting(query, properties);
+    }
 
     if (StringUtils.isNullOrEmpty(query)) {
       // only settings, just set properties
