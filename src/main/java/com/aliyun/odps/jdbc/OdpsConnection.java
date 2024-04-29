@@ -137,6 +137,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean enableCommandApi;
 
   private boolean httpsCheck;
+  private boolean skipSqlCheck;
 
   private Level logLevel = Level.INFO;
 
@@ -274,6 +275,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.autoLimitFallback = connRes.isAutoLimitFallback();
     this.enableCommandApi = connRes.isEnableCommandApi();
     this.httpsCheck = connRes.isHttpsCheck();
+    this.skipSqlCheck = connRes.isSkipSqlRewrite();
     this.tunnelDownloadUseSingleReader = connRes.isTunnelDownloadUseSingleReader();
 
     if (!httpsCheck) {
@@ -893,6 +895,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isHttpsCheck() {
     return httpsCheck;
+  }
+
+  public boolean isSkipSqlCheck() {
+    return skipSqlCheck;
   }
 
   public boolean isTunnelDownloadUseSingleReader() {
