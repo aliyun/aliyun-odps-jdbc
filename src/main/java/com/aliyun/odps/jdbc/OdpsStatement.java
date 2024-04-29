@@ -26,8 +26,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringEscapeUtils;
@@ -35,12 +37,14 @@ import org.apache.commons.lang.StringEscapeUtils;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
+import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.StringUtils;
@@ -707,7 +711,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       odpsResultSet = null;
     } else {
       try {
-        odpsResultSet = executor.getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
+        setResultSetInternal();
         List<String> exeLog = executor.getExecutionLog();
         if (!exeLog.isEmpty()) {
           for (String log : exeLog) {
@@ -790,4 +794,72 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public String getLogViewUrl() {
     return logviewUrl;
   }
+
+  private void setResultSetInternal() throws OdpsException, IOException {
+    if (connHandle.isTunnelDownloadUseSingleReader()) {
+
+
+      executeInstance.waitForSuccess();
+      Instance instance = executeInstance;
+
+      InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
+      InstanceTunnel.DownloadSession downloadSession = tunnel.createDownloadSession(
+              instance.getProject(),
+              instance.getId()
+      );
+
+      odpsResultSet = new com.aliyun.odps.data.ResultSet(
+              new SingleReaderResultSetIterator(downloadSession, downloadSession.getRecordCount()),
+              downloadSession.getSchema(),
+              downloadSession.getRecordCount());
+    } else {
+      odpsResultSet = connHandle.getExecutor().getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
+    }
+
+  }
+
+  class SingleReaderResultSetIterator implements Iterator<Record> {
+    private final TunnelRecordReader reader;
+    private final InstanceTunnel.DownloadSession session;
+    private Record nextLine;
+
+    public SingleReaderResultSetIterator(InstanceTunnel.DownloadSession session, long recordCount) {
+      try {
+        this.session = session;
+        this.reader = session.openRecordReader(0, recordCount);
+        moveToNextLine();
+      } catch (TunnelException | IOException e) {
+        throw new RuntimeException("Open tunnel reader failed, session id: " + session.getId()
+                + " errMsg: " + e.getMessage(),
+                e);
+      }
+    }
+
+    @Override
+    public boolean hasNext() {
+      return nextLine != null;
+    }
+
+    @Override
+    public Record next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      Record currLine = nextLine;
+      moveToNextLine();
+      return currLine;
+    }
+
+    private void moveToNextLine() {
+      try {
+        nextLine = reader.read();
+      } catch (IOException e) {
+        nextLine = null;
+        throw new RuntimeException("Read record failed, session id: " + session.getId()
+                + " errMsg: " + e.getMessage(),
+                e);
+      }
+    }
+  }
+
 }

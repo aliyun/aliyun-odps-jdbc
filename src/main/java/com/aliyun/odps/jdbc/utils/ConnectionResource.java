@@ -90,6 +90,7 @@ public class ConnectionResource {
   private static final String LOG_LEVEL_URL_KEY = "logLevel";
   private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
   private static final String TUNNEL_CONNECT_TIMEOUT_URL_KRY = "tunnelConnectTimeout";
+  private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY = "tunnelDownloadUseSingleReader";
   private static final String RETRY_TIME_URL_KEY = "retryTime";
 
   /**
@@ -146,6 +147,7 @@ public class ConnectionResource {
   private static final String LOG_LEVEL_PROP_KEY = "log_level";
   private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
   private static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
+  private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY = "tunnel_download_use_single_reader";
   private static final String RETRY_TIME_PROP_KEY = "retry_time";
 
   private String endpoint;
@@ -195,6 +197,7 @@ public class ConnectionResource {
   private String logLevel;
   private String tunnelReadTimeout;
   private String tunnelConnectTimeout;
+  private boolean tunnelDownloadUseSingleReader = false;
   private int retryTime;
 
   public static boolean acceptURL(String url) {
@@ -369,6 +372,8 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, TUNNEL_READ_TIMEOUT_PROP_KEY, TUNNEL_READ_TIMEOUT_URL_KEY);
     tunnelConnectTimeout =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, TUNNEL_CONNECT_TIMEOUT_PROP_KEY, TUNNEL_CONNECT_TIMEOUT_URL_KRY);
+
+    tunnelDownloadUseSingleReader = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY, TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY));
 
     // cancel enableLimit hint if autoSelectLimit turns on
     if (autoSelectLimit > 0) {
@@ -650,5 +655,9 @@ public class ConnectionResource {
 
   public int getRetryTime() {
     return retryTime;
+  }
+
+  public boolean isTunnelDownloadUseSingleReader() {
+    return tunnelDownloadUseSingleReader;
   }
 }

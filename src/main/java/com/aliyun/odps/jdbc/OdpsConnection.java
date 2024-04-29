@@ -142,6 +142,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private int tunnelReadTimeout = -1;
   private int tunnelConnectTimeout = -1;
+  private boolean tunnelDownloadUseSingleReader = false;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -273,6 +274,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.autoLimitFallback = connRes.isAutoLimitFallback();
     this.enableCommandApi = connRes.isEnableCommandApi();
     this.httpsCheck = connRes.isHttpsCheck();
+    this.tunnelDownloadUseSingleReader = connRes.isTunnelDownloadUseSingleReader();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -891,6 +893,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isHttpsCheck() {
     return httpsCheck;
+  }
+
+  public boolean isTunnelDownloadUseSingleReader() {
+    return tunnelDownloadUseSingleReader;
   }
 
   /**
