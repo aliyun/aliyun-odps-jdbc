@@ -21,25 +21,12 @@
 package com.aliyun.odps.jdbc;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Date;
-import java.sql.NClob;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -53,32 +40,20 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.aliyun.odps.Column;
 import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.PartitionSpec;
-import com.aliyun.odps.Table;
-import com.aliyun.odps.TableSchema;
-import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.data.Char;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
-import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
-import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import com.aliyun.odps.sqa.commandapi.utils.SqlParserUtil;
-import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
-import com.aliyun.odps.tunnel.io.TunnelRecordWriter;
-import com.aliyun.odps.type.TypeInfo;
-import com.aliyun.odps.utils.StringUtils;
 
-public class OdpsPreparedStatement extends OdpsStatement implements PreparedStatement {
+public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   private final String TABLE_NAME = "((\\w+\\.)?\\w+)";      // "proj.name" or "name"
   private final String PREP_VALUES = "\\((\\s*\\?\\s*)(,\\s*\\?\\s*)*\\)"; // "(?)" or "(?,?,...)"
@@ -130,17 +105,18 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
    */
   private final String sql;
 
-  private boolean verified = false;
+  private boolean parsed = false;
   private String tableBatchInsertTo;
 
+  private String projectName;
+  private String schemaName;
+  private String tableName;
   private String partitionSpec;
   private List<String> specificColumns;
 
   private int parametersNum;
 
-  TableTunnel.UploadSession session;
-  ArrayRecord reuseRecord;
-  int blocks;
+  private DataUploader uploader;
 
   /**
    * The parameters for the prepared sql (index=>parameter). The parameter is stored as Java objects
@@ -207,72 +183,50 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
    */
   @Override
   public int[] executeBatch() throws SQLException {
-    if (!verified) {
-      boolean withSpecPartition = sql.matches(PREP_INSERT_WITH_SPEC_PARTITION);
-      boolean withoutSpecPartition = sql.matches(PREP_INSERT_WITHOUT_SPEC_PARTITION);
-
-      if (!withoutSpecPartition && !withSpecPartition) {
-        throw new SQLException("batched statement only support following syntax: " + EXAMPLE);
-      }
-
-      if (withoutSpecPartition) {
-        setSession(Pattern.compile(PREP_INSERT_WITHOUT_SPEC_PARTITION).matcher(sql), false);
-      }
-
-      if (withSpecPartition) {
-        setSession(Pattern.compile(PREP_INSERT_WITH_SPEC_PARTITION).matcher(sql), true);
-      }
+    if (!parsed) {
+      parse();
     }
 
-    int batchedSize = batchedRows.size();
-    // if no sql is batched, just return
-    if (batchedSize == 0) {
-      return new int[0];
-    }
-
-    getConnection().log
-        .info(batchedSize + " records are going to be uploaded to table " + tableBatchInsertTo
-              + " in batch");
-
-    int[] updateCounts = new int[batchedSize];
-    Arrays.fill(updateCounts, -1);
-
-    long startTime = System.currentTimeMillis();
-    try(TunnelRecordWriter recordWriter =  (TunnelRecordWriter) session.openRecordWriter(blocks, true);) {
-      Map<String, TypeInfo> columnTypeMap =
-          session.getSchema().getColumns().stream()
-              .collect(Collectors.toMap(Column::getName, Column::getTypeInfo));
-      for (int i = 0; i < batchedSize; i++) {
-        Object[] row = batchedRows.get(i);
-        for (int j = 0; j < specificColumns.size(); j++) {
-          String columnName = specificColumns.get(j);
-          AbstractToOdpsTransformer transformer =
-              ToOdpsTransformerFactory.getTransformer(columnTypeMap.get(columnName).getOdpsType());
-          reuseRecord.set(columnName, transformer.transform(row[j], getConnection().getCharset()));
-        }
-        recordWriter.write(reuseRecord);
-        updateCounts[i] = 1;
-      }
-
-      long duration = System.currentTimeMillis() - startTime;
-      float megaBytesPerSec = (float) recordWriter.getTotalBytes() / 1024 / 1024 / duration * 1000;
-      getConnection().log.info(
-          String.format("It took me %d ms to insert %d records [%d], %.2f MiB/s", duration,
-                        batchedSize,
-                        blocks, megaBytesPerSec));
-      blocks += 1;
-    } catch (TunnelException | IOException e) {
-      throw new SQLException(e);
-    }
+    int[] updateCounts = uploader.upload(batchedRows);
     clearBatch();
     return updateCounts;
   }
 
-  private void setSession(Matcher matcher, boolean hasPartition) throws SQLException {
+  private void parse() throws SQLException {
+
+    boolean withSpecPartition = sql.matches(PREP_INSERT_WITH_SPEC_PARTITION);
+    boolean withoutSpecPartition = sql.matches(PREP_INSERT_WITHOUT_SPEC_PARTITION);
+
+    if (!withoutSpecPartition && !withSpecPartition) {
+      throw new SQLException("batched statement only support following syntax: " + EXAMPLE);
+    }
+
+    Matcher matcher = null;
+    boolean hasPartition = false;
+
+    if (withoutSpecPartition) {
+      matcher = Pattern.compile(PREP_INSERT_WITHOUT_SPEC_PARTITION).matcher(sql);
+      hasPartition = false;
+    }
+
+    if (withSpecPartition) {
+      matcher = Pattern.compile(PREP_INSERT_WITH_SPEC_PARTITION).matcher(sql);
+      hasPartition = true;
+    }
+
+
     if (matcher.find()) {
       tableBatchInsertTo = matcher.group(1);
       if (hasPartition) {
         partitionSpec = matcher.group(4);
+      }
+      if (tableBatchInsertTo.contains(".")) {
+        String[] splited = tableBatchInsertTo.split("\\.");
+        projectName = splited[0];
+        tableName = splited[1];
+      } else {
+        projectName = getConnection().getOdps().getDefaultProject();
+        tableName = tableBatchInsertTo;
       }
     } else {
       throw new SQLException("cannot extract table name or partition name in SQL: " + sql);
@@ -290,51 +244,16 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
       this.specificColumns = specificColumns;
     }
 
-    TableTunnel tunnel = new TableTunnel(getConnection().getOdps());
-    // TODO 三层模型
     try {
-      if (tableBatchInsertTo.contains(".")) {
-        String[] splited = tableBatchInsertTo.split("\\.");
-        String projectName = splited[0];
-        String tableName = splited[1];
-
-        if (hasPartition && !StringUtils.isNullOrEmpty(partitionSpec)) {
-          Table table = getConnection().getOdps().tables().get(projectName, tableName);
-          PartitionSpec partition = new PartitionSpec(partitionSpec);
-          if (!table.hasPartition(partition)) {
-            table.createPartition(partition);
-          }
-          session = tunnel.createUploadSession(projectName, tableName, partition);
-        } else {
-          session = tunnel.createUploadSession(projectName, tableName);
-        }
-      } else {
-        String defaultProject = getConnection().getOdps().getDefaultProject();
-        if (hasPartition && !StringUtils.isNullOrEmpty(partitionSpec)) {
-          Table table = getConnection().getOdps().tables().get(defaultProject, tableBatchInsertTo);
-          PartitionSpec partition = new PartitionSpec(partitionSpec);
-          if (!table.hasPartition(partition)) {
-            table.createPartition(partition);
-          }
-          session = tunnel.createUploadSession(defaultProject, tableBatchInsertTo, partition);
-        } else {
-          session = tunnel.createUploadSession(defaultProject, tableBatchInsertTo);
-        }
-      }
-    } catch (TunnelException e) {
-      throw new SQLException(e);
+      uploader = DataUploader.build(projectName, schemaName, tableName, partitionSpec,
+                                    specificColumns, getConnection());
     } catch (OdpsException e) {
       throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new SQLException(e);
     }
-    getConnection().log.info("create upload session id=" + session.getId());
-    reuseRecord = (ArrayRecord) session.newRecord();
-    if (specificColumns == null) {
-      TableSchema schema = session.getSchema();
-      this.specificColumns =
-          schema.getColumns().stream().map(Column::getName).collect(Collectors.toList());
-    }
-    blocks = 0;
-    verified = true;
+
+    parsed = true;
   }
 
   // Commit on close
@@ -343,17 +262,11 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
     if (isClosed()) {
       return;
     }
-    if (session != null && blocks > 0) {
-      Long[] blockList = new Long[blocks];
-      getConnection().log.info("commit session: " + blocks + " blocks");
-      for (int i = 0; i < blocks; i++) {
-        blockList[i] = Long.valueOf(i);
-      }
+
+    if (uploader != null) {
       try {
-        session.commit(blockList);
-      } catch (TunnelException e) {
-        throw new SQLException(e);
-      } catch (IOException e) {
+        uploader.commit();
+      } catch (TunnelException | IOException e) {
         throw new SQLException(e);
       }
     }
@@ -406,140 +319,8 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   }
 
   @Override
-  public ParameterMetaData getParameterMetaData() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setArray(int parameterIndex, Array x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setAsciiStream(int parameterIndex, InputStream x, int length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setAsciiStream(int parameterIndex, InputStream x, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBinaryStream(int parameterIndex, InputStream x, int length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBinaryStream(int parameterIndex, InputStream x, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBlob(int parameterIndex, Blob x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBlob(int parameterIndex, InputStream inputStream, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
     parameters.put(parameterIndex, x);
-  }
-
-  @Override
-  public void setCharacterStream(int parameterIndex, Reader reader)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setCharacterStream(int parameterIndex, Reader reader, int length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setCharacterStream(int parameterIndex, Reader reader, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setClob(int parameterIndex, Clob x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setClob(int parameterIndex, Reader reader) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setClob(int parameterIndex, Reader reader, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setNCharacterStream(int parameterIndex, Reader value)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setNCharacterStream(int parameterIndex, Reader value, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setNClob(int parameterIndex, NClob value) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setNClob(int parameterIndex, Reader reader, long length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setNString(int parameterIndex, String value) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -671,55 +452,6 @@ public class OdpsPreparedStatement extends OdpsStatement implements PreparedStat
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
     parameters.put(parameterIndex, x);
-  }
-
-  @Override
-  public void setObject(int parameterIndex, Object x, int targetSqlType)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setRef(int parameterIndex, Ref x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setRowId(int parameterIndex, RowId x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setURL(int parameterIndex, URL x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setUnicodeStream(int parameterIndex, InputStream x, int length)
-      throws SQLException {
-    throw new SQLFeatureNotSupportedException();
   }
 
   /**

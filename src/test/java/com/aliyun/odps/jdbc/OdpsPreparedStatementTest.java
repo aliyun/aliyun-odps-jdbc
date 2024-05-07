@@ -601,4 +601,57 @@ public class OdpsPreparedStatementTest {
       Assert.assertEquals("test", resultSet.getString(1));
     }
   }
+
+  @Test
+  public void testAcid2Table() throws SQLException {
+    Connection connection = TestManager.getInstance().conn;
+    Statement ddl = connection.createStatement();
+    ddl.executeUpdate("drop table if exists acid_table;");
+    ddl.executeUpdate(
+        "create table acid_table(c1 string not null primary key) tblproperties (\"transactional\"=\"true\");");
+    ddl.close();
+
+    PreparedStatement ps = connection.prepareStatement(
+        "insert into acid_table values (?);");
+    ps.setString(1, "str");
+    ps.addBatch();
+    ps.executeBatch();
+
+    ps.setString(1, "str2");
+    ps.addBatch();
+    ps.executeBatch();
+
+    ps.close();
+
+    ResultSet resultSet = runQuery("select count(*) from acid_table;");
+    resultSet.next();
+    Assert.assertEquals(2, resultSet.getInt(1));
+
+  }
+
+  @Test
+  public void testAcidTable() throws SQLException {
+    Connection connection = TestManager.getInstance().conn;
+    Statement ddl = connection.createStatement();
+    ddl.executeUpdate("drop table if exists acid1_table;");
+    ddl.executeUpdate(
+        "create table acid1_table(c1 string) tblproperties (\"transactional\"=\"true\");");
+    ddl.close();
+    PreparedStatement ps = connection.prepareStatement("insert into acid1_table values (?);");
+    ps.setString(1, "str");
+    ps.addBatch();
+    ps.executeBatch();
+    ps.setString(1, "str2");
+    ps.addBatch();
+    ps.executeBatch();
+    ps.close();
+    ResultSet resultSet = runQuery("select count(*) from acid1_table;");
+    resultSet.next();
+    Assert.assertEquals(2, resultSet.getInt(1));
+  }
+
+  ResultSet runQuery(String sql) throws SQLException {
+    Statement statement = TestManager.getInstance().conn.createStatement();
+    return statement.executeQuery(sql);
+  }
 }
