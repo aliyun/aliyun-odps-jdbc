@@ -22,9 +22,14 @@ package com.aliyun.odps.jdbc.utils;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -185,4 +190,23 @@ public class Utils {
     return sql;
   }
 
+  public static <T> T convertToSqlType(Object object, Class<T> type) {
+    if (type == String.class) {
+      return (T) Objects.toString(object);
+    }
+    if (object instanceof ZonedDateTime && type == LocalDateTime.class) {
+      ZonedDateTime zonedDateTime = (ZonedDateTime) object;
+      ZonedDateTime utcZonedDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC);
+      return (T) utcZonedDateTime.toLocalDateTime();
+    }
+    if (object instanceof Instant && type == LocalDateTime.class) {
+      Instant instant = (Instant) object;
+      return (T) LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+    }
+    if(object instanceof LocalDateTime && type == ZonedDateTime.class) {
+      LocalDateTime localDateTime = (LocalDateTime) object;
+      return (T) localDateTime.atZone(ZoneOffset.UTC);
+    }
+    return (T) object;
+  }
 }

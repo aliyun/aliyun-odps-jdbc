@@ -59,6 +59,7 @@ public class JdbcColumn {
     ODPS_SQLTYPE_MAPPER.put(OdpsType.SMALLINT, java.sql.Types.SMALLINT);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.DATE, java.sql.Types.DATE);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.TIMESTAMP, java.sql.Types.TIMESTAMP);
+    ODPS_SQLTYPE_MAPPER.put(OdpsType.TIMESTAMP_NTZ, java.sql.Types.TIMESTAMP);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.FLOAT, java.sql.Types.FLOAT);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.CHAR, java.sql.Types.CHAR);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.BINARY, java.sql.Types.BINARY);

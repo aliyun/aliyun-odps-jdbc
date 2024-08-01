@@ -42,6 +42,7 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.ToJdbcTransformerFactory;
@@ -161,7 +162,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   public int findColumn(String columnLabel) throws SQLException {
     int index = getMetaData().getColumnIndex(columnLabel);
     if (index == -1) {
-      throw new SQLException("the column label is invalid");
+      throw new SQLException("the column label is invalid: [" + columnLabel + "]");
     }
     return index;
   }
@@ -215,23 +216,23 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public Object getObject(int columnIndex, Map<String, Class<?>> map)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return getObject(columnIndex);
   }
 
   @Override
   public Object getObject(String columnLabel, Map<String, Class<?>> map)
       throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return getObject(columnLabel);
   }
 
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return Utils.convertToSqlType(getObject(columnIndex), type);
   }
 
   @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return Utils.convertToSqlType(getObject(columnLabel), type);
   }
 
   @Override

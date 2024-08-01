@@ -27,11 +27,13 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -67,7 +69,8 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   private final String PREP_INSERT_WITH_SPEC_PARTITION =
       "(?i)^" + "\\s*" + "insert" + "\\s+" + "into" + "\\s+" + TABLE_NAME + "\\s*" + SPEC_COLUMN
-      + "\\s+" + "partition" + SPEC_PARTITION + "\\s+" + "values" + "\\s*" + PREP_VALUES + "\\s*" + ";?\\s*$";
+      + "\\s+" + "partition" + SPEC_PARTITION + "\\s+" + "values" + "\\s*" + PREP_VALUES + "\\s*"
+      + ";?\\s*$";
 
   private final String EXAMPLE =
       "INSERT INTO table [(c1, c2)] [partition(p1=a,p2=b,...)] VALUES (?, ?);";
@@ -89,10 +92,17 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
   static ThreadLocal<SimpleDateFormat>
       DATE_FORMAT =
       ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
+
+  static ThreadLocal<DateTimeFormatter>
+      LOCAL_DATE_FORMAT =
+      ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_DATE_FORMAT)
+          .withZone(ZoneId.systemDefault()));
+
   static ThreadLocal<DateTimeFormatter>
       ZONED_DATETIME_FORMAT =
       ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_DATETIME_FORMAT)
           .withZone(ZoneId.systemDefault()));
+
   static ThreadLocal<DateTimeFormatter>
       ZONED_TIMESTAMP_FORMAT =
       ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_TIMESTAMP_FORMAT)
@@ -370,6 +380,8 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       setDate(parameterIndex, (Date) x);
     } else if (x instanceof java.util.Date) {
       parameters.put(parameterIndex, x);
+    } else if (x instanceof LocalDate) {
+      parameters.put(parameterIndex, x);
     } else if (x instanceof ZonedDateTime) {
       parameters.put(parameterIndex, x);
     } else if (x instanceof Instant) {
@@ -490,6 +502,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    * java.sql.Time -> odps DateTime
    * java.sql.Timestamp -> odps Timestamp
    * java.util.Date -> odps Date
+   * java.time.LocalDate -> odps Date
    * java.time.ZonedDateTime -> odps DateTime
    * java.time.Instant -> odps Timestamp
    *
@@ -552,6 +565,8 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
         DATE_FORMAT.get().setCalendar(calendar);
         return String.format("DATE'%s'", DATE_FORMAT.get().format(x));
       }
+    } else if (x instanceof LocalDate) {
+      return String.format("DATE'%s'", LOCAL_DATE_FORMAT.get().format((LocalDate) x));
     } else if (x instanceof ZonedDateTime) {
       return String.format("DATETIME'%s'",
                            ZONED_DATETIME_FORMAT.get().format((ZonedDateTime) x));
@@ -584,4 +599,25 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
     return matcher.find();
   }
 
+  @Override
+  public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
+    setObject(parameterIndex, x);
+  }
+
+  @Override
+  public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength)
+      throws SQLException {
+    setObject(parameterIndex, x);
+  }
+
+  @Override
+  public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
+    setObject(parameterIndex, x);
+  }
+
+  @Override
+  public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength)
+      throws SQLException {
+    setObject(parameterIndex, x);
+  }
 }
