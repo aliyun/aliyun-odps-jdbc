@@ -1132,12 +1132,31 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                                               col.getComment(),
                                               i + 1);
           Object[] rowVals =
-              {catalog, jdbcCol.getTableSchema(), jdbcCol.getTableName(), jdbcCol.getColumnName(),
-               (long) jdbcCol.getType(), jdbcCol.getTypeName(), null, null,
-               (long) jdbcCol.getDecimalDigits(), (long) jdbcCol.getNumPercRaidx(),
-               (long) jdbcCol.getIsNullable(), jdbcCol.getComment(), null, null, null, null,
-               (long) jdbcCol.getOrdinalPos(), jdbcCol.getIsNullableString(), null, null, null,
-               null};
+              {catalog, // table catalog (odps project)
+               jdbcCol.getTableSchema(), // table schema （odps project)
+               jdbcCol.getTableName(), // table name
+               jdbcCol.getColumnName(), // column name
+               (long) jdbcCol.getType(), // SQL type from java.sql.Types
+               jdbcCol.getTypeName(), // Data source dependent type name, actually odps typeInfo name
+               null, // column size
+               null, // not used
+               (long) jdbcCol.getDecimalDigits(), // the number of fractional digits.
+               (long) jdbcCol.getNumPercRaidx(), // Radix (typically either 10 or 2)
+               (long) jdbcCol.getIsNullable(), // is NULL allowed.
+               jdbcCol.getComment(), // comment describing column (may be null)
+               null, // default value for the column
+               null, // unused
+               null, // unused
+               null, // for char types the maximum number of bytes in the column
+               (long) jdbcCol.getOrdinalPos(), // index of column in table (start at 1)
+               jdbcCol.getIsNullableString(), // ISO rules are used to determine the nullability for a column.
+               null, // SCOPE_CATALOG
+               null, // SCOPE_SCHEMA
+               null, // SCOPE_TABLE
+               null, // SOURCE_DATA_TYPE
+               "NO", // IS_AUTOINCREMENT
+               "NO", // IS_GENERATEDCOLUMN
+               };
 
           rows.add(rowVals);
         }
@@ -1161,7 +1180,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                                                 "SQL_DATA_TYPE", "SQL_DATETIME_SUB",
                                                 "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
                                                 "IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA",
-                                                "SCOPE_TABLE", "SOURCE_DATA_TYPE"),
+                                                "SCOPE_TABLE", "SOURCE_DATA_TYPE",
+                                                "IS_AUTOINCREMENT", "IS_GENERATEDCOLUMN"),
                                   Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING,
                                                 TypeInfoFactory.STRING,
                                                 TypeInfoFactory.STRING, TypeInfoFactory.BIGINT,
@@ -1176,7 +1196,8 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
                                                 TypeInfoFactory.STRING,
                                                 TypeInfoFactory.STRING, TypeInfoFactory.STRING,
                                                 TypeInfoFactory.STRING,
-                                                TypeInfoFactory.BIGINT));
+                                                TypeInfoFactory.BIGINT, TypeInfoFactory.STRING,
+                                                TypeInfoFactory.STRING));
 
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }

@@ -23,6 +23,7 @@ package com.aliyun.odps.jdbc;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;

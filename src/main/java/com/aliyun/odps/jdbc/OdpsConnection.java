@@ -651,8 +651,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency,
                                    int resultSetHoldability) throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    log.warn("Ingore resultSetHoldability when create Statement");
+    return createStatement(resultSetType, resultSetConcurrency);
   }
 
   @Override

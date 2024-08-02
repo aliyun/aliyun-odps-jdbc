@@ -4,8 +4,8 @@
     <servers>
         <server>
             <id>ossrh</id>
-            <username>${env.nexus_username}</username>
-            <password>${env.nexus_password}</password>
+            <username>${env.nexus_token_username}</username>
+            <password>${env.nexus_token_password}</password>
         </server>
     </servers>
 </settings>
