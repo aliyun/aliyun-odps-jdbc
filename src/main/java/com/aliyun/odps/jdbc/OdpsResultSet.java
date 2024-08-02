@@ -57,11 +57,23 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private boolean wasNull = false;
 
   private SQLWarning warningChain = null;
+  protected TimeZone timeZone;
 
   OdpsResultSet(OdpsConnection conn, OdpsStatement stmt, OdpsResultSetMetaData meta) {
     this.stmt = stmt;
     this.meta = meta;
     this.conn = conn;
+
+    if (stmt != null) {
+      String sessionTimeZoneId =
+          stmt.getSqlTaskProperties().getProperty("odps.sql.timezone", null);
+      sessionTimeZoneId = stmt.getInputProperties().getProperty("odps.sql.timezone", sessionTimeZoneId);
+      if (sessionTimeZoneId != null) {
+        timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
+      } else {
+        timeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
+      }
+    }
   }
 
   @Override
@@ -227,12 +239,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    return Utils.convertToSqlType(getObject(columnIndex), type);
+    return Utils.convertToSqlType(getObject(columnIndex), type, timeZone);
   }
 
   @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-    return Utils.convertToSqlType(getObject(columnLabel), type);
+    return Utils.convertToSqlType(getObject(columnLabel), type, timeZone);
   }
 
   @Override
@@ -666,19 +678,6 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   private Object transformToJdbcType(Object o, Class jdbcCls, Calendar cal, TypeInfo typeInfo)
       throws SQLException {
     AbstractToJdbcTransformer transformer = ToJdbcTransformerFactory.getTransformer(jdbcCls);
-
-    TimeZone timeZone = null;
-
-    if (stmt != null) {
-      String sessionTimeZoneId =
-          stmt.getSqlTaskProperties().getProperty("odps.sql.timezone", null);
-      sessionTimeZoneId = stmt.getInputProperties().getProperty("odps.sql.timezone", sessionTimeZoneId);
-      if (sessionTimeZoneId != null) {
-        timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
-      } else {
-        timeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
-      }
-    }
 
     return ((AbstractToJdbcDateTypeTransformer) transformer)
         .transform(o, conn.getCharset(), cal, timeZone, typeInfo);

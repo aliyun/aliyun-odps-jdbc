@@ -24,13 +24,13 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -190,22 +190,36 @@ public class Utils {
     return sql;
   }
 
-  public static <T> T convertToSqlType(Object object, Class<T> type) {
+  public static <T> T convertToSqlType(Object object, Class<T> type, TimeZone timeZone) {
+    if (object == null) {
+      return null;
+    }
     if (type == String.class) {
       return (T) Objects.toString(object);
     }
-    if (object instanceof ZonedDateTime && type == LocalDateTime.class) {
+    if (object instanceof ZonedDateTime) {
       ZonedDateTime zonedDateTime = (ZonedDateTime) object;
-      ZonedDateTime utcZonedDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC);
-      return (T) utcZonedDateTime.toLocalDateTime();
-    }
-    if (object instanceof Instant && type == LocalDateTime.class) {
-      Instant instant = (Instant) object;
-      return (T) LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-    }
-    if(object instanceof LocalDateTime && type == ZonedDateTime.class) {
+      ZonedDateTime utcZonedDateTime = zonedDateTime.withZoneSameInstant(timeZone.toZoneId());
+
+      if (type == ZonedDateTime.class) {
+        return (T) utcZonedDateTime;
+      } else if (type == LocalDateTime.class) {
+        return (T) utcZonedDateTime.toLocalDateTime();
+      }
+    } else if (object instanceof LocalDateTime) {
       LocalDateTime localDateTime = (LocalDateTime) object;
-      return (T) localDateTime.atZone(ZoneOffset.UTC);
+
+      if (type == ZonedDateTime.class) {
+        return (T) localDateTime.atZone(timeZone.toZoneId());
+      }
+    } else if (object instanceof Instant) {
+      Instant instant = (Instant) object;
+      if (type == LocalDateTime.class) {
+        return (T) LocalDateTime.ofInstant(instant, timeZone.toZoneId());
+      } else if (type == ZonedDateTime.class) {
+        return (T) LocalDateTime.ofInstant(instant, timeZone.toZoneId())
+            .atZone(timeZone.toZoneId());
+      }
     }
     return (T) object;
   }
