@@ -93,6 +93,7 @@ public class ConnectionResource {
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY = "tunnelDownloadUseSingleReader";
   private static final String RETRY_TIME_URL_KEY = "retryTime";
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
+  private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
 
   /**
    * Keys to retrieve properties from info.
@@ -151,6 +152,7 @@ public class ConnectionResource {
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY = "tunnel_download_use_single_reader";
   private static final String RETRY_TIME_PROP_KEY = "retry_time";
   private static final String SKIP_SQL_REWRITE_PROP_KEY = "skip_sql_rewrite";
+  private static final String SKIP_SQL_INJECT_CHECK_PROP_KEY = "skip_sql_inject_check";
 
   private String endpoint;
   private String accessId;
@@ -181,6 +183,7 @@ public class ConnectionResource {
   private boolean enableCommandApi = false;
   private boolean httpsCheck = false;
   private boolean skipSqlRewrite = false;
+  private boolean skipSqlInjectCheck = false;
 
   public Boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
@@ -399,6 +402,10 @@ public class ConnectionResource {
     skipSqlRewrite = Boolean.parseBoolean(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_SQL_REWRITE_PROP_KEY,
                                                  SKIP_SQL_REWRITE_URL_KEY));
+
+    skipSqlInjectCheck = Boolean.parseBoolean(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_SQL_INJECT_CHECK_PROP_KEY,
+                                                 SKIP_SQL_INJECT_CHECK_URL_KEY));
 
     retryTime = Integer.parseInt(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY)
@@ -651,6 +658,10 @@ public class ConnectionResource {
 
   public boolean isSkipSqlRewrite() {
     return skipSqlRewrite;
+  }
+
+  public boolean isSkipSqlInjectCheck() {
+    return skipSqlInjectCheck;
   }
 
   public String getLogLevel() {

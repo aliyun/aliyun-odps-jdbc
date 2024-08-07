@@ -74,7 +74,7 @@ public class TestManager {
       String
           url =
           String
-              .format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s", endpoint, project, loglevel,
+              .format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&skipSqlInjectCheck=true", endpoint, project, loglevel,
                       logview);
 
       // pass project name via url

@@ -594,7 +594,10 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
     }
   }
 
-  private boolean isIllegal(String str) {
+  private boolean isIllegal(String str) throws SQLException {
+    if (getConnection().isSkipSqlInjectCheck()) {
+      return false;
+    }
     Matcher matcher = SQL_PATTERN.matcher(str);
     return matcher.find();
   }
