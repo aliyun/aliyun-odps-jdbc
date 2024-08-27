@@ -685,11 +685,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (executeInstance != null) {
       connHandle.log.info("InstanceId: " + executeInstance.getId());
     }
-    logviewUrl = executor.getLogView();
-    if (logviewUrl != null) {
-      connHandle.log.info("LogView: " + logviewUrl);
-    }
-
     if (isUpdate) {
       if (executeInstance != null) {
         executeInstance.waitForSuccess();
@@ -738,10 +733,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (executeInstance != null) {
       connHandle.log.info("It took me " + (end - begin) + " ms to run sql, instanceId: "
                           + executeInstance.getId());
+      warningChain = new SQLWarning("instance id: " + executeInstance.getId());
     } else {
       connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
+      warningChain = new SQLWarning();
     }
-    warningChain = new SQLWarning(executor.getSummary());
+    logviewUrl = executor.getLogView();
+    if (logviewUrl != null) {
+      connHandle.log.info("LogView: " + logviewUrl);
+    }
   }
 
   private void runSQL(String sql, Properties properties) throws SQLException {
