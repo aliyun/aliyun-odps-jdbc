@@ -1110,13 +1110,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         if (conn.isOdpsNamespaceSchema()) {
           table = conn.getOdps().tables().get(conn.getOdps().getDefaultProject(), schemaPattern, tableNamePattern);
         } else {
-          if (StringUtils.isNullOrEmpty(schemaPattern)) {
+          if (StringUtils.isNullOrEmpty(catalog)) {
             table = conn.getOdps().tables().get(tableNamePattern);
           } else {
-            table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
+            table = conn.getOdps().tables().get(catalog, tableNamePattern);
           }
         }
-        log.info("reload table " + table.getProject() + "." + table.getName() + " from odps");
         table.reload();
 
         // Read column & partition column information from table schema
