@@ -842,7 +842,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         schemas.close();
       }
     } catch (Exception e) {
-      throw new SQLException(e);
+      throw new SQLException(e.getMessage(), e);
     }
 
     long end = System.currentTimeMillis();
@@ -996,7 +996,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         }
       }
     } catch (OdpsException | RuntimeException e) {
-      throw new SQLException(e);
+      throw new SQLException(e.getMessage(), e);
     }
 
     sortRows(rows, new int[]{1, 0});

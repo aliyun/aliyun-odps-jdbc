@@ -111,7 +111,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         reader.close();
       }
     } catch (IOException e) {
-      throw new SQLException(e);
+      throw new SQLException(e.getMessage(), e);
     }
     conn.log.info("the result set has been closed");
   }
@@ -178,9 +178,9 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
       conn.log.warn(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
-      throw new SQLException(e);
+      throw new SQLException(e.getMessage(), e);
     } catch (TunnelException e) {
-      throw new SQLException(e);
+      throw new SQLException(e.getMessage(), e);
     }
   }
 

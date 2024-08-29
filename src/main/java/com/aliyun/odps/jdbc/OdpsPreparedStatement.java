@@ -257,10 +257,8 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
     try {
       uploader = DataUploader.build(projectName, schemaName, tableName, partitionSpec,
                                     specificColumns, getConnection());
-    } catch (OdpsException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new SQLException(e);
+    } catch (OdpsException | IOException e) {
+      throw new SQLException(e.getMessage());
     }
 
     parsed = true;
@@ -277,7 +275,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       try {
         uploader.commit();
       } catch (TunnelException | IOException e) {
-        throw new SQLException(e);
+        throw new SQLException(e.getMessage(), e);
       }
     }
     super.close();
@@ -543,7 +541,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
           throw new SQLException("charset is null");
         }
       } catch (UnsupportedEncodingException e) {
-        throw new SQLException(e);
+        throw new SQLException(e.getMessage(), e);
       }
     } else if (java.util.Date.class.isInstance(x)) {
       Calendar.Builder calendarBuilder = new Calendar.Builder()

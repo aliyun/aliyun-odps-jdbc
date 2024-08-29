@@ -319,7 +319,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     } catch (OdpsException e) {
       log.error("Connect to odps failed:" + e.getMessage());
-      throw new SQLException(e);
+      throw new SQLException(e.getMessage(), e);
     }
   }
 

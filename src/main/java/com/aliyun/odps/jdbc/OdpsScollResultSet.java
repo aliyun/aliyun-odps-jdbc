@@ -335,10 +335,8 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
           .info(String.format("fetch records, start=%d, cnt=%d, %d KB, %.2f KB/s", cachedUpperRow,
                               count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
-    } catch (TunnelException e) {
-      throw new SQLException(e);
-    } catch (IOException e) {
-      throw new SQLException(e);
+    } catch (TunnelException | IOException e) {
+      throw new SQLException(e.getMessage(), e);
     }
   }
 }
