@@ -1108,7 +1108,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       try {
         Table table;
         if (conn.isOdpsNamespaceSchema()) {
-          table = conn.getOdps().tables().get(catalog, schemaPattern, tableNamePattern);
+          table = conn.getOdps().tables().get(conn.getOdps().getDefaultProject(), schemaPattern, tableNamePattern);
         } else {
           if (StringUtils.isNullOrEmpty(schemaPattern)) {
             table = conn.getOdps().tables().get(tableNamePattern);
@@ -1116,6 +1116,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
             table = conn.getOdps().tables().get(schemaPattern, tableNamePattern);
           }
         }
+        log.info("reload table " + table.getProject() + "." + table.getName() + " from odps");
         table.reload();
 
         // Read column & partition column information from table schema
