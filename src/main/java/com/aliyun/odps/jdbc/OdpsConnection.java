@@ -135,6 +135,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int connectTimeout = -1;
 
   private boolean enableCommandApi;
+  private boolean useInstanceTunnel;
+  private boolean mcqaV2ForceString;
 
   private boolean httpsCheck;
   private boolean skipSqlCheck;
@@ -145,6 +147,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int tunnelReadTimeout = -1;
   private int tunnelConnectTimeout = -1;
   private boolean tunnelDownloadUseSingleReader = false;
+  private String quotaName;
+  private boolean enableMcqaV2 = false;
+  private String serviceName = null;
+  private FallbackPolicy fallbackPolicy;
+  private boolean verbose;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -158,7 +165,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
     String logConfFile = connRes.getLogConfFile();
-    String serviceName = connRes.getInteractiveServiceName();
+    serviceName = connRes.getInteractiveServiceName();
+    fallbackPolicy = connRes.getFallbackPolicy();
     String stsToken = connRes.getStsToken();
     String logLevel = connRes.getLogLevel();
     sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
@@ -279,6 +287,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.skipSqlCheck = connRes.isSkipSqlRewrite();
     this.skipSqlInjectCheck = connRes.isSkipSqlInjectCheck();
     this.tunnelDownloadUseSingleReader = connRes.isTunnelDownloadUseSingleReader();
+    this.useInstanceTunnel = connRes.isUseInstanceTunnel();
+    this.verbose = connRes.isVerbose();
+    this.mcqaV2ForceString = connRes.isMcqaV2ForceString();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -299,6 +310,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.info("Supoort odps namespace schema: " + this.odpsNamespaceSchema);
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
+    if (connRes.getQuotaName() != null) {
+      try {
+        enableMcqaV2 =
+            odps.quotas().getWlmQuota(odps.getDefaultProject(), connRes.getQuotaName())
+                .isInteractiveQuota();
+        log.info("quotaName: " + connRes.getQuotaName() + ", enableMcqaV2: " + enableMcqaV2);
+      } catch (Exception e) {
+        try {
+          log.warn(
+              "check quotaName: " + connRes.getQuotaName() + " failed, enableMcqaV2: "
+              + enableMcqaV2
+              + " because " + e.getMessage());
+          String tenantId = odps.projects().get().getTenantId();
+          log.info("use project tenantId: " + tenantId);
+        } catch (OdpsException ignored){}
+      }
+      quotaName = connRes.getQuotaName();
+    }
+
     try {
       long startTime = System.currentTimeMillis();
 
@@ -313,7 +343,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       tz = TimeZone.getTimeZone(timeZoneId);
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("load project meta infos time cost=%d", cost));
-      initSQLExecutor(serviceName, connRes.getFallbackPolicy());
+      initSQLExecutor(serviceName, fallbackPolicy);
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
 
@@ -354,7 +384,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .taskName(OdpsStatement.getDefaultTaskName())
         .enableCommandApi(enableCommandApi)
         .tunnelSocketTimeout(tunnelConnectTimeout)
-        .tunnelReadTimeout(tunnelReadTimeout);
+        .tunnelReadTimeout(tunnelReadTimeout)
+        .useInstanceTunnel(useInstanceTunnel);
+    if (enableMcqaV2) {
+      builder.quotaName(quotaName);
+      builder.enableMcqaV2(true);
+      if (mcqaV2ForceString) {
+        builder.useInstanceTunnel(false);
+      }
+    }
     long startTime = System.currentTimeMillis();
     executor = builder.build();
     if (interactiveMode && executor.getInstance() != null) {
@@ -793,6 +831,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return tunnelEndpoint;
   }
 
+  public void setTunnelEndpoint(String tunnelEndpoint) throws OdpsException {
+    this.tunnelEndpoint = tunnelEndpoint;
+    initSQLExecutor(serviceName, fallbackPolicy);
+  }
+
   public SQLExecutor getExecutor() {
     return executor;
   }
@@ -910,6 +953,28 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isTunnelDownloadUseSingleReader() {
     return tunnelDownloadUseSingleReader;
+  }
+
+  public boolean isUseInstanceTunnel() {
+    return useInstanceTunnel;
+  }
+
+  public boolean isMcqaV2ForceString() {
+    return mcqaV2ForceString;
+  }
+
+  public boolean isVerbose() {
+    return verbose;
+  }
+
+  public void setUseInstanceTunnel(boolean useInstanceTunnel) throws OdpsException {
+    this.useInstanceTunnel = useInstanceTunnel;
+    initSQLExecutor(serviceName, fallbackPolicy);
+  }
+
+  public void setInteractiveMode(boolean interactiveMode) throws OdpsException {
+    this.interactiveMode = interactiveMode;
+    initSQLExecutor(serviceName, fallbackPolicy);
   }
 
   /**

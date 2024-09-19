@@ -210,6 +210,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       // only settings, just set properties
       processSetClause(properties);
       return EMPTY_RESULT_SET;
+    } else {
+      try {
+        processSetClauseExtra(properties);
+      } catch (OdpsException e) {
+        throw new SQLException(e.getMessage(), e);
+      }
     }
     // otherwise those properties is just for this query
 
@@ -235,6 +241,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       // only settings, just set properties
       processSetClause(properties);
       return 0;
+    } else {
+      try {
+        processSetClauseExtra(properties);
+      } catch (OdpsException e) {
+        throw new SQLException(e.getMessage(), e);
+      }
     }
 
     checkClosed();
@@ -284,6 +296,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       // only settings, just set properties
       processSetClause(properties);
       return false;
+    } else {
+      try {
+        processSetClauseExtra(properties);
+      } catch (OdpsException e) {
+        throw new SQLException(e.getMessage(), e);
+      }
     }
     // otherwise those properties is just for this query
 
@@ -360,6 +378,31 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.getSqlTaskProperties().setProperty(key, properties.getProperty(key));
       }
       sqlTaskProperties.setProperty(key, properties.getProperty(key));
+    }
+    try {
+      processSetClauseExtra(properties);
+    } catch (Exception e) {
+      connHandle.log.error("processSetClauseExtra error", e);
+    }
+  }
+
+  /**
+   * This method is actually only used for debugging.
+   * If the user wants to change the behavior of jdbc, he should add parameters to the link string instead of adding settings in the code.
+   * This method and corresponding functionality may be removed at any time.
+   */
+  private void processSetClauseExtra(Properties properties) throws OdpsException {
+    for (String key : properties.stringPropertyNames()) {
+      connHandle.log.info("set sql task property extra: " + key + "=" + properties.getProperty(key));
+      if (key.equalsIgnoreCase("tunnelEndpoint")) {
+        connHandle.setTunnelEndpoint(properties.getProperty(key));
+      }
+      if (key.equalsIgnoreCase("useTunnel")) {
+        connHandle.setUseInstanceTunnel(Boolean.parseBoolean(properties.getProperty(key)));
+      }
+      if (key.equalsIgnoreCase("interactiveMode")) {
+        connHandle.setInteractiveMode(Boolean.parseBoolean(properties.getProperty(key)));
+      }
     }
   }
 
@@ -674,6 +717,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
       connHandle.log.info("Run SQL: " + sql + ", Begin time: " + begin);
       executor.run(sql, settings);
+      logviewUrl = executor.getLogView();
+      connHandle.log.info("LogView: " + logviewUrl);
       executeInstance = executor.getInstance();
       if (executeInstance != null) {
         connHandle.log.info("InstanceId: " + executeInstance.getId());
@@ -710,10 +755,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       } else {
         connHandle.log.info("It took me " + (end - begin) + " ms to run sql");
       }
-      logviewUrl = executor.getLogView();
-      if (logviewUrl != null) {
-        connHandle.log.info("LogView: " + logviewUrl);
-      }
       List<String> exeLog = executor.getExecutionLog();
       if (!exeLog.isEmpty()) {
         for (String log : exeLog) {
@@ -721,12 +762,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (OdpsException | IOException e) {
-      String logview = null;
-      try {
-        logview = executor.getLogView();
-      } catch (Exception ignored) {
-      }
-      throwSQLException(e, sql, executor.getInstance(), logview);
+      throwSQLException(e, sql, executor.getInstance(), executor.getLogView());
     }
   }
 
@@ -799,27 +835,34 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   private void setResultSetInternal() throws OdpsException, IOException {
     if (connHandle.isTunnelDownloadUseSingleReader()) {
 
-
       executeInstance.waitForSuccess();
       Instance instance = executeInstance;
 
       InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
       InstanceTunnel.DownloadSession downloadSession = tunnel.createDownloadSession(
-              instance.getProject(),
-              instance.getId()
+          instance.getProject(),
+          instance.getId()
       );
 
       odpsResultSet = new com.aliyun.odps.data.ResultSet(
-              new SingleReaderResultSetIterator(downloadSession, downloadSession.getRecordCount()),
-              downloadSession.getSchema(),
-              downloadSession.getRecordCount());
+          new SingleReaderResultSetIterator(downloadSession, downloadSession.getRecordCount()),
+          downloadSession.getSchema(),
+          downloadSession.getRecordCount());
     } else {
-      odpsResultSet = connHandle.getExecutor().getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
+      if (connHandle.getExecutor().isUseInstanceTunnel()) {
+        connHandle.log.info("Get result by instance tunnel.");
+        odpsResultSet =
+            connHandle.getExecutor()
+                .getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
+      } else {
+        connHandle.log.info("Get result by rest api.");
+        odpsResultSet = connHandle.getExecutor().getResultSet();
+      }
     }
-
   }
 
   class SingleReaderResultSetIterator implements Iterator<Record> {
+
     private final TunnelRecordReader reader;
     private final InstanceTunnel.DownloadSession session;
     private Record nextLine;
@@ -831,8 +874,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         moveToNextLine();
       } catch (TunnelException | IOException e) {
         throw new RuntimeException("Open tunnel reader failed, session id: " + session.getId()
-                + " errMsg: " + e.getMessage(),
-                e);
+                                   + " errMsg: " + e.getMessage(),
+                                   e);
       }
     }
 
@@ -857,8 +900,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       } catch (IOException e) {
         nextLine = null;
         throw new RuntimeException("Read record failed, session id: " + session.getId()
-                + " errMsg: " + e.getMessage(),
-                e);
+                                   + " errMsg: " + e.getMessage(),
+                                   e);
       }
     }
   }

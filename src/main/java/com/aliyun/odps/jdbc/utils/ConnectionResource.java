@@ -86,6 +86,7 @@ public class ConnectionResource {
   private static final String READ_TIMEOUT_URL_KEY = "readTimeout";
   private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
   private static final String ENABLE_COMMAND_API_URL_KEY = "enableCommandApi";
+  private static final String USE_INSTANCE_TUNNEL_URL_KEY = "useInstanceTunnel";
   private static final String HTTPS_CHECK_URL_KEY = "httpsCheck";
   private static final String LOG_LEVEL_URL_KEY = "logLevel";
   private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
@@ -93,6 +94,8 @@ public class ConnectionResource {
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY = "tunnelDownloadUseSingleReader";
   private static final String RETRY_TIME_URL_KEY = "retryTime";
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
+  private static final String QUOTA_NAME_URL_KEY = "quotaName";
+  private static final String MCQA_V2_FORCE_STRING_URL_KEY = "mcqaV2ForceString";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
 
   /**
@@ -145,6 +148,7 @@ public class ConnectionResource {
   private static final String READ_TIMEOUT_PROP_KEY = "read_timeout";
   private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
   private static final String ENABLE_COMMAND_API_PROP_KEY = "enable_command_api";
+  private static final String USE_INSTANCE_TUNNEL_PROP_KEY = "use_instance_tunnel";
   private static final String HTTPS_CHECK_PROP_KEY = "https_check";
   private static final String LOG_LEVEL_PROP_KEY = "log_level";
   private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
@@ -153,6 +157,8 @@ public class ConnectionResource {
   private static final String RETRY_TIME_PROP_KEY = "retry_time";
   private static final String SKIP_SQL_REWRITE_PROP_KEY = "skip_sql_rewrite";
   private static final String SKIP_SQL_INJECT_CHECK_PROP_KEY = "skip_sql_inject_check";
+  private static final String QUOTA_NAME_PROP_KEY = "quota_name";
+  private static final String VERBOSE_PROP_KEY = "verbose";
 
   private String endpoint;
   private String accessId;
@@ -181,9 +187,13 @@ public class ConnectionResource {
   private boolean enableLimit = false;
   private boolean autoLimitFallback = false;
   private boolean enableCommandApi = false;
+  private boolean useInstanceTunnel = true;
   private boolean httpsCheck = false;
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
+  private boolean verbose = false;
+  private boolean mcqaV2ForceString = false;
+  private String quotaName;
 
   public Boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
@@ -246,6 +256,10 @@ public class ConnectionResource {
         accessKey = URLDecoder.decode(accessKey);
       }
     }
+
+    useInstanceTunnel = Boolean.parseBoolean(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", USE_INSTANCE_TUNNEL_PROP_KEY,
+            USE_INSTANCE_TUNNEL_URL_KEY));
 
     charset =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CHARSET_DEFAULT_VALUE, CHARSET_PROP_KEY,
@@ -413,6 +427,14 @@ public class ConnectionResource {
 
     logLevel = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_LEVEL_PROP_KEY, LOG_LEVEL_URL_KEY);
 
+    quotaName = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, QUOTA_NAME_PROP_KEY, QUOTA_NAME_URL_KEY);
+    verbose =
+        Boolean.parseBoolean(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", VERBOSE_PROP_KEY,
+                                                     VERBOSE_PROP_KEY));
+    mcqaV2ForceString = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "false", MCQA_V2_FORCE_STRING_URL_KEY, MCQA_V2_FORCE_STRING_URL_KEY));
+
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
     // true/false                         |      true/false                    | true/false
@@ -577,6 +599,10 @@ public class ConnectionResource {
     return attachTimeout;
   }
 
+  public boolean isVerbose() {
+    return verbose;
+  }
+
   @SuppressWarnings("rawtypes")
   private static String tryGetFirstNonNullValueByAltMapAndAltKey(List<Map> maps,
                                                                  String defaultValue,
@@ -652,6 +678,16 @@ public class ConnectionResource {
     return enableCommandApi;
   }
 
+  public boolean isUseInstanceTunnel() {
+    return useInstanceTunnel;
+  }
+
+  public boolean isMcqaV2ForceString() {
+    return mcqaV2ForceString;
+  }
+
+
+
   public boolean isHttpsCheck() {
     return httpsCheck;
   }
@@ -682,5 +718,9 @@ public class ConnectionResource {
 
   public boolean isTunnelDownloadUseSingleReader() {
     return tunnelDownloadUseSingleReader;
+  }
+
+  public String getQuotaName() {
+    return quotaName;
   }
 }
