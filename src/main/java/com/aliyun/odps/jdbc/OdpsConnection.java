@@ -382,6 +382,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .enableCommandApi(enableCommandApi)
         .tunnelSocketTimeout(tunnelConnectTimeout)
         .tunnelReadTimeout(tunnelReadTimeout)
+        .enableOdpsNamespaceSchema(odpsNamespaceSchema)
         .useInstanceTunnel(useInstanceTunnel);
     if (enableMcqaV2) {
       builder.quotaName(quotaName);
@@ -613,8 +614,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public int getHoldability() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    return ResultSet.HOLD_CURSORS_OVER_COMMIT;
   }
 
   @Override
