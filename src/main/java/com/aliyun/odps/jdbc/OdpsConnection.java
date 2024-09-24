@@ -136,8 +136,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean enableCommandApi;
   private boolean useInstanceTunnel;
-  private boolean mcqaV2ForceString;
-
   private boolean httpsCheck;
   private boolean skipSqlCheck;
   private boolean skipSqlInjectCheck;
@@ -289,7 +287,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.tunnelDownloadUseSingleReader = connRes.isTunnelDownloadUseSingleReader();
     this.useInstanceTunnel = connRes.isUseInstanceTunnel();
     this.verbose = connRes.isVerbose();
-    this.mcqaV2ForceString = connRes.isMcqaV2ForceString();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -389,9 +386,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (enableMcqaV2) {
       builder.quotaName(quotaName);
       builder.enableMcqaV2(true);
-      if (mcqaV2ForceString) {
-        builder.useInstanceTunnel(false);
-      }
     }
     long startTime = System.currentTimeMillis();
     executor = builder.build();
@@ -957,10 +951,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isUseInstanceTunnel() {
     return useInstanceTunnel;
-  }
-
-  public boolean isMcqaV2ForceString() {
-    return mcqaV2ForceString;
   }
 
   public boolean isVerbose() {

@@ -95,7 +95,6 @@ public class ConnectionResource {
   private static final String RETRY_TIME_URL_KEY = "retryTime";
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
-  private static final String MCQA_V2_FORCE_STRING_URL_KEY = "mcqaV2ForceString";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
 
   /**
@@ -192,7 +191,6 @@ public class ConnectionResource {
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
   private boolean verbose = false;
-  private boolean mcqaV2ForceString = false;
   private String quotaName;
 
   public Boolean isOdpsNamespaceSchema() {
@@ -432,8 +430,6 @@ public class ConnectionResource {
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", VERBOSE_PROP_KEY,
                                                      VERBOSE_PROP_KEY));
-    mcqaV2ForceString = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
-        maps, "false", MCQA_V2_FORCE_STRING_URL_KEY, MCQA_V2_FORCE_STRING_URL_KEY));
 
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
@@ -681,12 +677,6 @@ public class ConnectionResource {
   public boolean isUseInstanceTunnel() {
     return useInstanceTunnel;
   }
-
-  public boolean isMcqaV2ForceString() {
-    return mcqaV2ForceString;
-  }
-
-
 
   public boolean isHttpsCheck() {
     return httpsCheck;
