@@ -281,4 +281,12 @@ public class UtilsTest {
     Assert.assertEquals(properties.size(), 0);
 
   }
+
+  @Test
+  public void testColumnNameWithSharp() {
+    String sql = "create table sharp_test( `hap#user_id` bigint);";
+    String res = Utils.parseSetting(sql, new Properties());
+    System.out.println(res);
+    Assert.assertEquals("create table sharp_test( `hap#user_id` bigint);", res);
+  }
 }
