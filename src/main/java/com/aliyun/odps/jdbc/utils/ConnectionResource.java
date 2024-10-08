@@ -96,6 +96,7 @@ public class ConnectionResource {
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
+  private static final String TIME_ZONE_URL_KEY = "timezone";
 
   /**
    * Keys to retrieve properties from info.
@@ -213,6 +214,7 @@ public class ConnectionResource {
   private String tunnelConnectTimeout;
   private boolean tunnelDownloadUseSingleReader = false;
   private int retryTime;
+  private String timeZone;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -430,6 +432,10 @@ public class ConnectionResource {
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", VERBOSE_PROP_KEY,
                                                      VERBOSE_PROP_KEY));
+    timeZone =
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TIME_ZONE_URL_KEY,
+                                                     TIME_ZONE_URL_KEY);
+
 
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
@@ -593,6 +599,10 @@ public class ConnectionResource {
 
   public Long getAttachTimeout() {
     return attachTimeout;
+  }
+
+  public String getTimeZone() {
+    return timeZone;
   }
 
   public boolean isVerbose() {
