@@ -29,6 +29,8 @@ import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import com.aliyun.odps.jdbc.utils.TimeUtils;
+
 
 public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
 
@@ -61,7 +63,8 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
           ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
       return java.sql.Date.valueOf(zonedDateTime.toLocalDate());
     } else if (o instanceof LocalDate) {
-      return java.sql.Date.valueOf((LocalDate) o);
+      return TimeUtils.getDate(java.sql.Date.valueOf((LocalDate) o), TimeZone.getDefault(),
+                               timeZone);
     } else if (o instanceof byte[]) {
       try {
         SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
