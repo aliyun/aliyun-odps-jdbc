@@ -21,14 +21,24 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
+import java.util.Objects;
 import java.util.TimeZone;
 
-
+/**
+ * Mapping of Java Types to ODPS Types for {@link java.sql.ResultSet#getTimestamp(int)} usage.
+ * A transformer is applied to convert ODPS native types to match the Java byte requirement.
+ * Following show which ODPS types can be converted.
+ * Incompatible types or conversion errors will result in a SQLException being thrown.
+ * <p>
+ * ZonedDateTime (DATETIME), Instant (TIMESTAMP), LocalDateTime (TIMESTAMP_NTZ), byte[] (String), Binary (Binary)
+ * <p>
+ */
 public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
@@ -41,50 +51,43 @@ public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
     if (o == null) {
       return null;
     }
-
-    if (java.util.Date.class.isInstance(o)) {
-      long time = ((java.util.Date) o).getTime();
-      if (timeZone != null) {
-        time += timeZone.getOffset(time);
-      }
-      return new java.sql.Time(time);
-    } else if (o instanceof ZonedDateTime) {
-      if (timeZone != null) {
-        o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
-      }
-      return java.sql.Time.valueOf(((ZonedDateTime) o).toLocalTime());
-    } else if (o instanceof Instant) {
-      // 转换
-      ZonedDateTime
-          zonedDateTime =
-          ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
-      return java.sql.Time.valueOf(zonedDateTime.toLocalTime());
-    } else if (o instanceof byte[]) {
-      try {
-        SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
-        SimpleDateFormat timeFormat = TIME_FORMAT.get();
-        if (cal != null) {
-          datetimeFormat.setCalendar(cal);
-          timeFormat.setCalendar(cal);
+    try {
+      if (o instanceof ZonedDateTime) {
+        if (timeZone != null) {
+          o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
         }
+        return java.sql.Time.valueOf(((ZonedDateTime) o).toLocalTime());
+      } else if (o instanceof Instant) {
+        ZonedDateTime
+            zonedDateTime =
+            ZonedDateTime.ofInstant((Instant) o,
+                                    timeZone == null ? ZoneId.systemDefault()
+                                                     : timeZone.toZoneId());
+        return java.sql.Time.valueOf(zonedDateTime.toLocalTime());
+      } else if (o instanceof LocalDateTime) {
+        return ((LocalDateTime) o).toLocalTime();
+      } else if (o instanceof byte[]) {
+        o = encodeBytes((byte[]) o, charset);
         try {
-          return new java.sql.Time(
-              datetimeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
-        } catch (ParseException ignored) {
+          SimpleDateFormat timeFormat = TIME_FORMAT.get();
+          if (cal != null) {
+            timeFormat.setCalendar(cal);
+          }
+          return new java.sql.Time(timeFormat.parse((String) o).getTime());
+        } finally {
+          restoreToDefaultCalendar();
         }
-        try {
-          return new java.sql.Time(timeFormat.parse(encodeBytes((byte[]) o, charset)).getTime());
-        } catch (ParseException ignored) {
-        }
-        String errorMsg =
-            getTransformationErrMsg(encodeBytes((byte[]) o, charset), java.sql.Time.class);
+      } else {
+        String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
-      } finally {
-        restoreToDefaultCalendar();
       }
-    } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
-      throw new SQLException(errorMsg);
+    } catch (SQLException e) {
+      throw e;
+    } catch (Exception e) {
+      String
+          errorMsg =
+          getTransformationErrMsg(Objects.toString(o), java.sql.Time.class, e.getMessage());
+      throw new SQLException(errorMsg, e);
     }
   }
 }

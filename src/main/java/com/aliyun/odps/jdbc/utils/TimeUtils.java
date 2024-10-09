@@ -2,6 +2,7 @@ package com.aliyun.odps.jdbc.utils;
 
 import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -16,6 +17,19 @@ public class TimeUtils {
       long milliSecsSinceEpochNew =
           millis + moveToTimeZoneOffset(millis, oldTz, newTz);
       return new Date(milliSecsSinceEpochNew);
+    } catch (NumberFormatException ex) {
+      throw new SQLException("Invalid date value: " + originDate);
+    }
+  }
+
+  public static Timestamp getTimestamp(Timestamp originDate, TimeZone oldTz, TimeZone newTz) throws SQLException {
+    try {
+      long millis = originDate.getTime();
+      long milliSecsSinceEpochNew =
+          millis + moveToTimeZoneOffset(millis, oldTz, newTz);
+      Timestamp res = new Timestamp(milliSecsSinceEpochNew);
+      res.setNanos(originDate.getNanos());
+      return res;
     } catch (NumberFormatException ex) {
       throw new SQLException("Invalid date value: " + originDate);
     }

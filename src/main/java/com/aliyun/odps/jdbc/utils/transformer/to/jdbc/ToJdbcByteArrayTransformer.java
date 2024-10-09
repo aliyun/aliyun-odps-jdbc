@@ -21,32 +21,53 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Objects;
+import java.util.TimeZone;
 
 import com.aliyun.odps.data.Binary;
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.data.converter.OdpsRecordConverter;
+import com.aliyun.odps.jdbc.utils.RecordConverterCache;
+import com.aliyun.odps.type.TypeInfo;
+import com.aliyun.odps.utils.OdpsCommonUtils;
 
 
-public class ToJdbcByteArrayTransformer extends AbstractToJdbcTransformer {
+/**
+ * Mapping of Java Types to ODPS Types for {@link java.sql.ResultSet#getBytes(int)}  usage.
+ * A transformer is applied to convert ODPS native types to match the Java byte requirement.
+ * All ODPS types can be converted.
+ * use {@link OdpsRecordConverter} to convert object to string and use {@link RecordConverterCache} to cache the record converter.
+ */
+public class ToJdbcByteArrayTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
-  public Object transform(Object o, String charset) throws SQLException {
+  public Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone timeZone,
+      TypeInfo odpsType) throws SQLException {
     if (o == null) {
       return null;
     }
-
     if (o instanceof byte[]) {
       return o;
-    } else if (java.util.Date.class.isInstance(o)) {
-      if (java.sql.Timestamp.class.isInstance(o)) {
-        return o.toString().getBytes();
-      }
-      SimpleDateFormat dateFormat = new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
-      return dateFormat.format(((java.util.Date) o)).getBytes();
-    } else if (o instanceof Binary) {
-      return ((Binary) o).data();
-    } else {
-      return o.toString().getBytes();
     }
+    if (o instanceof Binary) {
+      return ((Binary) o).data();
+    }
+    OdpsRecordConverter odpsRecordConverter = RecordConverterCache.get(timeZone);
+    try {
+      return odpsRecordConverter.formatObject(o, odpsType).getBytes(charset);
+    } catch (Exception e) {
+      String errorMsg = getTransformationErrMsg(Objects.toString(o), byte[].class, e.getMessage());
+      throw new SQLException(errorMsg, e);
+    }
+  }
+
+  @Override
+  public Object transform(Object o, String charset, Calendar cal, TimeZone timeZone)
+      throws SQLException {
+    return transform(o, charset, cal, timeZone, OdpsCommonUtils.indicateTypeFromClass(o));
   }
 }
