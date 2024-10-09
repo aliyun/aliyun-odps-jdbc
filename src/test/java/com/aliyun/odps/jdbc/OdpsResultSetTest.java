@@ -332,7 +332,7 @@ public class OdpsResultSetTest {
 
   @Test
   public void testGetTimestampWithTimeZone() throws SQLException {
-    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getProjectTimeZone();
+    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getTimezone();
 
     // Make sure the project's time zone is not UTC, or this test case will always pass.
     Assert.assertNotEquals(0, tz.getRawOffset());

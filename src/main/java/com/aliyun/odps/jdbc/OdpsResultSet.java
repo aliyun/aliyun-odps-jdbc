@@ -71,7 +71,7 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       if (sessionTimeZoneId != null) {
         timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
       } else {
-        timeZone = conn.isUseProjectTimeZone() ? conn.getProjectTimeZone() : null;
+        timeZone = conn.getTimezone();
       }
     }
   }
