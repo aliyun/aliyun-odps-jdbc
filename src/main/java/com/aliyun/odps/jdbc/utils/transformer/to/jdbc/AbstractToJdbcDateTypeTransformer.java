@@ -11,30 +11,9 @@ import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.type.TypeInfo;
 
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
-
-  static ThreadLocal<Calendar>
-      DEFAULT_CALENDAR =
-      ThreadLocal.withInitial(() -> new Calendar.Builder().setCalendarType("iso8601")
-          .setTimeZone(TimeZone.getTimeZone("GMT")).build());
-  static ThreadLocal<SimpleDateFormat>
-      TIMESTAMP_FORMAT =
-      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIMESTAMP_FORMAT));
-  static ThreadLocal<SimpleDateFormat>
-      DATETIME_FORMAT =
-      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT));
-  static ThreadLocal<SimpleDateFormat>
-      DATE_FORMAT =
-      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_DATE_FORMAT));
   static ThreadLocal<SimpleDateFormat>
       TIME_FORMAT =
       ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
-
-
-  static ThreadLocal<DateTimeFormatter>
-      ZONED_DATETIME_FORMAT =
-      ThreadLocal.withInitial(() -> DateTimeFormatter.ofPattern(JdbcColumn.ODPS_DATETIME_FORMAT)
-          .withZone(ZoneId.systemDefault()));
-
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
@@ -72,9 +51,6 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
   }
 
   void restoreToDefaultCalendar() {
-    TIMESTAMP_FORMAT.get().setCalendar(Calendar.getInstance());
-    DATETIME_FORMAT.get().setCalendar(Calendar.getInstance());
-    DATE_FORMAT.get().setCalendar(Calendar.getInstance());
     TIME_FORMAT.get().setCalendar(Calendar.getInstance());
   }
 }

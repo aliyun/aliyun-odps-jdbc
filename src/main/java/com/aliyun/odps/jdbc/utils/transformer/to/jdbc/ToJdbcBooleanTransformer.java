@@ -22,7 +22,18 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 
-
+/**
+ * Mapping of Java Types to ODPS Types for {@link java.sql.ResultSet#getBoolean(int)} usage.
+ * A transformer is applied to convert ODPS native types to match the Java byte requirement.
+ * Following table show which ODPS types can be converted.
+ * Incompatible types or conversion errors will result in a SQLException being thrown.
+ * <p>
+ * | JAVA\ODPS  | TINYINT | SMALLINT | INT | BIGINT | FLOAT | DOUBLE | DECIMAL | CHAR | VARCHAR | STRING | DATE | DATETIME | TIMESTAMP | TIMESTAMP_NTZ | BOOLEAN | BINARY |
+ * |:----------:|:-------:|:--------:|:---:|:------:|:-----:|:------:|:-------:|:----:|:-------:|:------:|:----:|:--------:|:---------:|:-------------:|:-------:|:------:|
+ * |  boolean   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |      |         |   Y    |      |          |           |               |    Y    |        |
+ * <p>
+ * Note: The 'Y' marks indicate compatible types for the transformation.
+ */
 public class ToJdbcBooleanTransformer extends AbstractToJdbcTransformer {
 
   @Override
@@ -31,9 +42,9 @@ public class ToJdbcBooleanTransformer extends AbstractToJdbcTransformer {
       return false;
     }
 
-    if (Boolean.class.isInstance(o)) {
+    if (o instanceof Boolean) {
       return o;
-    } else if (Number.class.isInstance(o)) {
+    } else if (o instanceof Number) {
       return ((Number) o).intValue() != 0;
     } else if (o instanceof byte[]) {
       return !"0".equals(encodeBytes((byte[]) o, charset));

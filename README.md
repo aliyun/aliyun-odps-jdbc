@@ -1,9 +1,7 @@
-
 # ODPS JDBC
 
 ![build](https://github.com/aliyun/aliyun-odps-jdbc/actions/workflows/maven.yml/badge.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.aliyun.odps/odps-jdbc)
-
 
 ## Chinese Docs
 
@@ -15,16 +13,18 @@ Generally, there are two ways to use ODPS JDBC driver in your project.
 
 1.The first one is to use the standalone library:
 
-* Download the with-dependencies-jar from [release page](https://github.com/aliyun/aliyun-odps-jdbc/releases).
+* Download the with-dependencies-jar
+  from [release page](https://github.com/aliyun/aliyun-odps-jdbc/releases).
 * Checkout the [CHANGELOG](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md).
 
 2.The second is to rely on maven to resolve the dependencies for you:
 
 ```xml
+
 <dependency>
-  <groupId>com.aliyun.odps</groupId>
-  <artifactId>odps-jdbc</artifactId>
-  <version>VERSION</version>
+    <groupId>com.aliyun.odps</groupId>
+    <artifactId>odps-jdbc</artifactId>
+    <version>VERSION</version>
 </dependency>
 ```
 
@@ -38,37 +38,34 @@ Using ODPS JDBC driver is just as using other JDBC drivers. It contains the foll
 Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 ```
 
-
 2\. Connect to the ODPS by creating a `Connection` object with the JDBC driver:
 
-
 ```java
-Connection conn = DriverManager.getConnection(url, accessId, accessKey);
+Connection conn=DriverManager.getConnection(url,accessId,accessKey);
 ```
 
 The ODPS server works with RESTful API, so the url looks like:
 
 ```java
-String url = "jdbc:odps:ENDPOINT?project=PROJECT_NAME&charset=UTF-8";
+String url="jdbc:odps:ENDPOINT?project=PROJECT_NAME&charset=UTF-8";
 ```
 
 The connection properties can also be passed through `Properties`. For example:
 
 ```java
-Properties config = new Properties();
-config.put("access_id", "...");
-config.put("access_key", "...");
-config.put("project_name", "...");
-config.put("charset", "...");
-Connection conn = DriverManager.getConnection("jdbc:odps:<endpoint>", config);
+Properties config=new Properties();
+    config.put("access_id","...");
+    config.put("access_key","...");
+    config.put("project_name","...");
+    config.put("charset","...");
+    Connection conn=DriverManager.getConnection("jdbc:odps:<endpoint>",config);
 ```
-
 
 3\. Submit SQL to ODPS by creating `Statement` object and using its `executeQuery()` method:
 
 ```java
-Statement stmt = conn.createStatement();
-ResultSet rs = stmt.executeQuery("SELECT foo FROM bar");
+Statement stmt=conn.createStatement();
+    ResultSet rs=stmt.executeQuery("SELECT foo FROM bar");
 ```
 
 4\. Process the result set.
@@ -76,41 +73,42 @@ ResultSet rs = stmt.executeQuery("SELECT foo FROM bar");
 For example:
 
 ```java
-while (rs.next()) {
+while(rs.next()){
     ...
-}
+    }
 ```
 
-
-
 ### Connection String Parameters
-It is recommended that the key and value in URL should be encoded by using java.net.URLEncoder#encode(java.lang.String). 
+
+It is recommended that the key and value in URL should be encoded by using
+java.net.URLEncoder#encode(java.lang.String).
 
 #### Basic
 
-|   URL key        |  Property Key     | Required | Default value | Description                              |
-| :--------------: | :---------------: | :------: | :-----------: | :--------------------------------------- |
-| `endpoint`       | `end_point`       | True     |               | The endpoint of your MaxCompute service  |
-| `project`        | `project_name`    | True     |               | The name of your MaxCompute project      |
-| `accessId`       | `access_id`       | True     |               | Your Alibaba Cloud access key ID         |
-| `accessKey`      | `access_key`      | True     |               | Your Alibaba Cloud access key secret     |
-| `interactiveMode`| `interactive_mode`| False    | false         | For MCQA, enable MCQA                    |
-| `logview`        | `logview_host`    | False    | Provided by MC | The endpoint of MaxCompute Logview       |
-| `tunnelEndpoint` | `tunnel_endpoint` | False    | Provided by MC | The endpoint of the MaxCompute Tunnel service |
-| `enableOdpsLogger` | `enable_odps_logger` | False | false       | Enable MaxCompute JDBC logger          |
+|      URL key       |     Property Key     | Required | Default value  | Description                                   |
+|:------------------:|:--------------------:|:--------:|:--------------:|:----------------------------------------------|
+|     `endpoint`     |     `end_point`      |   True   |                | The endpoint of your MaxCompute service       |
+|     `project`      |    `project_name`    |   True   |                | The name of your MaxCompute project           |
+|     `accessId`     |     `access_id`      |   True   |                | Your Alibaba Cloud access key ID              |
+|    `accessKey`     |     `access_key`     |   True   |                | Your Alibaba Cloud access key secret          |
+| `interactiveMode`  |  `interactive_mode`  |  False   |     false      | For MCQA, enable MCQA                         |
+|     `logview`      |    `logview_host`    |  False   | Provided by MC | The endpoint of MaxCompute Logview            |
+|  `tunnelEndpoint`  |  `tunnel_endpoint`   |  False   | Provided by MC | The endpoint of the MaxCompute Tunnel service |
+| `enableOdpsLogger` | `enable_odps_logger` |  False   |     false      | Enable MaxCompute JDBC logger                 |
 
 #### Advanced
-|   URL key        |  Property Key     | Required | Default value | Description                              |
-| :--------------: | :---------------: | :------: | :-----------: | :--------------------------------------- |
-| `stsToken`       | `sts_token`       | False    |               | The Alibaba Cloud STS token              |
-| `logConfFile`    | `log_conf_file`   | False    |               | The configuration path for SLF4J         |
-| `charset`        | `charset`         | False    | UTF-8         | The charset of the inputs and outputs    |
-| `executeProject` | `execute_project_name` | False |             | For MCQA, the name of the MaxCompute project in which actually execute the queries |
-| `alwaysFallback` | `always_fallback` | False    | false         | For MCQA, fall back to regular mode if any exception happened |
-| `instanceTunnelMaxRecord` | `instance_tunnel_max_record` | False | -1 (unlimited) | For MCQA, max number of records within a result set, enableLimit option should set to false |
-| `instanceTunnelMaxSize`| `instance_tunnel_max_size` | False | -1 (unlimited) | For MCQA, max size of a result set in byte |
-| `enableLimit`| `enable_limit` | False | true(limited) | For MCQA, download permission won't be checked if enableLimit is set true, but your result record count will be limited to 10000 |
-| `autoLimitFallback`| `auto_limit_fallback` | False | False(no auto fallback) | For non-MCQA mode, result record count will be limited to 10000 when no download permission exception happened and autoLimitFallback is set to true |
+
+|          URL key          |         Property Key         | Required |      Default value      | Description                                                                                                                                         |
+|:-------------------------:|:----------------------------:|:--------:|:-----------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------|
+|        `stsToken`         |         `sts_token`          |  False   |                         | The Alibaba Cloud STS token                                                                                                                         |
+|       `logConfFile`       |       `log_conf_file`        |  False   |                         | The configuration path for SLF4J                                                                                                                    |
+|         `charset`         |          `charset`           |  False   |          UTF-8          | The charset of the inputs and outputs                                                                                                               |
+|     `executeProject`      |    `execute_project_name`    |  False   |                         | For MCQA, the name of the MaxCompute project in which actually execute the queries                                                                  |
+|     `alwaysFallback`      |      `always_fallback`       |  False   |          false          | For MCQA, fall back to regular mode if any exception happened                                                                                       |
+| `instanceTunnelMaxRecord` | `instance_tunnel_max_record` |  False   |     -1 (unlimited)      | For MCQA, max number of records within a result set, enableLimit option should set to false                                                         |
+|  `instanceTunnelMaxSize`  |  `instance_tunnel_max_size`  |  False   |     -1 (unlimited)      | For MCQA, max size of a result set in byte                                                                                                          |
+|       `enableLimit`       |        `enable_limit`        |  False   |      true(limited)      | For MCQA, download permission won't be checked if enableLimit is set true, but your result record count will be limited to 10000                    |
+|    `autoLimitFallback`    |    `auto_limit_fallback`     |  False   | False(no auto fallback) | For non-MCQA mode, result record count will be limited to 10000 when no download permission exception happened and autoLimitFallback is set to true |
 
 ## Example
 
@@ -124,6 +122,7 @@ import java.sql.Statement;
 import java.sql.DriverManager;
 
 public class OdpsJdbcClient {
+
   private static String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
 
   /**
@@ -141,7 +140,11 @@ public class OdpsJdbcClient {
     // fill in the information here
     String accessId = "your_access_id";
     String accessKey = "your_access_key";
-    Connection conn = DriverManager.getConnection("jdbc:odps:https://service.odps.aliyun.com/api?project=<your_project_name>", accessId, accessKey);
+    Connection
+        conn =
+        DriverManager.getConnection(
+            "jdbc:odps:https://service.odps.aliyun.com/api?project=<your_project_name>", accessId,
+            accessKey);
     Statement stmt = conn.createStatement();
     String tableName = "testOdpsDriverTable";
     stmt.execute("drop table if exists " + tableName);
@@ -151,7 +154,10 @@ public class OdpsJdbcClient {
     ResultSet rs;
 
     // insert a record
-    sql = String.format("insert into table %s select 24 key, 'hours' value from (select count(1) from %s) a", tableName, tableName);
+    sql =
+        String.format(
+            "insert into table %s select 24 key, 'hours' value from (select count(1) from %s) a",
+            tableName, tableName);
     System.out.println("Running: " + sql);
     int count = stmt.executeUpdate(sql);
     System.out.println("updated records: " + count);
@@ -197,12 +203,13 @@ java -cp "target/odps-jdbc-2.2-jar-with-dependencies.jar:logback/logback-core-1.
 
 ```java
 stmt.execute("set biz_id=xxxxxx");
-stmt.execute("set odps.sql.mapper.split.size=512");
+    stmt.execute("set odps.sql.mapper.split.size=512");
 ```
 
 ## Third-party Integration
 
-It is also recommended to use ODPS by using other third-party BI tools or DB visualizer that supports JDBC.
+It is also recommended to use ODPS by using other third-party BI tools or DB visualizer that
+supports JDBC.
 
 For example:
 
@@ -210,10 +217,11 @@ For example:
 * [Squrriel SQL]()
 * [Pentaho]()
 
-
 ## Getting Involved
 
-The project is under construction (and not fully JDBC-compliant). If you dicover any good features which have not been implemented, please fire me an [Email](mailto:yichao.cheng@alibaba-inc.com) or just pull a request.
+The project is under construction (and not fully JDBC-compliant).
+If you dicover any good features which have not been implemented, please fire me
+an [Email](mailto:zhangdingxin.zdx@alibaba-inc.com) or just pull a request.
 
 ### Architecture
 
@@ -254,33 +262,58 @@ mvn test
 
 ### Data Type Mapping
 
-Currently, 13 ODPS data types are supported. Please see the following table for supported ODPS data 
+Currently, 16 ODPS data types are supported. Please see the following table for supported ODPS data
 types and corresponding JDBC interfaces.
 
+|   ODPS Type   |          JDBC Interface          | JDBC Type |
+|:-------------:|:--------------------------------:|:---------:|
+|    TINYINT    |    java.sql.ResultSet.getByte    |  TINYINT  |
+|   SMALLINT    |   java.sql.ResultSet.getShort    | SMALLINT  |
+|      INT      |    java.sql.ResultSet.getInt     |  INTEGER  |
+|    BIGINT     |    java.sql.ResultSet.getLong    |  BIGINT   |
+|     FLOAT     |   java.sql.ResultSet.getFloat    |   FLOAT   |
+|    DOUBLE     |   java.sql.ResultSet.getDouble   |  DOUBLE   |
+|    DECIMAL    | java.sql.ResultSet.getBigDecimal |  DECIMAL  |
+|    VARCHAR    |   java.sql.ResultSet.getString   |  VARCHAR  |
+|     CHAR      |   java.sql.ResultSet.getString   |   CHAR    |
+|    STRING     |   java.sql.ResultSet.getString   |  VARCHAR  |
+|    BOOLEAN    |  java.sql.ResultSet.getBoolean   |  BOOLEAN  |
+|     DATE      |    java.sql.ResultSet.getDate    |   DATE    |
+|   DATETIME    | java.sql.ResultSet.getTimestamp  | TIMESTAMP |
+|   TIMESTAMP   | java.sql.ResultSet.getTimestamp  | TIMESTAMP |
+| TIMESTAMP_NTZ | java.sql.ResultSet.getTimestamp  | TIMESTAMP |
+|    BINARY     |   java.sql.ResultSet.getBytes    |  BINARY   |
 
-| ODPS Type | JDBC Interface                    |   JDBC Type |
-| :-------: | :-------------------------------: | :-------:   |
-|  TINYINT  | java.sql.ResultSet.getByte        |  TINYINT    |
-|  SMALLINT | java.sql.ResultSet.getShort       |  SMALLINT   |
-|  INT      | java.sql.ResultSet.getInt         |  INTEGER    |
-|  BIGINT   | java.sql.ResultSet.getLong        |  BIGINT     |
-|  FLOAT    | java.sql.ResultSet.getFloat       |  FLOAT      |
-|  DOUBLE   | java.sql.ResultSet.getDouble      |  DOUBLE     |
-|  BOOLEAN  | java.sql.ResultSet.getBoolean     |  BOOLEAN    |
-|  DATETIME | java.sql.ResultSet.getTimestamp   |  TIMESTAMP  |
-|  TIMESTAMP| java.sql.ResultSet.getTimestamp   |  TIMESTAMP  |
-|  VARCHAR  | java.sql.ResultSet.getString      |  VARCHAR    |
-|  STRING   | java.sql.ResultSet.getString      |  VARCHAR    |
-|  DECIMAL  | java.sql.ResultSet.getBigDecimal  |  DECIMAL    |
-|  BINARY   | java.sql.ResultSet.getBytes       |  BINARY     |
+When the `getObject()` method is called, what is obtained is the Java type directly corresponding to
+each ODPS type without any conversion operation. Please see the following table for he
+correspondence between ODPS types and Java types.
+
+|   ODPS Type   |           Java Type           | 
+|:-------------:|:-----------------------------:|
+|    TINYINT    |        java.lang.Byte         |
+|   SMALLINT    |        java.lang.Short        |
+|      INT      |       java.lang.Integer       |
+|    BIGINT     |        java.lang.Long         |
+|     FLOAT     |        java.lang.Float        |
+|    DOUBLE     |       java.lang.Double        |
+|    DECIMAL    |     java.math.BigDecimal      | 
+|    VARCHAR    | com.aliyun.odps.data.Varchar  | 
+|     CHAR      |   com.aliyun.odps.data.Char   | 
+|    STRING     |            byte[]             | 
+|    BOOLEAN    | java.sql.ResultSet.getBoolean |
+|     DATE      |      java.time.LocalDate      |
+|   DATETIME    |    java.time.ZonedDateTime    |
+|   TIMESTAMP   |       java.time.Instant       |
+| TIMESTAMP_NTZ |    java.time.LocalDateTime    |
+|    BINARY     |  com.aliyun.odps.data.Binary  |
 
 NOTE: Possible timezone issue
 
-DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is 
-TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse 
-or format action. When application that using JDBC display a DATETIME as a human-readable string 
-format, it is the application itself did the format using application defined or OS defined 
-timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid 
+DATETIME in MaxCompute is actually defined as EPOCH in milliseconds, which is UTC, and so is
+TIMESTAMP in JDBC. This driver fill the DATETIME value directly into JDBC TIMESTAMP and do no parse
+or format action. When application that using JDBC display a DATETIME as a human-readable string
+format, it is the application itself did the format using application defined or OS defined
+timezone. It is suggested to keep your application/OS timezone setting same to MaxCompute to avoid
 inconsistent datetime parse/format.
 
 ### Type Conversion
@@ -288,37 +321,40 @@ inconsistent datetime parse/format.
 Implicit type conversion happens when accessing a ODPS data type with JDBC interfaces other than the
 recommended one. Please see the following table for supported implicit conversions.
 
-
-| JAVA\ODPS  |TINYINT |SMALLINT|INT      |BIGINT    |FLOAT   |DOUBLE   |DECIMAL  |VARCHAR  |STRING   |DATETIME |TIMESTAMP|BOOLEAN  |BINARY   |
-| :--------: | :----: | :----: | :-----: | :------: | :----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-|    byte    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |         |         |         |         |         |
-|   short    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
-|    int     |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
-|    long    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
-|   float    |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
-|   double   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |         |         |
-| BigDecimal |        |        |         |          |        |         |    Y    |         |         |         |         |         |         |
-|   String   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |         |
-|  byte\[\]  |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |    Y    |
-|    Date    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
-|    Time    |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
-| Timestamp  |        |        |         |          |        |         |         |         |    Y    |    Y    |    Y    |         |         |
-|  boolean   |   Y    |   Y    |    Y    |    Y     |   Y    |    Y    |    Y    |         |    Y    |         |         |    Y    |         |
+| JAVA\ODPS  | TINYINT | SMALLINT | INT | BIGINT | FLOAT | DOUBLE | DECIMAL | CHAR | VARCHAR | STRING | DATE | DATETIME | TIMESTAMP | TIMESTAMP_NTZ | BOOLEAN | BINARY |
+|:----------:|:-------:|:--------:|:---:|:------:|:-----:|:------:|:-------:|:----:|:-------:|:------:|:----:|:--------:|:---------:|:-------------:|:-------:|:------:|
+|    byte    |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+|   short    |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+|    int     |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+|    long    |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+|   float    |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+|   double   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+| BigDecimal |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+|   String   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |  Y   |    Y     |     Y     |       Y       |    Y    |   Y    |
+|  byte\[\]  |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |  Y   |    Y     |     Y     |       Y       |    Y    |   Y    |
+|    Date    |         |          |     |        |       |        |         |      |         |   Y    |  Y   |    Y     |     Y     |       Y       |         |   Y    |
+|    Time    |         |          |     |        |       |        |         |      |         |   Y    |      |    Y     |     Y     |       Y       |         |   Y    |
+| Timestamp  |         |          |     |        |       |        |         |      |         |   Y    |      |    Y     |     Y     |       Y       |         |   Y    |
+|  boolean   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |      |         |   Y    |      |          |           |               |    Y    |        |
 
 ## MaxCompute Service Compatibility and Recommended JDBC version
 
-Since Sprint27, MaxCompute tunnel service supported a feature named instance tunnel that allowing client read query result set through tunnel endpoint, to release client from creating temporary table. And this JDBC driver began adopt using instance tunnel since version 2.0.
+Since Sprint27, MaxCompute tunnel service supported a feature named instance tunnel that allowing
+client read query result set through tunnel endpoint, to release client from creating temporary
+table. And this JDBC driver began adopt using instance tunnel since version 2.0.
 
-However, for users using MaxCompute deploy that is earlier than Sprint27 (especially Private Cloud cases), please stick to the latest version before 2.0.
+However, for users using MaxCompute deploy that is earlier than Sprint27 (especially Private Cloud
+cases), please stick to the latest version before 2.0.
 
-| MaxCompute | JDBC |
-| :--------: | :---: |
-| Public Service | latest |
+|       MaxCompute       |  JDBC  |
+|:----------------------:|:------:|
+|     Public Service     | latest |
 | Non PRC Public Service | latest |
-| <= Sprint27 | 1.9.2 |
+|      <= Sprint27       | 1.9.2  |
 
 ## Authors && Contributors
 
+- [Zhang Dingxin](https://github.com/dingxin-tech)
 - [Cheng Yichao](https://github.com/onesuper)
 - [Li Ruibo](https://github.com/lyman)
 - [Zhao Zhenyi](https://github.com/emerson-zhao)

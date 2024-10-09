@@ -20,50 +20,25 @@
 
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Calendar.Builder;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
 
-import com.aliyun.odps.data.SimpleStruct;
-import com.aliyun.odps.data.Struct;
+import com.aliyun.odps.data.converter.OdpsRecordConverter;
+import com.aliyun.odps.jdbc.utils.RecordConverterCache;
 import com.aliyun.odps.type.TypeInfo;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
+import com.aliyun.odps.utils.OdpsCommonUtils;
 
 
+/**
+ * Mapping of Java Types to ODPS Types for {@link java.sql.ResultSet#getString(int)}  usage.
+ * A transformer is applied to convert ODPS native types to match the Java byte requirement.
+ * All ODPS types can be converted.
+ * use {@link OdpsRecordConverter} to convert object to string and use {@link RecordConverterCache} to cache the record converter.
+ */
 public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
-  private static final String ZEROS = "000000000";
-
-  private static String formatTimestamp(java.sql.Timestamp value) {
-    if (value.getNanos() == 0) {
-      return DATETIME_FORMAT.get().format(value);
-    } else {
-      String nanosValueStr = Integer.toString(value.getNanos());
-      nanosValueStr = ZEROS.substring(0, (9 - nanosValueStr.length())) + nanosValueStr;
-
-      // Truncate trailing zeros
-      char[] nanosChar = new char[nanosValueStr.length()];
-      nanosValueStr.getChars(0, nanosValueStr.length(), nanosChar, 0);
-      int truncIndex = 8;
-      while (nanosChar[truncIndex] == '0') {
-        truncIndex--;
-      }
-      nanosValueStr = new String(nanosChar, 0, truncIndex + 1);
-
-      return
-          String.format("%s.%s", DATETIME_FORMAT.get().format(value), nanosValueStr);
-    }
-  }
 
   @Override
   public Object transform(
@@ -75,122 +50,28 @@ public class ToJdbcStringTransformer extends AbstractToJdbcDateTypeTransformer {
     if (o == null) {
       return null;
     }
-
     if (o instanceof byte[]) {
       return encodeBytes((byte[]) o, charset);
     }
+    OdpsRecordConverter odpsRecordConverter = RecordConverterCache.get(timeZone);
 
-    // The argument cal should always be ignored since MaxCompute stores timezone information.
     try {
-      if (java.util.Date.class.isInstance(o)) {
-        Builder calendarBuilder = new Calendar.Builder()
-            .setCalendarType("iso8601")
-            .setLenient(true);
-        if (timeZone != null) {
-          calendarBuilder.setTimeZone(timeZone);
-        }
-        Calendar calendar = calendarBuilder.build();
-
-        if (java.sql.Timestamp.class.isInstance(o)) {
-          // MaxCompute TIMESTAMP
-          DATETIME_FORMAT.get().setCalendar(calendar);
-          return formatTimestamp((java.sql.Timestamp) o);
-        } else if (java.sql.Date.class.isInstance(o)) {
-          // MaxCompute DATE
-          DATE_FORMAT.get().setCalendar(calendar);
-          return DATE_FORMAT.get().format(o);
-        } else {
-          // MaxCompute DATETIME
-          DATETIME_FORMAT.get().setCalendar(calendar);
-          return DATETIME_FORMAT.get().format(o);
-        }
-      } else if (o instanceof ZonedDateTime) {
-        if (timeZone != null) {
-          return ZONED_DATETIME_FORMAT.get().withZone(timeZone.toZoneId()).format(((ZonedDateTime) o).toInstant());
-        }
-        return ZONED_DATETIME_FORMAT.get().format(((ZonedDateTime) o).toInstant());
-      } else if (o instanceof Instant) {
-        // 转换
-        ZonedDateTime
-            zonedDateTime =
-            ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
-        return java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime()).toString();
-      } else {
-        if (odpsType != null) {
-          Builder calendarBuilder = new Calendar.Builder()
-              .setCalendarType("iso8601")
-              .setLenient(true);
-          if (timeZone != null) {
-            calendarBuilder.setTimeZone(timeZone);
-          }
-          Calendar calendar = calendarBuilder.build();
-          DATETIME_FORMAT.get().setCalendar(calendar);
-
-          switch (odpsType.getOdpsType()) {
-            case ARRAY:
-            case MAP: {
-              return GSON_FORMAT.get().toJson(o);
-            }
-            case STRUCT: {
-              return GSON_FORMAT.get().toJson(normalizeStruct(o));
-            }
-            default: {
-              return o.toString();
-            }
-          }
-        }
-
-        return o.toString();
+      // odps record converter always use utf-8 encoding.
+      if (charset != null && !charset.equals(StandardCharsets.UTF_8.name())) {
+        return new java.lang.String(
+            (odpsRecordConverter.formatObject(o, odpsType).getBytes(StandardCharsets.UTF_8)),
+            charset);
       }
-    } finally {
-      restoreToDefaultCalendar();
+      return odpsRecordConverter.formatObject(o, odpsType);
+    } catch (Exception e) {
+      String errorMsg = getTransformationErrMsg(Objects.toString(o), byte[].class, e.getMessage());
+      throw new SQLException(errorMsg, e);
     }
   }
 
   @Override
   public Object transform(Object o, String charset, Calendar cal, TimeZone timeZone)
       throws SQLException {
-    return transform(o, charset, cal, timeZone, null);
+    return transform(o, charset, cal, timeZone, OdpsCommonUtils.indicateTypeFromClass(o));
   }
-
-  private static JsonElement normalizeStruct(Object object) {
-    Map<String, Object> values = new LinkedHashMap<>();
-    Struct struct = (Struct) object;
-    for (int i = 0; i < struct.getFieldCount(); i++) {
-      values.put(struct.getFieldName(i), struct.getFieldValue(i));
-    }
-
-    return new Gson().toJsonTree(values);
-  }
-
-  static ThreadLocal<Gson> GSON_FORMAT = ThreadLocal.withInitial(() -> {
-
-    JsonSerializer<Date> dateTimeSerializer = (date, type, jsonSerializationContext) -> {
-      if (date == null) {
-        return null;
-      }
-      return new JsonPrimitive(DATETIME_FORMAT.get().format(date));
-    };
-    JsonSerializer<Timestamp> timestampSerializer = (timestamp, type, jsonSerializationContext) -> {
-      if (timestamp == null) {
-        return null;
-      }
-      return new JsonPrimitive(formatTimestamp(timestamp));
-    };
-
-    JsonSerializer<SimpleStruct> structSerializer = (struct, type, jsonSerializationContext) -> {
-      if (struct == null) {
-        return null;
-      }
-      return normalizeStruct(struct);
-    };
-
-    return new GsonBuilder()
-        .registerTypeAdapter(Date.class, dateTimeSerializer)
-        .registerTypeAdapter(Timestamp.class, timestampSerializer)
-        .registerTypeAdapter(SimpleStruct.class, structSerializer)
-        .serializeNulls()
-        .create();
-  });
-
 }

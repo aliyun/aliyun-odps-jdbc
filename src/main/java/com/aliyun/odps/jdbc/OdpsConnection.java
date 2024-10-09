@@ -231,8 +231,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s, schema=%s", endpoint, project, schema));
-    log.info("JVM timezone : " + (connRes.getTimeZone() == null ? TimeZone.getDefault().getID()
-                                                                : connRes.getTimeZone()));
+    log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
     if (stsToken == null || stsToken.length() <= 0) {
@@ -340,14 +339,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         sqlTaskProperties.put("odps.sql.timezone", connRes.getTimeZone());
         tz = TimeZone.getTimeZone(connRes.getTimeZone());
       } else {
-        String timeZoneId = "Asia/Shanghai";
         String projectTimeZoneId = odps.projects().get().getProperty("odps.sql.timezone");
-        if (!StringUtils.isNullOrEmpty(projectTimeZoneId)) {
-          timeZoneId = projectTimeZoneId;
+        if (connRes.isUseProjectTimeZone() && !StringUtils.isNullOrEmpty(projectTimeZoneId)) {
+          tz = TimeZone.getTimeZone(projectTimeZoneId);
+        } else {
+          tz = TimeZone.getDefault();
         }
-        log.info("Project timezone: " + timeZoneId);
-        tz = TimeZone.getTimeZone(timeZoneId);
       }
+      log.info("jdbc timezone: " + tz.getID());
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("load project meta infos time cost=%d", cost));
       initSQLExecutor(serviceName, fallbackPolicy);
@@ -817,7 +816,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return this.odps;
   }
 
-  public TimeZone getProjectTimeZone() {
+  public TimeZone getTimezone() {
     return tz;
   }
 

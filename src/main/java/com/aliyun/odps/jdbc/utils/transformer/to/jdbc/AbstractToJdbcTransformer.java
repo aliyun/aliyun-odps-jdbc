@@ -33,7 +33,7 @@ public abstract class AbstractToJdbcTransformer {
   static final String ENCODING_ERR_MSG =
       "Error happened during encoding, please check the charset";
   static final String TRANSFORMATION_ERR_MSG =
-      "Error happened when transforming %s into %s";
+      "Error happened when transforming %s into %s : %s";
 
   /**
    * Transform ODPS SDK object to JDBC object
@@ -54,8 +54,8 @@ public abstract class AbstractToJdbcTransformer {
     return String.format(INVALID_TRANSFORMATION_ERROR_MSG, odpsCls.getName(), jdbcCls.getName());
   }
 
-  static String getTransformationErrMsg(Object o, Class jdbcCls) {
-    return String.format(TRANSFORMATION_ERR_MSG, o.toString(), jdbcCls.getName());
+  static String getTransformationErrMsg(Object o, Class jdbcCls, String errorMsg) {
+    return String.format(TRANSFORMATION_ERR_MSG, o.toString(), jdbcCls.getName(), errorMsg);
   }
 
   public static String encodeBytes(byte[] bytes, String charset) throws SQLException {
