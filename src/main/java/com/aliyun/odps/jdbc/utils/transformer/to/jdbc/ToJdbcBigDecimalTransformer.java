@@ -22,6 +22,10 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.Objects;
+
+import com.aliyun.odps.data.AbstractChar;
+import com.aliyun.odps.data.Binary;
 
 
 public class ToJdbcBigDecimalTransformer extends AbstractToJdbcTransformer {
@@ -32,11 +36,28 @@ public class ToJdbcBigDecimalTransformer extends AbstractToJdbcTransformer {
       return null;
     }
 
-    if (BigDecimal.class.isInstance(o)) {
-      return o;
-    } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), BigDecimal.class);
-      throw new SQLException(errorMsg);
+    try {
+      if (o instanceof BigDecimal) {
+        return o;
+      } else if (o instanceof Number || o instanceof String || o instanceof AbstractChar) {
+        return new BigDecimal(o.toString().trim());
+      } else if (o instanceof Binary) {
+        String str = encodeBytes(((Binary) o).data(), charset);
+        return new BigDecimal(str);
+      } else if (o instanceof byte[]) {
+        String str = encodeBytes((byte[]) o, charset);
+        return new BigDecimal(str);
+      } else {
+        String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), BigDecimal.class);
+        throw new SQLException(errorMsg);
+      }
+    } catch (SQLException e) {
+      throw e;
+    } catch (Exception e) {
+      String
+          errorMsg =
+          getTransformationErrMsg(Objects.toString(o), BigDecimal.class, e.getMessage());
+      throw new SQLException(errorMsg, e);
     }
   }
 }

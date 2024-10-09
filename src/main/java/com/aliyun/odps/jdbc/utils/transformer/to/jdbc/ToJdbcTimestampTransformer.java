@@ -22,15 +22,32 @@ package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.Objects;
 import java.util.TimeZone;
 
+import com.aliyun.odps.OdpsType;
+import com.aliyun.odps.data.Binary;
+import com.aliyun.odps.jdbc.utils.RecordConverterCache;
+import com.aliyun.odps.jdbc.utils.TimeUtils;
+import com.aliyun.odps.type.TypeInfo;
+import com.aliyun.odps.type.TypeInfoFactory;
+import com.aliyun.odps.utils.OdpsCommonUtils;
 
+
+/**
+ * Mapping of Java Types to ODPS Types for {@link java.sql.ResultSet#getTimestamp(int)} usage.
+ * A transformer is applied to convert ODPS native types to match the Java byte requirement.
+ * Following show which ODPS types can be converted.
+ * Incompatible types or conversion errors will result in a SQLException being thrown.
+ * <p>
+ * ZonedDateTime (DATETIME), Instant (TIMESTAMP), LocalDateTime (TIMESTAMP_NTZ), byte[] (String), Binary (Binary)
+ * <p>
+ */
 public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransformer {
 
   @Override
@@ -39,77 +56,65 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       String charset,
       Calendar cal,
       TimeZone timeZone) throws SQLException {
+    return transform(o, charset, cal, timeZone, OdpsCommonUtils.indicateTypeFromClass(o));
+  }
 
+  @Override
+  public Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone timeZone,
+      TypeInfo typeInfo) throws SQLException {
     if (o == null) {
       return null;
     }
-
-    if (java.util.Date.class.isInstance(o)) {
-      long time = ((java.util.Date) o).getTime();
-      if (timeZone != null) {
-        time += timeZone.getOffset(time);
+    // if typeInfo is null or not time type, use default (TIMESTAMP)
+    if (typeInfo == null || (typeInfo.getOdpsType() != OdpsType.DATETIME
+                             && typeInfo.getOdpsType() != OdpsType.TIMESTAMP
+                             && typeInfo.getOdpsType() != OdpsType.TIMESTAMP_NTZ)) {
+      typeInfo = TypeInfoFactory.TIMESTAMP;
+    }
+    try {
+      if (o instanceof byte[]) {
+        String str = encodeBytes((byte[]) o, charset);
+        // convert to local date
+        o = RecordConverterCache.get(timeZone).parseObject(str, typeInfo);
+      }
+      if (o instanceof Binary) {
+        String str = encodeBytes(((Binary) o).data(), charset);
+        // convert to local date
+        o = RecordConverterCache.get(timeZone).parseObject(str, typeInfo);
       }
 
-      int nanos = 0;
-      if (o instanceof java.sql.Timestamp) {
-        nanos = ((java.sql.Timestamp) o).getNanos();
-      }
-
-      java.sql.Timestamp ts = new java.sql.Timestamp(time);
-      ts.setNanos(nanos);
-
-      return ts;
-    } else if (o instanceof ZonedDateTime) {
-      if (timeZone != null) {
-        o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
-      }
-      return java.sql.Timestamp.valueOf(((ZonedDateTime) o).toLocalDateTime());
-    } else if (o instanceof Instant) {
-      // 转换
-      ZonedDateTime
-          zonedDateTime =
-          ZonedDateTime.ofInstant((Instant) o, timeZone == null ? ZONED_DATETIME_FORMAT.get().getZone() : timeZone.toZoneId());
-      return java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime());
-    } else if (o instanceof byte[]) {
-      try {
-        // Acceptable pattern yyyy-MM-dd HH:mm:ss[.f...]
-        SimpleDateFormat datetimeFormat = DATETIME_FORMAT.get();
-        if (cal != null) {
-          datetimeFormat.setCalendar(cal);
+      if (o instanceof ZonedDateTime) {
+        if (timeZone != null) {
+          o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
         }
-
-        // A timestamp string has two parts: datetime part and nano value part. We will firstly
-        // process the datetime part and apply the timezone. The nano value part will be set to the
-        // timestamp object later, since it has nothing to do with timezone.
-
-        // Deal with the datetime part, apply the timezone
-        String timestampStr = encodeBytes((byte[]) o, charset);
-        int dotIndex = timestampStr.indexOf('.');
-        Date date;
-        if (dotIndex == -1) {
-          date = datetimeFormat.parse(timestampStr);
-        } else {
-          date = datetimeFormat.parse(timestampStr.substring(0, dotIndex));
-        }
-        // Overwrite the datetime part
-        Timestamp timestamp = java.sql.Timestamp.valueOf(timestampStr);
-        int nanoValue = timestamp.getNanos();
-        timestamp.setTime(date.getTime());
-        timestamp.setNanos(nanoValue);
-
-        return timestamp;
-      } catch (IllegalArgumentException e) {
-        String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
+        Timestamp timestamp = Timestamp.valueOf(((ZonedDateTime) o).toLocalDateTime());
+        return TimeUtils.getTimestamp(timestamp, TimeZone.getDefault(), timeZone);
+      } else if (o instanceof Instant) {
+        ZonedDateTime
+            zonedDateTime =
+            ZonedDateTime.ofInstant((Instant) o,
+                                    timeZone == null ? ZoneId.systemDefault()
+                                                     : timeZone.toZoneId());
+        Timestamp timestamp = java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime());
+        return TimeUtils.getTimestamp(timestamp, TimeZone.getDefault(), timeZone);
+      } else if (o instanceof LocalDateTime) {
+        Timestamp timestamp = java.sql.Timestamp.valueOf((LocalDateTime) o);
+        return TimeUtils.getTimestamp(timestamp, TimeZone.getDefault(), timeZone);
+      } else {
+        String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
-      } catch (ParseException e) {
-        String errorMsg = getTransformationErrMsg(o, java.sql.Timestamp.class);
-        throw new SQLException(errorMsg);
-      } finally {
-        restoreToDefaultCalendar();
       }
-    } else {
-      String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
-      throw new SQLException(errorMsg);
+    } catch (SQLException e) {
+      throw e;
+    } catch (Exception e) {
+      String
+          errorMsg =
+          getTransformationErrMsg(Objects.toString(o), java.sql.Timestamp.class, e.getMessage());
+      throw new SQLException(errorMsg, e);
     }
   }
 }
