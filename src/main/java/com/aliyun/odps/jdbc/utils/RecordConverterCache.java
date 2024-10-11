@@ -14,14 +14,19 @@ public class RecordConverterCache {
   static Map<String, ThreadLocal<OdpsRecordConverter>> recordConverters;
 
   public static OdpsRecordConverter get(TimeZone timeZone) {
+    if (timeZone == null) {
+      timeZone = TimeZone.getDefault();
+    }
     if (recordConverters == null) {
       recordConverters = new ConcurrentHashMap<>();
     }
     if (recordConverters.get(timeZone.getID()) == null) {
+      TimeZone finalTimeZone = timeZone;
       recordConverters.put(timeZone.getID(), ThreadLocal.withInitial(() -> {
         return OdpsRecordConverter.builder()
             .setStrictMode(false)
-            .timezone(timeZone.getID())
+            .enableParseNull()
+            .timezone(finalTimeZone.getID())
             .build();
       }));
     }
