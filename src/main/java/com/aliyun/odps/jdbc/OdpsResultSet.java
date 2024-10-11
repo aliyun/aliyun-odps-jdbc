@@ -294,7 +294,8 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public byte[] getBytes(int columnIndex) throws SQLException {
     Object obj = getInnerObject(columnIndex);
-    return (byte[]) transformToJdbcType(obj, byte[].class);
+    return (byte[]) transformToJdbcType(obj, byte[].class, null,
+                                        meta.getColumnOdpsType(columnIndex));
   }
 
   @Override
