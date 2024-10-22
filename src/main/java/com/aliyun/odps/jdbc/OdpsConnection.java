@@ -307,6 +307,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       this.odpsNamespaceSchema = connRes.isOdpsNamespaceSchema();
     }
     log.info("Supoort odps namespace schema: " + this.odpsNamespaceSchema);
+    if (this.odpsNamespaceSchema) {
+      sqlTaskProperties.put("odps.namespace.schema", "true");
+    }
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     if (connRes.getQuotaName() != null) {
