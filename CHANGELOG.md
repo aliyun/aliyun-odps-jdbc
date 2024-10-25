@@ -1,107 +1,73 @@
-### v2.4
+# Changelog
+## [3.8.0] - 2024-10-09
+**Welcome to the MCQA 2.0 Era!**
+### New Features
+- Support for submitting MCQA 2.0 jobs. Enable MCQA 2.0 mode by setting `quotaName` to interactive quota and turning on `interactiveMode=true`.
+- New parameter `useInstanceTunnel`, which specifies whether to use Tunnel to retrieve data. The default value is true, consistent with previous behavior.
+  If `instanceTunnel` is turned off, the system will use RESTful API to retrieve data under this mode:
+    - Execution speed will be faster.
+    - Only 10,000 results can be returned; if this limit is exceeded, the data will be truncated.
+    - Return values are of String type, suitable only for display-type jobs.
+- New executable class `JdbcRunner`, which allows executing JDBC tasks via a connection string and SQL file. The usage is as follows:
+```bash
+ java -cp odps-jdbc-version-jar-with-dependencies.jar com.aliyun.odps.jdbc.JdbcRunner <jdbc_url> <sql_file>
+```
+- Added some debug settings that modify the current `Connection` configuration (effectively re-acquiring the Connection to replace the current one).
+    - `set tunnelEndpoint = xxx;` modifies the tunnelEndpoint parameter of the current Connection.
+    - `set useTunnel = true/false;` modifies the useInstanceTunnel parameter of the current Connection.
+    - `set interactiveMode = true/false;` modifies the interactiveMode parameter of the current Connection.
+### Changes
+- Removed handling of `#` comment in the `removeComment` method: it no longer removes comments after the `#`. This change resolves many issues where valid SQL statements were incorrect due to the removal of `#`.
+- Updated odps-sdk version to [0.50.0-public](https://github.com/aliyun/aliyun-odps-java-sdk/blob/release/0.50.x/CHANGELOG.md#0500-public---2024-10-09).
 
-1. fallback to limited mode instance tunnel if project is protection
-1. fix bug when sql statement contains semi-colon
-1. fix bug of no column info when accessing table from other project
+## [3.7.0] - 2024-08-29
+**Compatibility with Metabase!**  
+[Learn how to connect MaxCompute to Metabase](https://help.aliyun.com/zh/maxcompute/user-guide/connect-metabase-to-maxcompute)
+### Important Changes
+- **Optimized the `DatabaseMetadata.getColumns` Logic**: Enhanced compatibility for three-tier and two-tier model users as follows:
+    - **Three-tier model (project.schema.table)**:
+        - Ignores the passed `catalog`, using the project name from the JDBC connection, along with the `schemaPattern` and `tableNamePattern` parameters to compose the table reference.
+    - **Two-tier model (project.table)**:
+        - Ignores the `schemaPattern`, treating the `catalog` as the project name, and combines it with the `tableNamePattern` parameter to form the table reference.
+  ```text
+  Three-tier model: catalog.schemaPattern.tableNamePattern -> project.schemaPattern.tableNamePattern
+  Two-tier model: schemaPattern.tableNamePattern -> catalog.tableNamePattern
+  ```
+### Changes
+- **Enhanced SQLException Messages**: The exception message now includes the correct ErrorMessage.
+- **Updated odps-sdk Version**: Updated to [0.48.8-public](https://github.com/aliyun/aliyun-odps-java-sdk/blob/release/0.50.x/CHANGELOG.md#0488-public---2024-08-12).
 
-### v2.3.1 (2018-02-17)
+## [3.6.0] - 2024-08-07
+**Say No to SQLFeatureNotSupportedException!**
+### New Features
+- **LocalDate Support**: `PrepareStatement.setObject` now supports LocalDate type for MaxCompute DATE type.
+- **SQL Injection Check**: New parameter `skipSqlInjectCheck` allows skipping the SQL injection check, applicable when setting String type fields.
+- **TIMESTAMP_NTZ Support**: `DatabaseMetadata` now also supports MaxCompute `TIMESTAMP_NTZ` type fields.
+- **Extended `PrepareStatement` Methods**:
+    - Implemented `setObject(int, Object, int)`, `setObject(int, Object, int, int)`, `setObject(int, Object, SQLType)`, and `setObject(int, Object, SQLType, int)` methods, which will no longer throw exceptions but will return results from `setObject(int, Object)`, ignoring additional fields.
+- **Extended `ResultSet` Methods**:
+    - Added `getObject(int, Map)` and `getObject(String, Map)` methods, which no longer throw exceptions but ignore the `map` and call `ResultSet.getObject(int)` to return results.
+    - Added `getObject(int, Class<T>)` and `getObject(String, Class<T>)` methods, which first call `ResultSet.getObject(int)` before trying to convert the result to the specified type.
+- **Optimized `Statement` Method**: The `createStatement(int, int, int)` method now no longer throws exceptions but ignores `resultSetHoldability`, returning the result of `Statement.createStatement(int, int)`.
+### Changes
+- **Enhanced `DatabaseMetadata.getColumns`**: The interface now returns `IS_AUTOINCREMENT` and `IS_GENERATEDCOLUMN` fields to comply with JDBC specifications.
+- **Updated odps-sdk Version**: Updated to [0.48.7-public](https://github.com/aliyun/aliyun-odps-java-sdk/blob/release/0.50.x/CHANGELOG.md#0487-public---2024-08-07).
+    - The new version applies key-path-end optimizations, improving efficiency during offline job execution, especially in complex queries.
 
-1. update odps sdk and fastjson for security reason
+## [3.5.8] - 2024-07-22
+### New Features
+- **Delta Table Write Support**: `PrepareStatement` now supports write operations on Delta Tables.
+- **Skip SQL Rewrite**: New parameter `skipSqlRewrite`, with a default value of `true`, allows skipping SQL statement rewriting during comment removal. Enabling this parameter may cause settings submitted with the SQL to become ineffective.
+### Changes
+- **Optimized Comment Removal Logic**: The logic has been optimized to avoid throwing exceptions when processing very long queries. It fixes the issue of potentially removing SQL hints during comment removal.
+- **SDK Update**: The odps-sdk has been updated to [0.48.6-public](https://github.com/aliyun/aliyun-odps-java-sdk/blob/release/0.50.x/CHANGELOG.md#0486-public---2024-07-17).
+    - The new version reduces network overhead, slightly improving efficiency during offline job execution.
 
-### v1.9.2 (2018-02-17)
+## [3.5.7] - 2024-04-29
+### New Features
+- **New Parameter `tunnelDownloadUseSingleReader`**: The default value is `false`. When this parameter is enabled, each ResultSet will use only a single Reader for data downloading. This change is suitable for scenarios that require reading large amounts of data at once, optimizing performance. The previous behavior was to open a new Reader each time `hasNext` is called, to prevent connection drops.
 
-1. update odps sdk and fastjson for security reason
-1. add test tool `jdbc_test.sh`
-
-### v2.3 (2018-01-22)
-
-1. support customizing tunnel endpoint
-1. add test tool `jdbc_test.sh` with log conf sample
-
-### v2.2 (2017-02-24)
-
-1. Support Hive data type.
-
-### v1.9.1 (2016-11-11)
-
-1. Minor update to support hive proxy.
-
-### v2.0beta (2016-08-25)
-
-1. Support passing `logconffile` to customize logging
-2. Support passing `odps_config` with a file to specify JDBC configuration in order to avoid encoding/decoding the params which contains special characters. If `odps_config` is passed , neither `URL` nor `PROP` config will be ignored.
-3. Unify the configuration effects of both `URL_KEY` and `PROP_KEY`.`PROP_KEY`'s priority would be greater than `URL_KEY`'s when they both exist.
-4. `executeUpdate` will return non-negative value.
-5. Add `synchronized` to some methods to protect the safety of concurrent calling.
-
-### v2.0beta (2016-06-15)
-
-1. Use instance tunnel instead of table tunnel, so that temporary table is no longer created. Demands MaxCompute service >= Sprint27.
-
-### v1.9 (2016-06-14)
-
-1. Support set sql properties in `statement.execute()`.
-
-### v1.8 (2016-03-25)
-
-1. AutoCommit default is true, and always is true.
-
-### v1.7 (2016-03-18)
-
-1. Log for SQLFeatureNotSupportedException on the critical path.
-1. Refactor the unitest
-
-### v1.6 (2015-12-31)
-
-1. Put logview in the warning chain to let be captured in **SQLWorkbench/j**.
-1. Remove the hardcode when retrieve version
-1. Clear javadoc warnings.
-1. Put all the utils to `/utils` folder.
-
-### v1.5 (2015-12-30)
-
-1. Set temp table lifecycle in create SQL (eliminate the round trip cost).
-1. Accept `VALUES(?, ?, ?)` in prepareStatement.
-1. Reuse one tunnel upload session in `PrepareStatement.executeBatch()`. Commit the session on the close of the PrepareStatement.
-1. Catch the NPE of `instance.getTaskStatus().get("SQL")`.
-1. Support `supportsSchemasInTableDefinitions` to adpat to **Kettle**.
-
-### v1.4 (2015-12-22)
-
-1. Support `isValid()` to adpat to **HikariCP**.
-1. Support `setReadOnly()` to adapt to **HikariCP** (only allow for setting it to false).
-1. Add an example to use **HikariCP**.
-
-### v1.3 (2015-12-07)
-
-1. Support `supportsResultSetType()` to adapt to **Pentaho**.
-1. Support `PreparedStatement.setBytes()`.
-1. Support `getMaxTableNameLength()` to adapt to **SQL Workbench/J**.
-1. Support `getIdentifierQuoteString()` to adapt to **SQL Workbench/J**.
-1. Fix the `getUpdateCount()` bug. See Issue \#15.
-
-### v1.2 (2015-11-29)
-
-1. Support batch insert in PreparedStatement.
-1. Add an example to migrate data using batch functionality. The example splits the source and uses more than 1 thread to upload.
-1. `DatabaseMetaData.getColumns()` Support accoss schema query.
-1. Per-connection logger bug fixed.
-1. Display uuid in loggers' console handler.
-1. Use travis to deploy.
-1. `user_agent` looks like odps-jdbc-1.1.
-1. Rename OdpsQueryResultSet to ScollResultSet.
-1. Use project name in log string.
-1. Throw NPE if `instance.getStatus() == null`.
-
-
-### v1.1 (2015-11-17)
-
-1. SQLWorkbench's wbcopy command supported.
-1. Compress data when downloading the result set.
-1. No longer use log4j.
-1. `Driver.getParentLogger()` supported.
-1. Per-connection logger (support two connections with different log level.)
-1. More debug logs for profiling.
-1. Change the driver name to 'ODPS'.
-1. Optimize the performance of getting tables.
-1. No longer supports the concept of catalog (all related functions return null).
+## [3.5.6] - 2023-10-27
+### New Features
+- Support for `insert into tablename (co1, co2) values(?, ?)` syntax.
+- `DatabaseMetadata.getColumns` now adapts to situations using the three-tier model.
