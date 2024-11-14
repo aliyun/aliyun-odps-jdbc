@@ -88,22 +88,11 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       }
 
       if (o instanceof ZonedDateTime) {
-        if (timeZone != null) {
-          o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
-        }
-        Timestamp timestamp = Timestamp.valueOf(((ZonedDateTime) o).toLocalDateTime());
-        return TimeUtils.getTimestamp(timestamp, TimeZone.getDefault(), timeZone);
+        return TimeUtils.getTimestamp(((ZonedDateTime) o).toLocalDateTime(), timeZone);
       } else if (o instanceof Instant) {
-        ZonedDateTime
-            zonedDateTime =
-            ZonedDateTime.ofInstant((Instant) o,
-                                    timeZone == null ? ZoneId.systemDefault()
-                                                     : timeZone.toZoneId());
-        Timestamp timestamp = java.sql.Timestamp.valueOf(zonedDateTime.toLocalDateTime());
-        return TimeUtils.getTimestamp(timestamp, TimeZone.getDefault(), timeZone);
+        return TimeUtils.getTimestamp((Instant) o, timeZone);
       } else if (o instanceof LocalDateTime) {
-        Timestamp timestamp = java.sql.Timestamp.valueOf((LocalDateTime) o);
-        return TimeUtils.getTimestamp(timestamp, TimeZone.getDefault(), timeZone);
+        return TimeUtils.getTimestamp((LocalDateTime) o, timeZone);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
