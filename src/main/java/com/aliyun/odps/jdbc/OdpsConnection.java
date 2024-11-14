@@ -54,6 +54,7 @@ import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import com.aliyun.odps.jdbc.utils.TimeUtils;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
@@ -228,7 +229,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String version = Utils.retrieveVersion("driver.version");
     log.info("ODPS JDBC driver, Version " + version);
     log.info(String.format("endpoint=%s, project=%s, schema=%s", endpoint, project, schema));
-    log.info("JVM timezone : " + TimeZone.getDefault().getID());
     log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
     if (stsToken == null || stsToken.length() <= 0) {
@@ -342,10 +342,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         if (connRes.isUseProjectTimeZone() && !StringUtils.isNullOrEmpty(projectTimeZoneId)) {
           tz = TimeZone.getTimeZone(projectTimeZoneId);
         } else {
-          tz = TimeZone.getDefault();
+          tz = TimeUtils.UTC;
         }
       }
-      log.info("jdbc timezone: " + tz.getID());
+      log.info("Current connection timezone: " + tz.getID());
+
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("load project meta infos time cost=%d", cost));
       initSQLExecutor(serviceName, fallbackPolicy);
