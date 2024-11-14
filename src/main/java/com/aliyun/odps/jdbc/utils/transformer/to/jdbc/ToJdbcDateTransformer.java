@@ -68,32 +68,16 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
         // convert to local date
         o = RecordConverterCache.get(timeZone).parseObject(str, TypeInfoFactory.DATE);
       }
-
       if (o instanceof LocalDate) {
-        return TimeUtils.getDate(java.sql.Date.valueOf((LocalDate) o), TimeZone.getDefault(),
-                                 timeZone);
+        return TimeUtils.getDate(java.sql.Date.valueOf((LocalDate) o), timeZone);
       } else if (o instanceof ZonedDateTime) {
-        if (timeZone != null) {
-          // convert to target timezone, eg. 09-30 06:00:00[Asia/Shanghai] -> 09-29 22:00:00 [UTC]
-          o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
-        }
-        // convert to date will make date have default timezone again, eg. 09-29 22:00:00 [UTC] -> 09-29 22:00:00 [Asia/Shanghai]
         Date date = Date.valueOf(((ZonedDateTime) o).toLocalDate());
-
-        // then convert to target timezone again to correctly print, eg. 09-29 22:00:00 [Asia/Shanghai] -> 09-30 06:00:00[Asia/Shanghai]
-        // and then when the client print, it will be 09-30 06:00:00[Asia/Shanghai] -> 09-29 22:00:00 [UTC]
-        return TimeUtils.getDate(date, TimeZone.getDefault(), timeZone);
+        return TimeUtils.getDate(date, timeZone);
       } else if (o instanceof Instant) {
-        ZonedDateTime
-            zonedDateTime =
-            ZonedDateTime.ofInstant((Instant) o,
-                                    timeZone == null ? ZoneId.systemDefault()
-                                                     : timeZone.toZoneId());
-        Date date = Date.valueOf((zonedDateTime).toLocalDate());
-        return TimeUtils.getDate(date, TimeZone.getDefault(), timeZone);
+        return TimeUtils.getDate((Instant) o, timeZone);
       } else if (o instanceof LocalDateTime) {
         Date date = Date.valueOf(((LocalDateTime) o).toLocalDate());
-        return TimeUtils.getDate(date, TimeZone.getDefault(), timeZone);
+        return TimeUtils.getDate(date, timeZone);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Date.class);
         throw new SQLException(errorMsg);
