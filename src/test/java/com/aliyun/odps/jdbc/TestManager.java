@@ -74,7 +74,7 @@ public class TestManager {
       String
           url =
           String
-              .format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&skipSqlInjectCheck=true", endpoint, project, loglevel,
+              .format("jdbc:odps:%s?project=%s&loglevel=%s&logview=%s&skipSqlInjectCheck=true&enableOdpsLogger=true&useProjectTimeZone=false", endpoint, project, loglevel,
                       logview);
 
       // pass project name via url
@@ -92,7 +92,7 @@ public class TestManager {
 
       String
           urlSession =
-          String.format("jdbc:odps:%s?project=%s&interactiveMode=true&enableCommandApi=true", endpoint, project);
+          String.format("jdbc:odps:%s?project=%s&interactiveMode=true&enableCommandApi=true&enableOdpsLogger=true", endpoint, project);
 
       // pass project name via url
       sessionConn = DriverManager.getConnection(urlSession, username, password);
