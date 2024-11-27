@@ -28,14 +28,15 @@ jobs:
           echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
 
       - name: Release Maven package
-        uses: samuelmeuli/action-maven-publish@v1
+        uses: WasiqB/maven-publish-action@v1
         with:
           gpg_private_key: ${{ secrets.gpg_private_key }}
           gpg_passphrase: ${{ secrets.gpg_passphrase }}
           nexus_username: ${{ secrets.nexus_token_username }}
           nexus_password: ${{ secrets.nexus_token_password }}
           server_id: ossrh
-          maven_args: -s settings.xml -DskipTests
+          maven_args: -DskipTests
+          settings_path: settings.xml
 
       - name: Publish to GitHub Packages
         run: mvn clean package -DskipTests
