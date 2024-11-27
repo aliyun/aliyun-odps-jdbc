@@ -35,7 +35,7 @@ jobs:
           nexus_username: ${{ secrets.nexus_token_username }}
           nexus_password: ${{ secrets.nexus_token_password }}
           server_id: ossrh
-          maven_args: -DskipTests
+          maven_args: -s settings.xml -DskipTests
 
       - name: Publish to GitHub Packages
         run: mvn clean package -DskipTests
