@@ -150,6 +150,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String serviceName = null;
   private FallbackPolicy fallbackPolicy;
   private boolean verbose;
+  private int logviewVersion;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -162,6 +163,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     String endpoint = connRes.getEndpoint();
     String tunnelEndpoint = connRes.getTunnelEndpoint();
     String logviewHost = connRes.getLogview();
+    logviewVersion = connRes.getLogviewVersion();
     String logConfFile = connRes.getLogConfFile();
     serviceName = connRes.getInteractiveServiceName();
     fallbackPolicy = connRes.getFallbackPolicy();
@@ -383,7 +385,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .tunnelSocketTimeout(tunnelConnectTimeout)
         .tunnelReadTimeout(tunnelReadTimeout)
         .enableOdpsNamespaceSchema(odpsNamespaceSchema)
-        .useInstanceTunnel(useInstanceTunnel);
+        .useInstanceTunnel(useInstanceTunnel)
+        .logviewVersion(logviewVersion);
+
     if (enableMcqaV2) {
       builder.quotaName(quotaName);
       builder.enableMcqaV2(true);

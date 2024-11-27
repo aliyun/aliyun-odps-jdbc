@@ -96,6 +96,7 @@ public class ConnectionResource {
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
+  private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
 
   /**
    * Keys to retrieve properties from info.
@@ -158,6 +159,7 @@ public class ConnectionResource {
   private static final String SKIP_SQL_INJECT_CHECK_PROP_KEY = "skip_sql_inject_check";
   private static final String QUOTA_NAME_PROP_KEY = "quota_name";
   private static final String VERBOSE_PROP_KEY = "verbose";
+  private static final String LOGVIEW_VERSION_PROP_KEY = "logview_version";
 
   private String endpoint;
   private String accessId;
@@ -192,6 +194,7 @@ public class ConnectionResource {
   private boolean skipSqlInjectCheck = false;
   private boolean verbose = false;
   private String quotaName;
+  private int logviewVersion;
 
   public Boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
@@ -431,6 +434,10 @@ public class ConnectionResource {
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", VERBOSE_PROP_KEY,
                                                      VERBOSE_PROP_KEY));
 
+    logviewVersion = Integer.parseInt(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "1", LOGVIEW_VERSION_PROP_KEY, LOGVIEW_VERSION_URL_KEY)
+    );
+
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
     // true/false                         |      true/false                    | true/false
@@ -549,6 +556,10 @@ public class ConnectionResource {
 
   public String getLogview() {
     return logview;
+  }
+
+  public int getLogviewVersion() {
+    return logviewVersion;
   }
 
   public String getTunnelEndpoint() {
