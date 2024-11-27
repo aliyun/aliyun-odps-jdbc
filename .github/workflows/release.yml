@@ -26,6 +26,7 @@ jobs:
           echo use-agent >> ~/.gnupg/gpg.conf
           echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
           echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+          apt-get install pinentry
 
       - name: Release Maven package
         uses: WasiqB/maven-publish-action@v1
