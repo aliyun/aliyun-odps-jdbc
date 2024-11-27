@@ -20,13 +20,6 @@ jobs:
         with:
           java-version: 8
       
-      - name: Setup gpg
-        run: |
-          mkdir ~/.gnupg
-          echo use-agent >> ~/.gnupg/gpg.conf
-          echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
-          echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-
       - name: Release Maven package
         uses: WasiqB/maven-publish-action@v1
         with:
