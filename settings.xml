@@ -8,37 +8,4 @@
             <password>${env.nexus_token_password}</password>
         </server>
     </servers>
-
-    <profiles>
-        <profile>
-            <id>central</id>
-            <repositories>
-                <repository>
-                    <id>central</id>
-                    <url>https://repo.maven.apache.org/maven2</url>
-                    <releases>
-                        <enabled>true</enabled>
-                    </releases>
-                    <snapshots>
-                        <enabled>true</enabled>
-                    </snapshots>
-                </repository>
-                <repository>
-                    <id>sonatype-nexus-snapshots</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                    <releases>
-                        <enabled>false</enabled>
-                    </releases>
-                    <snapshots>
-                        <enabled>true</enabled>
-                    </snapshots>
-                </repository>
-            </repositories>
-
-        </profile>
-    </profiles>
-
-    <activeProfiles>
-        <activeProfile>central</activeProfile>
-    </activeProfiles>
 </settings>

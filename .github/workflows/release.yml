@@ -26,10 +26,9 @@ jobs:
           echo use-agent >> ~/.gnupg/gpg.conf
           echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
           echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-          sudo apt-get install pinentry-curses
 
       - name: Release Maven package
-        uses: WasiqB/maven-publish-action@v1
+        uses: samuelmeuli/action-maven-publish@v1
         with:
           gpg_private_key: ${{ secrets.gpg_private_key }}
           gpg_passphrase: ${{ secrets.gpg_passphrase }}
@@ -37,7 +36,6 @@ jobs:
           nexus_password: ${{ secrets.nexus_token_password }}
           server_id: ossrh
           maven_args: -DskipTests -X
-          settings_path: settings.xml
 
       - name: Publish to GitHub Packages
         run: mvn clean package -DskipTests
