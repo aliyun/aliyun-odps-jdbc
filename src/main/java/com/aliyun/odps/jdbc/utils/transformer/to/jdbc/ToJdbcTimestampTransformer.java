@@ -88,7 +88,7 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       }
 
       if (o instanceof ZonedDateTime) {
-        return TimeUtils.getTimestamp(((ZonedDateTime) o).toLocalDateTime(), timeZone);
+        return TimeUtils.getTimestamp(((ZonedDateTime) o).toInstant(), timeZone);
       } else if (o instanceof Instant) {
         return TimeUtils.getTimestamp((Instant) o, timeZone);
       } else if (o instanceof LocalDateTime) {
