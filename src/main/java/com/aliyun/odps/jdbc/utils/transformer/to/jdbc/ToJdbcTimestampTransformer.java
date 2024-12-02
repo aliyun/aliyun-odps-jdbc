@@ -92,7 +92,8 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       } else if (o instanceof Instant) {
         return TimeUtils.getTimestamp((Instant) o, timeZone);
       } else if (o instanceof LocalDateTime) {
-        return TimeUtils.getTimestamp((LocalDateTime) o, timeZone);
+        // LocalDatetime is not time zone aware, so we always convert it to UTC
+        return TimeUtils.getTimestamp((LocalDateTime) o, TimeUtils.UTC);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
