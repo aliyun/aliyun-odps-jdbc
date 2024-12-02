@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.aliyun.odps</groupId>
   <artifactId>odps-jdbc</artifactId>
-  <version>3.8.1-SNAPSHOT</version>
+  <version>3.8.1</version>
   <name>odps-jdbc</name>
   <description>Aliyun ODPS JDBC driver</description>
   <url>http://odps.aliyun.com</url>
@@ -48,8 +48,21 @@
     </repository>
   </distributionManagement>
 
+  <repositories>
+    <repository>
+      <id>sonatype-nexus-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <properties>
-    <sdk.version>0.50.5-public-SNAPSHOT</sdk.version>
+    <sdk.version>0.50.6-public</sdk.version>
     <junit.version>4.11</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>

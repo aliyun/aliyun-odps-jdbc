@@ -20,16 +20,22 @@ jobs:
         with:
           java-version: 8
       
+      - name: Setup gpg
+        run: |
+          mkdir ~/.gnupg
+          echo use-agent >> ~/.gnupg/gpg.conf
+          echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+          echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+
       - name: Release Maven package
-        uses: WasiqB/maven-publish-action@v1
+        uses: samuelmeuli/action-maven-publish@v1
         with:
           gpg_private_key: ${{ secrets.gpg_private_key }}
           gpg_passphrase: ${{ secrets.gpg_passphrase }}
           nexus_username: ${{ secrets.nexus_token_username }}
           nexus_password: ${{ secrets.nexus_token_password }}
           server_id: ossrh
-          maven_args: -DskipTests
-          settings_path: settings.xml
+          maven_args: -DskipTests -X
 
       - name: Publish to GitHub Packages
         run: mvn clean package -DskipTests
