@@ -29,10 +29,14 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import org.slf4j.LoggerFactory;
+
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsDriver implements Driver {
+
+  static org.slf4j.Logger logger = LoggerFactory.getLogger("OdpsConnection");
 
   static {
     try {
@@ -69,6 +73,8 @@ public class OdpsDriver implements Driver {
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
       throws SQLException {
+
+    logger.info("Accept: " + url);
 
     ConnectionResource connRes = new ConnectionResource(url, info);
 

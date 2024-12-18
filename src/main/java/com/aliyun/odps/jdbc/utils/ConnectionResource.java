@@ -228,6 +228,12 @@ public class ConnectionResource {
     init(info, paramsInURL);
   }
 
+  private Map<String, String> allProperties = new HashMap<>();
+
+  public Map<String, String> getAllProperties() {
+    return allProperties;
+  }
+
   @SuppressWarnings("rawtypes")
   void init(Properties info, Map<String, String> paramsInURL) {
     List<Map> maps = new ArrayList<Map>();
@@ -245,6 +251,13 @@ public class ConnectionResource {
     } else {
       maps.add(info);
       maps.add(paramsInURL);
+    }
+    for (Map map : maps) {
+      for (Object tempKey : map.keySet()) {
+        if (!allProperties.containsKey(tempKey)) {
+          allProperties.put(tempKey.toString(), map.get(tempKey).toString());
+        }
+      }
     }
 
     accessId = tryGetFirstNonNullValueByAltMapAndAltKey(
