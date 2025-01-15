@@ -40,6 +40,7 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
+import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
@@ -557,8 +558,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 enableLimit);
 
             resultSet = new OdpsScollResultSet(this, meta, session,
-                                                               connHandle.getExecutor()
-                                                                   .isRunningInInteractiveMode()
+                                               connHandle.getExecutor()
+                                                                   .getExecuteMode() == ExecuteMode.INTERACTIVE
                                                                ? OdpsScollResultSet.ResultMode.INTERACTIVE
                                                                : OdpsScollResultSet.ResultMode.OFFLINE);
           }
@@ -675,6 +676,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
     throw new SQLFeatureNotSupportedException();
+  }
+
+  public ExecuteMode getExecuteMode() {
+    return connHandle.getExecutor().getExecuteMode();
   }
 
   private void beforeExecute() throws SQLException {
