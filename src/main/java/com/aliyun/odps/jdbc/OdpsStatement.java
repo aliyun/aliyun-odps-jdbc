@@ -299,7 +299,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       properties.putAll(parseResult.getSettings());
     }
 
-    if (StringUtils.isNullOrEmpty(query)) {
+    if (StringUtils.isBlank(query)) {
       // only settings, just set properties
       processSetClause(properties);
       return false;
