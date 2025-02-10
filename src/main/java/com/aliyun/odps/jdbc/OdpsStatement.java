@@ -39,6 +39,7 @@ import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import com.aliyun.odps.jdbc.utils.SettingParser;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.SQLExecutor;
@@ -204,10 +205,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Properties properties = new Properties();
 
     if (!connHandle.isSkipSqlCheck()) {
-      query = Utils.parseSetting(query, properties);
+      SettingParser.ParseResult parseResult = SettingParser.parse(query);
+      query = parseResult.getRemainingQuery();
+      properties.putAll(parseResult.getSettings());
     }
-
-    if (StringUtils.isNullOrEmpty(query)) {
+    if (StringUtils.isBlank(query)) {
       // only settings, just set properties
       processSetClause(properties);
       return EMPTY_RESULT_SET;
@@ -235,10 +237,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     Properties properties = new Properties();
     if (!connHandle.isSkipSqlCheck()) {
-      query = Utils.parseSetting(query, properties);
+      SettingParser.ParseResult parseResult = SettingParser.parse(query);
+      query = parseResult.getRemainingQuery();
+      properties.putAll(parseResult.getSettings());
     }
 
-    if (StringUtils.isNullOrEmpty(query)) {
+    if (StringUtils.isBlank(query)) {
       // only settings, just set properties
       processSetClause(properties);
       return 0;
@@ -290,7 +294,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     Properties properties = new Properties();
 
     if (!connHandle.isSkipSqlCheck()) {
-      query = Utils.parseSetting(query, properties);
+      SettingParser.ParseResult parseResult = SettingParser.parse(query);
+      query = parseResult.getRemainingQuery();
+      properties.putAll(parseResult.getSettings());
     }
 
     if (StringUtils.isNullOrEmpty(query)) {
