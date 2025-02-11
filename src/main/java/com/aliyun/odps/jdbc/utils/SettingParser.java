@@ -50,6 +50,8 @@ public class SettingParser {
     List<String> errors = new ArrayList<>();
     List<int[]> excludeRanges = new ArrayList<>();
     State currentState = State.DEFAULT;
+    // use for ignore the case of 'set'
+    String lowerS = s.toLowerCase();
     int i = 0;
     int currentStartIndex = -1;
 
@@ -62,7 +64,7 @@ public class SettingParser {
           } else if (i <= s.length() - 2 && s.startsWith("/*", i)) {
             currentState = State.MULTI_LINE_COMMENT;
             i += 2;
-          } else if (i <= s.length() - 3 && (s.startsWith("set", i) || s.startsWith("SET", i))) {
+          } else if (i <= s.length() - 3 && lowerS.startsWith("set", i)) {
             if (i + 3 < s.length() && Character.isWhitespace(s.charAt(i + 3))) {
               currentState = State.IN_SET;
               currentStartIndex = i;
@@ -113,6 +115,7 @@ public class SettingParser {
           int keyValueStart = i;
           boolean foundSemicolon = false;
           while (i < s.length()) {
+            // Allows escape of semicolons to place semicolons in settings
             if (s.charAt(i) == ';' && s.charAt(i - 1) != '\\') {
               foundSemicolon = true;
               i++;

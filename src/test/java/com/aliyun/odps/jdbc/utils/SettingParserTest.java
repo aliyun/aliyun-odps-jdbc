@@ -11,7 +11,7 @@ public class SettingParserTest {
   public void testStandardScenario() {
     String sql = "/* pre comment */\n"
                  + "SET key1 = value1; -- inline comment\n"
-                 + "SET key2=value2;\n"
+                 + "SeT key2=value2;\n"
                  + "SELECT 1;";
 
     SettingParser parser = new SettingParser();
