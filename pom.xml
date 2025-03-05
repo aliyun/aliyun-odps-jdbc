@@ -62,7 +62,7 @@
   </repositories>
 
   <properties>
-    <sdk.version>0.51.6-public</sdk.version>
+    <sdk.version>0.51.9-public</sdk.version>
     <junit.version>4.11</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>
