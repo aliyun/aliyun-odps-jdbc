@@ -1,4 +1,32 @@
 # Changelog
+## [3.8.4] - 2025-03-18
+### Improvements
+- **Dependency Update**  
+  Upgraded `odps-sdk` to version `0.51.11-public`. The new SDK version refactors the `MCQA 2.0 ResultDescriptor` entity to ensure compatibility with MCQA 2.0. Users of MCQA 2.0 are **strongly recommended** to upgrade to this version. For details, refer to the [SDK Changelog](https://github.com/aliyun/aliyun-odps-java-sdk/releases/tag/v0.51.11-public).
+---
+
+## [3.8.3] - 2025-02-11
+### Enhancements
+- **SQL Settings Extraction**  
+  Replaced regular expressions with a state machine for SQL settings parsing, improving accuracy and resolving issues where JDBC-side SQL rewriting caused execution failures.
+- **Dependency Update**  
+  Upgraded `odps-sdk` to version `0.51.6-public`.
+---
+
+## [3.8.2] - 2025-01-15
+### Features
+- **Execution Mode**  
+  Added `getExecuteMode` method in `OdpsStatement` to retrieve the current execution mode (`INTERACTIVE`, `INTERACTIVE_V2`, or `OFFLINE`).
+- **Dependency Update**  
+  Upgraded `odps-sdk` to version `0.51.5-public`.
+---
+
+## [3.8.1] - 2024-11-27
+### Features
+- **Logview** Added support for Logview V2, details see [November 14, 2024 (UTC+8): Notice on the security upgrade for MaxCompute LogView](https://www.alibabacloud.com/help/en/maxcompute/product-overview/2024-service-notices). specifies the version through the url param `logviewVersion`.
+  method.
+
+----
 ## [3.8.0] - 2024-10-09
 **Welcome to the MCQA 2.0 Era!**
 ### New Features

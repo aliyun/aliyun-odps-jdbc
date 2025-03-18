@@ -1,5 +1,33 @@
 # 更新日志
 
+## [3.8.4] - 2025-03-18
+### 改进
+- **依赖升级**  
+  升级 `odps-sdk` 版本到 `0.51.11-public`。新版本 SDK 针对 `MCQA 2.0 ResultDescriptor` 实体进行了重构，以确保与 MCQA 2.0 的兼容性。**强烈建议 MCQA 2.0 用户升级到该版本**。详情请参考 [SDK 更新日志](https://github.com/aliyun/aliyun-odps-java-sdk/releases/tag/v0.51.11-public)。
+
+---
+
+## [3.8.3] - 2025-02-11
+### 优化
+- **SQL 设置提取**  
+  使用状态机替代正则表达式进行 SQL 设置提取，提升解析准确性，规避了因 JDBC 侧 SQL 重写导致的执行失败问题。
+- **依赖升级**  
+  升级 `odps-sdk` 版本到 `0.51.6-public`。
+
+----
+
+## [3.8.2] - 2025-01-15
+### 功能
+- **执行模式**  
+  在 `OdpsStatement` 类中新增 `getExecuteMode` 方法，用于获取当前执行模式（`INTERACTIVE`、`INTERACTIVE_V2` 或 `OFFLINE`）。
+- **依赖升级**  
+  升级 `odps-sdk` 版本到 `0.51.5-public`。
+----
+## [3.8.1] - 2024-11-27
+### 功能
+- **Logview** 新增对 Logview V2 的支持，V2 版本保障了数据安全，更多信息参考 [2024年11月14日-MaxCompute Logview安全升级](https://help.aliyun.com/zh/maxcompute/product-overview/2024-service-notices) 。通过url参数 `logviewVersion` 方法指定。
+----
+
 ## [3.8.0] - 2024-10-9
 **欢迎进入 MCQA 2.0 时代！**
 
