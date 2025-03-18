@@ -1,6 +1,6 @@
 # 更新日志
 
-## [3.8.4] - 2025-03-18
+## [3.8.5] - 2025-03-18
 ### 改进
 - **依赖升级**  
   升级 `odps-sdk` 版本到 `0.51.11-public`。新版本 SDK 针对 `MCQA 2.0 ResultDescriptor` 实体进行了重构，以确保与 MCQA 2.0 的兼容性。**强烈建议 MCQA 2.0 用户升级到该版本**。详情请参考 [SDK 更新日志](https://github.com/aliyun/aliyun-odps-java-sdk/releases/tag/v0.51.11-public)。

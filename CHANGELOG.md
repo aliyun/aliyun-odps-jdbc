@@ -1,5 +1,5 @@
 # Changelog
-## [3.8.4] - 2025-03-18
+## [3.8.5] - 2025-03-18
 ### Improvements
 - **Dependency Update**  
   Upgraded `odps-sdk` to version `0.51.11-public`. The new SDK version refactors the `MCQA 2.0 ResultDescriptor` entity to ensure compatibility with MCQA 2.0. Users of MCQA 2.0 are **strongly recommended** to upgrade to this version. For details, refer to the [SDK Changelog](https://github.com/aliyun/aliyun-odps-java-sdk/releases/tag/v0.51.11-public).
