@@ -160,6 +160,7 @@ public class ConnectionResource {
   private static final String QUOTA_NAME_PROP_KEY = "quota_name";
   private static final String VERBOSE_PROP_KEY = "verbose";
   private static final String LOGVIEW_VERSION_PROP_KEY = "logview_version";
+  private static final String ASYNC_PROP_KEY = "async";
 
   private String endpoint;
   private String accessId;
@@ -193,6 +194,7 @@ public class ConnectionResource {
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
   private boolean verbose = false;
+  private boolean async = false;
   private String quotaName;
   private int logviewVersion;
 
@@ -433,6 +435,10 @@ public class ConnectionResource {
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", VERBOSE_PROP_KEY,
                                                      VERBOSE_PROP_KEY));
+    async =
+        Boolean.parseBoolean(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "async", ASYNC_PROP_KEY,
+                                                     ASYNC_PROP_KEY));
 
     logviewVersion = Integer.parseInt(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "1", LOGVIEW_VERSION_PROP_KEY, LOGVIEW_VERSION_URL_KEY)
@@ -608,6 +614,10 @@ public class ConnectionResource {
 
   public boolean isVerbose() {
     return verbose;
+  }
+
+  public boolean isAsync() {
+    return async;
   }
 
   @SuppressWarnings("rawtypes")

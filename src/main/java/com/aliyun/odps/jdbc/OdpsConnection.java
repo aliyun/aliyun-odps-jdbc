@@ -151,6 +151,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private FallbackPolicy fallbackPolicy;
   private boolean verbose;
   private int logviewVersion;
+  private boolean async;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -289,6 +290,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.tunnelDownloadUseSingleReader = connRes.isTunnelDownloadUseSingleReader();
     this.useInstanceTunnel = connRes.isUseInstanceTunnel();
     this.verbose = connRes.isVerbose();
+    this.async = connRes.isAsync();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -642,7 +644,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public OdpsStatement createStatement() throws SQLException {
     checkClosed();
-    OdpsStatement stmt = new OdpsStatement(this, false);
+    OdpsStatement stmt;
+    if (async) {
+      stmt = new OdpsAsyncStatement(this, false);
+    } else {
+      stmt = new OdpsStatement(this, false);
+    }
     stmtHandles.add(stmt);
     return stmt;
   }
@@ -681,8 +688,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         throw new SQLFeatureNotSupportedException(
             "only support statement with ResultSet concurrency: CONCUR_READ_ONLY");
     }
-
-    OdpsStatement stmt = new OdpsStatement(this, isResultSetScrollable);
+    OdpsStatement stmt;
+    if (async) {
+      stmt = new OdpsAsyncStatement(this, isResultSetScrollable);
+    } else {
+      stmt = new OdpsStatement(this, isResultSetScrollable);
+    }
     stmtHandles.add(stmt);
     return stmt;
   }

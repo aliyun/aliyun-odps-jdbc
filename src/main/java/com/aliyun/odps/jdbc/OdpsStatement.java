@@ -53,28 +53,28 @@ import com.aliyun.odps.utils.StringUtils;
 
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
-  private OdpsConnection connHandle;
-  private Instance executeInstance = null;
-  private ResultSet resultSet = null;
-  private int updateCount = -1;
-  private int queryTimeout = -1;
+  protected OdpsConnection connHandle;
+  protected Instance executeInstance = null;
+  protected ResultSet resultSet = null;
+  protected int updateCount = -1;
+  protected int queryTimeout = -1;
 
   // result cache in session mode
   com.aliyun.odps.data.ResultSet odpsResultSet = null;
-  private String logviewUrl = null;
+  protected String logviewUrl = null;
 
   // when the update count is fetched by the client, set this true
   // Then the next call the getUpdateCount() will return -1, indicating there's no more results.
   // see Issue #15
   boolean updateCountFetched = false;
 
-  private boolean isClosed = false;
-  private boolean isCancelled = false;
+  protected boolean isClosed = false;
+  protected boolean isCancelled = false;
 
-  private static final int POLLING_INTERVAL = 3000;
-  private static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
-  private static final String JDBC_SQL_OFFLINE_TASK_NAME = "sqlrt_fallback_task";
-  private static ResultSet EMPTY_RESULT_SET = null;
+  protected static final int POLLING_INTERVAL = 3000;
+  protected static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
+  protected static final String JDBC_SQL_OFFLINE_TASK_NAME = "sqlrt_fallback_task";
+  protected static ResultSet EMPTY_RESULT_SET = null;
 
   static {
     try {
@@ -92,8 +92,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    */
   protected boolean isResultSetScrollable = false;
 
-  private Properties sqlTaskProperties;
-  private Properties inputProperties;
+  protected Properties sqlTaskProperties;
+  protected Properties inputProperties;
 
   /**
    * The suggestion of fetch direction which might be ignored by the resultSet generated
@@ -114,7 +114,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   protected boolean enableLimit = false;
 
-  private SQLWarning warningChain = new SQLWarning();
+  protected SQLWarning warningChain = new SQLWarning();
 
   OdpsStatement(OdpsConnection conn) {
     this(conn, false);
@@ -324,7 +324,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   // 内部使用
-  private boolean hasResultSet() {
+  protected boolean hasResultSet() {
     if (connHandle.getExecutor() == null) {
       return false;
     }
@@ -378,7 +378,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return false;
   }
 
-  private void processSetClause(Properties properties) {
+  protected void processSetClause(Properties properties) {
     for (String key : properties.stringPropertyNames()) {
       connHandle.log.info("set sql task property: " + key + "=" + properties.getProperty(key));
       if (!connHandle.disableConnSetting()) {
@@ -398,7 +398,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    * If the user wants to change the behavior of jdbc, he should add parameters to the link string instead of adding settings in the code.
    * This method and corresponding functionality may be removed at any time.
    */
-  private void processSetClauseExtra(Properties properties) throws OdpsException {
+  protected void processSetClauseExtra(Properties properties) throws OdpsException {
     for (String key : properties.stringPropertyNames()) {
       connHandle.log.info("set sql task property extra: " + key + "=" + properties.getProperty(key));
       if (key.equalsIgnoreCase("tunnelEndpoint")) {
@@ -413,7 +413,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  private boolean processUseClause(String sql) throws SQLFeatureNotSupportedException {
+  protected boolean processUseClause(String sql) throws SQLFeatureNotSupportedException {
     if (sql.matches("(?i)^(\\s*)(USE)(\\s+)(.*);?(\\s*)$")) {
       if (sql.contains(";")) {
         sql = sql.replace(';', ' ');
@@ -688,7 +688,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return connHandle.getExecutor().getExecuteMode();
   }
 
-  private void beforeExecute() throws SQLException {
+  protected void beforeExecute() throws SQLException {
     // If the statement re-executes another query, the previously-generated resultSet
     // will be implicit closed. And the corresponding temp table will be dropped as well.
     if (resultSet != null) {
@@ -714,10 +714,44 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  private void runSQL(String sql, Map<String, String> settings, boolean isUpdate)
-      throws SQLException, OdpsException {
+  protected void throwSQLException(Exception e, String sql, Instance instance, String logviewUrl) throws SQLException {
+    connHandle.log.error("LogView: " + logviewUrl);
+    connHandle.log.error("Run SQL failed", e);
+    throw new SQLException(
+        "execute sql [ " + sql + " ] + failed. " + (instance == null ? "" : "instanceId:["
+                                                                            + instance.getId()
+                                                                            + "]")
+        + e.getMessage(), e);
+  }
+
+  private void runSQL(String sql, Properties properties) throws SQLException {
+    runSQL(sql, properties, false);
+  }
+
+  private void runSQL(String sql, Properties properties, boolean isUpdate) throws SQLException {
     SQLExecutor executor = connHandle.getExecutor();
     try {
+
+      // If the client forget to end with a semi-colon, append it.
+      if (!sql.endsWith(";")) {
+        sql += ";";
+      }
+
+      Map<String, String> settings = new HashMap<>();
+      for (String key : sqlTaskProperties.stringPropertyNames()) {
+        settings.put(key, sqlTaskProperties.getProperty(key));
+      }
+
+      inputProperties = new Properties();
+      if (properties != null && !properties.isEmpty()) {
+        for (String key : properties.stringPropertyNames()) {
+          settings.put(key, properties.getProperty(key));
+          inputProperties.put(key, properties.getProperty(key));
+        }
+      }
+      if (!settings.isEmpty()) {
+        connHandle.log.info("Enabled SQL task properties: " + settings);
+      }
       long begin = System.currentTimeMillis();
       if (queryTimeout != -1 && !settings.containsKey("odps.sql.session.query.timeout")) {
         settings.put("odps.sql.session.query.timeout", String.valueOf(queryTimeout));
@@ -777,52 +811,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
   }
 
-  private void throwSQLException(Exception e, String sql, Instance instance, String logviewUrl) throws SQLException {
-    connHandle.log.error("LogView: " + logviewUrl);
-    connHandle.log.error("Run SQL failed", e);
-    throw new SQLException(
-        "execute sql [ " + sql + " ] + failed. " + (instance == null ? "" : "instanceId:["
-                                                                            + instance.getId()
-                                                                            + "]")
-        + e.getMessage(), e);
-  }
-
-  private void runSQL(String sql, Properties properties) throws SQLException {
-    runSQL(sql, properties, false);
-  }
-
-  private void runSQL(String sql, Properties properties, boolean isUpdate) throws SQLException {
-    try {
-
-      // If the client forget to end with a semi-colon, append it.
-      if (!sql.endsWith(";")) {
-        sql += ";";
-      }
-
-      Map<String, String> settings = new HashMap<>();
-      for (String key : sqlTaskProperties.stringPropertyNames()) {
-        settings.put(key, sqlTaskProperties.getProperty(key));
-      }
-
-      inputProperties = new Properties();
-      if (properties != null && !properties.isEmpty()) {
-        for (String key : properties.stringPropertyNames()) {
-          settings.put(key, properties.getProperty(key));
-          inputProperties.put(key, properties.getProperty(key));
-        }
-      }
-      if (!settings.isEmpty()) {
-        connHandle.log.info("Enabled SQL task properties: " + settings);
-      }
-
-      runSQL(sql, settings, isUpdate);
-
-    } catch (OdpsException e) {
-      connHandle.log.error("Fail to run sql: " + sql, e);
-      throw new SQLException("Fail to run sql:" + sql + ", Error:" + e.toString(), e);
-    }
-  }
-
   public Instance getExecuteInstance() {
     return executeInstance;
   }
@@ -843,7 +831,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     return logviewUrl;
   }
 
-  private void setResultSetInternal() throws OdpsException, IOException {
+  protected void setResultSetInternal() throws OdpsException, IOException {
     if (connHandle.isTunnelDownloadUseSingleReader()) {
 
       executeInstance.waitForSuccess();
