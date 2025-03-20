@@ -406,7 +406,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
-    OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql);
+    OdpsPreparedStatement stmt;
+    if (async) {
+      stmt = new OdpsAsyncPreparedStatement(this, sql);
+    } else {
+      stmt = new OdpsPreparedStatement(this, sql);
+    }
     stmtHandles.add(stmt);
     return stmt;
   }
@@ -454,7 +459,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
 
     boolean isResultSetScrollable = (resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE);
-    OdpsPreparedStatement stmt = new OdpsPreparedStatement(this, sql, isResultSetScrollable);
+    OdpsPreparedStatement stmt;
+    if (async) {
+      stmt = new OdpsAsyncPreparedStatement(this, sql, isResultSetScrollable);
+    } else {
+      stmt = new OdpsPreparedStatement(this, sql, isResultSetScrollable);
+    }
     stmtHandles.add(stmt);
     return stmt;
   }
