@@ -832,8 +832,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   protected void setResultSetInternal() throws OdpsException, IOException {
-    if (connHandle.isTunnelDownloadUseSingleReader()) {
-
+    if (connHandle.isTunnelDownloadUseSingleReader() && getExecuteMode() == ExecuteMode.OFFLINE) {
+      connHandle.log.info("Get result by instance tunnel (No page).");
       executeInstance.waitForSuccess();
       Instance instance = executeInstance;
 
