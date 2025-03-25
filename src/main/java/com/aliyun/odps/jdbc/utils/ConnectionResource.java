@@ -397,9 +397,11 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, TUNNEL_READ_TIMEOUT_PROP_KEY, TUNNEL_READ_TIMEOUT_URL_KEY);
     tunnelConnectTimeout =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, TUNNEL_CONNECT_TIMEOUT_PROP_KEY, TUNNEL_CONNECT_TIMEOUT_URL_KRY);
-    tunnelDownloadUseSingleReader = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
-            maps, "false", TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY, TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY));
 
+    String tunnelDownloadUseSingleReaderStr = tryGetFirstNonNullValueByAltMapAndAltKey(
+            maps, "true", TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY, TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY);
+    checkValueIsValidBoolean(TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY, tunnelDownloadUseSingleReaderStr);
+    tunnelDownloadUseSingleReader = Boolean.parseBoolean(tunnelDownloadUseSingleReaderStr);
 
     // cancel enableLimit hint if autoSelectLimit turns on
     if (autoSelectLimit > 0) {
