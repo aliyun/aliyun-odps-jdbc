@@ -99,6 +99,11 @@ public class ConnectionResource {
   private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
   private static final String TIME_ZONE_URL_KEY = "timezone";
 
+  private static final String FETCH_RESULT_SPLIT_SIZE = "fetchResultSplitSize";
+  private static final String FETCH_RESULT_PRELOAD_SPLIT_NUM = "fetchResultPreloadSplitNum";
+  private static final String FETCH_RESULT_THREAD_NUM = "fetchResultThreadNum";
+
+
   /**
    * Keys to retrieve properties from info.
    * <p>
@@ -220,6 +225,10 @@ public class ConnectionResource {
   private boolean tunnelDownloadUseSingleReader = false;
   private int retryTime;
   private String timeZone;
+
+  private long fetchResultSplitSize;
+  private int fetchResultPreloadSplitNum;
+  private int fetchResultThreadNum;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -446,6 +455,14 @@ public class ConnectionResource {
     timeZone =
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TIME_ZONE_URL_KEY,
                                                      TIME_ZONE_URL_KEY);
+
+    fetchResultSplitSize =
+            Long.parseLong(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "10000", FETCH_RESULT_SPLIT_SIZE, FETCH_RESULT_SPLIT_SIZE));
+
+    fetchResultPreloadSplitNum =
+            Integer.parseInt(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "5", FETCH_RESULT_PRELOAD_SPLIT_NUM, FETCH_RESULT_PRELOAD_SPLIT_NUM));
+
+    fetchResultThreadNum = Integer.parseInt(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "5", FETCH_RESULT_THREAD_NUM, FETCH_RESULT_THREAD_NUM));
 
 
     logviewVersion = Integer.parseInt(
@@ -745,5 +762,17 @@ public class ConnectionResource {
 
   public String getQuotaName() {
     return quotaName;
+  }
+
+  public long getFetchResultSplitSize() {
+    return fetchResultSplitSize;
+  }
+
+  public int getFetchResultThreadNum() {
+    return fetchResultThreadNum;
+  }
+
+  public int getFetchResultPreloadSplitNum() {
+    return fetchResultPreloadSplitNum;
   }
 }

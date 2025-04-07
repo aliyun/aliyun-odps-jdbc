@@ -38,6 +38,7 @@ import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.jdbc.utils.InstanceDataIterator;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.SettingParser;
 import com.aliyun.odps.jdbc.utils.Utils;
@@ -832,21 +833,23 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   protected void setResultSetInternal() throws OdpsException, IOException {
-    if (connHandle.isTunnelDownloadUseSingleReader() && getExecuteMode() == ExecuteMode.OFFLINE) {
-      connHandle.log.info("Get result by instance tunnel (No page).");
+    if (getExecuteMode() == ExecuteMode.OFFLINE && !enableLimit && resultSizeLimit == null) {
+      connHandle.log.info(
+          "Get result by instance tunnel (" + connHandle.getFetchResultThreadNum() + " Thread, "
+          + connHandle.getFetchResultSplitSize() + " records per split, cache "
+          + connHandle.getFetchResultPreloadSplitNum() + " split in memory" + ").");
       executeInstance.waitForSuccess();
       Instance instance = executeInstance;
-
-      InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
-      InstanceTunnel.DownloadSession downloadSession = tunnel.createDownloadSession(
-          instance.getProject(),
-          instance.getId()
-      );
-
+      InstanceDataIterator
+          instanceDataIterator =
+          new InstanceDataIterator(connHandle.getOdps(), instance, 0, resultCountLimit,
+                                   connHandle.getFetchResultSplitSize(),
+                                   connHandle.getFetchResultPreloadSplitNum(),
+                                   connHandle.getFetchResultThreadNum());
       odpsResultSet = new com.aliyun.odps.data.ResultSet(
-          new SingleReaderResultSetIterator(downloadSession, downloadSession.getRecordCount()),
-          downloadSession.getSchema(),
-          downloadSession.getRecordCount());
+          instanceDataIterator,
+          instanceDataIterator.getSchema(),
+          instanceDataIterator.getRecordCount());
     } else {
       if (connHandle.getExecutor().isUseInstanceTunnel()) {
         connHandle.log.info("Get result by instance tunnel.");
