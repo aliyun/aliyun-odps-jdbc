@@ -154,6 +154,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int logviewVersion;
   private boolean async;
 
+  private long fetchResultSplitSize;
+  private int fetchResultPreloadSplitNum;
+  private int fetchResultThreadNum;
+
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -291,6 +295,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.useInstanceTunnel = connRes.isUseInstanceTunnel();
     this.verbose = connRes.isVerbose();
     this.async = connRes.isAsync();
+    this.fetchResultSplitSize = connRes.getFetchResultSplitSize();
+    this.fetchResultThreadNum = connRes.getFetchResultThreadNum();
+    this.fetchResultPreloadSplitNum = connRes.getFetchResultPreloadSplitNum();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -989,6 +996,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isVerbose() {
     return verbose;
+  }
+
+  public long getFetchResultSplitSize() {
+    return fetchResultSplitSize;
+  }
+
+  public int getFetchResultThreadNum() {
+    return fetchResultThreadNum;
+  }
+
+  public int getFetchResultPreloadSplitNum() {
+    return fetchResultPreloadSplitNum;
   }
 
   public void setUseInstanceTunnel(boolean useInstanceTunnel) throws OdpsException {
