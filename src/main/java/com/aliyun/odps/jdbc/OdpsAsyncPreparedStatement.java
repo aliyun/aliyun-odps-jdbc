@@ -58,7 +58,7 @@ public class OdpsAsyncPreparedStatement extends OdpsPreparedStatement {
   }
 
   private void runSQL(String sql, Properties properties) throws SQLException {
-    SQLExecutor executor = connHandle.getExecutor();
+    SQLExecutor executor = this.sqlExecutor;
     try {
       // If the client forget to end with a semi-colon, append it.
       if (!sql.endsWith(";")) {
@@ -102,7 +102,7 @@ public class OdpsAsyncPreparedStatement extends OdpsPreparedStatement {
 
   @Override
   public synchronized ResultSet getResultSet() throws SQLException {
-    SQLExecutor executor = connHandle.getExecutor();
+    SQLExecutor executor = this.sqlExecutor;
     try {
       long startTime = System.currentTimeMillis();
       setResultSetInternal();

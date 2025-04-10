@@ -77,4 +77,16 @@ public class SettingParserTest {
     assertEquals("'semi;colon'", result.getSettings().get("key"));
     assertEquals("\nSELECT '--fake_comment', \"/*fake*/\";", result.getRemainingQuery());
   }
+
+
+  @Test
+  public void testSetLabel() {
+    String sql = "SET odps.namespace.schema=true;\n"
+                 + "                    SET LABEL 1 TO TABLE default.wrk_gh_events(`repo_id`, `repo_name`, `org_id`, `org_login`);";
+
+    SettingParser.ParseResult result = new SettingParser().extractSetStatements(sql);
+    System.out.println(result.getSettings());
+    System.out.println(result.getErrors());
+    System.out.println(result.getRemainingQuery());
+  }
 }

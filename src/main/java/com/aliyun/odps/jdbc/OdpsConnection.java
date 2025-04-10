@@ -119,6 +119,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean autoLimitFallback = false;
 
+  private SQLExecutorBuilder executorBuilder;
+
   private SQLExecutor executor = null;
 
   private String executeProject = null;
@@ -147,7 +149,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int tunnelConnectTimeout = -1;
   private boolean tunnelDownloadUseSingleReader = false;
   private String quotaName;
-  private boolean enableMcqaV2 = false;
+  private boolean enableMaxQA = false;
   private String serviceName = null;
   private FallbackPolicy fallbackPolicy;
   private boolean verbose;
@@ -321,24 +323,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
-    if (connRes.getQuotaName() != null) {
-      try {
-        enableMcqaV2 =
-            odps.quotas().getWlmQuota(odps.getDefaultProject(), connRes.getQuotaName())
-                .isInteractiveQuota();
-        log.info("quotaName: " + connRes.getQuotaName() + ", enableMcqaV2: " + enableMcqaV2);
-      } catch (Exception e) {
-        try {
-          log.warn(
-              "check quotaName: " + connRes.getQuotaName() + " failed, enableMcqaV2: "
-              + enableMcqaV2
-              + " because " + e.getMessage());
-          String tenantId = odps.projects().get().getTenantId();
-          log.info("use project tenantId: " + tenantId);
-        } catch (OdpsException ignored){}
-      }
-      quotaName = connRes.getQuotaName();
-    }
+    this.quotaName = connRes.getQuotaName();
+    this.enableMaxQA = checkIfEnableMaxQA(this.quotaName);
 
     try {
       long startTime = System.currentTimeMillis();
@@ -368,6 +354,32 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       log.error("Connect to odps failed:" + e.getMessage());
       throw new SQLException(e.getMessage(), e);
     }
+  }
+
+  public boolean checkIfEnableMaxQA(String quotaName) {
+    if (quotaName != null) {
+      if ("default".equalsIgnoreCase(quotaName)) {
+        return false;
+      }
+      try {
+        boolean isMaxQAQuota =
+            odps.quotas().getWlmQuota(odps.getDefaultProject(), quotaName)
+                .isInteractiveQuota();
+        log.info("quotaName: " + quotaName + ", enableMaxQA: " + isMaxQAQuota);
+        return isMaxQAQuota;
+      } catch (Exception e) {
+        try {
+          log.warn(
+              "check quotaName: " + quotaName + " failed, enableMaxQA: "
+              + enableMaxQA
+              + " because " + e.getMessage());
+          String tenantId = odps.projects().get().getTenantId();
+          log.info("use project tenantId: " + tenantId);
+        } catch (OdpsException ignored){}
+        return enableMaxQA;
+      }
+    }
+    return false;
   }
 
   public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy)
@@ -406,12 +418,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .useInstanceTunnel(useInstanceTunnel)
         .logviewVersion(logviewVersion);
 
-    if (enableMcqaV2) {
+    if (enableMaxQA) {
       builder.quotaName(quotaName);
       builder.enableMcqaV2(true);
     }
     long startTime = System.currentTimeMillis();
-    executor = builder.build();
+    this.executorBuilder = builder;
+    this.executor = builder.build();
     if (interactiveMode && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format(
@@ -866,13 +879,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return tunnelEndpoint;
   }
 
-  public void setTunnelEndpoint(String tunnelEndpoint) throws OdpsException {
-    this.tunnelEndpoint = tunnelEndpoint;
-    initSQLExecutor(serviceName, fallbackPolicy);
-  }
-
   public SQLExecutor getExecutor() {
     return executor;
+  }
+
+  public SQLExecutorBuilder getExecutorBuilder() {
+    return executorBuilder;
   }
 
   public boolean runningInInteractiveMode() {
@@ -1008,16 +1020,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public int getFetchResultPreloadSplitNum() {
     return fetchResultPreloadSplitNum;
-  }
-
-  public void setUseInstanceTunnel(boolean useInstanceTunnel) throws OdpsException {
-    this.useInstanceTunnel = useInstanceTunnel;
-    initSQLExecutor(serviceName, fallbackPolicy);
-  }
-
-  public void setInteractiveMode(boolean interactiveMode) throws OdpsException {
-    this.interactiveMode = interactiveMode;
-    initSQLExecutor(serviceName, fallbackPolicy);
   }
 
   /**

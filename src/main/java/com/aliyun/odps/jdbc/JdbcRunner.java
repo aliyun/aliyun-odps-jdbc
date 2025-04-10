@@ -35,7 +35,7 @@ public class JdbcRunner {
 
     long start = System.currentTimeMillis();
     stmt.execute(sqlContent);
-    System.out.println(conn.getExecutor().getLogView());
+    System.out.println(stmt.getSqlExecutor().getLogView());
     OdpsResultSet odpsResultSet = (OdpsResultSet) stmt.getResultSet();
 
     long cost = System.currentTimeMillis() - start;
@@ -58,7 +58,7 @@ public class JdbcRunner {
       System.out.println(sb);
     }
 
-    System.out.println("Summary:\n" + conn.getExecutor().getSummary());
+    System.out.println("Summary:\n" + stmt.getSqlExecutor().getSummary());
     System.out.println("Execute cost " + cost + " ms;");
     System.exit(0);
   }

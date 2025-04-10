@@ -124,9 +124,10 @@ public class SettingParser {
             i++;
           }
           if (foundSemicolon) {
-            excludeRanges.add(new int[]{currentStartIndex, i});
             String kv = s.substring(keyValueStart, i - 1).trim();
-            parseKeyValue(kv, settings, errors);
+            if (parseKeyValue(kv, settings, errors)) {
+              excludeRanges.add(new int[]{currentStartIndex, i});
+            }
           } else {
             errors.add("Invalid SET statement: missing semicolon");
           }
@@ -156,19 +157,20 @@ public class SettingParser {
     return new ParseResult(settings, remainingQuery.toString(), errors);
   }
 
-  private void parseKeyValue(String kv, Map<String, String> settings, List<String> errors) {
+  private boolean parseKeyValue(String kv, Map<String, String> settings, List<String> errors) {
     int eqIdx = kv.indexOf('=');
     if (eqIdx == -1) {
       errors.add("Invalid key-value pair '" + kv + "': missing '='");
-      return;
+      return false;
     }
     String key = kv.substring(0, eqIdx).trim();
     if (key.isEmpty()) {
       errors.add("Invalid key-value pair '" + kv + "': empty key");
-      return;
+      return false;
     }
     String value = eqIdx < kv.length() - 1 ? kv.substring(eqIdx + 1).trim() : "";
     value = value.replace("\\;", ";");
     settings.put(key, value);
+    return true;
   }
 }

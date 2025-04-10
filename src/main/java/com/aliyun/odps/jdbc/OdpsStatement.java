@@ -44,6 +44,7 @@ import com.aliyun.odps.jdbc.utils.SettingParser;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.SQLExecutor;
+import com.aliyun.odps.sqa.SQLExecutorBuilder;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -59,6 +60,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected ResultSet resultSet = null;
   protected int updateCount = -1;
   protected int queryTimeout = -1;
+  protected SQLExecutor sqlExecutor;
 
   // result cache in session mode
   com.aliyun.odps.data.ResultSet odpsResultSet = null;
@@ -123,6 +125,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   OdpsStatement(OdpsConnection conn, boolean isResultSetScrollable) {
     this.connHandle = conn;
+    this.sqlExecutor = conn.getExecutor();
     sqlTaskProperties = (Properties) conn.getSqlTaskProperties().clone();
     this.resultCountLimit = conn.getCountLimit();
     this.resultSizeLimit = conn.getSizeLimit();
@@ -144,7 +147,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     try {
       if (connHandle.runningInInteractiveMode()) {
-        connHandle.getExecutor().cancel();
+        sqlExecutor.cancel();
         connHandle.log.info("submit cancel query instance id=" + executeInstance.getId());
       } else {
         // If the instance has already terminated, calling Instance.stop# results in an exception.
@@ -326,7 +329,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   // 内部使用
   protected boolean hasResultSet() {
-    if (connHandle.getExecutor() == null) {
+    if (sqlExecutor == null) {
       return false;
     }
 
@@ -334,7 +337,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       return true;
     }
 
-    return connHandle.getExecutor().hasResultSet();
+    return sqlExecutor.hasResultSet();
   }
 
   @Deprecated
@@ -395,22 +398,38 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   /**
-   * This method is actually only used for debugging.
-   * If the user wants to change the behavior of jdbc, he should add parameters to the link string instead of adding settings in the code.
-   * This method and corresponding functionality may be removed at any time.
+   * This method will rebuild the Statement-level SQLExecutor,
+   * and the main purpose is to enable the MaxQA quota configured through set.
+   * However, it only takes effect at the Statement level and cannot modify the Connection level Quota.
    */
   protected void processSetClauseExtra(Properties properties) throws OdpsException {
+    boolean needRebuildSql = false;
+    SQLExecutorBuilder executorBuilder = connHandle.getExecutorBuilder().clone();
+
     for (String key : properties.stringPropertyNames()) {
-      connHandle.log.info("set sql task property extra: " + key + "=" + properties.getProperty(key));
-      if (key.equalsIgnoreCase("tunnelEndpoint")) {
-        connHandle.setTunnelEndpoint(properties.getProperty(key));
+      if (key.equalsIgnoreCase("odps.task.wlm.quota")) {
+        boolean enableMaxQA = connHandle.checkIfEnableMaxQA(properties.getProperty(key));
+        executorBuilder.enableMcqaV2(enableMaxQA);
+        if (enableMaxQA) {
+          executorBuilder.executeMode(ExecuteMode.INTERACTIVE_V2);
+          executorBuilder.quotaName(properties.getProperty(key));
+        }
+        connHandle.log.info("enable MaxQA: " + enableMaxQA + ", quota name: " + properties.getProperty(key));
+        needRebuildSql = true;
       }
-      if (key.equalsIgnoreCase("useTunnel")) {
-        connHandle.setUseInstanceTunnel(Boolean.parseBoolean(properties.getProperty(key)));
+      if (key.equalsIgnoreCase("jdbc.tunnel.endpoint")) {
+        executorBuilder.tunnelEndpoint(properties.getProperty(key));
+        connHandle.log.info("use tunnel endpoint: " + properties.getProperty(key));
+        needRebuildSql = true;
       }
-      if (key.equalsIgnoreCase("interactiveMode")) {
-        connHandle.setInteractiveMode(Boolean.parseBoolean(properties.getProperty(key)));
+      if (key.equalsIgnoreCase("jdbc.fetchResult.useTunnel")) {
+        executorBuilder.useInstanceTunnel(Boolean.parseBoolean(properties.getProperty(key)));
+        connHandle.log.info("fetch result use tunnel: " + properties.getProperty(key));
+        needRebuildSql = true;
       }
+    }
+    if (needRebuildSql) {
+      this.sqlExecutor = executorBuilder.build();
     }
   }
 
@@ -541,7 +560,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             meta =
             getResultMeta(odpsResultSet.getTableSchema().getColumns());
         try {
-          if (!isResultSetScrollable || connHandle.getExecutor().getInstance() == null) {
+          if (!isResultSetScrollable || sqlExecutor.getInstance() == null) {
             resultSet = new OdpsSessionForwardResultSet(this, meta, odpsResultSet, startTime);
           } else {
             DownloadSession session;
@@ -559,13 +578,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             }
             session = tunnel.createDirectDownloadSession(
                 connHandle.getOdps().getDefaultProject(),
-                connHandle.getExecutor().getInstance().getId(),
-                connHandle.getExecutor().getTaskName(),
-                connHandle.getExecutor().getSubqueryId(),
+                sqlExecutor.getInstance().getId(),
+                sqlExecutor.getTaskName(),
+                sqlExecutor.getSubqueryId(),
                 enableLimit);
 
             resultSet = new OdpsScollResultSet(this, meta, session,
-                                               connHandle.getExecutor()
+                                               sqlExecutor
                                                                    .getExecuteMode() == ExecuteMode.INTERACTIVE
                                                                ? OdpsScollResultSet.ResultMode.INTERACTIVE
                                                                : OdpsScollResultSet.ResultMode.OFFLINE);
@@ -575,13 +594,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
           throw new SQLException("create session resultset failed: instance id="
-                                 + connHandle.getExecutor().getInstance().getId() + ", Error:" + e
+                                 + sqlExecutor.getInstance().getId() + ", Error:" + e
                                      .getMessage(), e);
         } catch (IOException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
           throw new SQLException("create session resultset failed: instance id="
-                                 + connHandle.getExecutor().getInstance().getId() + ", Error:" + e
+                                 + sqlExecutor.getInstance().getId() + ", Error:" + e
                                      .getMessage(), e);
         }
     }
@@ -686,7 +705,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   public ExecuteMode getExecuteMode() {
-    return connHandle.getExecutor().getExecuteMode();
+    return sqlExecutor.getExecuteMode();
   }
 
   protected void beforeExecute() throws SQLException {
@@ -730,7 +749,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   private void runSQL(String sql, Properties properties, boolean isUpdate) throws SQLException {
-    SQLExecutor executor = connHandle.getExecutor();
+    SQLExecutor executor = sqlExecutor;
     try {
 
       // If the client forget to end with a semi-colon, append it.
@@ -851,16 +870,20 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           instanceDataIterator.getSchema(),
           instanceDataIterator.getRecordCount());
     } else {
-      if (connHandle.getExecutor().isUseInstanceTunnel()) {
+      if (sqlExecutor.isUseInstanceTunnel()) {
         connHandle.log.info("Get result by instance tunnel.");
         odpsResultSet =
-            connHandle.getExecutor()
+            sqlExecutor
                 .getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
       } else {
         connHandle.log.info("Get result by rest api.");
-        odpsResultSet = connHandle.getExecutor().getResultSet();
+        odpsResultSet = sqlExecutor.getResultSet();
       }
     }
+  }
+
+  public SQLExecutor getSqlExecutor() {
+    return sqlExecutor;
   }
 
   class SingleReaderResultSetIterator implements Iterator<Record> {
