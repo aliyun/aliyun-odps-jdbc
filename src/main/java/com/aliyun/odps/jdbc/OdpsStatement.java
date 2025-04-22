@@ -429,7 +429,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     }
     if (needRebuildSql) {
-      this.sqlExecutor = executorBuilder.build();
+      try {
+        this.sqlExecutor = executorBuilder.build();
+      } catch (Exception e) {
+        connHandle.log.error("rebuild sql executor failed.", e);
+        this.sqlExecutor = connHandle.getExecutor();
+      }
     }
   }
 
