@@ -14,11 +14,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Odps;
+import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.TableSchema;
+import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.sqa.SQLExecutorConstants;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.aliyun.odps.type.TypeInfoFactory;
 
 /**
  * Use sharded concurrent download mode to download sample data.
@@ -29,25 +33,38 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   private static final Record EOF_RECORD = new EOFRecord();
-  private final ExecutorService executor;
-  private final int splitNum;
-  private final BlockingQueue<Record>[] queues;
-  private final AtomicReference<Throwable> error = new AtomicReference<>();
-  private final long offset;
-  private final long recordCount;
-  private final int preloadSplitNum;
-  private final long splitSize;
-  private final InstanceTunnel.DownloadSession downloadSession;
-  private final int threadNum;
+  private boolean isSelect = true;
+
+  private ExecutorService executor;
+  private int splitNum;
+  private BlockingQueue<Record>[] queues;
+  private AtomicReference<Throwable> error = new AtomicReference<>();
+  private long offset;
+  private long recordCount;
+  private int preloadSplitNum;
+  private long splitSize;
+  private InstanceTunnel.DownloadSession downloadSession;
+  private int threadNum;
 
   private int currentSplit = 0;
 
   private Record currentRecord;
 
-  public InstanceDataIterator(InstanceTunnel.DownloadSession downloadSession, long offset, long readCount, long splitSize, int preloadSplitNum, int threadNum) {
-    this.downloadSession = downloadSession;
+  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount, long splitSize, int preloadSplitNum, int threadNum)
+      throws OdpsException {
+    try {
+      this.downloadSession = new InstanceTunnel(odps).createDownloadSession(instance.getProject(), instance.getId(), false);
+    } catch (TunnelException e) {
+      if (e.getErrorCode().equals(SQLExecutorConstants.sessionNotSelectException)
+          || e.getErrorMsg().contains(SQLExecutorConstants.sessionNotSelectMessage)) {
+        isSelect = false;
+        currentRecord = getInfoRecord(instance);
+        return;
+      }
+      throw e;
+    }
     this.offset = offset;
-    this.recordCount = (readCount < 0) ? downloadSession.getRecordCount() - offset : Math.min(readCount, (downloadSession.getRecordCount() - offset));
+    this.recordCount = (readCount == null || readCount < 0) ? downloadSession.getRecordCount() - offset : Math.min(readCount, (downloadSession.getRecordCount() - offset));
     this.splitSize = (splitSize <= 0) ? this.recordCount : splitSize;
     this.splitNum = computeSplitNum(this.splitSize, recordCount);
     this.preloadSplitNum = (preloadSplitNum == -1) ? splitNum : Math.max(preloadSplitNum, 1);
@@ -62,9 +79,6 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     }
   }
 
-  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount, long splitSize, int preloadSplitNum, int threadNum) throws TunnelException {
-    this(new InstanceTunnel(odps).createDownloadSession(instance.getProject(), instance.getId(), false), offset, readCount == null ? -1 : readCount, splitSize, preloadSplitNum, threadNum);
-  }
 
   private int computeSplitNum(long splitSize, long recordCount) {
     return (int) ((recordCount + splitSize - 1) / splitSize);
@@ -76,7 +90,6 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     long start = offset + splitIndex * splitSize;
     long count = Math.min(splitSize, recordCount - (splitIndex * splitSize));
 
-    long startTime = System.currentTimeMillis();
     queues[splitIndex] = new LinkedBlockingQueue<>();
     executor.submit(() -> {
       TunnelRecordReader reader = null;
@@ -98,7 +111,6 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
           }
         }
       }
-      System.out.println("Read " + count + " records in " + (System.currentTimeMillis() - startTime) + "ms");
     });
   }
 
@@ -127,7 +139,11 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   @Override
   public boolean hasNext() {
-    return hasNextInternal();
+    if (isSelect) {
+      return hasNextInternal();
+    } else {
+      return currentRecord != EOF_RECORD;
+    }
   }
 
   @Override
@@ -135,7 +151,13 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     if (currentRecord == EOF_RECORD) {
       throw new NoSuchElementException("No more records.");
     }
-    return currentRecord;
+    if (isSelect) {
+      return currentRecord;
+    } else {
+      Record record = currentRecord;
+      currentRecord = EOF_RECORD;
+      return record;
+    }
   }
 
   private void checkError() {
@@ -170,8 +192,25 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
   }
 
   public TableSchema getSchema() {
-    return this.downloadSession.getSchema();
+    if (isSelect) {
+      return this.downloadSession.getSchema();
+    } else {
+      TableSchema schema = new TableSchema();
+      schema.addColumn(new Column("info", TypeInfoFactory.STRING));
+      return schema;
+    }
   }
+
+  private Record getInfoRecord(Instance instance) throws OdpsException {
+    Instance.InstanceResultModel.TaskResult taskResult = instance.getRawTaskResults().get(0);
+    String result = taskResult.getResult().getString();
+    TableSchema schema = new TableSchema();
+    schema.addColumn(new Column("info", TypeInfoFactory.STRING));
+    Record record = new ArrayRecord(schema);
+    record.set(0, result);
+    return record;
+  }
+
 
   private static class EOFRecord implements Record {
     @Override public int getColumnCount() { return 0; }

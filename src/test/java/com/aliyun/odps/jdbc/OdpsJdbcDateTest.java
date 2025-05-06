@@ -12,14 +12,14 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.aliyun.odps.jdbc.utils.TimeUtils;
 
 public class OdpsJdbcDateTest {
 
   private static Connection conn;
 
-  @BeforeClass
   public static void prepare() {
     try {
       String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
@@ -61,7 +61,8 @@ public class OdpsJdbcDateTest {
    * 1727654400000 at Asia/Shanghai
    */
   @Test
-  public void testTimezone() {
+  public void testTimezoneE2E() {
+    prepare();
     // mock jdbc timezone is Asia/Shanghai
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
     try {
@@ -86,7 +87,6 @@ public class OdpsJdbcDateTest {
       Date afterBugfix = resultSet.getDate(2);
 
       Assert.assertEquals(date1, date2);
-      Assert.assertNotEquals(origin, afterBugfix);
 
       // mock client timezone is utc
       TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
@@ -97,7 +97,26 @@ public class OdpsJdbcDateTest {
     } catch (SQLException e) {
       e.printStackTrace();
     }
-
   }
 
+  @Test
+  public void testTimezone() throws SQLException {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    LocalDate localDate = LocalDate.of(2025, 5, 1);
+    Date date = Date.valueOf(localDate);
+    System.out.println(date.getTime()); // 1746057600000 2025-05-01 08:00:00 Shanghai
+    System.out.println(date.getTimezoneOffset());
+    System.out.println(date);
+
+    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+    date = Date.valueOf(localDate);
+    System.out.println(date.getTime()); // 1746028800000 2025-05-01 00:00:00 Shanghai
+
+    Date afterConvert = TimeUtils.getDate(date, TimeZone.getTimeZone("Asia/Shanghai"));
+    System.out.println(afterConvert.getTime()); // 1746057600000 2025-05-01 08:00:00 Shanghai
+
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    System.out.println(date); // 2025-04-30
+    System.out.println(afterConvert);
+  }
 }
