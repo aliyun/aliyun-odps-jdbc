@@ -329,15 +329,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   // 内部使用
   protected boolean hasResultSet() {
-    if (sqlExecutor == null) {
-      return false;
-    }
-
-    if (odpsResultSet != null) {
-      return true;
-    }
-
-    return sqlExecutor.hasResultSet();
+    return resultSet != null || odpsResultSet != null;
   }
 
   @Deprecated
@@ -560,7 +552,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   @Override
   public ResultSet getResultSet() throws SQLException {
     long startTime = System.currentTimeMillis();
-    if (resultSet == null || resultSet.isClosed() && odpsResultSet != null) {
+    if ((resultSet == null || resultSet.isClosed()) && odpsResultSet != null) {
         OdpsResultSetMetaData
             meta =
             getResultMeta(odpsResultSet.getTableSchema().getColumns());
