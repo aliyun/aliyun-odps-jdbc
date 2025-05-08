@@ -97,6 +97,7 @@ public class ConnectionResource {
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
   private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
+  private static final String SKIP_CHECK_IF_SELECT = "skipCheckIfSelect";
 
   /**
    * Keys to retrieve properties from info.
@@ -218,6 +219,7 @@ public class ConnectionResource {
   private String tunnelConnectTimeout;
   private boolean tunnelDownloadUseSingleReader = false;
   private int retryTime;
+  private boolean skipCheckIfSelect;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -444,6 +446,11 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "1", LOGVIEW_VERSION_PROP_KEY, LOGVIEW_VERSION_URL_KEY)
     );
 
+    skipCheckIfSelect =
+        Boolean.parseBoolean(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_CHECK_IF_SELECT,
+                                                     SKIP_CHECK_IF_SELECT));
+
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
     // true/false                         |      true/false                    | true/false
@@ -618,6 +625,10 @@ public class ConnectionResource {
 
   public boolean isAsync() {
     return async;
+  }
+
+  public boolean isSkipCheckIfSelect() {
+    return skipCheckIfSelect;
   }
 
   @SuppressWarnings("rawtypes")

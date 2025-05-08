@@ -152,6 +152,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean verbose;
   private int logviewVersion;
   private boolean async;
+  private boolean skipCheckIfSelect;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -291,6 +292,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.useInstanceTunnel = connRes.isUseInstanceTunnel();
     this.verbose = connRes.isVerbose();
     this.async = connRes.isAsync();
+    this.skipCheckIfSelect = connRes.isSkipCheckIfSelect();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -388,7 +390,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .tunnelReadTimeout(tunnelReadTimeout)
         .enableOdpsNamespaceSchema(odpsNamespaceSchema)
         .useInstanceTunnel(useInstanceTunnel)
-        .logviewVersion(logviewVersion);
+        .logviewVersion(logviewVersion)
+        .setSkipCheckIfSelect(skipCheckIfSelect);
 
     if (enableMcqaV2) {
       builder.quotaName(quotaName);
