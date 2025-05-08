@@ -332,7 +332,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       // Default value for odps.sql.timezone
       if (!StringUtils.isNullOrEmpty(connRes.getTimeZone())) {
         log.info("Use timezone: " + connRes.getTimeZone());
-        sqlTaskProperties.put("odps.sql.timezone", connRes.getTimeZone());
         tz = TimeZone.getTimeZone(connRes.getTimeZone());
       } else {
         String projectTimeZoneId = odps.projects().get().getProperty("odps.sql.timezone");
