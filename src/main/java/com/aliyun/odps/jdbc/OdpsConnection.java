@@ -155,6 +155,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean verbose;
   private int logviewVersion;
   private boolean async;
+  private boolean skipCheckIfSelect;
 
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
@@ -300,6 +301,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fetchResultSplitSize = connRes.getFetchResultSplitSize();
     this.fetchResultThreadNum = connRes.getFetchResultThreadNum();
     this.fetchResultPreloadSplitNum = connRes.getFetchResultPreloadSplitNum();
+    this.skipCheckIfSelect = connRes.isSkipCheckIfSelect();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -415,7 +417,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .tunnelReadTimeout(tunnelReadTimeout)
         .enableOdpsNamespaceSchema(odpsNamespaceSchema)
         .useInstanceTunnel(useInstanceTunnel)
-        .logviewVersion(logviewVersion);
+        .logviewVersion(logviewVersion)
+        .setSkipCheckIfSelect(skipCheckIfSelect);
 
     if (enableMaxQA) {
       builder.quotaName(quotaName);
