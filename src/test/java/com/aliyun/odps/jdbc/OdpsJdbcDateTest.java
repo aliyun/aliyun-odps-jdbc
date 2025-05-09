@@ -112,7 +112,7 @@ public class OdpsJdbcDateTest {
     date = Date.valueOf(localDate);
     System.out.println(date.getTime()); // 1746028800000 2025-05-01 00:00:00 Shanghai
 
-    Date afterConvert = TimeUtils.getDate(date, TimeZone.getTimeZone("Asia/Shanghai"));
+    Date afterConvert = TimeUtils.getDate(date, TimeZone.getTimeZone("UTC"));
     System.out.println(afterConvert.getTime()); // 1746057600000 2025-05-01 08:00:00 Shanghai
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));

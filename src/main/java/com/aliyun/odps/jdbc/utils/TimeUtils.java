@@ -58,7 +58,7 @@ public class TimeUtils {
     try {
       long millis = originDate.getTime();
       long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, targetTimezone);
+          millis + moveToTimeZoneOffset(millis, UTC, TimeZone.getDefault()) + moveToTimeZoneOffset(millis, UTC, targetTimezone);
       return new Date(milliSecsSinceEpochNew);
     } catch (NumberFormatException ex) {
       throw new SQLException("Invalid date value: " + originDate);
@@ -69,7 +69,7 @@ public class TimeUtils {
     try {
       long millis = originDate.getEpochSecond() * 1000 + originDate.getNano() / 1000000;
       long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, targetTimezone);
+          millis + moveToTimeZoneOffset(millis, UTC, TimeZone.getDefault()) + moveToTimeZoneOffset(millis, UTC, targetTimezone);
       return new Date(milliSecsSinceEpochNew);
     } catch (NumberFormatException ex) {
       throw new SQLException("Invalid date value: " + originDate);
