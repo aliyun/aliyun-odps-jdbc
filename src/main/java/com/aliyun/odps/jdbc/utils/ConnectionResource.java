@@ -103,6 +103,7 @@ public class ConnectionResource {
   private static final String FETCH_RESULT_PRELOAD_SPLIT_NUM = "fetchResultPreloadSplitNum";
   private static final String FETCH_RESULT_THREAD_NUM = "fetchResultThreadNum";
   private static final String SKIP_CHECK_IF_SELECT = "skipCheckIfSelect";
+  private static final String LONG_JOB_WARNING_THRESHOLD = "longJobWarningThreshold";
 
 
   /**
@@ -227,6 +228,7 @@ public class ConnectionResource {
   private int retryTime;
   private String timeZone;
   private boolean skipCheckIfSelect;
+  private long longJobWarningThreshold;
 
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
@@ -476,6 +478,10 @@ public class ConnectionResource {
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_CHECK_IF_SELECT,
                                                      SKIP_CHECK_IF_SELECT));
 
+    longJobWarningThreshold = Long.parseLong(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", LONG_JOB_WARNING_THRESHOLD, LONG_JOB_WARNING_THRESHOLD)
+    );
+
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
     // true/false                         |      true/false                    | true/false
@@ -658,6 +664,10 @@ public class ConnectionResource {
 
   public boolean isSkipCheckIfSelect() {
     return skipCheckIfSelect;
+  }
+
+  public long getLongJobWarningThreshold() {
+    return longJobWarningThreshold;
   }
 
   @SuppressWarnings("rawtypes")

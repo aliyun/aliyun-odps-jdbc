@@ -63,7 +63,7 @@
 
   <properties>
     <sdk.version>0.52.1-public</sdk.version>
-    <junit.version>4.11</junit.version>
+    <junit.version>4.13.1</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>
   </properties>
@@ -239,7 +239,22 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.5</version>
+      <version>1.7.32</version>
+    </dependency>
+
+    <!-- for test -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+      <version>1.2.12</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>1.2.12</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

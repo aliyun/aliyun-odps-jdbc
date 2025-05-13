@@ -156,6 +156,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int logviewVersion;
   private boolean async;
   private boolean skipCheckIfSelect;
+  private long longJobWarningThreshold;
 
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
@@ -302,6 +303,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fetchResultThreadNum = connRes.getFetchResultThreadNum();
     this.fetchResultPreloadSplitNum = connRes.getFetchResultPreloadSplitNum();
     this.skipCheckIfSelect = connRes.isSkipCheckIfSelect();
+    this.longJobWarningThreshold = connRes.getLongJobWarningThreshold();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -1022,6 +1024,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public int getFetchResultPreloadSplitNum() {
     return fetchResultPreloadSplitNum;
+  }
+
+  public long getLongJobWarningThreshold() {
+    return longJobWarningThreshold;
   }
 
   /**
