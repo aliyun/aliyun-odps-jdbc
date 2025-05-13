@@ -21,13 +21,21 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Project;
+import com.aliyun.odps.account.Account;
+import com.aliyun.odps.account.AliyunAccount;
 
 public class TestUtils {
 
@@ -130,5 +138,51 @@ public class TestUtils {
 
   public static java.util.Date randomDate() {
     return new java.util.Date(System.currentTimeMillis() + 86400000 * TestUtils.randomInt(100000));
+  }
+
+  public static Connection getConnection(Map<String, String> properties) throws Exception {
+    Properties odpsConfig = new Properties();
+
+    InputStream is =
+        Thread.currentThread().getContextClassLoader().getResourceAsStream("conf.properties");
+    odpsConfig.load(is);
+
+    Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
+
+    String endpoint = odpsConfig.getProperty("end_point");
+    String project = odpsConfig.getProperty("project_name");
+    String username = odpsConfig.getProperty("access_id");
+    String password = odpsConfig.getProperty("access_key");
+
+    String url = String.format("jdbc:odps:%s?project=%s",
+                               endpoint, project);
+    StringBuilder sb = new StringBuilder(url);
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
+    }
+    // pass project name via url
+    return DriverManager.getConnection(sb.toString(), username, password);
+  }
+
+  public static Connection getConnection() throws Exception {
+    return getConnection(Collections.emptyMap());
+  }
+
+  public static Odps getOdps() throws Exception {
+    Properties odpsConfig = new Properties();
+
+    InputStream is =
+        Thread.currentThread().getContextClassLoader().getResourceAsStream("conf.properties");
+    odpsConfig.load(is);
+    String endpoint = odpsConfig.getProperty("end_point");
+    String project = odpsConfig.getProperty("project_name");
+    String username = odpsConfig.getProperty("access_id");
+    String password = odpsConfig.getProperty("access_key");
+
+    Account account = new AliyunAccount(username, password);
+    Odps odps = new Odps(account);
+    odps.setDefaultProject(project);
+    odps.setEndpoint(endpoint);
+    return odps;
   }
 }

@@ -153,6 +153,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int logviewVersion;
   private boolean async;
   private boolean skipCheckIfSelect;
+  private long longJobWarningThreshold;
 
   OdpsConnection(String url, Properties info) throws SQLException {
 
@@ -293,6 +294,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.verbose = connRes.isVerbose();
     this.async = connRes.isAsync();
     this.skipCheckIfSelect = connRes.isSkipCheckIfSelect();
+    this.longJobWarningThreshold = connRes.getLongJobWarningThreshold();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -993,6 +995,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   public void setInteractiveMode(boolean interactiveMode) throws OdpsException {
     this.interactiveMode = interactiveMode;
     initSQLExecutor(serviceName, fallbackPolicy);
+  }
+
+  public long getLongJobWarningThreshold() {
+    return longJobWarningThreshold;
   }
 
   /**

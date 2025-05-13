@@ -733,8 +733,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     try {
 
       // If the client forget to end with a semi-colon, append it.
-      if (!sql.endsWith(";")) {
+      if (!sql.trim().endsWith(";")) {
         sql += ";";
+      }
+      if (sql.length() > 4000) {
+        connHandle.log.warn("The length of sql is too long, it may cause performance issues. SQL length: " + sql.length());
       }
 
       Map<String, String> settings = new HashMap<>();
@@ -794,6 +797,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         setResultSetInternal();
       }
       long end = System.currentTimeMillis();
+      if (connHandle.getLongJobWarningThreshold() != -1 && (end - begin) > connHandle.getLongJobWarningThreshold()) {
+        connHandle.log.warn("SQL execution time exceeds long job warning threshold. Execution time: " + (end - begin)
+                            + (executeInstance == null ? "" : (", InstanceId: " + executeInstance.getId())));
+      }
+
       if (executeInstance != null) {
         connHandle.log.info("It took me " + (end - begin) + " ms to run sql, instanceId: "
                             + executeInstance.getId());

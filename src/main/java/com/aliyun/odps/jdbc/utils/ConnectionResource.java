@@ -98,6 +98,7 @@ public class ConnectionResource {
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
   private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
   private static final String SKIP_CHECK_IF_SELECT = "skipCheckIfSelect";
+  private static final String LONG_JOB_WARNING_THRESHOLD = "longJobWarningThreshold";
 
   /**
    * Keys to retrieve properties from info.
@@ -220,6 +221,7 @@ public class ConnectionResource {
   private boolean tunnelDownloadUseSingleReader = false;
   private int retryTime;
   private boolean skipCheckIfSelect;
+  private long longJobWarningThreshold;
 
   public static boolean acceptURL(String url) {
     return (url != null) && url.startsWith(JDBC_ODPS_URL_PREFIX);
@@ -451,6 +453,10 @@ public class ConnectionResource {
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_CHECK_IF_SELECT,
                                                      SKIP_CHECK_IF_SELECT));
 
+    longJobWarningThreshold = Long.parseLong(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", LONG_JOB_WARNING_THRESHOLD, LONG_JOB_WARNING_THRESHOLD)
+    );
+
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
     // true/false                         |      true/false                    | true/false
@@ -629,6 +635,10 @@ public class ConnectionResource {
 
   public boolean isSkipCheckIfSelect() {
     return skipCheckIfSelect;
+  }
+
+  public long getLongJobWarningThreshold() {
+    return longJobWarningThreshold;
   }
 
   @SuppressWarnings("rawtypes")
