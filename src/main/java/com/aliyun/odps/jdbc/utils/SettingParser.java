@@ -7,6 +7,9 @@ import java.util.Map;
 
 public class SettingParser {
   public static ParseResult parse(String query) {
+    if (!query.trim().endsWith(";")) {
+      query += ";";
+    }
     SettingParser parser = new SettingParser();
     return parser.extractSetStatements(query);
   }
