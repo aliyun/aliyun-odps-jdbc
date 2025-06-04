@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.utils.GsonObjectBuilder;
 import com.aliyun.odps.utils.StringUtils;
@@ -179,7 +180,7 @@ public class ConnectionResource {
   private String logview;
   private String tunnelEndpoint;
   private String logConfFile;
-  private boolean interactiveMode;
+  private ExecuteMode interactiveMode;
   private String interactiveServiceName;
   private String majorVersion;
   private String fallbackQuota;
@@ -302,9 +303,23 @@ public class ConnectionResource {
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_CONF_FILE_PROP_KEY,
                                                  LOG_CONF_FILE_URL_KEY);
-    interactiveMode = Boolean.valueOf(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", INTERACTIVE_MODE_PROP_KEY,
-                                                 INTERACTIVE_MODE_URL_KEY));
+    String interactiveModeStr = tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", INTERACTIVE_MODE_PROP_KEY,
+                                                 INTERACTIVE_MODE_URL_KEY);
+    if (interactiveModeStr.equalsIgnoreCase("maxqa")) {
+      interactiveMode = ExecuteMode.INTERACTIVE_V2;
+    } else if (interactiveModeStr.equalsIgnoreCase("mcqa")) {
+      interactiveMode = ExecuteMode.INTERACTIVE;
+    } else if (interactiveModeStr.equalsIgnoreCase("offline")) {
+      interactiveMode = ExecuteMode.OFFLINE;
+    } else {
+      // boolean before 3.9.3
+      if (Boolean.parseBoolean(interactiveModeStr)) {
+        interactiveMode = ExecuteMode.INTERACTIVE;
+      } else {
+        interactiveMode = ExecuteMode.OFFLINE;
+      }
+    }
+
     interactiveServiceName =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, INTERACTIVE_SERVICE_NAME_DEFAULT_VALUE,
                                                  SERVICE_NAME_PROP_KEY,
@@ -697,7 +712,7 @@ public class ConnectionResource {
     throw new IllegalArgumentException("key " + key + " value should be true/false. current value " + value + " is not valid");
   }
 
-  public boolean isInteractiveMode() {
+  public ExecuteMode isInteractiveMode() {
     return interactiveMode;
   }
 

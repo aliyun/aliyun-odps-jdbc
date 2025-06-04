@@ -99,7 +99,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String fallbackQuota;
   private static final String MAJOR_VERSION = "odps.task.major.version";
   private static String ODPS_SETTING_PREFIX = "odps.";
-  private boolean interactiveMode = false;
+  private ExecuteMode interactiveMode;
   private Long autoSelectLimit = null;
   private Map<String, Map<String, List<String>>> tables;
   //Unit: result record row count, only applied in interactive mode
@@ -404,7 +404,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       executeOdps.setDefaultProject(executeProject);
     }
     builder.odps(executeOdps)
-        .executeMode(interactiveMode ? ExecuteMode.INTERACTIVE : ExecuteMode.OFFLINE)
+        .executeMode(interactiveMode)
         .properties(hints)
         .serviceName(serviceName)
         .fallbackPolicy(fallbackPolicy)
@@ -422,14 +422,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .logviewVersion(logviewVersion)
         .setSkipCheckIfSelect(skipCheckIfSelect);
 
-    if (enableMaxQA) {
+    if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
       builder.quotaName(quotaName);
       builder.enableMcqaV2(true);
     }
     long startTime = System.currentTimeMillis();
     this.executorBuilder = builder;
     this.executor = builder.build();
-    if (interactiveMode && executor.getInstance() != null) {
+    if (interactiveMode == ExecuteMode.INTERACTIVE && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format(
           "Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d",
@@ -892,7 +892,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   public boolean runningInInteractiveMode() {
-    return interactiveMode;
+    return interactiveMode != ExecuteMode.OFFLINE;
   }
 
   Map<String, Map<String, List<String>>> getTables() {
