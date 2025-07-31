@@ -253,6 +253,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps.setDefaultProject(project);
     odps.setCurrentSchema(schema);
     odps.setUserAgent("odps-jdbc-" + version);
+    odps.setLogViewHost(logviewHost);
 
     int retryTime = connRes.getRetryTime();
     if (retryTime > 0) {
