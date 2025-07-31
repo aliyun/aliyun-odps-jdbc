@@ -34,6 +34,7 @@ import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -382,6 +383,8 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       parameters.put(parameterIndex, x);
     } else if (x instanceof ZonedDateTime) {
       parameters.put(parameterIndex, x);
+    } else if (x instanceof OffsetDateTime) {
+      parameters.put(parameterIndex, ((OffsetDateTime) x).toInstant());
     } else if (x instanceof Instant) {
       parameters.put(parameterIndex, x);
     } else if (x instanceof Varchar) {
