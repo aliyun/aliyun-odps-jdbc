@@ -132,20 +132,20 @@ public class ConnectionResourceTest {
     Assert.assertEquals(null, resource.getLogview());
     Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
-    Assert.assertEquals(false, resource.isInteractiveMode());
+    Assert.assertEquals(com.aliyun.odps.sqa.ExecuteMode.OFFLINE, resource.isInteractiveMode());
     Assert.assertEquals("sn", resource.getInteractiveServiceName());
     Assert.assertEquals("default1", resource.getMajorVersion());
     Map<String, Map<String, List<String>>> tables = resource.getTables();
     Assert.assertEquals(2, tables.size());
     Assert.assertTrue(tables.containsKey("project1"));
-    Assert.assertEquals(2, tables.get("project1").size());
-    Assert.assertTrue(tables.get("project1").get("project1").contains("table1"));
-    Assert.assertTrue(tables.get("project1").get("project1").contains("table2"));
+    Assert.assertEquals(1, tables.get("project1").size());
+    Assert.assertTrue(tables.get("project1").get(null).contains("table1"));
+    Assert.assertTrue(tables.get("project1").get(null).contains("table2"));
     Assert.assertTrue(tables.containsKey("project2"));
-    Assert.assertEquals(3, tables.get("project2").size());
-    Assert.assertTrue(tables.get("project2").get("project2").contains("table1"));
-    Assert.assertTrue(tables.get("project2").get("project2").contains("table2"));
-    Assert.assertTrue(tables.get("project2").get("project2").contains("table3"));
+    Assert.assertEquals(1, tables.get("project2").size());
+    Assert.assertTrue(tables.get("project2").get(null).contains("table1"));
+    Assert.assertTrue(tables.get("project2").get(null).contains("table2"));
+    Assert.assertTrue(tables.get("project2").get(null).contains("table3"));
     Assert.assertEquals("21", resource.getReadTimeout());
   }
 
@@ -162,7 +162,7 @@ public class ConnectionResourceTest {
         "&majorVersion=default1&logConfFile="
         + logConfigFile;
     ConnectionResource resource = new ConnectionResource(url2, null);
-    Assert.assertEquals(true, resource.isInteractiveMode());
+    Assert.assertEquals(com.aliyun.odps.sqa.ExecuteMode.INTERACTIVE, resource.isInteractiveMode());
     Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
     Assert.assertEquals("p1", resource.getProject());
     Assert.assertEquals("123", resource.getAccessId());

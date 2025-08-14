@@ -551,6 +551,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
           .setCalendarType("iso8601")
           .setLenient(true);
       Calendar calendar = calendarBuilder.build();
+      calendar.setTimeZone(getConnection().getTimezone());
 
       if (java.sql.Timestamp.class.isInstance(x)) {
         return String.format("TIMESTAMP'%s'", x);

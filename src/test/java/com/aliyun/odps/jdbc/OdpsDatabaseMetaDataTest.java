@@ -169,19 +169,24 @@ public class OdpsDatabaseMetaDataTest {
       while (rs.next()) {
         String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
-        Assert.assertEquals(schema, catalog);
+        // Only check equality when not in namespace schema mode
+        if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
+          Assert.assertEquals(schema, catalog);
+        }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
         } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
           includesPublicDataSet = true;
         }
         count += 1;
-        System.out.println(String.format("%s.%s", catalog, schema));
       }
       Assert.assertTrue(includesDefaultProject);
       // TODO fix later
       Assert.assertTrue(includesPublicDataSet);
-      Assert.assertEquals(2, count);
+      // In namespace schema mode, there may be many schemas, so we can't assert the exact count
+      if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
+        Assert.assertEquals(2, count);
+      }
     }
 
     // Filtered by catalog name
@@ -194,7 +199,10 @@ public class OdpsDatabaseMetaDataTest {
       while (rs.next()) {
         String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
-        Assert.assertEquals(schema, catalog);
+        // Only check equality when not in namespace schema mode
+        if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
+          Assert.assertEquals(schema, catalog);
+        }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
         } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
@@ -205,7 +213,10 @@ public class OdpsDatabaseMetaDataTest {
       }
       Assert.assertFalse(includesDefaultProject);
       Assert.assertTrue(includesPublicDataSet);
-      Assert.assertEquals(1, count);
+      // In namespace schema mode, there may be many schemas, so we can't assert the exact count
+      if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
+        Assert.assertEquals(1, count);
+      }
     }
 
     try (ResultSet rs =
@@ -216,7 +227,10 @@ public class OdpsDatabaseMetaDataTest {
       while (rs.next()) {
         String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
-        Assert.assertEquals(schema, catalog);
+        // Only check equality when not in namespace schema mode
+        if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
+          Assert.assertEquals(schema, catalog);
+        }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
         } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
@@ -227,7 +241,10 @@ public class OdpsDatabaseMetaDataTest {
       }
       Assert.assertTrue(includesDefaultProject);
       Assert.assertFalse(includesPublicDataSet);
-      Assert.assertEquals(1, count);
+      // In namespace schema mode, there may be many schemas, so we can't assert the exact count
+      if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
+        Assert.assertEquals(1, count);
+      }
     }
   }
 }

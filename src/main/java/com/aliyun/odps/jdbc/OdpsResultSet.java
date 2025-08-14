@@ -70,9 +70,15 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       sessionTimeZoneId = stmt.getInputProperties().getProperty("odps.sql.timezone", sessionTimeZoneId);
       if (sessionTimeZoneId != null) {
         timeZone = TimeZone.getTimeZone(sessionTimeZoneId);
-      } else {
+      } else if (conn != null) {
         timeZone = conn.getTimezone();
+      } else {
+        timeZone = TimeZone.getTimeZone("UTC");
       }
+    } else if (conn != null) {
+      timeZone = conn.getTimezone();
+    } else {
+      timeZone = TimeZone.getTimeZone("UTC");
     }
   }
 
