@@ -773,8 +773,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.log.info("Enabled SQL task properties: " + settings);
       }
       long begin = System.currentTimeMillis();
-      if (queryTimeout != -1 && !settings.containsKey("odps.sql.session.query.timeout")) {
+      if (getExecuteMode() == ExecuteMode.INTERACTIVE && queryTimeout != -1
+          && !settings.containsKey("odps.sql.session.query.timeout")) {
         settings.put("odps.sql.session.query.timeout", String.valueOf(queryTimeout));
+      }
+      if (getExecuteMode() == ExecuteMode.INTERACTIVE_V2 && queryTimeout != -1
+          && !settings.containsKey("odps.sql.maxqa.query.timeout")) {
+        settings.put("odps.sql.maxqa.query.timeout", String.valueOf(queryTimeout));
       }
       Long autoSelectLimit = connHandle.getAutoSelectLimit();
       if (autoSelectLimit != null && autoSelectLimit > 0) {
