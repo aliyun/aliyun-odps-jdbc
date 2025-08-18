@@ -25,10 +25,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
@@ -40,7 +40,7 @@ public class OdpsResultSetMetaDataTest {
   static ResultSet rs;
   static ResultSetMetaData rsmd;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     stmt = TestManager.getInstance().conn.createStatement();
     stmt.executeUpdate("drop table if exists dual;");
@@ -62,7 +62,7 @@ public class OdpsResultSetMetaDataTest {
     rsmd = rs.getMetaData();
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
     rs.close();
     stmt.close();
@@ -70,43 +70,43 @@ public class OdpsResultSetMetaDataTest {
 
   @Test
   public void testGetColumnCount() throws Exception {
-    Assert.assertEquals(6, rsmd.getColumnCount());
+    Assertions.assertEquals(6, rsmd.getColumnCount());
   }
 
   @Test
   public void testGetColumnName() throws Exception {
-    Assert.assertEquals("name", rsmd.getColumnName(1));
-    Assert.assertEquals("male", rsmd.getColumnName(2));
-    Assert.assertEquals("age", rsmd.getColumnName(3));
-    Assert.assertEquals("height", rsmd.getColumnName(4));
-    Assert.assertEquals("day", rsmd.getColumnName(5));
-    Assert.assertEquals("volume", rsmd.getColumnName(6));
+    Assertions.assertEquals("name", rsmd.getColumnName(1));
+    Assertions.assertEquals("male", rsmd.getColumnName(2));
+    Assertions.assertEquals("age", rsmd.getColumnName(3));
+    Assertions.assertEquals("height", rsmd.getColumnName(4));
+    Assertions.assertEquals("day", rsmd.getColumnName(5));
+    Assertions.assertEquals("volume", rsmd.getColumnName(6));
   }
 
   @Test
   public void testGetColumnType() throws Exception {
-    Assert.assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
-    Assert.assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
-    Assert.assertEquals(Types.INTEGER, rsmd.getColumnType(3));
-    Assert.assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
-    Assert.assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
-    Assert.assertEquals(Types.DECIMAL, rsmd.getColumnType(6));
+    Assertions.assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
+    Assertions.assertEquals(Types.BOOLEAN, rsmd.getColumnType(2));
+    Assertions.assertEquals(Types.INTEGER, rsmd.getColumnType(3));
+    Assertions.assertEquals(Types.DOUBLE, rsmd.getColumnType(4));
+    Assertions.assertEquals(Types.TIMESTAMP, rsmd.getColumnType(5));
+    Assertions.assertEquals(Types.DECIMAL, rsmd.getColumnType(6));
   }
 
   @Test
   public void testGetColumnTypeName() throws Exception {
-    Assert.assertEquals("STRING", rsmd.getColumnTypeName(1));
-    Assert.assertEquals("BOOLEAN", rsmd.getColumnTypeName(2));
-    Assert.assertEquals("INT", rsmd.getColumnTypeName(3));
-    Assert.assertEquals("DOUBLE", rsmd.getColumnTypeName(4));
-    Assert.assertEquals("DATETIME", rsmd.getColumnTypeName(5));
-    Assert.assertTrue(rsmd.getColumnTypeName(6).contains("DECIMAL"));
+    Assertions.assertEquals("STRING", rsmd.getColumnTypeName(1));
+    Assertions.assertEquals("BOOLEAN", rsmd.getColumnTypeName(2));
+    Assertions.assertEquals("INT", rsmd.getColumnTypeName(3));
+    Assertions.assertEquals("DOUBLE", rsmd.getColumnTypeName(4));
+    Assertions.assertEquals("DATETIME", rsmd.getColumnTypeName(5));
+    Assertions.assertTrue(rsmd.getColumnTypeName(6).contains("DECIMAL"));
   }
 
   @Test
   public void testGetColumnMeta() throws Exception {
     for (int i = 0; i < rsmd.getColumnCount(); i++) {
-      Assert.assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(i + 1));
+      Assertions.assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(i + 1));
       int scale = rsmd.getScale(i + 1);
       int precision = rsmd.getPrecision(i + 1);
       int displaySize = rsmd.getColumnDisplaySize(i + 1);

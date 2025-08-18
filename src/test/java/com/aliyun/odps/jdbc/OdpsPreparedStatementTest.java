@@ -39,8 +39,8 @@ import java.util.Calendar;
 import java.util.Optional;
 import java.util.TimeZone;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Binary;
@@ -150,19 +150,19 @@ public class OdpsPreparedStatementTest {
     {
       ResultSet rs = pstmt.executeQuery();
       rs.next();
-      Assert.assertEquals(BigDecimal.TEN, rs.getBigDecimal(1));
-      Assert.assertEquals(Boolean.TRUE, rs.getBoolean(2));
-      Assert.assertEquals(Byte.MAX_VALUE, rs.getByte(3));
-      Assert.assertEquals(new Date(unixtime).toString(), rs.getDate(4).toString());
-      Assert.assertEquals(Double.MAX_VALUE, rs.getDouble(5), 0);
-      Assert.assertEquals(Float.MAX_VALUE, rs.getFloat(6), 0);
-      Assert.assertEquals(Integer.MAX_VALUE, rs.getInt(7));
-      Assert.assertEquals(0.314, rs.getDouble(8), 0);
-      Assert.assertEquals(Long.MAX_VALUE, rs.getLong(9));
-      Assert.assertEquals(Short.MAX_VALUE, rs.getShort(10));
-      Assert.assertEquals("hello", rs.getString(11));
-      Assert.assertEquals(new Time(unixtime).toString(), rs.getTime(12).toString());
-      Assert.assertEquals("2019-05-27 00:00:00.123456789",
+      Assertions.assertEquals(BigDecimal.TEN, rs.getBigDecimal(1));
+      Assertions.assertEquals(Boolean.TRUE, rs.getBoolean(2));
+      Assertions.assertEquals(Byte.MAX_VALUE, rs.getByte(3));
+      Assertions.assertEquals(new Date(unixtime).toString(), rs.getDate(4).toString());
+      Assertions.assertEquals(Double.MAX_VALUE, rs.getDouble(5), 0);
+      Assertions.assertEquals(Float.MAX_VALUE, rs.getFloat(6), 0);
+      Assertions.assertEquals(Integer.MAX_VALUE, rs.getInt(7));
+      Assertions.assertEquals(0.314, rs.getDouble(8), 0);
+      Assertions.assertEquals(Long.MAX_VALUE, rs.getLong(9));
+      Assertions.assertEquals(Short.MAX_VALUE, rs.getShort(10));
+      Assertions.assertEquals("hello", rs.getString(11));
+      Assertions.assertEquals(new Time(unixtime).toString(), rs.getTime(12).toString());
+      Assertions.assertEquals("2019-05-27 00:00:00.123456789",
                           rs.getTimestamp(13).toString());
       rs.close();
     }
@@ -221,25 +221,25 @@ public class OdpsPreparedStatementTest {
     Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from insert_with_new_type;");
     while (rs.next()) {
-      Assert.assertEquals(127, (byte) rs.getObject(1));
-      Assert.assertEquals(32767, (short) rs.getObject(2));
-      Assert.assertEquals(2147483647, (int) rs.getObject(3));
-      Assert.assertEquals(9223372036854775807L, (long) rs.getObject(4));
-      Assert.assertEquals(3.14, (float) rs.getObject(5), 0.001);
-      Assert.assertEquals(3.141592653589,
+      Assertions.assertEquals(127, (byte) rs.getObject(1));
+      Assertions.assertEquals(32767, (short) rs.getObject(2));
+      Assertions.assertEquals(2147483647, (int) rs.getObject(3));
+      Assertions.assertEquals(9223372036854775807L, (long) rs.getObject(4));
+      Assertions.assertEquals(3.14, (float) rs.getObject(5), 0.001);
+      Assertions.assertEquals(3.141592653589,
                           (double) rs.getObject(6), 0.0000000000001);
-      Assert.assertEquals(new BigDecimal("3.1415926535897932"),
+      Assertions.assertEquals(new BigDecimal("3.1415926535897932"),
                           rs.getObject(7));
-      Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
-      Assert.assertEquals("bar", rs.getObject(9));
-      Assert.assertEquals(new java.sql.Time(datetime.getTime()).toString(),
+      Assertions.assertEquals(new Varchar("foo"), rs.getObject(8));
+      Assertions.assertEquals("bar", rs.getObject(9));
+      Assertions.assertEquals(new java.sql.Time(datetime.getTime()).toString(),
                           rs.getTime(10).toString());
-      Assert.assertEquals(timestamp.toString(), rs.getTimestamp(11).toString());
-      Assert.assertEquals(true, rs.getObject(12));
-      Assert.assertEquals(date.toString(), rs.getDate(13).toString());
-      Assert.assertEquals("=FA4=E1=02=93=CBB=84=85s=A4=E3=997=F4y", rs.getObject(14).toString());
-      Assert.assertEquals(zonedDateTime.toString(), rs.getObject(15).toString());
-      Assert.assertEquals(zonedDateTime.toInstant().toEpochMilli(),
+      Assertions.assertEquals(timestamp.toString(), rs.getTimestamp(11).toString());
+      Assertions.assertEquals(true, rs.getObject(12));
+      Assertions.assertEquals(date.toString(), rs.getDate(13).toString());
+      Assertions.assertEquals("=FA4=E1=02=93=CBB=84=85s=A4=E3=997=F4y", rs.getObject(14).toString());
+      Assertions.assertEquals(zonedDateTime.toString(), rs.getObject(15).toString());
+      Assertions.assertEquals(zonedDateTime.toInstant().toEpochMilli(),
                           ((Instant) rs.getObject(16)).toEpochMilli());
     }
 
@@ -283,16 +283,16 @@ public class OdpsPreparedStatementTest {
     ResultSet rs = query.executeQuery("select * from employee_test");
 
     while (rs.next()) {
-      Assert.assertEquals(rs.getInt(1), 9999);
-      Assert.assertEquals(rs.getString(2), "hello");
-      Assert.assertEquals(rs.getTime(3).toString(), new Time(unixtime).toString());
-      Assert.assertTrue(rs.getBoolean(4));
-      Assert.assertEquals(rs.getDouble(5), 3.141590261234F, 0);
-      Assert.assertEquals(rs.getBigDecimal(6), BigDecimal.TEN);
+      Assertions.assertEquals(rs.getInt(1), 9999);
+      Assertions.assertEquals(rs.getString(2), "hello");
+      Assertions.assertEquals(rs.getTime(3).toString(), new Time(unixtime).toString());
+      Assertions.assertTrue(rs.getBoolean(4));
+      Assertions.assertEquals(rs.getDouble(5), 3.141590261234F, 0);
+      Assertions.assertEquals(rs.getBigDecimal(6), BigDecimal.TEN);
       count--;
     }
 
-    Assert.assertEquals(count, 0);
+    Assertions.assertEquals(count, 0);
 
     rs.close();
     query.close();
@@ -339,27 +339,27 @@ public class OdpsPreparedStatementTest {
     ps.close();
 
     for (int i : results) {
-      Assert.assertEquals(1, i);
+      Assertions.assertEquals(1, i);
     }
 
     Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from batch_insert_with_new_type;");
     while (rs.next()) {
-      Assert.assertEquals(127, (byte) rs.getObject(1));
-      Assert.assertEquals(32767, (short) rs.getObject(2));
-      Assert.assertEquals(2147483647, (int) rs.getObject(3));
-      Assert.assertEquals(9223372036854775807L, (long) rs.getObject(4));
-      Assert.assertEquals(3.14, (float) rs.getObject(5), 0.001);
-      Assert.assertEquals(3.141592653589,
+      Assertions.assertEquals(127, (byte) rs.getObject(1));
+      Assertions.assertEquals(32767, (short) rs.getObject(2));
+      Assertions.assertEquals(2147483647, (int) rs.getObject(3));
+      Assertions.assertEquals(9223372036854775807L, (long) rs.getObject(4));
+      Assertions.assertEquals(3.14, (float) rs.getObject(5), 0.001);
+      Assertions.assertEquals(3.141592653589,
                           (double) rs.getObject(6), 0.0000000000001);
-      Assert.assertEquals(new BigDecimal("3.141592653589793238"),
+      Assertions.assertEquals(new BigDecimal("3.141592653589793238"),
                           rs.getObject(7));
-      Assert.assertEquals(new Varchar("foo"), rs.getObject(8));
-      Assert.assertEquals("bar", rs.getObject(9));
-      Assert.assertEquals("2019-09-23 14:25:00", rs.getString(10));
-      Assert.assertEquals(timestamp.toString(), rs.getString(11));
-      Assert.assertEquals(true, rs.getObject(12));
-      Assert.assertEquals(date.toString(), rs.getDate(13).toString());
+      Assertions.assertEquals(new Varchar("foo"), rs.getObject(8));
+      Assertions.assertEquals("bar", rs.getObject(9));
+      Assertions.assertEquals("2019-09-23 14:25:00", rs.getString(10));
+      Assertions.assertEquals(timestamp.toString(), rs.getString(11));
+      Assertions.assertEquals(true, rs.getObject(12));
+      Assertions.assertEquals(date.toString(), rs.getDate(13).toString());
     }
 
     ddl.executeUpdate("drop table if exists batch_insert_with_new_type;");
@@ -388,7 +388,7 @@ public class OdpsPreparedStatementTest {
     ps.close();
 
     for (int i : results) {
-      Assert.assertEquals(1, i);
+      Assertions.assertEquals(1, i);
     }
 
     Statement query = conn.createStatement();
@@ -396,13 +396,13 @@ public class OdpsPreparedStatementTest {
         rs =
         query.executeQuery("set odps.sql.type.json.enable=true; select * from json_test;");
     rs.next();
-    Assert.assertEquals(rs.getMetaData().getColumnType(1), 12);
-    Assert.assertEquals(((SimpleJsonValue) rs.getObject(1)).getAsNumber().intValue(), 123);
+    Assertions.assertEquals(rs.getMetaData().getColumnType(1), 12);
+    Assertions.assertEquals(((SimpleJsonValue) rs.getObject(1)).getAsNumber().intValue(), 123);
     rs.next();
-    Assert.assertEquals(rs.getMetaData().getColumnType(1), 12);
+    Assertions.assertEquals(rs.getMetaData().getColumnType(1), 12);
     SimpleJsonValue jsonValue = (SimpleJsonValue) rs.getObject(1);
-    Assert.assertEquals(jsonValue.get("id").getAsNumber().intValue(), 123);
-    Assert.assertEquals(jsonValue.get("name").getAsString(), "MaxCompute");
+    Assertions.assertEquals(jsonValue.get("id").getAsNumber().intValue(), 123);
+    Assertions.assertEquals(jsonValue.get("name").getAsString(), "MaxCompute");
 
     ddl.executeUpdate("drop table if exists json_test;");
     ddl.close();
@@ -444,28 +444,28 @@ public class OdpsPreparedStatementTest {
     ResultSet rs = query.executeQuery("select * from employee_test");
 
     while (rs.next()) {
-      Assert.assertEquals(0, rs.getInt(1));
-      Assert.assertTrue(rs.wasNull());
+      Assertions.assertEquals(0, rs.getInt(1));
+      Assertions.assertTrue(rs.wasNull());
 
-      Assert.assertNull(rs.getString(2));
-      Assert.assertTrue(rs.wasNull());
+      Assertions.assertNull(rs.getString(2));
+      Assertions.assertTrue(rs.wasNull());
 
-      Assert.assertNull(rs.getTime(3));
-      Assert.assertTrue(rs.wasNull());
+      Assertions.assertNull(rs.getTime(3));
+      Assertions.assertTrue(rs.wasNull());
 
-      Assert.assertFalse(rs.getBoolean(4));
-      Assert.assertTrue(rs.wasNull());
+      Assertions.assertFalse(rs.getBoolean(4));
+      Assertions.assertTrue(rs.wasNull());
 
-      Assert.assertEquals(0.0f, rs.getFloat(5), 0);
-      Assert.assertTrue(rs.wasNull());
+      Assertions.assertEquals(0.0f, rs.getFloat(5), 0);
+      Assertions.assertTrue(rs.wasNull());
 
-      Assert.assertNull(rs.getBigDecimal(6));
-      Assert.assertTrue(rs.wasNull());
+      Assertions.assertNull(rs.getBigDecimal(6));
+      Assertions.assertTrue(rs.wasNull());
 
       count--;
     }
 
-    Assert.assertEquals(0, count);
+    Assertions.assertEquals(0, count);
 
     rs.close();
     query.close();
@@ -497,10 +497,10 @@ public class OdpsPreparedStatementTest {
     Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");
     while (rs.next()) {
-      Assert.assertEquals("value1", rs.getString(1));
-      Assert.assertEquals(3.141592653589,
+      Assertions.assertEquals("value1", rs.getString(1));
+      Assertions.assertEquals(3.141592653589,
                           (double) rs.getObject(2), 0.0000000000001);
-      Assert.assertTrue(rs.getBoolean(3));
+      Assertions.assertTrue(rs.getBoolean(3));
     }
 
     stmt.executeUpdate("drop table if exists " + tableName + ";");
@@ -537,10 +537,10 @@ public class OdpsPreparedStatementTest {
     Statement query = conn.createStatement();
     ResultSet rs = query.executeQuery("select * from " + tableName + " where p1='1234';");
     while (rs.next()) {
-      Assert.assertEquals("value1", rs.getString(1));
-      Assert.assertEquals(3.141592653589,
+      Assertions.assertEquals("value1", rs.getString(1));
+      Assertions.assertEquals(3.141592653589,
                           (double) rs.getObject(2), 0.0000000000001);
-      Assert.assertTrue(rs.getBoolean(3));
+      Assertions.assertTrue(rs.getBoolean(3));
     }
 
     stmt.executeUpdate("drop table if exists " + tableName + ";");
@@ -567,12 +567,12 @@ public class OdpsPreparedStatementTest {
     ps = connection.prepareStatement("select * from sql_injection where c3 = ?;");
     ps.setObject(1, false);
     ResultSet resultSet = ps.executeQuery();
-    Assert.assertFalse(resultSet.next());
+    Assertions.assertFalse(resultSet.next());
 
     ps.setObject(1, "false', 'or 1=1");
     try {
       ps.execute();
-      Assert.fail();
+      Assertions.fail();
     } catch (Exception ignored) {
     }
 
@@ -598,7 +598,7 @@ public class OdpsPreparedStatementTest {
     ps.setObject(1, "?");
     ResultSet resultSet = ps.executeQuery();
     while (resultSet.next()) {
-      Assert.assertEquals("test", resultSet.getString(1));
+      Assertions.assertEquals("test", resultSet.getString(1));
     }
   }
 
@@ -625,7 +625,7 @@ public class OdpsPreparedStatementTest {
 
     ResultSet resultSet = runQuery("select count(*) from acid_table;");
     resultSet.next();
-    Assert.assertEquals(2, resultSet.getInt(1));
+    Assertions.assertEquals(2, resultSet.getInt(1));
 
   }
 
@@ -647,7 +647,7 @@ public class OdpsPreparedStatementTest {
     ps.close();
     ResultSet resultSet = runQuery("select count(*) from acid1_table;");
     resultSet.next();
-    Assert.assertEquals(2, resultSet.getInt(1));
+    Assertions.assertEquals(2, resultSet.getInt(1));
   }
 
   ResultSet runQuery(String sql) throws SQLException {

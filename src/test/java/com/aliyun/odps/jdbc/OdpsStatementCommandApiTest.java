@@ -9,9 +9,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class OdpsStatementCommandApiTest {
 
@@ -19,7 +19,7 @@ public class OdpsStatementCommandApiTest {
 
   static Connection conn;
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() throws SQLException {
     try {
       String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
@@ -59,7 +59,7 @@ public class OdpsStatementCommandApiTest {
     statement.execute("create table " + tableName + " (key string, value datetime);");
   }
 
-  @AfterClass
+  @AfterAll
   public static void after() throws SQLException {
     Statement stmt = conn.createStatement();
     stmt.execute("drop table if exists " + tableName);

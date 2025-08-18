@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ConnectionResourceTest {
 
@@ -38,14 +38,14 @@ public class ConnectionResourceTest {
   public void connectionURLMinimumTest() {
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", null);
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals(null, cr.getAccessId());
-    Assert.assertEquals(null, cr.getAccessKey());
-    Assert.assertEquals(null, cr.getLogview());
-    Assert.assertEquals("UTF-8", cr.getCharset());
-    Assert.assertEquals("-1", cr.getConnectTimeout());
-    Assert.assertEquals("-1", cr.getReadTimeout());
+    Assertions.assertEquals("haha", cr.getEndpoint());
+    Assertions.assertEquals("xixi", cr.getProject());
+    Assertions.assertEquals(null, cr.getAccessId());
+    Assertions.assertEquals(null, cr.getAccessKey());
+    Assertions.assertEquals(null, cr.getLogview());
+    Assertions.assertEquals("UTF-8", cr.getCharset());
+    Assertions.assertEquals("-1", cr.getConnectTimeout());
+    Assertions.assertEquals("-1", cr.getReadTimeout());
   }
 
   @Test
@@ -55,14 +55,14 @@ public class ConnectionResourceTest {
         cr =
         new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
                                + "logview=loglog&charset=setset&lifecycle=5&loglevel=FATAL&readTimeout=20&connectTimeout=30", null);
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals("idid", cr.getAccessId());
-    Assert.assertEquals("keykey", cr.getAccessKey());
-    Assert.assertEquals("loglog", cr.getLogview());
-    Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("20", cr.getReadTimeout());
-    Assert.assertEquals("30", cr.getConnectTimeout());
+    Assertions.assertEquals("haha", cr.getEndpoint());
+    Assertions.assertEquals("xixi", cr.getProject());
+    Assertions.assertEquals("idid", cr.getAccessId());
+    Assertions.assertEquals("keykey", cr.getAccessKey());
+    Assertions.assertEquals("loglog", cr.getLogview());
+    Assertions.assertEquals("setset", cr.getCharset());
+    Assertions.assertEquals("20", cr.getReadTimeout());
+    Assertions.assertEquals("30", cr.getConnectTimeout());
   }
 
   @Test
@@ -80,13 +80,13 @@ public class ConnectionResourceTest {
 
     ConnectionResource cr = new ConnectionResource("jdbc:odps:haha?project=xixi", info);
 
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals("idid", cr.getAccessId());
-    Assert.assertEquals("keykey", cr.getAccessKey());
-    Assert.assertEquals("loglog", cr.getLogview());
-    Assert.assertEquals("setset", cr.getCharset());
-    Assert.assertEquals("20", cr.getReadTimeout());
+    Assertions.assertEquals("haha", cr.getEndpoint());
+    Assertions.assertEquals("xixi", cr.getProject());
+    Assertions.assertEquals("idid", cr.getAccessId());
+    Assertions.assertEquals("keykey", cr.getAccessKey());
+    Assertions.assertEquals("loglog", cr.getLogview());
+    Assertions.assertEquals("setset", cr.getCharset());
+    Assertions.assertEquals("20", cr.getReadTimeout());
   }
 
   @Test
@@ -105,14 +105,14 @@ public class ConnectionResourceTest {
         cr =
         new ConnectionResource("jdbc:odps:haha?project=xixi&accessId=idid&accessKey=keykey&"
                                + "logview=loglog&charset=setset&lifecycle=5&loglevel=INFO&readTimeout=20&connectTimeout=30", info);
-    Assert.assertEquals("haha", cr.getEndpoint());
-    Assert.assertEquals("xixi", cr.getProject());
-    Assert.assertEquals("id", cr.getAccessId());
-    Assert.assertEquals("key", cr.getAccessKey());
-    Assert.assertEquals("log", cr.getLogview());
-    Assert.assertEquals("set", cr.getCharset());
-    Assert.assertEquals("20", cr.getReadTimeout());
-    Assert.assertEquals("300", cr.getConnectTimeout());
+    Assertions.assertEquals("haha", cr.getEndpoint());
+    Assertions.assertEquals("xixi", cr.getProject());
+    Assertions.assertEquals("id", cr.getAccessId());
+    Assertions.assertEquals("key", cr.getAccessKey());
+    Assertions.assertEquals("log", cr.getLogview());
+    Assertions.assertEquals("set", cr.getCharset());
+    Assertions.assertEquals("20", cr.getReadTimeout());
+    Assertions.assertEquals("300", cr.getConnectTimeout());
   }
 
   @Test
@@ -123,30 +123,30 @@ public class ConnectionResourceTest {
         + "&odps_config=" + odpsConfigFile;
 
     ConnectionResource resource = new ConnectionResource(url1, null);
-    Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
-    Assert.assertEquals("p2", resource.getProject());
-    Assert.assertEquals("345", resource.getAccessId());
-    Assert.assertEquals("456=", resource.getAccessKey());
-    Assert.assertEquals("UTF-8", resource.getCharset());
-    Assert.assertEquals("logback1.xml", resource.getLogConfFile());
-    Assert.assertEquals(null, resource.getLogview());
-    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
+    Assertions.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
+    Assertions.assertEquals("p2", resource.getProject());
+    Assertions.assertEquals("345", resource.getAccessId());
+    Assertions.assertEquals("456=", resource.getAccessKey());
+    Assertions.assertEquals("UTF-8", resource.getCharset());
+    Assertions.assertEquals("logback1.xml", resource.getLogConfFile());
+    Assertions.assertEquals(null, resource.getLogview());
+    Assertions.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
 
-    Assert.assertEquals(com.aliyun.odps.sqa.ExecuteMode.OFFLINE, resource.isInteractiveMode());
-    Assert.assertEquals("sn", resource.getInteractiveServiceName());
-    Assert.assertEquals("default1", resource.getMajorVersion());
+    Assertions.assertEquals(com.aliyun.odps.sqa.ExecuteMode.OFFLINE, resource.isInteractiveMode());
+    Assertions.assertEquals("sn", resource.getInteractiveServiceName());
+    Assertions.assertEquals("default1", resource.getMajorVersion());
     Map<String, Map<String, List<String>>> tables = resource.getTables();
-    Assert.assertEquals(2, tables.size());
-    Assert.assertTrue(tables.containsKey("project1"));
-    Assert.assertEquals(1, tables.get("project1").size());
-    Assert.assertTrue(tables.get("project1").get(null).contains("table1"));
-    Assert.assertTrue(tables.get("project1").get(null).contains("table2"));
-    Assert.assertTrue(tables.containsKey("project2"));
-    Assert.assertEquals(1, tables.get("project2").size());
-    Assert.assertTrue(tables.get("project2").get(null).contains("table1"));
-    Assert.assertTrue(tables.get("project2").get(null).contains("table2"));
-    Assert.assertTrue(tables.get("project2").get(null).contains("table3"));
-    Assert.assertEquals("21", resource.getReadTimeout());
+    Assertions.assertEquals(2, tables.size());
+    Assertions.assertTrue(tables.containsKey("project1"));
+    Assertions.assertEquals(1, tables.get("project1").size());
+    Assertions.assertTrue(tables.get("project1").get(null).contains("table1"));
+    Assertions.assertTrue(tables.get("project1").get(null).contains("table2"));
+    Assertions.assertTrue(tables.containsKey("project2"));
+    Assertions.assertEquals(1, tables.get("project2").size());
+    Assertions.assertTrue(tables.get("project2").get(null).contains("table1"));
+    Assertions.assertTrue(tables.get("project2").get(null).contains("table2"));
+    Assertions.assertTrue(tables.get("project2").get(null).contains("table3"));
+    Assertions.assertEquals("21", resource.getReadTimeout());
   }
 
   @Test
@@ -162,16 +162,16 @@ public class ConnectionResourceTest {
         "&majorVersion=default1&logConfFile="
         + logConfigFile;
     ConnectionResource resource = new ConnectionResource(url2, null);
-    Assert.assertEquals(com.aliyun.odps.sqa.ExecuteMode.INTERACTIVE, resource.isInteractiveMode());
-    Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
-    Assert.assertEquals("p1", resource.getProject());
-    Assert.assertEquals("123", resource.getAccessId());
-    Assert.assertEquals("234=", resource.getAccessKey());
-    Assert.assertEquals(logConfigFile, resource.getLogConfFile());
-    Assert.assertEquals("UTF-8", resource.getCharset());
-    Assert.assertEquals(logConfigFile, resource.getLogConfFile());
-    Assert.assertEquals("http://abc.com:8080", resource.getLogview());
-    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
+    Assertions.assertEquals(com.aliyun.odps.sqa.ExecuteMode.INTERACTIVE, resource.isInteractiveMode());
+    Assertions.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
+    Assertions.assertEquals("p1", resource.getProject());
+    Assertions.assertEquals("123", resource.getAccessId());
+    Assertions.assertEquals("234=", resource.getAccessKey());
+    Assertions.assertEquals(logConfigFile, resource.getLogConfFile());
+    Assertions.assertEquals("UTF-8", resource.getCharset());
+    Assertions.assertEquals(logConfigFile, resource.getLogConfFile());
+    Assertions.assertEquals("http://abc.com:8080", resource.getLogview());
+    Assertions.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
     // Map<String, List<String>> tables = resource.getTables();
     // Assert.assertEquals(2, tables.size());
     // Assert.assertTrue(tables.containsKey("project1"));
@@ -186,16 +186,16 @@ public class ConnectionResourceTest {
     Properties info = new Properties();
     info.load(new FileInputStream(odpsConfigFile));
     resource = new ConnectionResource(url2, info);
-    Assert.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
-    Assert.assertEquals("p2", resource.getProject());
-    Assert.assertEquals("345", resource.getAccessId());
-    Assert.assertEquals("456=", resource.getAccessKey());
-    Assert.assertEquals("UTF-8", resource.getCharset());
-    Assert.assertEquals("logback1.xml", resource.getLogConfFile());
-    Assert.assertEquals("http://abc.com:8080", resource.getLogview());
-    Assert.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
-    Assert.assertEquals("sn", resource.getInteractiveServiceName());
-    Assert.assertEquals("default1", resource.getMajorVersion());
+    Assertions.assertEquals("http://1.1.1.1:8100/api", resource.getEndpoint());
+    Assertions.assertEquals("p2", resource.getProject());
+    Assertions.assertEquals("345", resource.getAccessId());
+    Assertions.assertEquals("456=", resource.getAccessKey());
+    Assertions.assertEquals("UTF-8", resource.getCharset());
+    Assertions.assertEquals("logback1.xml", resource.getLogConfFile());
+    Assertions.assertEquals("http://abc.com:8080", resource.getLogview());
+    Assertions.assertEquals("http://1.1.1.1:8066", resource.getTunnelEndpoint());
+    Assertions.assertEquals("sn", resource.getInteractiveServiceName());
+    Assertions.assertEquals("default1", resource.getMajorVersion());
     // tables = resource.getTables();
     // Assert.assertEquals(2, tables.size());
     // Assert.assertTrue(tables.containsKey("project1"));
@@ -217,15 +217,15 @@ public class ConnectionResourceTest {
     String url2 = url1 + "&tableList=project1.table1,project1.table2,project2.table1,project2.table2,project2.table3";
     ConnectionResource resource = new ConnectionResource(url2, null);
     Map<String, Map<String, List<String>>> tables = resource.getTables();
-    Assert.assertTrue(tables.get("project1").get(null).contains("table1"));
-    Assert.assertEquals(2, tables.get("project1").get(null).size());
+    Assertions.assertTrue(tables.get("project1").get(null).contains("table1"));
+    Assertions.assertEquals(2, tables.get("project1").get(null).size());
 
     String url3 = url1 + "&tableList=p1.s1.t1,p1.s1.t2,p2.s2.t1,p2.s2.t2,p2.s2.t3"
                   + "&odpsNamespaceSchema=true&schema=s1";
     resource = new ConnectionResource(url3, null);
     tables = resource.getTables();
-    Assert.assertTrue(tables.get("p1").get("s1").contains("t2"));
-    Assert.assertEquals(3, tables.get("p2").get("s2").size());
+    Assertions.assertTrue(tables.get("p1").get("s1").contains("t2"));
+    Assertions.assertEquals(3, tables.get("p2").get("s2").size());
 
   }
 }

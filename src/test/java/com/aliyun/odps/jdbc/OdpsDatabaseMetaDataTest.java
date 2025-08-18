@@ -26,16 +26,16 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class OdpsDatabaseMetaDataTest {
 
   static DatabaseMetaData databaseMetaData;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     databaseMetaData = TestManager.getInstance().conn.getMetaData();
     System.out.println(databaseMetaData.getCatalogTerm());
@@ -43,7 +43,7 @@ public class OdpsDatabaseMetaDataTest {
     System.out.println(databaseMetaData.getSchemaTerm());
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
   }
 
@@ -69,10 +69,10 @@ public class OdpsDatabaseMetaDataTest {
   public void testGetTables() throws Exception {
     {
       ResultSet rs = databaseMetaData.getTables(null, null, "%test", null);
-      Assert.assertNotNull(rs);
+      Assertions.assertNotNull(rs);
       while (rs.next()) {
-        Assert.assertTrue(rs.getString("TABLE_NAME").endsWith("test"));
-        Assert.assertTrue(rs.getString("TABLE_TYPE").equals("TABLE"));
+        Assertions.assertTrue(rs.getString("TABLE_NAME").endsWith("test"));
+        Assertions.assertTrue(rs.getString("TABLE_TYPE").equals("TABLE"));
 
       }
       rs.close();
@@ -80,9 +80,9 @@ public class OdpsDatabaseMetaDataTest {
 
     {
       ResultSet rs = databaseMetaData.getTables(null, null, null, new String[]{"VIEW"});
-      Assert.assertNotNull(rs);
+      Assertions.assertNotNull(rs);
       while (rs.next()) {
-        Assert.assertTrue(rs.getString("TABLE_TYPE").equals("VIEW"));
+        Assertions.assertTrue(rs.getString("TABLE_TYPE").equals("VIEW"));
       }
       rs.close();
     }
@@ -91,7 +91,7 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetFunctions() throws Exception {
     ResultSet rs = databaseMetaData.getFunctions(null, null, null);
-    Assert.assertNotNull(rs);
+    Assertions.assertNotNull(rs);
     printRs(rs);
     rs.close();
   }
@@ -104,7 +104,7 @@ public class OdpsDatabaseMetaDataTest {
     stmt.close();
 
     ResultSet rs = databaseMetaData.getColumns(null, null, "dual", null);
-    Assert.assertNotNull(rs);
+    Assertions.assertNotNull(rs);
     printRs(rs);
     rs.close();
   }
@@ -112,7 +112,7 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetUDTs() throws Exception {
     ResultSet rs = databaseMetaData.getUDTs(null, null, null, null);
-    Assert.assertNotNull(rs);
+    Assertions.assertNotNull(rs);
     printRs(rs);
     rs.close();
   }
@@ -120,7 +120,7 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetPrimaryKeys() throws Exception {
     ResultSet rs = databaseMetaData.getPrimaryKeys(null, null, null);
-    Assert.assertNotNull(rs);
+    Assertions.assertNotNull(rs);
     printRs(rs);
     rs.close();
   }
@@ -128,7 +128,7 @@ public class OdpsDatabaseMetaDataTest {
   @Test
   public void testGetProcedures() throws Exception {
     ResultSet rs = databaseMetaData.getProcedures(null, null, null);
-    Assert.assertNotNull(rs);
+    Assertions.assertNotNull(rs);
     printRs(rs);
     rs.close();
   }
@@ -150,10 +150,10 @@ public class OdpsDatabaseMetaDataTest {
         count += 1;
         System.out.println(catalog);
       }
-      Assert.assertTrue(includesDefaultProject);
+      Assertions.assertTrue(includesDefaultProject);
       // TODO fix later
-      Assert.assertTrue(includesPublicDataSet);
-      Assert.assertEquals(2, count);
+      Assertions.assertTrue(includesPublicDataSet);
+      Assertions.assertEquals(2, count);
     }
   }
 
@@ -171,7 +171,7 @@ public class OdpsDatabaseMetaDataTest {
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
         // Only check equality when not in namespace schema mode
         if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-          Assert.assertEquals(schema, catalog);
+          Assertions.assertEquals(schema, catalog);
         }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
@@ -180,12 +180,12 @@ public class OdpsDatabaseMetaDataTest {
         }
         count += 1;
       }
-      Assert.assertTrue(includesDefaultProject);
+      Assertions.assertTrue(includesDefaultProject);
       // TODO fix later
-      Assert.assertTrue(includesPublicDataSet);
+      Assertions.assertTrue(includesPublicDataSet);
       // In namespace schema mode, there may be many schemas, so we can't assert the exact count
       if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-        Assert.assertEquals(2, count);
+        Assertions.assertEquals(2, count);
       }
     }
 
@@ -201,7 +201,7 @@ public class OdpsDatabaseMetaDataTest {
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
         // Only check equality when not in namespace schema mode
         if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-          Assert.assertEquals(schema, catalog);
+          Assertions.assertEquals(schema, catalog);
         }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
@@ -211,11 +211,11 @@ public class OdpsDatabaseMetaDataTest {
         count += 1;
         System.out.println(String.format("%s.%s", catalog, schema));
       }
-      Assert.assertFalse(includesDefaultProject);
-      Assert.assertTrue(includesPublicDataSet);
+      Assertions.assertFalse(includesDefaultProject);
+      Assertions.assertTrue(includesPublicDataSet);
       // In namespace schema mode, there may be many schemas, so we can't assert the exact count
       if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-        Assert.assertEquals(1, count);
+        Assertions.assertEquals(1, count);
       }
     }
 
@@ -229,7 +229,7 @@ public class OdpsDatabaseMetaDataTest {
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
         // Only check equality when not in namespace schema mode
         if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-          Assert.assertEquals(schema, catalog);
+          Assertions.assertEquals(schema, catalog);
         }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
@@ -239,11 +239,11 @@ public class OdpsDatabaseMetaDataTest {
         count += 1;
         System.out.println(String.format("%s.%s", catalog, schema));
       }
-      Assert.assertTrue(includesDefaultProject);
-      Assert.assertFalse(includesPublicDataSet);
+      Assertions.assertTrue(includesDefaultProject);
+      Assertions.assertFalse(includesPublicDataSet);
       // In namespace schema mode, there may be many schemas, so we can't assert the exact count
       if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-        Assert.assertEquals(1, count);
+        Assertions.assertEquals(1, count);
       }
     }
   }

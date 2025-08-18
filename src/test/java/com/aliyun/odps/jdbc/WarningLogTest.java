@@ -1,11 +1,9 @@
 package com.aliyun.odps.jdbc;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -30,13 +28,13 @@ public class WarningLogTest {
     Logger logger = (Logger) LoggerFactory.getLogger("ROOT");
     ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         listAppender.start();
         logger.addAppender(listAppender);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         logger.detachAppender(listAppender);
     }
@@ -55,7 +53,7 @@ public class WarningLogTest {
                 // do nothing
             }
         }
-        Assert.assertTrue(listAppender.list.stream().filter(event -> event.getLevel() == Level.WARN)
+        Assertions.assertTrue(listAppender.list.stream().filter(event -> event.getLevel() == Level.WARN)
                               .anyMatch(event -> event.getFormattedMessage()
                                   .contains(
                                       "The length of sql is too long, it may cause performance issues.")));
@@ -72,7 +70,7 @@ public class WarningLogTest {
                 // do nothing
             }
         }
-        Assert.assertTrue(listAppender.list.stream().filter(event -> event.getLevel() == Level.WARN)
+        Assertions.assertTrue(listAppender.list.stream().filter(event -> event.getLevel() == Level.WARN)
                               .anyMatch(event -> event.getFormattedMessage()
                                   .contains(
                                       "SQL execution time exceeds long job warning threshold.")));

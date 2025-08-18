@@ -20,9 +20,7 @@
 
 package com.aliyun.odps.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -39,12 +37,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.Column;
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.TableSchema;
@@ -52,6 +51,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TableTunnel.UploadSession;
 import com.aliyun.odps.type.TypeInfoFactory;
@@ -100,22 +100,22 @@ public class ImplicitTypeConversionTest {
   private static SimpleDateFormat dateFormat =
       new SimpleDateFormat(JdbcColumn.ODPS_DATETIME_FORMAT);
 
-  @BeforeClass
-  public static void setUp() throws OdpsException, IOException, ParseException, SQLException {
+  @BeforeAll
+  public static void setUp() throws Exception {
     createTestTable();
     createTestTableNull();
   }
 
   private static void createTestTable()
-      throws OdpsException, IOException, ParseException, SQLException {
-    // Create table for test
-    TestManager tm = TestManager.getInstance();
-    tm.odps.tables().delete(TEST_TABLE, true);
+      throws Exception {
+    Odps odps = TestUtils.getOdps();
+    odps.tables().delete(TEST_TABLE, true);
     TableSchema schema = getTestTableSchema();
     Map<String, String> hints = new HashMap<String, String>();
     hints.put("odps.sql.type.system.odps2", "true");
-    tm.odps.tables().create(
-        tm.odps.getDefaultProject(),
+    odps.tables().create(
+        odps.getDefaultProject(),
+        "default",
         TEST_TABLE,
         schema,
         null,
@@ -123,9 +123,9 @@ public class ImplicitTypeConversionTest {
         null, hints, null);
 
     // Upload a record
-    TableTunnel tunnel = new TableTunnel(tm.odps);
+    TableTunnel tunnel = new TableTunnel(odps);
     UploadSession uploadSession = tunnel.createUploadSession(
-        tm.odps.getDefaultProject(), TEST_TABLE);
+        odps.getDefaultProject(), "default", TEST_TABLE, true);
     RecordWriter writer = uploadSession.openRecordWriter(0);
     Record r = uploadSession.newRecord();
     r.set(TINYINT_COL, Byte.parseByte(TINYINT_VAL));
@@ -149,7 +149,7 @@ public class ImplicitTypeConversionTest {
 
     // Query the test
     String sql = "select * from " + TEST_TABLE;
-    Statement stmt = tm.conn.createStatement();
+    Statement stmt = TestUtils.getConnection().createStatement();
     stmt.execute(sql);
     rs = stmt.getResultSet();
     rs.next();
@@ -164,6 +164,7 @@ public class ImplicitTypeConversionTest {
     hints.put("odps.sql.type.system.odps2", "true");
     tm.odps.tables().create(
         tm.odps.getDefaultProject(),
+        "default",
         TEST_TABLE_NULL,
         schema,
         null,
@@ -173,7 +174,7 @@ public class ImplicitTypeConversionTest {
     // Upload a record
     TableTunnel tunnel = new TableTunnel(tm.odps);
     UploadSession uploadSession = tunnel.createUploadSession(
-        tm.odps.getDefaultProject(), TEST_TABLE_NULL);
+        tm.odps.getDefaultProject(), "default", TEST_TABLE_NULL, true);
     RecordWriter writer = uploadSession.openRecordWriter(0);
     Record r = uploadSession.newRecord();
     r.set(TINYINT_COL, null);
@@ -232,7 +233,7 @@ public class ImplicitTypeConversionTest {
     return schema;
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws OdpsException, SQLException {
     rs.close();
     rsNull.close();
@@ -955,25 +956,25 @@ public class ImplicitTypeConversionTest {
     java.sql.Time time = rs.getTime(STRING_COL_2, cal);
     Timestamp timestamp = rs.getTimestamp(STRING_COL_2, cal);
 
-    Assert.assertEquals(expectedDate, date.toString());
-    Assert.assertEquals(expectedTime, time.toString());
-    Assert.assertEquals(expectedTimestamp, timestamp.toString());
+    Assertions.assertEquals(expectedDate, date.toString());
+    Assertions.assertEquals(expectedTime, time.toString());
+    Assertions.assertEquals(expectedTimestamp, timestamp.toString());
   }
 
   @Test
   public void testGetNull() throws SQLException {
-    Assert.assertEquals(0, rsNull.getByte(1));
-    Assert.assertEquals(0, rsNull.getShort(2));
-    Assert.assertEquals(0, rsNull.getInt(3));
-    Assert.assertEquals(0, rsNull.getLong(4));
-    Assert.assertEquals(0, rsNull.getFloat(5), 0.001);
-    Assert.assertEquals(0, rsNull.getDouble(6), 0.001);
-    Assert.assertNull(rsNull.getBigDecimal(7));
-    Assert.assertNull(rsNull.getString(8));
-    Assert.assertNull(rsNull.getString(9));
-    Assert.assertNull(rsNull.getString(10));
-    Assert.assertNull(rsNull.getDate(11));
-    Assert.assertNull(rsNull.getTimestamp(12));
-    Assert.assertFalse(rsNull.getBoolean(13));
+    Assertions.assertEquals(0, rsNull.getByte(1));
+    Assertions.assertEquals(0, rsNull.getShort(2));
+    Assertions.assertEquals(0, rsNull.getInt(3));
+    Assertions.assertEquals(0, rsNull.getLong(4));
+    Assertions.assertEquals(0, rsNull.getFloat(5), 0.001);
+    Assertions.assertEquals(0, rsNull.getDouble(6), 0.001);
+    Assertions.assertNull(rsNull.getBigDecimal(7));
+    Assertions.assertNull(rsNull.getString(8));
+    Assertions.assertNull(rsNull.getString(9));
+    Assertions.assertNull(rsNull.getString(10));
+    Assertions.assertNull(rsNull.getDate(11));
+    Assertions.assertNull(rsNull.getTimestamp(12));
+    Assertions.assertFalse(rsNull.getBoolean(13));
   }
 }

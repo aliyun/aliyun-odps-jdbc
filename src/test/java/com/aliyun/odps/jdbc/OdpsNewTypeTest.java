@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Odps;
@@ -85,7 +85,7 @@ public class OdpsNewTypeTest {
   static SimpleStruct v18;
 
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     stmt = TestManager.getInstance().conn.createStatement();
     stmt.executeUpdate("drop table if exists " + table + ";");
@@ -93,7 +93,7 @@ public class OdpsNewTypeTest {
     uploadData();
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
     if (rs != null) {
       rs.close();
@@ -111,87 +111,87 @@ public class OdpsNewTypeTest {
     while (rs.next()) {
       System.out.println(v1);
       System.out.println(rs.getString(1));
-      Assert.assertEquals(v1, rs.getInt(1));
+      Assertions.assertEquals(v1, rs.getInt(1));
       System.out.println(v2);
       System.out.println(rs.getString(2));
-      Assert.assertEquals(v2, rs.getLong(2));
+      Assertions.assertEquals(v2, rs.getLong(2));
       System.out.println(v3);
       System.out.println(rs.getString(3));
-      Assert.assertEquals(v3, rs.getString(3));
+      Assertions.assertEquals(v3, rs.getString(3));
       System.out.println(v4);
       System.out.println(rs.getString(4));
-      Assert.assertEquals(v4, rs.getBigDecimal(4));
+      Assertions.assertEquals(v4, rs.getBigDecimal(4));
       System.out.println(v5);
       System.out.println(rs.getString(5));
-      Assert.assertEquals(v5, rs.getByte(5));
+      Assertions.assertEquals(v5, rs.getByte(5));
       System.out.println(v6);
       System.out.println(rs.getString(6));
-      Assert.assertEquals(v6, rs.getShort(6));
+      Assertions.assertEquals(v6, rs.getShort(6));
       System.out.println(v7);
       System.out.println(rs.getString(7));
-      Assert.assertEquals(v7, rs.getDouble(7), 0.0000000001);
+      Assertions.assertEquals(v7, rs.getDouble(7), 0.0000000001);
       System.out.println(v8);
       System.out.println(rs.getString(8));
-      Assert.assertEquals(v8, rs.getFloat(8), 0.00001);
+      Assertions.assertEquals(v8, rs.getFloat(8), 0.00001);
       System.out.println(v9);
       System.out.println(rs.getString(9));
-      Assert.assertEquals(v9, rs.getBoolean(9));
+      Assertions.assertEquals(v9, rs.getBoolean(9));
       System.out.println(v10);
       System.out.println(rs.getString(10));
-      Assert.assertEquals(v10.toString(), rs.getDate(10).toString());
+      Assertions.assertEquals(v10.toString(), rs.getDate(10).toString());
       System.out.println(v11);
       System.out.println(rs.getString(11));
-      Assert.assertEquals(v11.getTime(), rs.getTimestamp(11).getTime());
+      Assertions.assertEquals(v11.getTime(), rs.getTimestamp(11).getTime());
       System.out.println(v12);
       System.out.println(rs.getString(12));
-      Assert.assertEquals(new Timestamp(v12.getTime()), rs.getTimestamp(12));
+      Assertions.assertEquals(new Timestamp(v12.getTime()), rs.getTimestamp(12));
       System.out.println(v13);
       System.out.println(rs.getString(13));
-      Assert.assertEquals(v13.toString(), rs.getString(13));
-      Assert.assertEquals(v13, rs.getObject(13));
+      Assertions.assertEquals(v13.toString(), rs.getString(13));
+      Assertions.assertEquals(v13, rs.getObject(13));
       System.out.println("v14:" + v14);
       System.out.println("v14 length:" + v14.length());
       System.out.println(rs.getString(14));
       System.out.println(rs.getString(14).length());
-      Assert.assertNotEquals(v14.toString(), rs.getString(14));
-      Assert.assertEquals(v14.toString().trim(), rs.getString(14).trim());
-      Assert.assertEquals(2, rs.getString(14).length());
+      Assertions.assertNotEquals(v14.toString(), rs.getString(14));
+      Assertions.assertEquals(v14.toString().trim(), rs.getString(14).trim());
+      Assertions.assertEquals(2, rs.getString(14).length());
       System.out.println(v15);
       System.out.println(rs.getString(15));
-      Assert.assertEquals(v15.toString(), rs.getString(15));
-      Assert.assertEquals(v15, rs.getObject(15));
+      Assertions.assertEquals(v15.toString(), rs.getString(15));
+      Assertions.assertEquals(v15, rs.getObject(15));
       System.out.println(v16);
       System.out.println(rs.getString(16));
-      Assert.assertEquals(v16.toString(), rs.getString(16));
-      Assert.assertEquals(v16, rs.getObject(16));
+      Assertions.assertEquals(v16.toString(), rs.getString(16));
+      Assertions.assertEquals(v16, rs.getObject(16));
       System.out.println(v17);
       System.out.println(rs.getString(17));
-      Assert.assertEquals(v17.toString(), rs.getString(17));
-      Assert.assertEquals(v17, rs.getObject(17));
+      Assertions.assertEquals(v17.toString(), rs.getString(17));
+      Assertions.assertEquals(v17, rs.getObject(17));
       System.out.println(v18.getFieldCount());
       System.out.println(((SimpleStruct) rs.getObject(18)).getFieldCount());
-      Assert.assertEquals(v18.getFieldCount(), ((SimpleStruct) rs.getObject(18)).getFieldCount());
+      Assertions.assertEquals(v18.getFieldCount(), ((SimpleStruct) rs.getObject(18)).getFieldCount());
       List<Object> fields = ((SimpleStruct) rs.getObject(18)).getFieldValues();
       for (int i = 0; i < v18.getFieldValues().size(); i++) {
         System.out.println("index:" + i);
         System.out.println(v18.getFieldValues().get(i));
         System.out.println(fields.get(i));
         if (fields.get(i) instanceof Double) {
-          Assert.assertEquals((Double) v18.getFieldValues().get(i), (Double) fields.get(i),
+          Assertions.assertEquals((Double) v18.getFieldValues().get(i), (Double) fields.get(i),
                               0.0000000001);
         } else if (fields.get(i) instanceof Float) {
-          Assert.assertEquals((Float) v18.getFieldValues().get(i), (Float) fields.get(i), 0.00001);
+          Assertions.assertEquals((Float) v18.getFieldValues().get(i), (Float) fields.get(i), 0.00001);
         } else if (fields.get(i) instanceof Map) {
           Map m1 = (Map) v18.getFieldValues().get(i);
           Map m2 = new TreeMap((Map) fields.get(i));
-          Assert.assertNotEquals(m1.toString(), m2.toString());
+          Assertions.assertNotEquals(m1.toString(), m2.toString());
           for (Object k : m1.keySet()) {
             String v1 = m1.get(k).toString().trim();
             String v2 = m2.get(k).toString().trim();
-            Assert.assertEquals(v1, v2);
+            Assertions.assertEquals(v1, v2);
           }
         } else {
-          Assert.assertEquals(v18.getFieldValues().get(i), fields.get(i));
+          Assertions.assertEquals(v18.getFieldValues().get(i), fields.get(i));
         }
       }
     }
@@ -255,7 +255,7 @@ public class OdpsNewTypeTest {
     writer.write(r);
     writer.close();
     Long[] blocks = up.getBlockList();
-    Assert.assertEquals(1, blocks.length);
+    Assertions.assertEquals(1, blocks.length);
     up.commit(new Long[]{0L});
   }
 

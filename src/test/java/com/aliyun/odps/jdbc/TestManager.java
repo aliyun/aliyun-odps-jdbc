@@ -20,14 +20,14 @@
 
 package com.aliyun.odps.jdbc;
 
+import org.junit.jupiter.api.Assertions;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Properties;
-
-import org.junit.Assert;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.account.Account;
@@ -79,7 +79,7 @@ public class TestManager {
 
       // pass project name via url
       conn = DriverManager.getConnection(url, username, password);
-      Assert.assertNotNull(conn);
+      Assertions.assertNotNull(conn);
       Statement stmt = conn.createStatement();
       stmt.execute("set odps.sql.hive.compatible=true;");
       stmt.execute("set odps.sql.preparse.odps2=lot;");
@@ -96,7 +96,7 @@ public class TestManager {
 
       // pass project name via url
       sessionConn = DriverManager.getConnection(urlSession, username, password);
-      Assert.assertNotNull(sessionConn);
+      Assertions.assertNotNull(sessionConn);
       Statement sessionConnStatement = sessionConn.createStatement();
       sessionConnStatement.execute("set odps.sql.hive.compatible=true;");
       sessionConnStatement.execute("set odps.sql.preparse.odps2=lot;");
@@ -111,10 +111,10 @@ public class TestManager {
       odps = new Odps(account);
       odps.setEndpoint(endpoint);
       odps.setDefaultProject(project);
-      Assert.assertNotNull(odps);
+      Assertions.assertNotNull(odps);
 
       tunnel = new TableTunnel(odps);
-      Assert.assertNotNull(tunnel);
+      Assertions.assertNotNull(tunnel);
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     } catch (java.sql.SQLException e) {

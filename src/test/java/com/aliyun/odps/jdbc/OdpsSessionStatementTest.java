@@ -26,10 +26,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
@@ -44,7 +44,7 @@ public class OdpsSessionStatementTest {
   private static String OUTPUT_TABLE_NAME = "session_statement_test_table_output";
   private static String INPUT_TABLE_NAME = "session_statement_test_table_input";
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
@@ -66,7 +66,7 @@ public class OdpsSessionStatementTest {
     upload.commit(new Long[]{0L});
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
     Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
@@ -77,9 +77,9 @@ public class OdpsSessionStatementTest {
   @Test
   public void testExecuteSet() throws Exception {
     Statement stmt = sessionConn.createStatement();
-    Assert.assertFalse(stmt.execute("   set  sql.x.y = 123 ;"));
-    Assert.assertFalse(stmt.execute("   set  sql.a.b=  1111"));
-    Assert.assertFalse(stmt.execute("SET  sql.c.d =abcdefgh"));
+    Assertions.assertFalse(stmt.execute("   set  sql.x.y = 123 ;"));
+    Assertions.assertFalse(stmt.execute("   set  sql.a.b=  1111"));
+    Assertions.assertFalse(stmt.execute("SET  sql.c.d =abcdefgh"));
     ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
     stmt.close();
   }
@@ -88,63 +88,63 @@ public class OdpsSessionStatementTest {
   public void testExecuteQuery() throws Exception {
     Statement stmt = sessionConn.createStatement();
     ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
-    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
+    Assertions.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
 
     long start = System.currentTimeMillis();
     {
       int i = 0;
       while (rs.next()) {
-        Assert.assertEquals(i + 1, rs.getRow());
-        Assert.assertEquals(i, rs.getInt(1));
+        Assertions.assertEquals(i + 1, rs.getRow());
+        Assertions.assertEquals(i, rs.getInt(1));
         i++;
       }
     }
     long end = System.currentTimeMillis();
     System.out.printf("step\tmillis\t%d\n", end - start);
     rs.close();
-    Assert.assertTrue(rs.isClosed());
+    Assertions.assertTrue(rs.isClosed());
     stmt.close();
-    Assert.assertTrue(stmt.isClosed());
+    Assertions.assertTrue(stmt.isClosed());
   }
 
   @Test
   public void testSelectNullQuery() throws Exception {
     Statement stmt = sessionConn.createStatement();
     ResultSet rs = stmt.executeQuery("select null from " + INPUT_TABLE_NAME);
-    Assert.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
+    Assertions.assertEquals(ResultSet.TYPE_FORWARD_ONLY, rs.getType());
 
     long start = System.currentTimeMillis();
     {
       int i = 0;
       while (rs.next()) {
-        Assert.assertEquals(i + 1, rs.getRow());
-        Assert.assertEquals(null, rs.getObject(1));
-        Assert.assertEquals(null, rs.getString(1));
+        Assertions.assertEquals(i + 1, rs.getRow());
+        Assertions.assertEquals(null, rs.getObject(1));
+        Assertions.assertEquals(null, rs.getString(1));
         i++;
       }
     }
     long end = System.currentTimeMillis();
     System.out.printf("step\tmillis\t%d\n", end - start);
     rs.close();
-    Assert.assertTrue(rs.isClosed());
+    Assertions.assertTrue(rs.isClosed());
     stmt.close();
-    Assert.assertTrue(stmt.isClosed());
+    Assertions.assertTrue(stmt.isClosed());
   }
 
   @Test
   public void testSetMaxRows() throws Exception {
     Statement stmt = sessionConn.createStatement();
     stmt.setMaxRows(8888);
-    Assert.assertEquals(8888, stmt.getMaxRows());
+    Assertions.assertEquals(8888, stmt.getMaxRows());
     ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
     {
       int i = 0;
       while (rs.next()) {
-        Assert.assertEquals(i + 1, rs.getRow());
-        Assert.assertEquals(i, rs.getInt(1));
+        Assertions.assertEquals(i + 1, rs.getRow());
+        Assertions.assertEquals(i, rs.getInt(1));
         i++;
       }
-      Assert.assertEquals(8888, i);
+      Assertions.assertEquals(8888, i);
     }
     rs.close();
     stmt.close();
@@ -154,16 +154,16 @@ public class OdpsSessionStatementTest {
   public void testExceedMaxRows() throws Exception {
     Statement stmt = sessionConn.createStatement();
     stmt.setMaxRows(11111);
-    Assert.assertEquals(11111, stmt.getMaxRows());
+    Assertions.assertEquals(11111, stmt.getMaxRows());
     ResultSet rs = stmt.executeQuery("select * from " + INPUT_TABLE_NAME);
     {
       int i = 0;
       while (rs.next()) {
-        Assert.assertEquals(i + 1, rs.getRow());
-        Assert.assertEquals(i, rs.getInt(1));
+        Assertions.assertEquals(i + 1, rs.getRow());
+        Assertions.assertEquals(i, rs.getInt(1));
         i++;
       }
-      Assert.assertEquals(11111, i);
+      Assertions.assertEquals(11111, i);
     }
     rs.close();
     stmt.close();
@@ -226,9 +226,9 @@ public class OdpsSessionStatementTest {
     String sql = "select * from " + INPUT_TABLE_NAME + " where id < 0;";
     ResultSet rs = stmt.executeQuery(sql);
 
-    Assert.assertNotNull(rs);
+    Assertions.assertNotNull(rs);
     ResultSetMetaData rsmd = rs.getMetaData();
-    Assert.assertEquals(1, rsmd.getColumnCount());
+    Assertions.assertEquals(1, rsmd.getColumnCount());
 
     stmt.close();
   }
@@ -237,34 +237,34 @@ public class OdpsSessionStatementTest {
   public void testExecuteMissingSemiColon() throws Exception {
     Statement stmt = sessionConn.createStatement();
 
-    Assert.assertEquals(true, stmt.execute("select 1 id from " + INPUT_TABLE_NAME + " limit 1;"));
+    Assertions.assertEquals(true, stmt.execute("select 1 id from " + INPUT_TABLE_NAME + " limit 1;"));
     ResultSet rs = stmt.getResultSet();
     {
       rs.next();
-      Assert.assertEquals(1, rs.getInt(1));
+      Assertions.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute(
+    Assertions.assertEquals(true, stmt.execute(
         "select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1;"));
     rs = stmt.getResultSet();
     {
       rs.next();
-      Assert.assertEquals(1, rs.getInt(1));
+      Assertions.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute("select 1 id from " + INPUT_TABLE_NAME + " limit 1"));
+    Assertions.assertEquals(true, stmt.execute("select 1 id from " + INPUT_TABLE_NAME + " limit 1"));
     rs = stmt.getResultSet();
     {
       rs.next();
-      Assert.assertEquals(1, rs.getInt(1));
+      Assertions.assertEquals(1, rs.getInt(1));
     }
 
-    Assert.assertEquals(true, stmt.execute(
+    Assertions.assertEquals(true, stmt.execute(
         "select 1 id \n,2 height\nfrom " + INPUT_TABLE_NAME + " limit 1"));
     rs = stmt.getResultSet();
     {
       rs.next();
-      Assert.assertEquals(1, rs.getInt(1));
+      Assertions.assertEquals(1, rs.getInt(1));
     }
 
     rs.close();
@@ -291,19 +291,19 @@ public class OdpsSessionStatementTest {
 
   @Test
   public void testQueryOrUpdate() throws Exception {
-    Assert.assertTrue(OdpsStatement.isQuery("select 1 id, 1.5 weight from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery(" select 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery("\nselect 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery("\t\r\nselect 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery("SELECT 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery(" SELECT 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery(" SELECT 1 id--xixi\n from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery("--abcd\nSELECT 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\nSELECT 1 id from dual;"));
-    Assert.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
-    Assert.assertFalse(
+    Assertions.assertTrue(OdpsStatement.isQuery("select 1 id, 1.5 weight from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery(" select 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery("\nselect 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery("\t\r\nselect 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery("SELECT 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery(" SELECT 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery(" SELECT 1 id--xixi\n from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery("--abcd\nSELECT 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\nSELECT 1 id from dual;"));
+    Assertions.assertTrue(OdpsStatement.isQuery("--abcd\n--hehehe\n\t \t select 1 id from dual;"));
+    Assertions.assertFalse(
         OdpsStatement.isQuery("insert into table yichao_test_table_output select 1 id from dual;"));
-    Assert.assertFalse(OdpsStatement.isQuery(
+    Assertions.assertFalse(OdpsStatement.isQuery(
         "insert into table\nyichao_test_table_output\nselect 1 id from dual;"));
   }
 }

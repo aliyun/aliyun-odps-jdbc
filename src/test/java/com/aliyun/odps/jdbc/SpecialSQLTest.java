@@ -1,8 +1,8 @@
 package com.aliyun.odps.jdbc;
 
-import java.sql.Statement;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import java.sql.Statement;
 
 /**
  * @author dingxin (zhangdingxin.zdx@alibaba-inc.com)

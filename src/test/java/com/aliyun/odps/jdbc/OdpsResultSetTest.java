@@ -26,10 +26,10 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.data.Record;
@@ -49,7 +49,7 @@ public class OdpsResultSetTest {
   static String odpsDecimalStr;
   static BigDecimal bigDecimal;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     stmt = TestManager.getInstance().conn.createStatement();
     stmt.executeUpdate("drop table if exists dual;");
@@ -77,7 +77,7 @@ public class OdpsResultSetTest {
 
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws Exception {
     stmt.executeUpdate("drop table if exists dual;");
     stmt.close();
@@ -103,7 +103,7 @@ public class OdpsResultSetTest {
 
     ResultSet rs = stmt.executeQuery("select * from select_from_partition where par_col='a'");
     rs.next();
-    Assert.assertEquals(42L, rs.getInt(1));
+    Assertions.assertEquals(42L, rs.getInt(1));
     rs.close();
     stmt.executeUpdate("drop table if exists select_from_partition");
   }
@@ -112,7 +112,7 @@ public class OdpsResultSetTest {
   public void testGetSelectStar() throws Exception {
     ResultSet rs = stmt.executeQuery("select * from dual;");
     rs.next();
-    Assert.assertEquals(42L, rs.getInt(1));
+    Assertions.assertEquals(42L, rs.getInt(1));
     rs.close();
   }
 
@@ -121,7 +121,7 @@ public class OdpsResultSetTest {
     ResultSet rs = stmt.executeQuery("select count(*) from dual;");
     rs.next();
     // TODO fix later
-    Assert.assertEquals(1, rs.getInt(1));
+    Assertions.assertEquals(1, rs.getInt(1));
     rs.close();
   }
 
@@ -133,23 +133,23 @@ public class OdpsResultSetTest {
 
     ResultSetMetaData meta = rs.getMetaData();
 
-    Assert.assertEquals("c1", meta.getColumnName(1));
-    Assert.assertEquals("c2", meta.getColumnName(2));
-    Assert.assertEquals("c3", meta.getColumnName(3));
+    Assertions.assertEquals("c1", meta.getColumnName(1));
+    Assertions.assertEquals("c2", meta.getColumnName(2));
+    Assertions.assertEquals("c3", meta.getColumnName(3));
     // Assert.assertEquals("c4", meta.getColumnName(4));
 
-    Assert.assertEquals("INT", meta.getColumnTypeName(1));
-    Assert.assertEquals("DOUBLE", meta.getColumnTypeName(2));
+    Assertions.assertEquals("INT", meta.getColumnTypeName(1));
+    Assertions.assertEquals("DOUBLE", meta.getColumnTypeName(2));
     // TODO: SDK treats com.aliyun.odps.OdpsType.VOID as string?
-    Assert.assertEquals("STRING", meta.getColumnTypeName(3));
+    Assertions.assertEquals("STRING", meta.getColumnTypeName(3));
     // Assert.assertEquals("STRING", meta.getColumnTypeName(4));
 
     rs.next();
-    Assert.assertEquals(1, rs.getInt(1));
-    Assert.assertEquals(2.2, rs.getDouble(2), 0);
+    Assertions.assertEquals(1, rs.getInt(1));
+    Assertions.assertEquals(2.2, rs.getDouble(2), 0);
     //Assert.assertEquals(0, rs.getInt(3));
     //Assert.assertTrue(rs.wasNull());
-    Assert.assertEquals("haha", rs.getString(3));
+    Assertions.assertEquals("haha", rs.getString(3));
 
     rs.close();
   }
@@ -161,19 +161,19 @@ public class OdpsResultSetTest {
                           + " union all select 2 id, 2.9 weight from dual) x order by id desc limit 2;");
     {
       rs.next();
-      Assert.assertEquals(2, ((Long) rs.getObject(1)).longValue());
-      Assert.assertEquals(2, ((Long) rs.getObject("id")).longValue());
-      Assert.assertEquals(2.9, ((Double) rs.getObject(2)).doubleValue(), 0);
-      Assert.assertEquals(2.9, ((Double) rs.getObject("weight")).doubleValue(), 0);
+      Assertions.assertEquals(2, ((Long) rs.getObject(1)).longValue());
+      Assertions.assertEquals(2, ((Long) rs.getObject("id")).longValue());
+      Assertions.assertEquals(2.9, ((Double) rs.getObject(2)).doubleValue(), 0);
+      Assertions.assertEquals(2.9, ((Double) rs.getObject("weight")).doubleValue(), 0);
     }
 
     {
       rs.next();
       // TODO fix later
-      Assert.assertEquals(1, ((Long) rs.getObject(1)).longValue());
-      Assert.assertEquals(1, ((Long) rs.getObject("id")).longValue());
-      Assert.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
-      Assert.assertEquals(1.5, ((Double) rs.getObject("weight")).doubleValue(), 0);
+      Assertions.assertEquals(1, ((Long) rs.getObject(1)).longValue());
+      Assertions.assertEquals(1, ((Long) rs.getObject("id")).longValue());
+      Assertions.assertEquals(1.5, ((Double) rs.getObject(2)).doubleValue(), 0);
+      Assertions.assertEquals(1.5, ((Double) rs.getObject("weight")).doubleValue(), 0);
     }
 
     rs.close();
@@ -187,14 +187,14 @@ public class OdpsResultSetTest {
                           + "3.14 c5, 0.0 c6, 95 c7, 0 c8 from dual;");
     {
       rs.next();
-      Assert.assertEquals(true, rs.getBoolean(1));
-      Assert.assertEquals(false, rs.getBoolean(2));
-      Assert.assertEquals(true, rs.getBoolean(3));
-      Assert.assertEquals(false, rs.getBoolean(4));
-      Assert.assertEquals(true, rs.getBoolean(5));
-      Assert.assertEquals(false, rs.getBoolean(6));
-      Assert.assertEquals(true, rs.getBoolean(7));
-      Assert.assertEquals(false, rs.getBoolean(8));
+      Assertions.assertEquals(true, rs.getBoolean(1));
+      Assertions.assertEquals(false, rs.getBoolean(2));
+      Assertions.assertEquals(true, rs.getBoolean(3));
+      Assertions.assertEquals(false, rs.getBoolean(4));
+      Assertions.assertEquals(true, rs.getBoolean(5));
+      Assertions.assertEquals(false, rs.getBoolean(6));
+      Assertions.assertEquals(true, rs.getBoolean(7));
+      Assertions.assertEquals(false, rs.getBoolean(8));
     }
     rs.close();
   }
@@ -207,9 +207,9 @@ public class OdpsResultSetTest {
                                         odpsDecimalStr));
     {
       rs.next();
-      Assert.assertEquals((byte) 1943, rs.getByte(1));
-      Assert.assertEquals((byte) 3.1415926, rs.getByte(2));
-      Assert.assertEquals(bigDecimal.byteValue(), rs.getByte(3));
+      Assertions.assertEquals((byte) 1943, rs.getByte(1));
+      Assertions.assertEquals((byte) 3.1415926, rs.getByte(2));
+      Assertions.assertEquals(bigDecimal.byteValue(), rs.getByte(3));
     }
     rs.close();
   }
@@ -222,20 +222,20 @@ public class OdpsResultSetTest {
             "select 1943 c1, 3.1415926 c2, %s c3, '1234' c4 from dual;", odpsDecimalStr));
     {
       rs.next();
-      Assert.assertEquals(1943, rs.getInt(1));
-      Assert.assertEquals((int) 3.1415926, rs.getInt(2));
-      Assert.assertEquals(bigDecimal.intValue(), rs.getInt(3));
-      Assert.assertEquals(1234, rs.getInt(4));
+      Assertions.assertEquals(1943, rs.getInt(1));
+      Assertions.assertEquals((int) 3.1415926, rs.getInt(2));
+      Assertions.assertEquals(bigDecimal.intValue(), rs.getInt(3));
+      Assertions.assertEquals(1234, rs.getInt(4));
 
-      Assert.assertEquals((short) 1943, rs.getShort(1));
-      Assert.assertEquals((short) 3.1415926, rs.getShort(2));
-      Assert.assertEquals(bigDecimal.shortValue(), rs.getShort(3));
-      Assert.assertEquals((short) 1234, rs.getShort(4));
+      Assertions.assertEquals((short) 1943, rs.getShort(1));
+      Assertions.assertEquals((short) 3.1415926, rs.getShort(2));
+      Assertions.assertEquals(bigDecimal.shortValue(), rs.getShort(3));
+      Assertions.assertEquals((short) 1234, rs.getShort(4));
 
-      Assert.assertEquals((long) 1943, rs.getLong(1));
-      Assert.assertEquals((long) 3.1415926, rs.getLong(2));
-      Assert.assertEquals(bigDecimal.longValue(), rs.getLong(3));
-      Assert.assertEquals((long) 1234, rs.getLong(4));
+      Assertions.assertEquals((long) 1943, rs.getLong(1));
+      Assertions.assertEquals((long) 3.1415926, rs.getLong(2));
+      Assertions.assertEquals(bigDecimal.longValue(), rs.getLong(3));
+      Assertions.assertEquals((long) 1234, rs.getLong(4));
     }
     rs.close();
   }
@@ -248,15 +248,15 @@ public class OdpsResultSetTest {
             "select 1943 c1, 3.1415926 c2, %s c3, '3.1415926' c4 from dual;", odpsDecimalStr));
     {
       rs.next();
-      Assert.assertEquals((double) 1943, rs.getDouble(1), 0);
-      Assert.assertEquals(3.1415926, rs.getDouble(2), 0);
-      Assert.assertEquals(bigDecimal.doubleValue(), rs.getDouble(3), 0);
-      Assert.assertEquals(3.1415926, rs.getDouble(4), 0);
+      Assertions.assertEquals((double) 1943, rs.getDouble(1), 0);
+      Assertions.assertEquals(3.1415926, rs.getDouble(2), 0);
+      Assertions.assertEquals(bigDecimal.doubleValue(), rs.getDouble(3), 0);
+      Assertions.assertEquals(3.1415926, rs.getDouble(4), 0);
 
-      Assert.assertEquals((float) 1943, rs.getFloat(1), 0);
-      Assert.assertEquals((float) 3.1415926, rs.getFloat(2), 0);
-      Assert.assertEquals(bigDecimal.floatValue(), rs.getFloat(3), 0);
-      Assert.assertEquals((float) 3.1415926, rs.getFloat(4), 0);
+      Assertions.assertEquals((float) 1943, rs.getFloat(1), 0);
+      Assertions.assertEquals((float) 3.1415926, rs.getFloat(2), 0);
+      Assertions.assertEquals(bigDecimal.floatValue(), rs.getFloat(3), 0);
+      Assertions.assertEquals((float) 3.1415926, rs.getFloat(4), 0);
     }
     rs.close();
   }
@@ -269,8 +269,8 @@ public class OdpsResultSetTest {
                                         odpsDecimalStr));
     {
       rs.next();
-      Assert.assertEquals(bigDecimal, rs.getBigDecimal(1));
-      Assert.assertEquals(bigDecimal, rs.getBigDecimal(2));
+      Assertions.assertEquals(bigDecimal, rs.getBigDecimal(1));
+      Assertions.assertEquals(bigDecimal, rs.getBigDecimal(2));
     }
     rs.close();
   }
@@ -283,15 +283,15 @@ public class OdpsResultSetTest {
             String.format("select DATETIME'%s' c1, %s c2 from dual;", nowStr, odpsNowStr));
     {
       rs.next();
-      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
-      Assert.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(2).toString());
+      Assertions.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(1).toString());
+      Assertions.assertEquals(new Date(unixTimeNow).toString(), rs.getDate(2).toString());
 
-      Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(1).toString());
-      Assert.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(2).toString());
+      Assertions.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(1).toString());
+      Assertions.assertEquals(new Time(unixTimeNow).toString(), rs.getTime(2).toString());
 
-      Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
+      Assertions.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
                           formatter.format(rs.getTimestamp(1)));
-      Assert.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
+      Assertions.assertEquals(formatter.format(new Timestamp(unixTimeNow)),
                           formatter.format(rs.getTimestamp(2)));
     }
     rs.close();
@@ -306,13 +306,13 @@ public class OdpsResultSetTest {
             odpsDecimalStr));
     {
       rs.next();
-      Assert.assertEquals("alibaba", rs.getString(1));
-      Assert.assertEquals("alibaba", rs.getString("c1"));
-      Assert.assertEquals("0.5", rs.getString(2));
-      Assert.assertEquals("1", rs.getString(3));
-      Assert.assertEquals(nowStr, rs.getString(4));
-      Assert.assertEquals(decimalValue, rs.getString(5));
-      Assert.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
+      Assertions.assertEquals("alibaba", rs.getString(1));
+      Assertions.assertEquals("alibaba", rs.getString("c1"));
+      Assertions.assertEquals("0.5", rs.getString(2));
+      Assertions.assertEquals("1", rs.getString(3));
+      Assertions.assertEquals(nowStr, rs.getString(4));
+      Assertions.assertEquals(decimalValue, rs.getString(5));
+      Assertions.assertEquals(Boolean.TRUE.toString(), rs.getString(6));
     }
     rs.close();
   }
@@ -325,7 +325,7 @@ public class OdpsResultSetTest {
     ResultSet rs = stmt.executeQuery(sql);
     {
       rs.next();
-      Assert.assertEquals("{\"2\":\"b\",\"1\":\"a\"}", rs.getString(1));
+      Assertions.assertEquals("{\"2\":\"b\",\"1\":\"a\"}", rs.getString(1));
     }
     rs.close();
   }
@@ -335,7 +335,7 @@ public class OdpsResultSetTest {
     TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getTimezone();
 
     // Make sure the project's time zone is not UTC, or this test case will always pass.
-    Assert.assertNotEquals(0, tz.getRawOffset());
+    Assertions.assertNotEquals(0, tz.getRawOffset());
 
     long timestampWithoutTimeZone;
     try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr))) {
@@ -353,6 +353,6 @@ public class OdpsResultSetTest {
     }
 
     // TODO fix later
-    Assert.assertEquals(tz.getRawOffset(), timestampWithTimeZone - timestampWithoutTimeZone);
+    Assertions.assertEquals(tz.getRawOffset(), timestampWithTimeZone - timestampWithoutTimeZone);
   }
 }

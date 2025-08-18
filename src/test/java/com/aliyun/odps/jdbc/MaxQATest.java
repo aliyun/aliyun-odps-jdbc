@@ -1,8 +1,8 @@
 package com.aliyun.odps.jdbc;
 
-import java.sql.Connection;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import java.sql.Connection;
 
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.google.common.collect.ImmutableMap;
