@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -206,7 +207,7 @@ public class Utils {
       LocalDateTime localDateTime = (LocalDateTime) object;
 
       if (type == ZonedDateTime.class) {
-        return (T) localDateTime.atZone(timeZone.toZoneId());
+        return (T) localDateTime.atZone(ZoneId.of("UTC"));
       }
     } else if (object instanceof Instant) {
       Instant instant = (Instant) object;

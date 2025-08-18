@@ -1,19 +1,12 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.type.TypeInfo;
 
 public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTransformer {
-  static ThreadLocal<SimpleDateFormat>
-      TIME_FORMAT =
-      ThreadLocal.withInitial(() -> new SimpleDateFormat(JdbcColumn.ODPS_TIME_FORMAT));
 
   @Override
   public Object transform(Object o, String charset) throws SQLException {
@@ -48,9 +41,5 @@ public abstract class AbstractToJdbcDateTypeTransformer extends AbstractToJdbcTr
       TypeInfo odpsType) throws SQLException {
     //default implement
     return transform(o, charset, cal, timeZone);
-  }
-
-  void restoreToDefaultCalendar() {
-    TIME_FORMAT.get().setCalendar(Calendar.getInstance());
   }
 }

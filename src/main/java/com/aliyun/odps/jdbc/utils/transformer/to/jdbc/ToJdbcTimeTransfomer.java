@@ -30,6 +30,14 @@ import java.util.Calendar;
 import java.util.Objects;
 import java.util.TimeZone;
 
+import com.aliyun.odps.OdpsType;
+import com.aliyun.odps.data.Binary;
+import com.aliyun.odps.jdbc.utils.RecordConverterCache;
+import com.aliyun.odps.jdbc.utils.TimeUtils;
+import com.aliyun.odps.type.TypeInfo;
+import com.aliyun.odps.type.TypeInfoFactory;
+import com.aliyun.odps.utils.OdpsCommonUtils;
+
 /**
  * Mapping of Java Types to ODPS Types for {@link java.sql.ResultSet#getTimestamp(int)} usage.
  * A transformer is applied to convert ODPS native types to match the Java byte requirement.
@@ -47,36 +55,49 @@ public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
       String charset,
       Calendar cal,
       TimeZone timeZone) throws SQLException {
+    return transform(o, charset, cal, timeZone, OdpsCommonUtils.indicateTypeFromClass(o));
+  }
+
+  @Override
+  public Object transform(
+      Object o,
+      String charset,
+      Calendar cal,
+      TimeZone timeZone,
+      TypeInfo typeInfo) throws SQLException {
 
     if (o == null) {
       return null;
     }
+    if (cal != null) {
+      timeZone = cal.getTimeZone();
+    }
+    // if typeInfo is null or not time type, use default (TIMESTAMP)
+    if (typeInfo == null || (typeInfo.getOdpsType() != OdpsType.DATETIME
+                             && typeInfo.getOdpsType() != OdpsType.TIMESTAMP
+                             && typeInfo.getOdpsType() != OdpsType.TIMESTAMP_NTZ)) {
+      typeInfo = TypeInfoFactory.TIMESTAMP;
+    }
+
     try {
+      if (o instanceof byte[]) {
+        String str = encodeBytes((byte[]) o, charset);
+        // convert to local date
+        o = RecordConverterCache.get(timeZone).parseObject(str, typeInfo);
+      }
+      if (o instanceof Binary) {
+        String str = encodeBytes(((Binary) o).data(), charset);
+        // convert to local date
+        o = RecordConverterCache.get(timeZone).parseObject(str, typeInfo);
+      }
+
       if (o instanceof ZonedDateTime) {
-        if (timeZone != null) {
-          o = ((ZonedDateTime) o).withZoneSameInstant(timeZone.toZoneId());
-        }
-        return java.sql.Time.valueOf(((ZonedDateTime) o).toLocalTime());
+        return TimeUtils.getTime(((ZonedDateTime) o).toInstant(), timeZone);
       } else if (o instanceof Instant) {
-        ZonedDateTime
-            zonedDateTime =
-            ZonedDateTime.ofInstant((Instant) o,
-                                    timeZone == null ? ZoneId.systemDefault()
-                                                     : timeZone.toZoneId());
-        return java.sql.Time.valueOf(zonedDateTime.toLocalTime());
+        return TimeUtils.getTime((Instant) o, timeZone);
       } else if (o instanceof LocalDateTime) {
-        return ((LocalDateTime) o).toLocalTime();
-      } else if (o instanceof byte[]) {
-        o = encodeBytes((byte[]) o, charset);
-        try {
-          SimpleDateFormat timeFormat = TIME_FORMAT.get();
-          if (cal != null) {
-            timeFormat.setCalendar(cal);
-          }
-          return new java.sql.Time(timeFormat.parse((String) o).getTime());
-        } finally {
-          restoreToDefaultCalendar();
-        }
+        // LocalDatetime is not time zone aware, so we always convert it to UTC
+        return TimeUtils.getTime((LocalDateTime) o, TimeUtils.UTC);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
@@ -86,7 +107,7 @@ public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
     } catch (Exception e) {
       String
           errorMsg =
-          getTransformationErrMsg(Objects.toString(o), java.sql.Time.class, e.getMessage());
+          getTransformationErrMsg(Objects.toString(o), java.sql.Timestamp.class, e.getMessage());
       throw new SQLException(errorMsg, e);
     }
   }

@@ -2,8 +2,10 @@ package com.aliyun.odps.jdbc.utils;
 
 import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Calendar;
@@ -54,11 +56,21 @@ public class TimeUtils {
 
   public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
-  public static Date getDate(Date originDate, TimeZone targetTimezone) throws SQLException {
+  public static Date getDate(LocalDate originDate, TimeZone targetTimezone) throws SQLException {
     try {
-      long millis = originDate.getTime();
+      long millis = originDate.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000;
+      return new Date(millis);
+    } catch (NumberFormatException ex) {
+      throw new SQLException("Invalid date value: " + originDate);
+    }
+  }
+
+
+  public static Date getDate(LocalDateTime originDate, TimeZone targetTimezone) throws SQLException {
+    try {
+      long millis = originDate.toEpochSecond(ZoneOffset.UTC) * 1000 + originDate.getNano() / 1000000;
       long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, TimeZone.getDefault()) + moveToTimeZoneOffset(millis, UTC, targetTimezone);
+          millis + moveToTimeZoneOffset(millis, TimeZone.getDefault(), UTC);
       return new Date(milliSecsSinceEpochNew);
     } catch (NumberFormatException ex) {
       throw new SQLException("Invalid date value: " + originDate);
@@ -68,9 +80,7 @@ public class TimeUtils {
   public static Date getDate(Instant originDate, TimeZone targetTimezone) throws SQLException {
     try {
       long millis = originDate.getEpochSecond() * 1000 + originDate.getNano() / 1000000;
-      long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, TimeZone.getDefault()) + moveToTimeZoneOffset(millis, UTC, targetTimezone);
-      return new Date(milliSecsSinceEpochNew);
+      return new Date(millis);
     } catch (NumberFormatException ex) {
       throw new SQLException("Invalid date value: " + originDate);
     }
@@ -80,7 +90,7 @@ public class TimeUtils {
     try {
       long millis = originTimestamp.getTime();
       long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, targetTimezone);
+          millis + moveToTimeZoneOffset(millis, TimeZone.getDefault(), targetTimezone);
       Timestamp res = new Timestamp(milliSecsSinceEpochNew);
       res.setNanos(originTimestamp.getNanos());
       return res;
@@ -93,7 +103,7 @@ public class TimeUtils {
     try {
       long millis = originTimestamp.toEpochSecond(ZoneOffset.UTC) * 1000 + originTimestamp.getNano() / 1000000;
       long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, targetTimezone);
+          millis + moveToTimeZoneOffset(millis, TimeZone.getDefault(), targetTimezone);
       Timestamp res = new Timestamp(milliSecsSinceEpochNew);
       res.setNanos(originTimestamp.getNano());
       return res;
@@ -106,10 +116,32 @@ public class TimeUtils {
     try {
       long millis = originTimestamp.getEpochSecond() * 1000 + originTimestamp.getNano() / 1000000;
       long milliSecsSinceEpochNew =
-          millis + moveToTimeZoneOffset(millis, UTC, targetTimezone);
+          millis + moveToTimeZoneOffset(millis, TimeZone.getDefault(), targetTimezone);
       Timestamp res = new Timestamp(milliSecsSinceEpochNew);
       res.setNanos(originTimestamp.getNano());
       return res;
+    } catch (NumberFormatException ex) {
+      throw new SQLException("Invalid date value: " + originTimestamp);
+    }
+  }
+
+  public static Time getTime(LocalDateTime originTimestamp, TimeZone targetTimezone) throws SQLException {
+    try {
+      long millis = originTimestamp.toEpochSecond(ZoneOffset.UTC) * 1000 + originTimestamp.getNano() / 1000000;
+      long milliSecsSinceEpochNew =
+          millis + moveToTimeZoneOffset(millis, TimeZone.getDefault(), targetTimezone);
+      return new Time(milliSecsSinceEpochNew);
+    } catch (NumberFormatException ex) {
+      throw new SQLException("Invalid date value: " + originTimestamp);
+    }
+  }
+
+  public static Time getTime(Instant originTimestamp, TimeZone targetTimezone) throws SQLException {
+    try {
+      long millis = originTimestamp.getEpochSecond() * 1000 + originTimestamp.getNano() / 1000000;
+      long milliSecsSinceEpochNew =
+          millis + moveToTimeZoneOffset(millis, TimeZone.getDefault(), targetTimezone);
+      return new Time(milliSecsSinceEpochNew);
     } catch (NumberFormatException ex) {
       throw new SQLException("Invalid date value: " + originTimestamp);
     }

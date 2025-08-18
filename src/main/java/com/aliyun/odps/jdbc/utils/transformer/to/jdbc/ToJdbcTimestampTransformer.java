@@ -69,6 +69,9 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
     if (o == null) {
       return null;
     }
+    if (cal != null) {
+      timeZone = cal.getTimeZone();
+    }
     // if typeInfo is null or not time type, use default (TIMESTAMP)
     if (typeInfo == null || (typeInfo.getOdpsType() != OdpsType.DATETIME
                              && typeInfo.getOdpsType() != OdpsType.TIMESTAMP

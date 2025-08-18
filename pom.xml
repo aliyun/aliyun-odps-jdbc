@@ -65,6 +65,7 @@
   <properties>
     <sdk.version>0.52.2-public</sdk.version>
     <junit.version>4.13.1</junit.version>
+    <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>
   </properties>
@@ -101,24 +102,6 @@
         </dependencies>
       </plugin>
 
-      <!-- Disabled in official releases -->
-      <!--<plugin>-->
-      <!--<groupId>org.codehaus.mojo</groupId>-->
-      <!--<artifactId>aspectj-maven-plugin</artifactId>-->
-      <!--<version>1.8</version>-->
-      <!--<configuration>-->
-      <!--<source>${jdk.version}</source>-->
-      <!--<target>${jdk.version}</target>-->
-      <!--<complianceLevel>${jdk.version}</complianceLevel>-->
-      <!--</configuration>-->
-      <!--<executions>-->
-      <!--<execution>-->
-      <!--<goals>-->
-      <!--<goal>compile</goal>-->
-      <!--</goals>-->
-      <!--</execution>-->
-      <!--</executions>-->
-      <!--</plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
@@ -209,6 +192,14 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit5.version}</version> <!-- 或最新版本 -->
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>druid</artifactId>

@@ -47,14 +47,13 @@ import org.slf4j.MDC;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.Project;
 import com.aliyun.odps.ReloadException;
-import com.aliyun.odps.Tenant;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
-import com.aliyun.odps.jdbc.utils.TimeUtils;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
@@ -309,14 +308,19 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
     }
+    long startTime = System.currentTimeMillis();
+    Project currentProject;
+    try {
+      currentProject = odps.projects().get(project);
+    } catch (OdpsException ignored) {
+      throw new IllegalStateException("no excpetion will throw here.");
+    }
 
     if (null == connRes.isOdpsNamespaceSchema()) {
       try {
-        Tenant tenant = odps.tenant();
         this.odpsNamespaceSchema =
-            Boolean.parseBoolean(tenant.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
+            Boolean.parseBoolean(currentProject.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
       } catch (ReloadException e) {
-        log.info("tenant doesn't exist, this project cannot support odpsNamespaceSchema.");
         this.odpsNamespaceSchema = false;
       }
     } else {
@@ -332,18 +336,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.enableMaxQA = checkIfEnableMaxQA(this.quotaName);
 
     try {
-      long startTime = System.currentTimeMillis();
 
       // Default value for odps.sql.timezone
       if (!StringUtils.isNullOrEmpty(connRes.getTimeZone())) {
-        log.info("Use timezone: " + connRes.getTimeZone());
         tz = TimeZone.getTimeZone(connRes.getTimeZone());
+        sqlTaskProperties.setProperty("odps.sql.timezone", connRes.getTimeZone());
       } else {
-        String projectTimeZoneId = odps.projects().get().getProperty("odps.sql.timezone");
-        if (connRes.isUseProjectTimeZone() && !StringUtils.isNullOrEmpty(projectTimeZoneId)) {
+        String projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
+        if (!StringUtils.isNullOrEmpty(projectTimeZoneId)) {
           tz = TimeZone.getTimeZone(projectTimeZoneId);
         } else {
-          tz = TimeUtils.UTC;
+          tz = TimeZone.getDefault();
         }
       }
       log.info("Current connection timezone: " + tz.getID());
@@ -426,6 +429,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
       builder.quotaName(quotaName);
       builder.enableMcqaV2(true);
+      this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
     }
     long startTime = System.currentTimeMillis();
     this.executorBuilder = builder;
@@ -890,6 +894,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public SQLExecutorBuilder getExecutorBuilder() {
     return executorBuilder;
+  }
+
+  public ExecuteMode getInteractiveMode() {
+    return interactiveMode;
   }
 
   public boolean runningInInteractiveMode() {

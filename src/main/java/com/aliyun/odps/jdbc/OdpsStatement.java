@@ -773,11 +773,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         connHandle.log.info("Enabled SQL task properties: " + settings);
       }
       long begin = System.currentTimeMillis();
-      if (getExecuteMode() == ExecuteMode.INTERACTIVE && queryTimeout != -1
+      if (connHandle.getInteractiveMode() == ExecuteMode.INTERACTIVE && queryTimeout != -1
           && !settings.containsKey("odps.sql.session.query.timeout")) {
         settings.put("odps.sql.session.query.timeout", String.valueOf(queryTimeout));
       }
-      if (getExecuteMode() == ExecuteMode.INTERACTIVE_V2 && queryTimeout != -1
+      if (connHandle.getInteractiveMode() == ExecuteMode.INTERACTIVE_V2 && queryTimeout != -1
           && !settings.containsKey("odps.sql.maxqa.query.timeout")) {
         settings.put("odps.sql.maxqa.query.timeout", String.valueOf(queryTimeout));
       }
@@ -895,50 +895,4 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   public SQLExecutor getSqlExecutor() {
     return sqlExecutor;
   }
-
-  class SingleReaderResultSetIterator implements Iterator<Record> {
-
-    private final TunnelRecordReader reader;
-    private final InstanceTunnel.DownloadSession session;
-    private Record nextLine;
-
-    public SingleReaderResultSetIterator(InstanceTunnel.DownloadSession session, long recordCount) {
-      try {
-        this.session = session;
-        this.reader = session.openRecordReader(0, recordCount);
-        moveToNextLine();
-      } catch (TunnelException | IOException e) {
-        throw new RuntimeException("Open tunnel reader failed, session id: " + session.getId()
-                                   + " errMsg: " + e.getMessage(),
-                                   e);
-      }
-    }
-
-    @Override
-    public boolean hasNext() {
-      return nextLine != null;
-    }
-
-    @Override
-    public Record next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      Record currLine = nextLine;
-      moveToNextLine();
-      return currLine;
-    }
-
-    private void moveToNextLine() {
-      try {
-        nextLine = reader.read();
-      } catch (IOException e) {
-        nextLine = null;
-        throw new RuntimeException("Read record failed, session id: " + session.getId()
-                                   + " errMsg: " + e.getMessage(),
-                                   e);
-      }
-    }
-  }
-
 }

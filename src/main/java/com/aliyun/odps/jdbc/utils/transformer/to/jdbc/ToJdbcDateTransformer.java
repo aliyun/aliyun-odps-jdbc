@@ -57,6 +57,9 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
     if (o == null) {
       return null;
     }
+    if (cal != null) {
+      timeZone = cal.getTimeZone();
+    }
     try {
       if (o instanceof byte[]) {
         String str = encodeBytes((byte[]) o, charset);
@@ -69,15 +72,13 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
         o = RecordConverterCache.get(timeZone).parseObject(str, TypeInfoFactory.DATE);
       }
       if (o instanceof LocalDate) {
-        return TimeUtils.getDate(java.sql.Date.valueOf((LocalDate) o), timeZone);
+        return TimeUtils.getDate(((LocalDate) o), timeZone);
       } else if (o instanceof ZonedDateTime) {
-        Date date = Date.valueOf(((ZonedDateTime) o).toLocalDate());
-        return TimeUtils.getDate(date, timeZone);
+        return TimeUtils.getDate(((ZonedDateTime) o).toLocalDateTime(), timeZone);
       } else if (o instanceof Instant) {
         return TimeUtils.getDate((Instant) o, timeZone);
       } else if (o instanceof LocalDateTime) {
-        Date date = Date.valueOf(((LocalDateTime) o).toLocalDate());
-        return TimeUtils.getDate(date, timeZone);
+        return TimeUtils.getDate((LocalDateTime) o, timeZone);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Date.class);
         throw new SQLException(errorMsg);

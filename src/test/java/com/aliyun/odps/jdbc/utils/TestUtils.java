@@ -36,6 +36,7 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Project;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
+import com.google.common.collect.ImmutableMap;
 
 public class TestUtils {
 
@@ -166,6 +167,10 @@ public class TestUtils {
 
   public static Connection getConnection() throws Exception {
     return getConnection(Collections.emptyMap());
+  }
+
+  public static Connection getConnectionWithTimezone(String zoneId) throws Exception {
+    return getConnection(ImmutableMap.of("timezone", zoneId));
   }
 
   public static Odps getOdps() throws Exception {
