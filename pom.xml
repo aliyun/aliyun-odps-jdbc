@@ -63,7 +63,7 @@
   </repositories>
 
   <properties>
-    <sdk.version>0.52.2-public</sdk.version>
+    <sdk.version>0.53.0-public</sdk.version>
     <junit.version>4.13.1</junit.version>
     <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -186,12 +186,6 @@
     </plugins>
   </build>
   <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
