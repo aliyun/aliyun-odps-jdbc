@@ -26,9 +26,9 @@ public class BasicTableUploader extends DataUploader {
 
   public void setUpSession() throws OdpsException {
     if (null != partitionSpec) {
-      uploadSession = tunnel.createUploadSession(projectName, tableName, partitionSpec);
+      uploadSession = tunnel.createUploadSession(projectName, schemaName, tableName, partitionSpec, false);
     } else {
-      uploadSession = tunnel.createUploadSession(projectName, tableName);
+      uploadSession = tunnel.createUploadSession(projectName, schemaName, tableName, false);
     }
 
     conn.log.info("create upload session id=" + uploadSession.getId());

@@ -231,13 +231,34 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       if (hasPartition) {
         partitionSpec = matcher.group(4);
       }
-      if (tableBatchInsertTo.contains(".")) {
-        String[] splited = tableBatchInsertTo.split("\\.");
-        projectName = splited[0];
-        tableName = splited[1];
+      if (connHandle.isOdpsNamespaceSchema()) {
+        if (tableBatchInsertTo.contains(".")) {
+          String[] splited = tableBatchInsertTo.split("\\.");
+          if (splited.length == 3) {
+            projectName = splited[0];
+            schemaName = splited[1];
+            tableName = splited[2];
+          } else if (splited.length == 2) {
+            projectName = getConnection().getOdps().getDefaultProject();
+            schemaName = splited[0];
+            tableName = splited[1];
+          } else {
+            throw new SQLException("Invalid table name: " + tableBatchInsertTo);
+          }
+        } else {
+          projectName = getConnection().getOdps().getDefaultProject();
+          schemaName = "default";
+          tableName = tableBatchInsertTo;
+        }
       } else {
-        projectName = getConnection().getOdps().getDefaultProject();
-        tableName = tableBatchInsertTo;
+        if (tableBatchInsertTo.contains(".")) {
+          String[] splited = tableBatchInsertTo.split("\\.");
+          projectName = splited[0];
+          tableName = splited[1];
+        } else {
+          projectName = getConnection().getOdps().getDefaultProject();
+          tableName = tableBatchInsertTo;
+        }
       }
     } else {
       throw new SQLException("cannot extract table name or partition name in SQL: " + sql);

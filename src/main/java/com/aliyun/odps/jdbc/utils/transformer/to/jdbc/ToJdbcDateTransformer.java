@@ -25,15 +25,14 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Objects;
 import java.util.TimeZone;
 
 import com.aliyun.odps.data.Binary;
+import com.aliyun.odps.jdbc.utils.JdbcTimeUtil;
 import com.aliyun.odps.jdbc.utils.RecordConverterCache;
-import com.aliyun.odps.jdbc.utils.TimeUtils;
 import com.aliyun.odps.type.TypeInfoFactory;
 
 
@@ -57,28 +56,25 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
     if (o == null) {
       return null;
     }
+    TimeZone parserTimezone = timeZone;
     if (cal != null) {
-      timeZone = cal.getTimeZone();
+      parserTimezone = cal.getTimeZone();
     }
     try {
       if (o instanceof byte[]) {
         String str = encodeBytes((byte[]) o, charset);
         // convert to local date
-        o = RecordConverterCache.get(timeZone).parseObject(str, TypeInfoFactory.DATE);
+        o = RecordConverterCache.get(parserTimezone).parseObject(str, TypeInfoFactory.DATE);
       }
       if (o instanceof Binary) {
         String str = encodeBytes(((Binary) o).data(), charset);
         // convert to local date
-        o = RecordConverterCache.get(timeZone).parseObject(str, TypeInfoFactory.DATE);
+        o = RecordConverterCache.get(parserTimezone).parseObject(str, TypeInfoFactory.DATE);
       }
       if (o instanceof LocalDate) {
-        return TimeUtils.getDate(((LocalDate) o), timeZone);
-      } else if (o instanceof ZonedDateTime) {
-        return TimeUtils.getDate(((ZonedDateTime) o).toLocalDateTime(), timeZone);
-      } else if (o instanceof Instant) {
-        return TimeUtils.getDate((Instant) o, timeZone);
-      } else if (o instanceof LocalDateTime) {
-        return TimeUtils.getDate((LocalDateTime) o, timeZone);
+        return JdbcTimeUtil.epochDayToJdbcDate(((LocalDate) o).toEpochDay(), timeZone);
+      } else if (o instanceof ZonedDateTime || o instanceof Instant || o instanceof LocalDateTime) {
+        return JdbcTimeUtil.toJdbcDate(JdbcTimeUtil.getEpochMillis(o), timeZone);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Date.class);
         throw new SQLException(errorMsg);

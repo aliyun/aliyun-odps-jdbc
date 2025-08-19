@@ -338,18 +338,19 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     try {
 
       // Default value for odps.sql.timezone
+      String projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
       if (!StringUtils.isNullOrEmpty(connRes.getTimeZone())) {
         tz = TimeZone.getTimeZone(connRes.getTimeZone());
         sqlTaskProperties.setProperty("odps.sql.timezone", connRes.getTimeZone());
       } else {
-        String projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
-        if (!StringUtils.isNullOrEmpty(projectTimeZoneId)) {
+        if (useProjectTimeZone && !StringUtils.isNullOrEmpty(projectTimeZoneId)) {
           tz = TimeZone.getTimeZone(projectTimeZoneId);
         } else {
           tz = TimeZone.getDefault();
         }
       }
-      log.info("Current connection timezone: " + tz.getID());
+      log.info("Connection timezone: " + tz.getID() + " ,serverTimezone: " + projectTimeZoneId
+               + " , localTimezone: " + TimeZone.getDefault().getID());
 
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("load project meta infos time cost=%d", cost));

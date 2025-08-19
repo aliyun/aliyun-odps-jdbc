@@ -21,10 +21,8 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Objects;
@@ -32,8 +30,8 @@ import java.util.TimeZone;
 
 import com.aliyun.odps.OdpsType;
 import com.aliyun.odps.data.Binary;
+import com.aliyun.odps.jdbc.utils.JdbcTimeUtil;
 import com.aliyun.odps.jdbc.utils.RecordConverterCache;
-import com.aliyun.odps.jdbc.utils.TimeUtils;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.OdpsCommonUtils;
@@ -69,8 +67,9 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
     if (o == null) {
       return null;
     }
+    TimeZone parserTimezone = timeZone;
     if (cal != null) {
-      timeZone = cal.getTimeZone();
+      parserTimezone = cal.getTimeZone();
     }
     // if typeInfo is null or not time type, use default (TIMESTAMP)
     if (typeInfo == null || (typeInfo.getOdpsType() != OdpsType.DATETIME
@@ -82,21 +81,15 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       if (o instanceof byte[]) {
         String str = encodeBytes((byte[]) o, charset);
         // convert to local date
-        o = RecordConverterCache.get(timeZone).parseObject(str, typeInfo);
+        o = RecordConverterCache.get(parserTimezone).parseObject(str, typeInfo);
       }
       if (o instanceof Binary) {
         String str = encodeBytes(((Binary) o).data(), charset);
         // convert to local date
-        o = RecordConverterCache.get(timeZone).parseObject(str, typeInfo);
+        o = RecordConverterCache.get(parserTimezone).parseObject(str, typeInfo);
       }
-
-      if (o instanceof ZonedDateTime) {
-        return TimeUtils.getTimestamp(((ZonedDateTime) o).toInstant(), timeZone);
-      } else if (o instanceof Instant) {
-        return TimeUtils.getTimestamp((Instant) o, timeZone);
-      } else if (o instanceof LocalDateTime) {
-        // LocalDatetime is not time zone aware, so we always convert it to UTC
-        return TimeUtils.getTimestamp((LocalDateTime) o, TimeUtils.UTC);
+      if (o instanceof ZonedDateTime || o instanceof Instant || o instanceof LocalDateTime) {
+        return JdbcTimeUtil.toJdbcTimestamp(JdbcTimeUtil.getEpochMillis(o), JdbcTimeUtil.getNanos(o), timeZone);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);

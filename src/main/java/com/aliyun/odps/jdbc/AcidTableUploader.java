@@ -31,6 +31,7 @@ public class AcidTableUploader extends DataUploader {
     if (null != partitionSpec) {
       builder.setPartitionSpec(partitionSpec);
     }
+    builder.setSchemaName(schemaName);
 
     upsertSession = builder.build();
     conn.log.info("create upsert session id=" + upsertSession.getId());

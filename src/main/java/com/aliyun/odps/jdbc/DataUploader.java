@@ -49,7 +49,7 @@ public abstract class DataUploader {
     this.conn = conn;
 
     tunnel = new TableTunnel(conn.getOdps());
-    Table table = conn.getOdps().tables().get(projectName, tableName);
+    Table table = conn.getOdps().tables().get(projectName, schemaName, tableName);
     if (partitionSpec != null && !table.hasPartition(this.partitionSpec)) {
       table.createPartition(this.partitionSpec);
     }
