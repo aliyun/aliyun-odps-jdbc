@@ -580,11 +580,11 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                 sqlExecutor.getSubqueryId(),
                 enableLimit);
 
-            resultSet = new OdpsScollResultSet(this, meta, session,
+            resultSet = new OdpsScrollResultSet(this, meta, session,
                                                sqlExecutor
                                                                    .getExecuteMode() == ExecuteMode.INTERACTIVE
-                                                               ? OdpsScollResultSet.ResultMode.INTERACTIVE
-                                                               : OdpsScollResultSet.ResultMode.OFFLINE);
+                                                               ? OdpsScrollResultSet.ResultMode.INTERACTIVE
+                                                               : OdpsScrollResultSet.ResultMode.OFFLINE);
           }
           odpsResultSet = null;
         } catch (TunnelException e) {

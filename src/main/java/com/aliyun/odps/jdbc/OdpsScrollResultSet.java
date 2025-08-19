@@ -29,7 +29,7 @@ import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 
-public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
+public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
 
   private DownloadSession sessionHandle;
   private int fetchSize;
@@ -40,8 +40,6 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
   public enum ResultMode {
     OFFLINE, INTERACTIVE
   }
-
-  ;
 
   /**
    * Keeps in the memory a frame of rows which are likely be accessed in the near future.
@@ -63,7 +61,7 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
 
   private boolean isClosed = false;
 
-  OdpsScollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
+  OdpsScrollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
                      ResultMode mode)
       throws SQLException, TunnelException, IOException {
     super(stmt.getConnection(), stmt, meta);
@@ -99,8 +97,16 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
   public boolean absolute(int rows) throws SQLException {
     checkClosed();
 
-    long target = rows >= 0 ? rows : totalRows + rows;
-    target = rows >= 0 ? target - 1 : target;  // to zero-index
+    // According to JDBC spec:
+    // - If rows > 0, move to the given row number (1-indexed)
+    // - If rows < 0, move to the row number rows with respect to the end of the result set
+    // - If rows == 0, move to beforeFirst
+    if (rows == 0) {
+      cursorRow = -1;  // beforeFirst
+      return false;
+    }
+
+    long target = rows > 0 ? rows - 1 : totalRows + rows;  // Convert to zero-indexed
 
     if (target >= 0 && target < totalRows) {
       cursorRow = target;
@@ -270,26 +276,45 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
   public boolean next() throws SQLException {
     checkClosed();
 
-    if (cursorRow != totalRows) {
-      cursorRow++;
+    // If we're already at or past the end, return false
+    if (cursorRow >= totalRows) {
+      conn.log.debug("next() returning false: cursorRow=" + cursorRow + " >= totalRows=" + totalRows);
+      return false;
     }
-    return cursorRow != totalRows;
+    
+    // Move to the next row
+    cursorRow++;
+    conn.log.debug("next() moved cursor to: " + cursorRow + ", totalRows=" + totalRows);
+    
+    // If we've moved past the last row, return false
+    if (cursorRow >= totalRows) {
+      // cursorRow is already at totalRows (afterLast position)
+      conn.log.debug("next() returning false: cursorRow=" + cursorRow + " >= totalRows=" + totalRows);
+      return false;
+    }
+    
+    conn.log.debug("next() returning true: cursorRow=" + cursorRow + " < totalRows=" + totalRows);
+    return true;
   }
 
-  @Override
   protected Object[] rowAtCursor() throws SQLException {
+    conn.log.debug("rowAtCursor() called with cursorRow=" + cursorRow + ", cachedUpperRow=" + cachedUpperRow + ", fetchSize=" + fetchSize);
     // detect whether the cache contains the record
     boolean cacheHit = (cursorRow >= cachedUpperRow) && (cursorRow < cachedUpperRow + fetchSize);
+    conn.log.debug("cacheHit=" + cacheHit);
     if (!cacheHit) {
+      conn.log.debug("Calling fetchRows()");
       fetchRows();
     }
 
     int offset = (int) (cursorRow - cachedUpperRow);
+    conn.log.debug("offset=" + offset);
 
     Object[] row = rowsCache[offset];
 
     if (row == null) {
-      throw new SQLException("the row should be not-null, row=" + cursorRow);
+      // This means we've reached the end of the result set
+      throw new SQLException("No more records available, row=" + cursorRow);
     }
 
     if (row.length == 0) {
@@ -304,7 +329,9 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
    */
   private void fetchRows() throws SQLException {
     // determines the frame id to be cached
-    cachedUpperRow = (cursorRow / fetchSize) * fetchSize;
+    // Handle the case when cursorRow is -1 (beforeFirst position)
+    long effectiveCursorRow = Math.max(0, cursorRow);
+    cachedUpperRow = (effectiveCursorRow / fetchSize) * fetchSize;
 
     // tailor the fetchSize to read effective records
     long count = fetchSize;
@@ -323,6 +350,15 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
       }
       for (int i = 0; i < count; i++) {
         reuseRecord = reader.read(reuseRecord);
+        // Check if we've reached the end of records
+        if (reuseRecord == null) {
+          // If we get null, it means there are no more records
+          // Initialize the remaining cache entries as null
+          for (int j = i; j < count; j++) {
+            rowsCache[j] = null;
+          }
+          break;
+        }
         int columns = reuseRecord.getColumnCount();
         rowsCache[i] = new Object[columns];
         for (int j = 0; j < reuseRecord.getColumnCount(); j++) {
