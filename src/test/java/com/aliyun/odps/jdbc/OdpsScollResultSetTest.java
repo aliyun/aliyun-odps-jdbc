@@ -29,8 +29,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsScollResultSetTest {
@@ -44,14 +46,15 @@ public class OdpsScollResultSetTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    conn = TestManager.getInstance().conn;
+    conn = TestUtils.getConnection();
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
 
-    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
-        TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
+    Odps odps = TestUtils.getOdps();
+    TableTunnel tunnel = new TableTunnel(odps);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), INPUT_TABLE_NAME);
 
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();

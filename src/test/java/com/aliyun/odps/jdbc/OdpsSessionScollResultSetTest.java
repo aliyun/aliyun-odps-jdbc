@@ -29,8 +29,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsSessionScollResultSetTest {
@@ -39,6 +41,8 @@ public class OdpsSessionScollResultSetTest {
   private static Connection sessionConn;
   private static Statement stmt;
   private static ResultSet rs;
+  private static Odps odps;
+  private static TableTunnel tunnel;
   private static String INPUT_TABLE_NAME = "statement_test_table_input";
   private static final String
       SQL =
@@ -48,17 +52,19 @@ public class OdpsSessionScollResultSetTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    conn = TestManager.getInstance().conn;
-    sessionConn = TestManager.getInstance().sessionConn;
+    conn = TestUtils.getConnection();
+    sessionConn = TestUtils.getConnection(com.google.common.collect.ImmutableMap.of("interactiveMode", "true", "enableCommandApi", "true"));
     OdpsConnection odpsConn = (OdpsConnection) sessionConn;
     odpsConn.setEnableLimit(false);
+    odps = TestUtils.getOdps();
+    tunnel = new TableTunnel(odps);
+    
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
 
-    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
-        TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), INPUT_TABLE_NAME);
 
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();

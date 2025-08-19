@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -34,13 +35,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.tunnel.TableTunnel;
+import com.aliyun.odps.jdbc.utils.TestUtils;
+import com.google.common.collect.ImmutableMap;
 
 public class OdpsStatementTest {
 
-  private static Connection conn = TestManager.getInstance().conn;
+  private static Connection conn;
+  private static Odps odps;
+  private static TableTunnel tunnel;
   private static final int ROWS = 100000;
 
   private static String OUTPUT_TABLE_NAME = "statement_test_table_output";
@@ -49,7 +55,11 @@ public class OdpsStatementTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    Statement stmt = TestManager.getInstance().conn.createStatement();
+    conn = TestUtils.getConnection();
+    odps = TestUtils.getOdps();
+    tunnel = new TableTunnel(odps);
+    
+    Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
     stmt.executeUpdate("drop table if exists " + PARTITIONED_TABLE_NAME);
@@ -60,8 +70,8 @@ public class OdpsStatementTest {
     stmt.executeUpdate("alter table " + PARTITIONED_TABLE_NAME + " add partition (bar='hello')");
     stmt.close();
 
-    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
-        TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(
+        odps.getDefaultProject(), INPUT_TABLE_NAME);
 
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
@@ -140,6 +150,7 @@ public class OdpsStatementTest {
 
   @Test
   public void testSetMaxRows() throws Exception {
+    Connection conn = TestUtils.getConnection(ImmutableMap.of("enableLimit", "false"));
     Statement stmt = conn.createStatement();
     stmt.setMaxRows(45678);
     Assertions.assertEquals(45678, stmt.getMaxRows());
@@ -326,7 +337,7 @@ public class OdpsStatementTest {
 
   @Test
   public void testDescTable() {
-    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+    try (Statement stmt = conn.createStatement()) {
       stmt.execute("desc " + PARTITIONED_TABLE_NAME);
       try (ResultSet rs = stmt.getResultSet()) {
         int columnCount = rs.getMetaData().getColumnCount();
@@ -348,7 +359,7 @@ public class OdpsStatementTest {
 
   @Test
   public void testDescPartition() {
-    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+    try (Statement stmt = conn.createStatement()) {
       stmt.execute("desc " + PARTITIONED_TABLE_NAME + " partition (bar='hello');");
       try (ResultSet rs = stmt.getResultSet()) {
         int columnCount = rs.getMetaData().getColumnCount();
@@ -370,7 +381,7 @@ public class OdpsStatementTest {
 
   @Test
   public void testShowTables() {
-    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+    try (Statement stmt = conn.createStatement()) {
       stmt.execute("show tables;");
       try (ResultSet rs = stmt.getResultSet()) {
         int columnCount = rs.getMetaData().getColumnCount();
@@ -392,7 +403,7 @@ public class OdpsStatementTest {
 
   @Test
   public void testShowPartitions() {
-    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+    try (Statement stmt = conn.createStatement()) {
       stmt.execute("show partitions " + PARTITIONED_TABLE_NAME);
       try (ResultSet rs = stmt.getResultSet()) {
         int columnCount = rs.getMetaData().getColumnCount();
@@ -413,25 +424,44 @@ public class OdpsStatementTest {
   }
 
   @Test
-  public void testSetTimeZone() {
-    Calendar jvmCalendar = Calendar.getInstance();
-    jvmCalendar.set(2020, Calendar.JANUARY, 1, 0, 0, 0);
-    long localTimestampInSecond = jvmCalendar.toInstant().getEpochSecond();
+  public void testSetTimeZone() throws SQLException {
+    // 先指定 calendar 的时区再设置时间
+    Calendar shanghaiCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"));
+    shanghaiCal.set(2020, Calendar.JANUARY, 1, 0, 0, 0);
+    long localTimestampSecond = shanghaiCal.toInstant().getEpochSecond();
+    System.out.println("Shanghai 2020-01-01T00:00 epoch seconds: " + localTimestampSecond);
 
-    try (Statement stmt = TestManager.getInstance().conn.createStatement()) {
+    try (Statement stmt = conn.createStatement()) {
       stmt.execute("SET odps.sql.timezone=UTC");
-      try (ResultSet rs = stmt.executeQuery("SELECT CAST('2020-01-01 00:00:00' AS DATETIME)")) {
+
+      try (ResultSet rs = stmt.executeQuery(
+          "SELECT CAST('2020-01-01 00:00:00' AS DATETIME)")) {
+
         while (rs.next()) {
-          Date utcDate = rs.getTimestamp(1);
-          long utcTimestampInSecond = utcDate.getTime() / 1000;
-          // TODO fix later
-          Assertions.assertEquals(
-              utcTimestampInSecond - localTimestampInSecond,
-              TimeZone.getDefault().getOffset(utcDate.getTime()) / 1000);
+          // 按 UTC 解析 DB 值
+          Timestamp utcTs = rs.getTimestamp(1);
+          long utcTimestampSecond = utcTs.getTime() / 1000;
+          // 本地时间戳 - UTC 时间戳 == 时区偏移秒数
+          Assertions.assertEquals(localTimestampSecond - utcTimestampSecond, 0);
         }
       }
-    } catch (SQLException e) {
-      e.printStackTrace();
+    }
+
+    try (Statement stmt = conn.createStatement()) {
+      try (ResultSet rs = stmt.executeQuery(
+          "SELECT CAST('2020-01-01 00:00:00' AS DATETIME)")) {
+
+        while (rs.next()) {
+          // 按 UTC 解析 DB 值
+          Timestamp utcTs = rs.getTimestamp(1);
+          long utcTimestampSecond = utcTs.getTime() / 1000;
+          System.out.println("UTC 2020-01-01T00:00 epoch seconds: " + utcTimestampSecond);
+
+          long offsetSeconds = TimeZone.getDefault().getOffset(utcTs.getTime()) / 1000;
+          // 本地时间戳 - UTC 时间戳 == 时区偏移秒数
+          Assertions.assertEquals(localTimestampSecond - utcTimestampSecond, offsetSeconds);
+        }
+      }
     }
   }
 }

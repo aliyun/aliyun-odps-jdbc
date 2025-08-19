@@ -160,15 +160,15 @@ public class ImplicitTypeConversionTest {
     rs.next();
   }
 
-  private static void createTestTableNull() throws OdpsException, IOException, SQLException {
+  private static void createTestTableNull() throws Exception {
     // Create table for test
-    TestManager tm = TestManager.getInstance();
-    tm.odps.tables().delete(TEST_TABLE_NULL, true);
+    Odps odps = TestUtils.getOdps();
+    odps.tables().delete(TEST_TABLE_NULL, true);
     TableSchema schema = getTestTableSchema();
     Map<String, String> hints = new HashMap<String, String>();
     hints.put("odps.sql.type.system.odps2", "true");
-    tm.odps.tables().create(
-        tm.odps.getDefaultProject(),
+    odps.tables().create(
+        odps.getDefaultProject(),
         "default",
         TEST_TABLE_NULL,
         schema,
@@ -177,9 +177,9 @@ public class ImplicitTypeConversionTest {
         null, hints, null);
 
     // Upload a record
-    TableTunnel tunnel = new TableTunnel(tm.odps);
+    TableTunnel tunnel = new TableTunnel(odps);
     UploadSession uploadSession = tunnel.createUploadSession(
-        tm.odps.getDefaultProject(), "default", TEST_TABLE_NULL, true);
+        odps.getDefaultProject(), "default", TEST_TABLE_NULL, true);
     RecordWriter writer = uploadSession.openRecordWriter(0);
     Record r = uploadSession.newRecord();
     r.set(TINYINT_COL, null);
@@ -201,7 +201,7 @@ public class ImplicitTypeConversionTest {
 
     // Query the test
     String sql = "select * from " + TEST_TABLE_NULL;
-    Statement stmt = tm.conn.createStatement();
+    Statement stmt = TestUtils.getConnection().createStatement();
     stmt.execute(sql);
     rsNull = stmt.getResultSet();
     rsNull.next();
@@ -241,12 +241,12 @@ public class ImplicitTypeConversionTest {
   }
 
   @AfterAll
-  public static void tearDown() throws OdpsException, SQLException {
+  public static void tearDown() throws Exception {
     rs.close();
     rsNull.close();
-    TestManager tm = TestManager.getInstance();
-    tm.odps.tables().delete(TEST_TABLE, true);
-    tm.odps.tables().delete(TEST_TABLE_NULL, true);
+    Odps odps = TestUtils.getOdps();
+    odps.tables().delete(TEST_TABLE, true);
+    odps.tables().delete(TEST_TABLE_NULL, true);
   }
 
   /**

@@ -72,7 +72,7 @@ public class ToJdbcDateTransformer extends AbstractToJdbcDateTypeTransformer {
         o = RecordConverterCache.get(parserTimezone).parseObject(str, TypeInfoFactory.DATE);
       }
       if (o instanceof LocalDate) {
-        return JdbcTimeUtil.epochDayToJdbcDate(((LocalDate) o).toEpochDay(), timeZone);
+        return java.sql.Date.valueOf((LocalDate)o);
       } else if (o instanceof ZonedDateTime || o instanceof Instant || o instanceof LocalDateTime) {
         return JdbcTimeUtil.toJdbcDate(JdbcTimeUtil.getEpochMillis(o), timeZone);
       } else {

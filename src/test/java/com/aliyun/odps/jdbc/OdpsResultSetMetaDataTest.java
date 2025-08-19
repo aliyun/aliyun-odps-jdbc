@@ -30,8 +30,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsResultSetMetaDataTest {
@@ -42,12 +44,13 @@ public class OdpsResultSetMetaDataTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    stmt = TestManager.getInstance().conn.createStatement();
+    stmt = TestUtils.getConnection().createStatement();
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
 
-    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
-        TestManager.getInstance().odps.getDefaultProject(), "dual");
+    Odps odps = TestUtils.getOdps();
+    TableTunnel tunnel = new TableTunnel(odps);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), "dual");
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
     r.setBigint(0, 42L);

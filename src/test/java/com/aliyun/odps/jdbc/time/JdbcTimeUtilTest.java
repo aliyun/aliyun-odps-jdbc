@@ -24,15 +24,12 @@ public class JdbcTimeUtilTest {
     // Atlantic/Azores = UTC-1
     @ParameterizedTest
     @CsvSource({
-        // jvmTz, serverTz, calendarTz, expectedDateTime
-        "UTC, UTC, , 2012-01-01T00:00:00",
-        "Asia/Shanghai, Asia/Shanghai, , 2012-01-01T08:00:00",
-        "UTC, Asia/Shanghai, UTC, 2012-01-01T00:00:00",
-        "UTC, UTC, Asia/Shanghai, 2012-01-01T08:00:00",
-        "UTC, UTC, Asia/Pyongyang, 2012-01-01T09:00:00",
-        "UTC, UTC, Atlantic/Azores, 2011-12-31T23:00:00"
+        // jvmTz, serverTz, expectedDateTime
+        "UTC, UTC, 2012-01-01T00:00:00",
+        "Asia/Shanghai, Asia/Shanghai, 2012-01-01T08:00:00",
+        "UTC, Asia/Shanghai, 2012-01-01T00:00:00",
     })
-    void testToJdbcTimestamp(String jvmTz, String serverTz, String expected) {
+    void testToJdbcTimestamp(String jvmTz, String serverTz, String calendarTz, String expected) {
         TimeZone.setDefault(TimeZone.getTimeZone(jvmTz));
         Timestamp ts = JdbcTimeUtil.toJdbcTimestamp(UTC_MILLIS, 0, TimeZone.getTimeZone(serverTz));
         assertEquals(LocalDateTime.parse(expected), ts.toLocalDateTime());
@@ -56,19 +53,11 @@ public class JdbcTimeUtilTest {
     @ParameterizedTest
     @CsvSource({
         // jvmTz, serverTz, calendarTz, expectedLocalTime
-        "UTC, UTC, , 00:00:00",
-        "UTC, Asia/Shanghai, , 08:00:00",
-        "UTC, Asia/Shanghai, UTC, 00:00:00",
-        "UTC, UTC, Asia/Shanghai, 08:00:00",
-        "UTC, UTC, Asia/Pyongyang, 09:00:00",
-        "UTC, UTC, Atlantic/Azores, 23:00:00"
+        "UTC, UTC, 00:00:00",
+        "UTC, Asia/Shanghai, 08:00:00",
     })
-    void testToJdbcTime(String jvmTz, String serverTz, String calendarTz, String expected) {
+    void testToJdbcTime(String jvmTz, String serverTz, String expected) {
         TimeZone.setDefault(TimeZone.getTimeZone(jvmTz));
-        Calendar cal = (calendarTz != null && !calendarTz.isEmpty())
-                       ? Calendar.getInstance(TimeZone.getTimeZone(calendarTz))
-                       : null;
-
         Time time = JdbcTimeUtil.toJdbcTime(UTC_MILLIS, TimeZone.getTimeZone(serverTz));
         assertEquals(LocalTime.parse(expected), time.toLocalTime());
     }

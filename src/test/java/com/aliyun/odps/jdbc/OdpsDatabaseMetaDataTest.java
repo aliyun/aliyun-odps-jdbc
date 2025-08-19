@@ -31,13 +31,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
+import com.aliyun.odps.jdbc.utils.TestUtils;
+
 public class OdpsDatabaseMetaDataTest {
 
   static DatabaseMetaData databaseMetaData;
 
   @BeforeAll
   public static void setUp() throws Exception {
-    databaseMetaData = TestManager.getInstance().conn.getMetaData();
+    databaseMetaData = TestUtils.getConnection().getMetaData();
     System.out.println(databaseMetaData.getCatalogTerm());
     System.out.println(databaseMetaData.getProcedureTerm());
     System.out.println(databaseMetaData.getSchemaTerm());
@@ -98,7 +101,7 @@ public class OdpsDatabaseMetaDataTest {
 
   @Test
   public void testGetColumns() throws Exception {
-    Statement stmt = TestManager.getInstance().conn.createStatement();
+    Statement stmt = TestUtils.getConnection().createStatement();
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
     stmt.close();
@@ -134,8 +137,8 @@ public class OdpsDatabaseMetaDataTest {
   }
 
   @Test
-  public void testGetCatalogs() throws SQLException {
-    String projectName = TestManager.getInstance().odps.getDefaultProject();
+  public void testGetCatalogs() throws Exception {
+    String projectName = TestUtils.getOdps().getDefaultProject();
     try (ResultSet rs = databaseMetaData.getCatalogs()) {
       int count = 0;
       boolean includesDefaultProject = false;
@@ -158,8 +161,8 @@ public class OdpsDatabaseMetaDataTest {
   }
 
   @Test
-  public void testGetSchemas() throws SQLException {
-    String projectName = TestManager.getInstance().odps.getDefaultProject();
+  public void testGetSchemas() throws Exception {
+    String projectName = TestUtils.getOdps().getDefaultProject();
 
     // Without any filter
     try (ResultSet rs = databaseMetaData.getSchemas(null, null)) {

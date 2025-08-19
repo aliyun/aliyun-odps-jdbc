@@ -42,6 +42,7 @@ import java.util.TimeZone;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.data.Record;
@@ -49,40 +50,44 @@ import com.aliyun.odps.data.RecordReader;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.data.SimpleJsonValue;
 import com.aliyun.odps.data.Varchar;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsPreparedStatementTest {
 
   @Test
-  public void testSetPartialWithoutPartition() throws SQLException, OdpsException, IOException {
-    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+  public void testSetPartialWithoutPartition() throws Exception {
+    Connection conn = TestUtils.getConnection();
+    OdpsConnection connection = (OdpsConnection) conn;
     Statement stmt = connection.createStatement();
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(c1 bigint, c2 bigint, c3 bigint);");
 
     testExecuteBatch("insert into dual(c3, c1, c2) values(? ,?, ?);");
-    show("dual");
+    show("dual", conn);
 
     testExecuteBatch("insert into dual values(? ,?, ?);");
-    show("dual");
+    show("dual", conn);
   }
 
   @Test
-  public void testSetPartialWithPartition() throws SQLException, OdpsException, IOException {
-    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+  public void testSetPartialWithPartition() throws Exception {
+    Connection conn = TestUtils.getConnection();
+    OdpsConnection connection = (OdpsConnection) conn;
     Statement stmt = connection.createStatement();
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(c1 bigint, c2 bigint, c3 bigint) partitioned by (c4 int);");
 
     testExecuteBatch("insert into dual(c3, c1, c2) partition(c4=1) values(? ,?, ?);");
-    show("dual");
+    show("dual", conn);
 
     testExecuteBatch("insert into dual partition(c4=1) values(? ,?, ?);");
-    show("dual");
+    show("dual", conn);
   }
 
-  private void testExecuteBatch(String sql) throws SQLException {
-    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+  private void testExecuteBatch(String sql) throws Exception {
+    Connection conn = TestUtils.getConnection();
+    OdpsConnection connection = (OdpsConnection) conn;
     PreparedStatement pstmt = connection.prepareStatement(sql);
     pstmt.setLong(1, 100L);
     pstmt.setLong(2, 200L);
@@ -100,8 +105,8 @@ public class OdpsPreparedStatementTest {
     pstmt.close();
   }
 
-  private void show(String tableName) throws IOException, OdpsException {
-    OdpsConnection connection = (OdpsConnection) TestManager.getInstance().conn;
+  private void show(String tableName, Connection conn) throws Exception {
+    OdpsConnection connection = (OdpsConnection) conn;
     RecordReader reader = connection.getOdps().tables().get(tableName).read(10);
     Record r;
     while((r = reader.read()) != null) {
@@ -115,11 +120,15 @@ public class OdpsPreparedStatementTest {
 
   @Test
   public void testSetAll() throws Exception {
-    Statement stmt = TestManager.getInstance().conn.createStatement();
+    Connection conn = TestUtils.getConnection();
+    Odps odps = TestUtils.getOdps();
+    TableTunnel tunnel = new TableTunnel(odps);
+    
+    Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
-    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
-        TestManager.getInstance().odps.getDefaultProject(), "dual");
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(
+        odps.getDefaultProject(), "dual");
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
     r.setBigint(0, 42L);
@@ -128,7 +137,7 @@ public class OdpsPreparedStatementTest {
     upload.commit(new Long[]{0L});
 
     PreparedStatement pstmt;
-    pstmt = TestManager.getInstance().conn.prepareStatement(
+    pstmt = conn.prepareStatement(
         "select ? c1, ? c2, ? c3, ? c4, ? c5, ? c6, "
         + "? c7, ? c8, ? c9, ? c10, ? c11, ? c12, ? c13 from dual;");
     long unixtime = new java.util.Date().getTime();
@@ -170,8 +179,8 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testSetAllWithNewType() throws SQLException, ParseException {
-    Connection conn = TestManager.getInstance().conn;
+  public void testSetAllWithNewType() throws Exception {
+    Connection conn = TestUtils.getConnection();
     Statement ddl = conn.createStatement();
     ddl.execute("set odps.sql.type.system.odps2=true;");
     ddl.execute("set odps.sql.decimal.odps2=true;");
@@ -249,7 +258,7 @@ public class OdpsPreparedStatementTest {
 
   @Test
   public void testBatchInsert() throws Exception {
-    Connection conn = TestManager.getInstance().conn;
+    Connection conn = TestUtils.getConnection();
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
     ddl.executeUpdate(
@@ -299,8 +308,8 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testBatchInsertWithNewType() throws SQLException, ParseException {
-    Connection conn = TestManager.getInstance().conn;
+  public void testBatchInsertWithNewType() throws Exception {
+    Connection conn = TestUtils.getConnection();
     Statement ddl = conn.createStatement();
     ddl.execute("set odps.sql.type.system.odps2=true;");
     ddl.execute("set odps.sql.decimal.odps2=true;");
@@ -367,8 +376,8 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void test() throws SQLException, ParseException {
-    Connection conn = TestManager.getInstance().conn;
+  public void test() throws Exception {
+    Connection conn = TestUtils.getConnection();
     Statement ddl = conn.createStatement();
     ddl.execute("set odps.sql.type.system.odps2=true;");
     ddl.execute("set odps.sql.decimal.odps2=true;");
@@ -411,7 +420,7 @@ public class OdpsPreparedStatementTest {
 
   @Test
   public void testBatchInsertNullAndFetch() throws Exception {
-    Connection conn = TestManager.getInstance().conn;
+    Connection conn = TestUtils.getConnection();
     Statement ddl = conn.createStatement();
     ddl.executeUpdate("drop table if exists employee_test;");
     ddl.executeUpdate(
@@ -472,11 +481,11 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testUploadTableWithPartition() throws SQLException {
-    Connection conn = TestManager.getInstance().conn;
+  public void testUploadTableWithPartition() throws Exception {
+    Connection conn = TestUtils.getConnection();
     String tableName = "shuzuo_prepared_upload_partition_table";
 
-    Statement stmt = TestManager.getInstance().conn.createStatement();
+    Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + tableName + ";");
     stmt.executeUpdate(
         "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
@@ -509,11 +518,11 @@ public class OdpsPreparedStatementTest {
 
 
   @Test
-  public void testBatchUploadTableWithPartition() throws SQLException {
-    Connection conn = TestManager.getInstance().conn;
+  public void testBatchUploadTableWithPartition() throws Exception {
+    Connection conn = TestUtils.getConnection();
     String tableName = "shuzuo_prepared_batch_upload_partition_table";
 
-    Statement stmt = TestManager.getInstance().conn.createStatement();
+    Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + tableName + ";");
     stmt.executeUpdate(
         "create table if not exists " + tableName + " (key1 STRING, key2 DOUBLE, key3 BOOLEAN)"
@@ -548,8 +557,8 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testSqlInjection() throws SQLException {
-    Connection connection = TestManager.getInstance().conn;
+  public void testSqlInjection() throws Exception {
+    Connection connection = TestUtils.getConnection();
     Statement ddl = connection.createStatement();
 
     ddl.executeUpdate("drop table if exists sql_injection;");
@@ -579,8 +588,8 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testSqlWithConstantMark() throws SQLException {
-    Connection connection = TestManager.getInstance().conn;
+  public void testSqlWithConstantMark() throws Exception {
+    Connection connection = TestUtils.getConnection();
     Statement ddl = connection.createStatement();
 
     ddl.executeUpdate("drop table if exists sql_with_constant_mark;");
@@ -603,8 +612,8 @@ public class OdpsPreparedStatementTest {
   }
 
   @Test
-  public void testAcid2Table() throws SQLException {
-    Connection connection = TestManager.getInstance().conn;
+  public void testAcid2Table() throws Exception {
+    Connection connection = TestUtils.getConnection();
     Statement ddl = connection.createStatement();
     ddl.executeUpdate("drop table if exists acid_table;");
     ddl.executeUpdate(
@@ -623,15 +632,15 @@ public class OdpsPreparedStatementTest {
 
     ps.close();
 
-    ResultSet resultSet = runQuery("select count(*) from acid_table;");
+    ResultSet resultSet = runQuery("select count(*) from acid_table;", connection);
     resultSet.next();
     Assertions.assertEquals(2, resultSet.getInt(1));
 
   }
 
   @Test
-  public void testAcidTable() throws SQLException {
-    Connection connection = TestManager.getInstance().conn;
+  public void testAcidTable() throws Exception {
+    Connection connection = TestUtils.getConnection();
     Statement ddl = connection.createStatement();
     ddl.executeUpdate("drop table if exists acid1_table;");
     ddl.executeUpdate(
@@ -645,13 +654,13 @@ public class OdpsPreparedStatementTest {
     ps.addBatch();
     ps.executeBatch();
     ps.close();
-    ResultSet resultSet = runQuery("select count(*) from acid1_table;");
+    ResultSet resultSet = runQuery("select count(*) from acid1_table;", connection);
     resultSet.next();
     Assertions.assertEquals(2, resultSet.getInt(1));
   }
 
-  ResultSet runQuery(String sql) throws SQLException {
-    Statement statement = TestManager.getInstance().conn.createStatement();
+  ResultSet runQuery(String sql, Connection conn) throws SQLException {
+    Statement statement = conn.createStatement();
     return statement.executeQuery(sql);
   }
 }

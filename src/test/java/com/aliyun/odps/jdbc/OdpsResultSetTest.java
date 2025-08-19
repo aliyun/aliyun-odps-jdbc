@@ -31,9 +31,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsResultSetTest {
@@ -51,13 +53,15 @@ public class OdpsResultSetTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    stmt = TestManager.getInstance().conn.createStatement();
+    OdpsConnection conn = (OdpsConnection) TestUtils.getConnection();
+    stmt = conn.createStatement();
+    stmt.execute("set odps.default.schema=default;");
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
 
-    TableTunnel.UploadSession upload =
-        TestManager.getInstance().tunnel.createUploadSession(
-            TestManager.getInstance().odps.getDefaultProject(), "dual");
+    Odps odps = TestUtils.getOdps();
+    TableTunnel tunnel = new TableTunnel(odps);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), "dual");
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
     r.setBigint(0, 42L);
@@ -91,9 +95,9 @@ public class OdpsResultSetTest {
     stmt.executeUpdate("alter table select_from_partition add partition (par_col='a')");
 
     PartitionSpec ps = new PartitionSpec("par_col='a'");
-    TableTunnel.UploadSession upload =
-        TestManager.getInstance().tunnel.createUploadSession(
-            TestManager.getInstance().odps.getDefaultProject(), "select_from_partition", ps);
+    Odps odps = TestUtils.getOdps();
+    TableTunnel tunnel = new TableTunnel(odps);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), "select_from_partition", ps);
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
     r.setBigint(0, 42L);
@@ -331,8 +335,9 @@ public class OdpsResultSetTest {
   }
 
   @Test
-  public void testGetTimestampWithTimeZone() throws SQLException {
-    TimeZone tz = ((OdpsConnection) TestManager.getInstance().conn).getTimezone();
+  public void testGetTimestampWithTimeZone() throws Exception {
+    OdpsConnection conn = (OdpsConnection) TestUtils.getConnection();
+    TimeZone tz = conn.getTimezone();
 
     // Make sure the project's time zone is not UTC, or this test case will always pass.
     Assertions.assertNotEquals(0, tz.getRawOffset());
@@ -344,12 +349,12 @@ public class OdpsResultSetTest {
     }
 
     long timestampWithTimeZone;
-    ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(true);
+    conn.setUseProjectTimeZone(true);
     try (ResultSet rs = stmt.executeQuery(String.format("select %s c1 from dual;", odpsNowStr))) {
       rs.next();
       timestampWithTimeZone = rs.getTimestamp(1).getTime();
     } finally {
-      ((OdpsConnection) TestManager.getInstance().conn).setUseProjectTimeZone(false);
+      conn.setUseProjectTimeZone(false);
     }
 
     // TODO fix later

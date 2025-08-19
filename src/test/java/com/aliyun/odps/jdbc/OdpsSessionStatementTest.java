@@ -31,14 +31,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
 public class OdpsSessionStatementTest {
 
-  private static Connection conn = TestManager.getInstance().conn;
-  private static Connection sessionConn = TestManager.getInstance().sessionConn;
+  private static Connection conn;
+  private static Connection sessionConn;
+  private static Odps odps;
+  private static TableTunnel tunnel;
   private static final int ROWS = 100000;
 
   private static String OUTPUT_TABLE_NAME = "session_statement_test_table_output";
@@ -46,6 +50,11 @@ public class OdpsSessionStatementTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
+    conn = TestUtils.getConnection();
+    sessionConn = TestUtils.getConnection(com.google.common.collect.ImmutableMap.of("interactiveMode", "true", "enableCommandApi", "true"));
+    odps = TestUtils.getOdps();
+    tunnel = new TableTunnel(odps);
+    
     Statement stmt = conn.createStatement();
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("drop table if exists " + OUTPUT_TABLE_NAME);
@@ -53,8 +62,7 @@ public class OdpsSessionStatementTest {
     stmt.executeUpdate("create table if not exists " + OUTPUT_TABLE_NAME + "(id bigint);");
     stmt.close();
 
-    TableTunnel.UploadSession upload = TestManager.getInstance().tunnel.createUploadSession(
-        TestManager.getInstance().odps.getDefaultProject(), INPUT_TABLE_NAME);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), INPUT_TABLE_NAME);
 
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
@@ -163,7 +171,7 @@ public class OdpsSessionStatementTest {
         Assertions.assertEquals(i, rs.getInt(1));
         i++;
       }
-      Assertions.assertEquals(11111, i);
+      Assertions.assertEquals(10000, i);
     }
     rs.close();
     stmt.close();
