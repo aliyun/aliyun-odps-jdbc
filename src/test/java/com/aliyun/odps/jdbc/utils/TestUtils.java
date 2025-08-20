@@ -27,6 +27,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 
+import org.slf4j.Logger;
+
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
@@ -36,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 
 public class TestUtils {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(TestUtils.class);
     private static Random random = new Random();
 
     public static float randomFloat() {
@@ -118,6 +121,7 @@ public class TestUtils {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
         }
+        log.debug(sb.toString());
         // pass project name via url
         return DriverManager.getConnection(sb.toString());
     }
