@@ -18,7 +18,9 @@ jobs:
         with:
           role-to-assume: '${{ secrets.ROLE_ARN }}'
           oidc-provider-arn: '${{ secrets.OIDC_ARN }}'
-          audience: 'actions.github.com' # default value
+          role-session-name: 'github-action-session'
+          role-session-expiration: 1800
+          audience: 'github-actions'
 
       - name: Set up environment
         run: |
