@@ -573,16 +573,24 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             if (connHandle.getTunnelReadTimeout() >= 0) {
               tunnel.getConfig().setSocketTimeout(connHandle.getTunnelReadTimeout());
             }
-            session = tunnel.createDirectDownloadSession(
-                connHandle.getOdps().getDefaultProject(),
-                sqlExecutor.getInstance().getId(),
-                sqlExecutor.getTaskName(),
-                sqlExecutor.getSubqueryId(),
-                enableLimit);
+            ExecuteMode executeMode = getExecuteMode();
+            if (executeMode == ExecuteMode.INTERACTIVE) {
+              session = tunnel.createDirectDownloadSession(
+                  connHandle.getOdps().getDefaultProject(),
+                  sqlExecutor.getInstance().getId(),
+                  sqlExecutor.getTaskName(),
+                  sqlExecutor.getSubqueryId(),
+                  enableLimit
+              );
+            } else {
+              session = tunnel.createDownloadSession(
+                  connHandle.getOdps().getDefaultProject(),
+                  sqlExecutor.getInstance().getId(),
+                  enableLimit);
+            }
 
             resultSet = new OdpsScrollResultSet(this, meta, session,
-                                               sqlExecutor
-                                                                   .getExecuteMode() == ExecuteMode.INTERACTIVE
+                                                executeMode == ExecuteMode.INTERACTIVE
                                                                ? OdpsScrollResultSet.ResultMode.INTERACTIVE
                                                                : OdpsScrollResultSet.ResultMode.OFFLINE);
           }

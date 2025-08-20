@@ -14,7 +14,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
-import java.util.Properties;
 import java.util.TimeZone;
 
 import org.junit.jupiter.api.AfterAll;
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.jdbc.OdpsPreparedStatement;
+import com.aliyun.odps.jdbc.utils.TestUtils;
 
 public class OdpsJdbcDateTimeTest {
 
@@ -41,39 +41,9 @@ public class OdpsJdbcDateTimeTest {
         .build();
 
     @BeforeAll
-    public static void prepare() {
-        try {
-            String driverName = "com.aliyun.odps.jdbc.OdpsDriver";
-            Class.forName(driverName);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        // fill in the information string
-        Properties odpsConfig = new Properties();
-        InputStream is =
-            Thread.currentThread().getContextClassLoader().getResourceAsStream("conf.properties");
-        try {
-            odpsConfig.load(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        String accessId = odpsConfig.getProperty("access_id");
-        String accessKey = odpsConfig.getProperty("access_key");
-        String endpoint = odpsConfig.getProperty("end_point");
-        String pj = odpsConfig.getProperty("project_name");
-        conn = null;
-        try {
-            conn =
-                DriverManager.getConnection(
-                    "jdbc:odps:" + endpoint + "?project=" + pj + "&enableOdpsLogger=true", accessId,
-                    accessKey);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public static void prepare() throws Exception {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+        conn = TestUtils.getConnection();
     }
 
     @AfterAll
@@ -84,6 +54,7 @@ public class OdpsJdbcDateTimeTest {
         stmt.execute("drop table if exists " + TIMESTAMP_TABLE_NAME);
         stmt.execute("drop table if exists " + PREPARED_DATETIME_TABLE_NAME);
         stmt.execute("drop table if exists " + PREPARED_DATETIME_BATCH_TABLE_NAME);
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
     }
 
     @Test

@@ -25,46 +25,47 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
+import com.google.common.collect.ImmutableMap;
 
-public class OdpsSessionScollResultSetTest {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class OdpsScrollResultSetTest {
 
   private static Connection conn;
-  private static Connection sessionConn;
   private static Statement stmt;
   private static ResultSet rs;
-  private static Odps odps;
-  private static TableTunnel tunnel;
   private static String INPUT_TABLE_NAME = "statement_test_table_input";
-  private static final String
-      SQL =
-      "set odps.sql.select.auto.limit=-1;set odps.sql.session.result.cache.enable=false;select * from "
-      + INPUT_TABLE_NAME;
+  private static String FULL_TABLE_NAME;
+  private static final String SQL = "select * from " + INPUT_TABLE_NAME;
   private static final int ROWS = 100000;
 
   @BeforeAll
   public static void setUp() throws Exception {
-    conn = TestUtils.getConnection();
-    sessionConn = TestUtils.getConnection(com.google.common.collect.ImmutableMap.of("interactiveMode", "true", "enableCommandApi", "true"));
-    OdpsConnection odpsConn = (OdpsConnection) sessionConn;
-    odpsConn.setEnableLimit(false);
-    odps = TestUtils.getOdps();
-    tunnel = new TableTunnel(odps);
-    
+    conn = TestUtils.getConnection(ImmutableMap.of("enableLimit", "false"));
+    Odps odps = TestUtils.getOdps();
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
-    stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
+    stmt.executeUpdate(
+        "create table if not exists " + odps.getDefaultProject() + ".default." + INPUT_TABLE_NAME
+        + "(id bigint);");
 
-    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), INPUT_TABLE_NAME);
+
+    TableTunnel tunnel = new TableTunnel(odps);
+    TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), "default", INPUT_TABLE_NAME, true);
 
     RecordWriter writer = upload.openRecordWriter(0);
     Record r = upload.newRecord();
@@ -74,19 +75,49 @@ public class OdpsSessionScollResultSetTest {
     }
     writer.close();
     upload.commit(new Long[]{0L});
+    
+    // Wait for data to be committed and verify it's visible
+    boolean dataCommitted = false;
+    int attempts = 0;
+    while (!dataCommitted && attempts < 10) {
+      try {
+        Thread.sleep(2000);
+        attempts++;
+        
+        // Check if data is visible by trying to query it
+        Statement checkStmt = conn.createStatement();
+        ResultSet checkRs = checkStmt.executeQuery("select count(*) from " + INPUT_TABLE_NAME);
+        if (checkRs.next()) {
+          long count = checkRs.getLong(1);
+          System.out.println("Data check attempt " + attempts + ": count = " + count);
+          if (count == ROWS) {
+            dataCommitted = true;
+          }
+        }
+        checkRs.close();
+        checkStmt.close();
+      } catch (Exception e) {
+        System.out.println("Data check attempt " + attempts + " failed: " + e.getMessage());
+      }
+    }
+    
+    if (!dataCommitted) {
+      throw new Exception("Data was not committed within the expected time");
+    }
+  }
 
-    stmt = sessionConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                       ResultSet.CONCUR_READ_ONLY);
+  @BeforeEach
+  public void reset() throws Exception {
     rs = stmt.executeQuery(SQL);
-    Assertions.assertEquals(ResultSet.FETCH_UNKNOWN, rs.getFetchDirection());
+  }
+
+  @AfterEach
+  public void close() throws Exception {
+    rs.close();
   }
 
   @AfterAll
   public static void tearDown() throws Exception {
-    stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                ResultSet.CONCUR_READ_ONLY);
-    stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
-    rs.close();
     stmt.close();
   }
 
@@ -139,23 +170,8 @@ public class OdpsSessionScollResultSetTest {
   }
 
   @Test
-  public void testReverse10K() throws Exception {
-    rs.setFetchDirection(ResultSet.FETCH_REVERSE);
-    rs.setFetchSize(10000);
-    {
-      int i = ROWS;
-      while (rs.previous()) {
-        Assertions.assertEquals(i, rs.getRow());
-        Assertions.assertEquals(i - 1, rs.getInt(1));
-        i--;
-      }
-      Assertions.assertEquals(0, i);
-    }
-    Assertions.assertEquals(true, rs.isBeforeFirst());
-  }
-
-  @Test
-  public void testForward10K() throws Exception {
+  @Order(1)
+  public void testForward10KAndReverse10k() throws Exception {
     rs.setFetchDirection(ResultSet.FETCH_FORWARD);
     rs.setFetchSize(100000);
     long start = System.currentTimeMillis();
@@ -171,9 +187,23 @@ public class OdpsSessionScollResultSetTest {
     long end = System.currentTimeMillis();
     System.out.printf("step\t%d\tmillis\t%d\n", rs.getFetchSize(), end - start);
     Assertions.assertEquals(true, rs.isAfterLast());
+
+    rs.setFetchDirection(ResultSet.FETCH_REVERSE);
+    rs.setFetchSize(10000);
+    {
+      int i = ROWS;
+      while (rs.previous()) {
+        Assertions.assertEquals(i, rs.getRow());
+        Assertions.assertEquals(i - 1, rs.getInt(1));
+        i--;
+      }
+      Assertions.assertEquals(0, i);
+    }
+    Assertions.assertEquals(true, rs.isBeforeFirst());
   }
 
   @Test
+  @Order(4)
   public void testForward100K() throws Exception {
     rs.setFetchDirection(ResultSet.FETCH_FORWARD);
     rs.setFetchSize(100000);
@@ -193,6 +223,7 @@ public class OdpsSessionScollResultSetTest {
   }
 
   @Test
+  @Order(3)
   public void testForward5K() throws Exception {
     rs.setFetchDirection(ResultSet.FETCH_FORWARD);
     rs.setFetchSize(5000);

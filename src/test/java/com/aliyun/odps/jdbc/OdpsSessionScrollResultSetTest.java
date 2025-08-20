@@ -25,8 +25,10 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.Odps;
@@ -34,26 +36,43 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
+import com.google.common.collect.ImmutableMap;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
 
-public class OdpsScollResultSetTest {
+public class OdpsSessionScrollResultSetTest {
 
   private static Connection conn;
+  private static Connection sessionConn;
   private static Statement stmt;
   private static ResultSet rs;
+  private static Odps odps;
+  private static TableTunnel tunnel;
   private static String INPUT_TABLE_NAME = "statement_test_table_input";
-  private static final String SQL = "select * from " + INPUT_TABLE_NAME;
+  private static final String
+      SQL =
+      "set odps.sql.select.auto.limit=-1;set odps.sql.session.result.cache.enable=false;select * from "
+      + INPUT_TABLE_NAME;
   private static final int ROWS = 100000;
 
   @BeforeAll
   public static void setUp() throws Exception {
-    conn = TestUtils.getConnection();
+    conn = TestUtils.getConnection(ImmutableMap.of("enableLimit", "false"));
+    sessionConn =
+        TestUtils.getConnection(
+            com.google.common.collect.ImmutableMap.of("enableLimit", "false", "interactiveMode",
+                                                      "true", "enableCommandApi", "true"));
+    OdpsConnection odpsConn = (OdpsConnection) sessionConn;
+    odpsConn.setEnableLimit(false);
+    odps = TestUtils.getOdps();
+    tunnel = new TableTunnel(odps);
+    
     stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                 ResultSet.CONCUR_READ_ONLY);
     stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.executeUpdate("create table if not exists " + INPUT_TABLE_NAME + "(id bigint);");
 
-    Odps odps = TestUtils.getOdps();
-    TableTunnel tunnel = new TableTunnel(odps);
     TableTunnel.UploadSession upload = tunnel.createUploadSession(odps.getDefaultProject(), INPUT_TABLE_NAME);
 
     RecordWriter writer = upload.openRecordWriter(0);
@@ -65,14 +84,26 @@ public class OdpsScollResultSetTest {
     writer.close();
     upload.commit(new Long[]{0L});
 
-    rs = stmt.executeQuery(SQL);
-    Assertions.assertEquals(ResultSet.FETCH_UNKNOWN, rs.getFetchDirection());
+    stmt = sessionConn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                                       ResultSet.CONCUR_READ_ONLY);
   }
 
   @AfterAll
   public static void tearDown() throws Exception {
-    rs.close();
+    stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                                ResultSet.CONCUR_READ_ONLY);
+    stmt.executeUpdate("drop table if exists " + INPUT_TABLE_NAME);
     stmt.close();
+  }
+
+  @BeforeEach
+  public void reset() throws Exception {
+    rs = stmt.executeQuery(SQL);
+  }
+
+  @AfterEach
+  public void close() throws Exception {
+    rs.close();
   }
 
   @Test
@@ -124,23 +155,7 @@ public class OdpsScollResultSetTest {
   }
 
   @Test
-  public void testReverse10K() throws Exception {
-    rs.setFetchDirection(ResultSet.FETCH_REVERSE);
-    rs.setFetchSize(10000);
-    {
-      int i = ROWS;
-      while (rs.previous()) {
-        Assertions.assertEquals(i, rs.getRow());
-        Assertions.assertEquals(i - 1, rs.getInt(1));
-        i--;
-      }
-      Assertions.assertEquals(0, i);
-    }
-    Assertions.assertEquals(true, rs.isBeforeFirst());
-  }
-
-  @Test
-  public void testForward10K() throws Exception {
+  public void testForward10KAndReverse10k() throws Exception {
     rs.setFetchDirection(ResultSet.FETCH_FORWARD);
     rs.setFetchSize(100000);
     long start = System.currentTimeMillis();
@@ -156,6 +171,19 @@ public class OdpsScollResultSetTest {
     long end = System.currentTimeMillis();
     System.out.printf("step\t%d\tmillis\t%d\n", rs.getFetchSize(), end - start);
     Assertions.assertEquals(true, rs.isAfterLast());
+
+    rs.setFetchDirection(ResultSet.FETCH_REVERSE);
+    rs.setFetchSize(10000);
+    {
+      int i = ROWS;
+      while (rs.previous()) {
+        Assertions.assertEquals(i, rs.getRow());
+        Assertions.assertEquals(i - 1, rs.getInt(1));
+        i--;
+      }
+      Assertions.assertEquals(0, i);
+    }
+    Assertions.assertEquals(true, rs.isBeforeFirst());
   }
 
   @Test

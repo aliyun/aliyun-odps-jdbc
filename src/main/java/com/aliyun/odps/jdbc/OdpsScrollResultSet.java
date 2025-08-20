@@ -221,11 +221,15 @@ public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public boolean previous() throws SQLException {
     checkClosed();
-
-    if (cursorRow != -1) {
-      cursorRow--;
+    // Move to the previous row
+    cursorRow--;
+    // If we've moved before the first row, return false
+    if (cursorRow < 0) {
+      // cursorRow is before beforeFirst position
+      cursorRow = -1; // Keep cursor at beforeFirst position
+      return false;
     }
-    return (cursorRow != -1);
+    return true;
   }
 
   @Override
@@ -275,25 +279,13 @@ public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
   @Override
   public boolean next() throws SQLException {
     checkClosed();
-
-    // If we're already at or past the end, return false
-    if (cursorRow >= totalRows) {
-      conn.log.debug("next() returning false: cursorRow=" + cursorRow + " >= totalRows=" + totalRows);
-      return false;
-    }
-    
     // Move to the next row
     cursorRow++;
-    conn.log.debug("next() moved cursor to: " + cursorRow + ", totalRows=" + totalRows);
-    
     // If we've moved past the last row, return false
     if (cursorRow >= totalRows) {
-      // cursorRow is already at totalRows (afterLast position)
-      conn.log.debug("next() returning false: cursorRow=" + cursorRow + " >= totalRows=" + totalRows);
+      // cursorRow is at totalRows (afterLast position) or beyond
       return false;
     }
-    
-    conn.log.debug("next() returning true: cursorRow=" + cursorRow + " < totalRows=" + totalRows);
     return true;
   }
 

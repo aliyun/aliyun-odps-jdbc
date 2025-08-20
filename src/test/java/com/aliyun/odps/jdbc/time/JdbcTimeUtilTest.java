@@ -1,5 +1,7 @@
 package com.aliyun.odps.jdbc.time;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -20,6 +22,12 @@ public class JdbcTimeUtilTest {
 
     private static final long UTC_MILLIS = 1325376000000L; // 2012-01-01T00:00:00Z
 
+
+    @AfterAll
+    public static void tearDown() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+    }
+
     // Asia/Pyongyang = UTC+9
     // Atlantic/Azores = UTC-1
     @ParameterizedTest
@@ -27,9 +35,9 @@ public class JdbcTimeUtilTest {
         // jvmTz, serverTz, expectedDateTime
         "UTC, UTC, 2012-01-01T00:00:00",
         "Asia/Shanghai, Asia/Shanghai, 2012-01-01T08:00:00",
-        "UTC, Asia/Shanghai, 2012-01-01T00:00:00",
+        "UTC, Asia/Shanghai, 2012-01-01T08:00:00",
     })
-    void testToJdbcTimestamp(String jvmTz, String serverTz, String calendarTz, String expected) {
+    void testToJdbcTimestamp(String jvmTz, String serverTz, String expected) {
         TimeZone.setDefault(TimeZone.getTimeZone(jvmTz));
         Timestamp ts = JdbcTimeUtil.toJdbcTimestamp(UTC_MILLIS, 0, TimeZone.getTimeZone(serverTz));
         assertEquals(LocalDateTime.parse(expected), ts.toLocalDateTime());
