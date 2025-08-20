@@ -20,7 +20,7 @@ jobs:
           oidc-provider-arn: '${{ secrets.OIDC_ARN }}'
           role-session-name: 'github-action-session'
           role-session-expiration: 1800
-          audience: 'github-actions'
+          audience: 'actions.github.com'
 
       - name: Set up environment
         run: |
