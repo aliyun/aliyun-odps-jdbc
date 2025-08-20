@@ -105,9 +105,9 @@ public class TestUtils {
 
         String endpoint = System.getenv("odps_endpoint");
         String project = System.getenv("MAXCOMPUTE_PROJECT");
-        String accessId = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID");
-        String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
-        String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
+        String accessId = System.getenv("ALIBABACLOUD_ACCESS_KEY_ID");
+        String accessKey = System.getenv("ALIBABACLOUD_ACCESS_KEY_SECRET");
+        String stsToken = System.getenv("ALIBABACLOUD_SECURITY_TOKEN");
 
         String url = String.format("jdbc:odps:%s?project=%s&accessId=%s&accessKey=%s",
                                    endpoint, project, accessId, accessKey);
@@ -133,9 +133,9 @@ public class TestUtils {
     public static Odps getOdps() throws Exception {
         String endpoint = System.getenv("odps_endpoint");
         String project = System.getenv("MAXCOMPUTE_PROJECT");
-        String accessId = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID");
-        String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
-        String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
+        String accessId = System.getenv("ALIBABACLOUD_ACCESS_KEY_ID");
+        String accessKey = System.getenv("ALIBABACLOUD_ACCESS_KEY_SECRET");
+        String stsToken = System.getenv("ALIBABACLOUD_SECURITY_TOKEN");
 
         Account account =
             StringUtils.isBlank(stsToken) ? new AliyunAccount(accessId, accessKey)
