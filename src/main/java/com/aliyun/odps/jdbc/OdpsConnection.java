@@ -241,9 +241,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.info(String.format("endpoint=%s, project=%s, schema=%s", endpoint, project, schema));
     log.info(String.format("charset=%s, logview host=%s", charset, logviewHost));
     Account account;
-    if (stsToken == null || stsToken.length() <= 0) {
+    if (StringUtils.isBlank(stsToken)) {
+      log.debug("use ak, sk to auth");
       account = new AliyunAccount(accessId, accessKey);
     } else {
+      log.debug("use ak, sk, ststoken to auth");
       account = new StsAccount(accessId, accessKey, stsToken);
     }
     log.debug("debug mode on");
