@@ -26,6 +26,7 @@ jobs:
           echo "ALIBABA_CLOUD_ACCESS_KEY_SECRET=${{ steps.get-credentials.outputs.aliyun-access-key-secret }}" >> $GITHUB_ENV
           echo "ALIBABA_CLOUD_SECURITY_TOKEN=${{ steps.get-credentials.outputs.aliyun-security-token }}" >> $GITHUB_ENV
           echo "odps_endpoint=${{ secrets.ENDPOINT }}" >> $GITHUB_ENV
+          echo "MAXCOMPUTE_PROJECT=go_sdk_regression_testing" >> $GITHUB_ENV
           echo "TZ=Asia/Shanghai" >> $GITHUB_ENV
 
       - uses: actions/checkout@v4

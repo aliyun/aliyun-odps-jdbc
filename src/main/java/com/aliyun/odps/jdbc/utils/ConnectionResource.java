@@ -491,7 +491,7 @@ public class ConnectionResource {
 
     skipCheckIfSelect =
         Boolean.parseBoolean(
-            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_CHECK_IF_SELECT,
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", SKIP_CHECK_IF_SELECT,
                                                      SKIP_CHECK_IF_SELECT));
 
     longJobWarningThreshold = Long.parseLong(

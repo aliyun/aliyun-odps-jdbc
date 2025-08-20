@@ -824,7 +824,7 @@ public class ImplicitTypeConversionTest {
     // Here we pass a calendar with timezone JSP (Japen Standard Time, GMT+9) to getTime, getDate,
     // and getTimestamp. Expected return value should be one hour earlier. E.g. the string in ODPS
     // is "2019-06-12 00:00:00", the expected return value should be "2019-06-11 23:00:00"
-
+    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
     String expectedTime = "23:00:00";
     String expectedDate = "2019-05-23";
     String expectedTimestamp = "2019-05-22 23:00:00.0";

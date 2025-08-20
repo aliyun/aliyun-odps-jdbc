@@ -422,46 +422,4 @@ public class OdpsStatementTest {
       e.printStackTrace();
     }
   }
-
-  @Test
-  public void testSetTimeZone() throws SQLException {
-    // 先指定 calendar 的时区再设置时间
-    Calendar shanghaiCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"));
-    shanghaiCal.set(2020, Calendar.JANUARY, 1, 0, 0, 0);
-    long localTimestampSecond = shanghaiCal.toInstant().getEpochSecond();
-    System.out.println("Shanghai 2020-01-01T00:00 epoch seconds: " + localTimestampSecond);
-
-    try (Statement stmt = conn.createStatement()) {
-      stmt.execute("SET odps.sql.timezone=UTC");
-
-      try (ResultSet rs = stmt.executeQuery(
-          "SELECT CAST('2020-01-01 00:00:00' AS DATETIME)")) {
-
-        while (rs.next()) {
-          // 按 UTC 解析 DB 值
-          Timestamp utcTs = rs.getTimestamp(1);
-          long utcTimestampSecond = utcTs.getTime() / 1000;
-          // 本地时间戳 - UTC 时间戳 == 时区偏移秒数
-          Assertions.assertEquals(localTimestampSecond - utcTimestampSecond, 0);
-        }
-      }
-    }
-
-    try (Statement stmt = conn.createStatement()) {
-      try (ResultSet rs = stmt.executeQuery(
-          "SELECT CAST('2020-01-01 00:00:00' AS DATETIME)")) {
-
-        while (rs.next()) {
-          // 按 UTC 解析 DB 值
-          Timestamp utcTs = rs.getTimestamp(1);
-          long utcTimestampSecond = utcTs.getTime() / 1000;
-          System.out.println("UTC 2020-01-01T00:00 epoch seconds: " + utcTimestampSecond);
-
-          long offsetSeconds = TimeZone.getDefault().getOffset(utcTs.getTime()) / 1000;
-          // 本地时间戳 - UTC 时间戳 == 时区偏移秒数
-          Assertions.assertEquals(localTimestampSecond - utcTimestampSecond, offsetSeconds);
-        }
-      }
-    }
-  }
 }

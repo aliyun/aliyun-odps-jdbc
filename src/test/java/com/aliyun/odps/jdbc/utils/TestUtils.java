@@ -104,7 +104,7 @@ public class TestUtils {
         Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
         String endpoint = System.getenv("odps_endpoint");
-        String project = System.getenv("odps_project");
+        String project = System.getenv("MAXCOMPUTE_PROJECT");
         String accessId = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID");
         String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
         String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
@@ -132,7 +132,7 @@ public class TestUtils {
 
     public static Odps getOdps() throws Exception {
         String endpoint = System.getenv("odps_endpoint");
-        String project = System.getenv("odps_project");
+        String project = System.getenv("MAXCOMPUTE_PROJECT");
         String accessId = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID");
         String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
         String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
