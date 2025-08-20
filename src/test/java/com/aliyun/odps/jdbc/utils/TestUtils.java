@@ -21,6 +21,8 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -114,20 +116,16 @@ public class TestUtils {
         String accessKey = System.getenv("ALIBABACLOUD_ACCESS_KEY_SECRET");
         String stsToken = System.getenv("ALIBABACLOUD_SECURITY_TOKEN");
 
-
-        log.debug(Base64.getEncoder().encodeToString(stsToken.getBytes(StandardCharsets.UTF_8)));
-
-
         String url = String.format("jdbc:odps:%s?project=%s&accessId=%s&accessKey=%s",
                                    endpoint, project, accessId, accessKey);
         if (!StringUtils.isBlank(stsToken)) {
+            stsToken = stsToken.replace("  ", " ");
             url += "&stsToken=" + stsToken;
         }
         StringBuilder sb = new StringBuilder(url);
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
         }
-        log.debug(sb.toString());
         // pass project name via url
         return DriverManager.getConnection(sb.toString());
     }
@@ -146,7 +144,9 @@ public class TestUtils {
         String accessId = System.getenv("ALIBABACLOUD_ACCESS_KEY_ID");
         String accessKey = System.getenv("ALIBABACLOUD_ACCESS_KEY_SECRET");
         String stsToken = System.getenv("ALIBABACLOUD_SECURITY_TOKEN");
-
+        if (!StringUtils.isBlank(stsToken)) {
+            stsToken = stsToken.replace("  ", " ");
+        }
         Account account =
             StringUtils.isBlank(stsToken) ? new AliyunAccount(accessId, accessKey)
                                           : new StsAccount(accessId, accessKey, stsToken);
