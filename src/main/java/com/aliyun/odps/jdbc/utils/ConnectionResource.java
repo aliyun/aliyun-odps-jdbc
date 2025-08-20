@@ -258,11 +258,11 @@ public class ConnectionResource {
       } catch (IOException e) {
         throw new RuntimeException("Load odps conf failed:", e);
       }
+    } else {
+      maps.add(info);
+      maps.add(paramsInURL);
     }
-    // Always add info and paramsInURL to maps, even when odps_config is provided
-    // This ensures URL parameters can override config file settings
-    maps.add(info);
-    maps.add(paramsInURL);
+
 
     accessId = tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, null, ACCESS_ID_PROP_KEY_ALT, ACCESS_ID_PROP_KEY, ACCESS_ID_URL_KEY);
