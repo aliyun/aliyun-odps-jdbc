@@ -21,8 +21,10 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
@@ -111,6 +113,10 @@ public class TestUtils {
         String accessId = System.getenv("ALIBABACLOUD_ACCESS_KEY_ID");
         String accessKey = System.getenv("ALIBABACLOUD_ACCESS_KEY_SECRET");
         String stsToken = System.getenv("ALIBABACLOUD_SECURITY_TOKEN");
+
+
+        log.debug(Base64.getEncoder().encodeToString(stsToken.getBytes(StandardCharsets.UTF_8)));
+
 
         String url = String.format("jdbc:odps:%s?project=%s&accessId=%s&accessKey=%s",
                                    endpoint, project, accessId, accessKey);
