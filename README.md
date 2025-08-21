@@ -185,25 +185,11 @@ public class OdpsJdbcClient {
 }
 ```
 
-### Running the JDBC Sample Code
-
-```shell
-# compile the client code
-mvn clean package -DskipTests
-
-# run the program with specifying the class path
-# using prepared shell script (linux)
-./jdbc_test.sh 'jdbc:odps:http://service.odps.aliyun.com/api?project=odpsdemo&accessId=...&accessKey=...&charset=UTF-8&logconffile=logback/logback.xml' 'select * from dual'
-
-# using java command
-java -cp "target/odps-jdbc-2.2-jar-with-dependencies.jar:logback/logback-core-1.2.3.jar:logback/logback-classic-1.2.3.jar" com.aliyun.odps.jdbc.JdbcTest "jdbc:odps:http://service.odps.aliyun.com/api?project=odpsdemo&accessId=...&accessKey=...&charset=UTF-8&logconffile=logback/logback.xml" "select * from dual"
-```
-
 ### Setting SQL task properties
 
 ```java
-stmt.execute("set biz_id=xxxxxx");
-    stmt.execute("set odps.sql.mapper.split.size=512");
+stmt.execute("set biz_id=xxxxxx;");
+stmt.execute("set odps.sql.mapper.split.size=512;");
 ```
 
 ## Third-party Integration
@@ -283,6 +269,7 @@ types and corresponding JDBC interfaces.
 |   TIMESTAMP   | java.sql.ResultSet.getTimestamp  | TIMESTAMP |
 | TIMESTAMP_NTZ | java.sql.ResultSet.getTimestamp  | TIMESTAMP |
 |    BINARY     |   java.sql.ResultSet.getBytes    |  BINARY   |
+|     ARRAY     |   java.sql.ResultSet.getArray    |   ARRAY   |
 
 When the `getObject()` method is called, what is obtained is the Java type directly corresponding to
 each ODPS type without any conversion operation. Please see the following table for he
@@ -306,6 +293,7 @@ correspondence between ODPS types and Java types.
 |   TIMESTAMP   |       java.time.Instant       |
 | TIMESTAMP_NTZ |    java.time.LocalDateTime    |
 |    BINARY     |  com.aliyun.odps.data.Binary  |
+|     ARRAY     |    java.util.List<Object>     |
 
 NOTE: Possible timezone issue
 
@@ -351,15 +339,6 @@ cases), please stick to the latest version before 2.0.
 |     Public Service     | latest |
 | Non PRC Public Service | latest |
 |      <= Sprint27       | 1.9.2  |
-
-## Authors && Contributors
-
-- [Zhang Dingxin](https://github.com/dingxin-tech)
-- [Cheng Yichao](https://github.com/onesuper)
-- [Li Ruibo](https://github.com/lyman)
-- [Zhao Zhenyi](https://github.com/emerson-zhao)
-- [Wen Shaojin](https://github.com/wenshao)
-- [Wang Zhong](https://github.com/cornmonster)
 
 ## License
 
