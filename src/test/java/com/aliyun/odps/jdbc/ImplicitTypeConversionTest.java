@@ -105,6 +105,7 @@ public class ImplicitTypeConversionTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
+    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
     createTestTable();
     createTestTableNull();
   }
