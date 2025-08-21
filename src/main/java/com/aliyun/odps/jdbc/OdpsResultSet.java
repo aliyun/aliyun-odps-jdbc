@@ -73,12 +73,12 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       } else if (conn != null) {
         timeZone = conn.getTimezone();
       } else {
-        timeZone = TimeZone.getTimeZone("UTC");
+        timeZone = TimeZone.getDefault();
       }
     } else if (conn != null) {
       timeZone = conn.getTimezone();
     } else {
-      timeZone = TimeZone.getTimeZone("UTC");
+      timeZone = TimeZone.getDefault();
     }
   }
 
@@ -139,12 +139,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public Array getArray(int columnIndex) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    Object val = getInnerObject(columnIndex);
+    return (Array) transformToJdbcType(val, Array.class, meta.getColumnOdpsType(columnIndex));
   }
 
   @Override
   public Array getArray(String columnLabel) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    int columnIndex = findColumn(columnLabel);
+    return getArray(columnIndex);
   }
 
   @Override

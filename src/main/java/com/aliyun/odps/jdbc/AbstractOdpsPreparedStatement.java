@@ -56,11 +56,6 @@ public abstract class AbstractOdpsPreparedStatement extends OdpsStatement implem
   }
 
   @Override
-  public void setArray(int parameterIndex, Array x) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }

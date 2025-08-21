@@ -21,6 +21,7 @@
 package com.aliyun.odps.jdbc.utils.transformer.to.jdbc;
 
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,6 +53,9 @@ public class ToJdbcTransformerFactory {
   private static final ToJdbcBooleanTransformer
       BOOLEAN_TRANSFORMER =
       new ToJdbcBooleanTransformer();
+  private static final ToJdbcArrayTransformer
+      ARRAY_TRANSFORMER =
+      new ToJdbcArrayTransformer();
 
   private static final Map<Class, AbstractToJdbcTransformer> JDBC_CLASS_TO_TRANSFORMER =
       new HashMap<Class, AbstractToJdbcTransformer>();
@@ -70,6 +74,7 @@ public class ToJdbcTransformerFactory {
     JDBC_CLASS_TO_TRANSFORMER.put(java.sql.Time.class, TIME_TRANSFORMER);
     JDBC_CLASS_TO_TRANSFORMER.put(java.sql.Timestamp.class, TIMESTAMP_TRANSFORMER);
     JDBC_CLASS_TO_TRANSFORMER.put(boolean.class, BOOLEAN_TRANSFORMER);
+    JDBC_CLASS_TO_TRANSFORMER.put(Array.class, ARRAY_TRANSFORMER);
   }
 
   public static AbstractToJdbcTransformer getTransformer(Class jdbcCls) throws SQLException {

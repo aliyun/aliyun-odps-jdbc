@@ -23,10 +23,12 @@ package com.aliyun.odps.jdbc;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLType;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -41,6 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -414,6 +417,10 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       setString(parameterIndex, x.toString());
     } else if (x instanceof Binary) {
       parameters.put(parameterIndex, x);
+    } else if (x instanceof Array) {
+      setArray(parameterIndex, (Array) x);
+    } else if (x instanceof List) {
+      parameters.put(parameterIndex, x);
     } else {
       throw new SQLException("can not set an object of type: " + x.getClass().getName());
     }
@@ -476,6 +483,16 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       return;
     }
     parameters.put(parameterIndex, x.getBytes());
+  }
+
+  @Override
+  public void setArray(int parameterIndex, Array x) throws SQLException {
+    if (x == null) {
+      parameters.put(parameterIndex, null);
+      return;
+    }
+    parameters.put(parameterIndex,
+                   Arrays.stream(((Object[]) x.getArray())).collect(Collectors.toList()));
   }
 
   @Override

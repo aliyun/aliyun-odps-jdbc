@@ -52,6 +52,7 @@ import com.aliyun.odps.ReloadException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
+import com.aliyun.odps.jdbc.data.OdpsArray;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
@@ -59,6 +60,10 @@ import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.type.ArrayTypeInfo;
+import com.aliyun.odps.type.TypeInfo;
+import com.aliyun.odps.type.TypeInfoFactory;
+import com.aliyun.odps.type.TypeInfoParser;
 import com.aliyun.odps.utils.OdpsConstants;
 import com.aliyun.odps.utils.StringUtils;
 
@@ -808,8 +813,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    TypeInfo typeInfo = TypeInfoParser.getTypeInfoFromTypeString(typeName);
+    ArrayTypeInfo arrayTypeInfo = TypeInfoFactory.getArrayTypeInfo(typeInfo);
+    return new OdpsArray(elements, arrayTypeInfo);
   }
 
   @Override
