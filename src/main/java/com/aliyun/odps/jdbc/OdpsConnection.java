@@ -53,6 +53,7 @@ import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
 import com.aliyun.odps.jdbc.data.OdpsArray;
+import com.aliyun.odps.jdbc.data.OdpsStruct;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.Utils;
@@ -61,6 +62,7 @@ import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
 import com.aliyun.odps.type.ArrayTypeInfo;
+import com.aliyun.odps.type.StructTypeInfo;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.type.TypeInfoParser;
@@ -820,8 +822,13 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    TypeInfo typeInfo = TypeInfoParser.getTypeInfoFromTypeString(typeName);
+    if (typeInfo instanceof StructTypeInfo) {
+      return new OdpsStruct(attributes, (StructTypeInfo) typeInfo);
+    } else {
+      throw new SQLException(
+          "createStruct only support StructTypeInfo, but got " + typeInfo.getTypeName());
+    }
   }
 
   @Override

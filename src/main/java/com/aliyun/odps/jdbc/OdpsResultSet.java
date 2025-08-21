@@ -236,12 +236,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   @Override
   public Object getObject(int columnIndex, Map<String, Class<?>> map)
       throws SQLException {
+    conn.log.warn("Unsupported method call: OdpsResultSet#getObject(int columnIndex, Map<String, Class<?>> map), ignored");
     return getObject(columnIndex);
   }
 
   @Override
   public Object getObject(String columnLabel, Map<String, Class<?>> map)
       throws SQLException {
+    conn.log.warn("Unsupported method call: OdpsResultSet#getObject(String columnLabel, Map<String, Class<?>> map), ignored");
     return getObject(columnLabel);
   }
 

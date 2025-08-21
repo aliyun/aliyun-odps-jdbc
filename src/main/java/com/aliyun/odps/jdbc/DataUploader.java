@@ -94,7 +94,6 @@ public abstract class DataUploader {
       upload(batchedRows, batchedSize, updateCounts);
     } catch (Exception e) {
       throw new SQLException(e.getMessage(), e);
-      //TODO
     }
 
     return updateCounts;

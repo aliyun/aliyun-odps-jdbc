@@ -156,7 +156,7 @@ public class OdpsArrayTest {
             // Create table with array column
             stmt.executeUpdate("create table array_e2e_test_table (id bigint, str_array array<string>);");
             
-            // Insert data using SQL directly (since PreparedStatement.setArray is not supported)
+            // Insert data using SQL directly
             stmt.executeUpdate("insert into array_e2e_test_table values (1, array('apple', 'banana', 'cherry'));");
             stmt.executeUpdate("insert into array_e2e_test_table values (2, array('dog', 'cat', 'bird', 'fish'));");
             
@@ -322,6 +322,126 @@ public class OdpsArrayTest {
             if (stmt != null) {
                 try {
                     stmt.executeUpdate("drop table if exists array_index_test_table;");
+                    stmt.close();
+                } catch (SQLException e) {
+                    // Ignore
+                }
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+    
+    @Test
+    public void testPreparedStatementSetArray() throws Exception {
+        Connection conn = TestUtils.getConnection();
+        Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+
+            // Drop table if exists
+            stmt.executeUpdate("drop table if exists ps_array_test_table;");
+
+            // Create table with array column
+            stmt.executeUpdate("create table ps_array_test_table (id bigint, str_array array<string>);");
+
+            // Create an array to insert
+            String[] arrayData = {"apple", "banana", "cherry"};
+            ArrayTypeInfo arrayTypeInfo = TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.STRING);
+            OdpsArray odpsArray = new OdpsArray(arrayData, arrayTypeInfo);
+
+            // Insert data using PreparedStatement.setArray()
+            PreparedStatement insertStmt = conn.prepareStatement("insert into ps_array_test_table values (?, ?);");
+            insertStmt.setLong(1, 1L);
+            insertStmt.setArray(2, odpsArray);
+            insertStmt.executeUpdate();
+            insertStmt.close();
+
+            // Query the data
+            PreparedStatement queryStmt = conn.prepareStatement("select * from ps_array_test_table where id = ?;");
+            queryStmt.setLong(1, 1L);
+            ResultSet rs = queryStmt.executeQuery();
+
+            Assertions.assertTrue(rs.next());
+            Assertions.assertEquals(1L, rs.getLong(1));
+
+            // Get the array from ResultSet
+            java.sql.Array resultArray = rs.getArray(2);
+            Assertions.assertNotNull(resultArray);
+            Assertions.assertEquals("STRING", resultArray.getBaseTypeName());
+
+            // Get array data
+            Object[] resultData = (Object[]) resultArray.getArray();
+            Assertions.assertArrayEquals(arrayData, resultData);
+
+            rs.close();
+            queryStmt.close();
+
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.executeUpdate("drop table if exists ps_array_test_table;");
+                    stmt.close();
+                } catch (SQLException e) {
+                    // Ignore
+                }
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
+    @Test
+    public void testPreparedStatementSetObjectWithArray() throws Exception {
+        Connection conn = TestUtils.getConnection();
+        Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+
+            // Drop table if exists
+            stmt.executeUpdate("drop table if exists ps_object_array_test_table;");
+
+            // Create table with array column
+            stmt.executeUpdate("create table ps_object_array_test_table (id bigint, str_array array<string>);");
+
+            // Create an array to insert
+            String[] arrayData = {"dog", "cat", "bird"};
+            ArrayTypeInfo arrayTypeInfo = TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.STRING);
+            OdpsArray odpsArray = new OdpsArray(arrayData, arrayTypeInfo);
+
+            // Insert data using PreparedStatement.setObject()
+            PreparedStatement insertStmt = conn.prepareStatement("insert into ps_object_array_test_table values (?, ?);");
+            insertStmt.setLong(1, 1L);
+            insertStmt.setObject(2, odpsArray);
+            insertStmt.executeUpdate();
+            insertStmt.close();
+
+            // Query the data
+            PreparedStatement queryStmt = conn.prepareStatement("select * from ps_object_array_test_table where id = ?;");
+            queryStmt.setLong(1, 1L);
+            ResultSet rs = queryStmt.executeQuery();
+
+            Assertions.assertTrue(rs.next());
+            Assertions.assertEquals(1L, rs.getLong(1));
+
+            // Get the array from ResultSet
+            java.sql.Array resultArray = rs.getArray(2);
+            Assertions.assertNotNull(resultArray);
+            Assertions.assertEquals("STRING", resultArray.getBaseTypeName());
+
+            // Get array data
+            Object[] resultData = (Object[]) resultArray.getArray();
+            Assertions.assertArrayEquals(arrayData, resultData);
+
+            rs.close();
+            queryStmt.close();
+
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.executeUpdate("drop table if exists ps_object_array_test_table;");
                     stmt.close();
                 } catch (SQLException e) {
                     // Ignore

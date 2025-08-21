@@ -22,6 +22,7 @@ package com.aliyun.odps.jdbc.utils;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Struct;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -38,7 +39,10 @@ import java.util.regex.Pattern;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.data.SimpleStruct;
+import com.aliyun.odps.jdbc.data.OdpsStruct;
 import com.aliyun.odps.task.SQLTask;
+import com.aliyun.odps.type.StructTypeInfo;
 import com.aliyun.odps.utils.StringUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -217,6 +221,11 @@ public class Utils {
         return (T) LocalDateTime.ofInstant(instant, timeZone.toZoneId())
             .atZone(timeZone.toZoneId());
       }
+    } else if (object instanceof SimpleStruct && type == Struct.class) {
+      SimpleStruct simpleStruct = (SimpleStruct) object;
+      Struct odpsStruct = new OdpsStruct(simpleStruct.getFieldValues().toArray(new Object[0]),
+                                             (StructTypeInfo) simpleStruct.getTypeInfo());
+      return (T) odpsStruct;
     }
     return (T) object;
   }

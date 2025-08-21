@@ -28,8 +28,8 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLType;
+import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -43,7 +43,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +53,9 @@ import java.util.stream.Collectors;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.data.Binary;
 import com.aliyun.odps.data.Char;
+import com.aliyun.odps.data.SimpleStruct;
 import com.aliyun.odps.data.Varchar;
+import com.aliyun.odps.jdbc.data.OdpsStruct;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.sqa.commandapi.utils.SqlParserUtil;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -421,6 +422,10 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       setArray(parameterIndex, (Array) x);
     } else if (x instanceof List) {
       parameters.put(parameterIndex, x);
+    } else if (x instanceof Struct) {
+      parameters.put(parameterIndex,
+                     new SimpleStruct(((OdpsStruct) x).getTypeInfo(),
+                                      Arrays.asList(((Struct) x).getAttributes())));
     } else {
       throw new SQLException("can not set an object of type: " + x.getClass().getName());
     }

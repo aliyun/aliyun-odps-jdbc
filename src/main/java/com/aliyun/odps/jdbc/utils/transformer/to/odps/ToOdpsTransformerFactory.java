@@ -49,6 +49,8 @@ public class ToOdpsTransformerFactory {
   private static ToOdpsBinaryTransformer BINARY_TRANSFORMER = new ToOdpsBinaryTransformer();
   private static ToOdpsCharTransformer CHAR_TRANSFORMER = new ToOdpsCharTransformer();
   private static ToOdpsJsonTransformer JSON_TRANSFORMER = new ToOdpsJsonTransformer();
+  private static ToOdpsArrayTransformer ARRAY_TRANSFORMER = new ToOdpsArrayTransformer();
+  private static ToOdpsStructTransformer STRUCT_TRANSFORMER = new ToOdpsStructTransformer();
 
   private static final Map<OdpsType, AbstractToOdpsTransformer> ODPS_TYPE_TO_TRANSFORMER =
       new HashMap<>();
@@ -70,6 +72,8 @@ public class ToOdpsTransformerFactory {
     ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.BINARY, BINARY_TRANSFORMER);
     ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.CHAR, CHAR_TRANSFORMER);
     ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.JSON, JSON_TRANSFORMER);
+    ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.ARRAY, ARRAY_TRANSFORMER);
+    ODPS_TYPE_TO_TRANSFORMER.put(OdpsType.STRUCT, STRUCT_TRANSFORMER);
   }
 
   public static AbstractToOdpsTransformer getTransformer(OdpsType odpsType) throws SQLException {
