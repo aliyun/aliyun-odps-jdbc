@@ -9,12 +9,16 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.aliyun.odps.jdbc.utils.JdbcTimeUtil;
 
@@ -68,6 +72,70 @@ public class JdbcTimeUtilTest {
         TimeZone.setDefault(TimeZone.getTimeZone(jvmTz));
         Time time = JdbcTimeUtil.toJdbcTime(UTC_MILLIS, TimeZone.getTimeZone(serverTz));
         assertEquals(LocalTime.parse(expected), time.toLocalTime());
+    }
+
+    @Test
+    void testGetEpochMillis() {
+        // Test LocalDateTime
+        LocalDateTime localDateTime = LocalDateTime.of(2012, 1, 1, 0, 0, 0);
+        long expectedMillis = localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        assertEquals(expectedMillis, JdbcTimeUtil.getEpochMillis(localDateTime));
+
+        // Test ZonedDateTime
+        ZonedDateTime zonedDateTime = ZonedDateTime.of(2012, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+        long expectedZonedMillis = zonedDateTime.toInstant().toEpochMilli();
+        assertEquals(expectedZonedMillis, JdbcTimeUtil.getEpochMillis(zonedDateTime));
+
+        // Test Instant
+        Instant instant = Instant.ofEpochMilli(UTC_MILLIS);
+        assertEquals(UTC_MILLIS, JdbcTimeUtil.getEpochMillis(instant));
+
+        // Test unsupported type
+        assertThrows(IllegalArgumentException.class, () -> {
+            JdbcTimeUtil.getEpochMillis("invalid");
+        });
+    }
+
+    @Test
+    void testGetNanos() {
+        // Test LocalDateTime
+        LocalDateTime localDateTime = LocalDateTime.of(2012, 1, 1, 0, 0, 0, 123456789);
+        int expectedNanos = localDateTime.toInstant(ZoneOffset.UTC).getNano();
+        assertEquals(expectedNanos, JdbcTimeUtil.getNanos(localDateTime));
+
+        // Test ZonedDateTime
+        ZonedDateTime zonedDateTime = ZonedDateTime.of(2012, 1, 1, 0, 0, 0, 987654321, ZoneId.of("UTC"));
+        int expectedZonedNanos = zonedDateTime.toInstant().getNano();
+        assertEquals(expectedZonedNanos, JdbcTimeUtil.getNanos(zonedDateTime));
+
+        // Test Instant
+        Instant instant = Instant.ofEpochSecond(UTC_MILLIS / 1000, 555555555);
+        assertEquals(555555555, JdbcTimeUtil.getNanos(instant));
+
+        // Test unsupported type
+        assertThrows(IllegalArgumentException.class, () -> {
+            JdbcTimeUtil.getNanos("invalid");
+        });
+    }
+
+    @Test
+    void testEpochDayToJdbcDate() {
+        // Test epoch day conversion
+        long epochDay = 15340; // 2012-01-01
+        Date date = JdbcTimeUtil.epochDayToJdbcDate(epochDay, TimeZone.getTimeZone("UTC"));
+        assertEquals(Date.valueOf("2012-01-01"), date);
+
+        // Test with different timezone
+        Date date2 = JdbcTimeUtil.epochDayToJdbcDate(epochDay, TimeZone.getTimeZone("Asia/Shanghai"));
+        assertEquals(Date.valueOf("2012-01-01"), date2);
+    }
+
+    @Test
+    void testToJdbcTimestampWithNanos() {
+        // Test timestamp with nanos
+        Timestamp ts = JdbcTimeUtil.toJdbcTimestamp(UTC_MILLIS, 123456789, TimeZone.getTimeZone("UTC"));
+        assertEquals(LocalDateTime.of(2012, 1, 1, 0, 0, 0), ts.toLocalDateTime());
+        assertEquals(123456789, ts.getNanos());
     }
 }
 

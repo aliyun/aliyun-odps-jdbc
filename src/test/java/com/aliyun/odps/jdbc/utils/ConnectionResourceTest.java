@@ -228,4 +228,42 @@ public class ConnectionResourceTest {
     Assertions.assertEquals(3, tables.get("p2").get("s2").size());
 
   }
+
+  @Test
+  public void testAcceptURL() {
+    // Test valid URLs
+    Assertions.assertTrue(ConnectionResource.acceptURL("jdbc:odps:http://example.com"));
+    Assertions.assertTrue(ConnectionResource.acceptURL("jdbc:odps:https://example.com/api"));
+
+    // Test invalid URLs
+    Assertions.assertFalse(ConnectionResource.acceptURL("jdbc:mysql://example.com"));
+    Assertions.assertFalse(ConnectionResource.acceptURL("http://example.com"));
+    Assertions.assertFalse(ConnectionResource.acceptURL(null));
+  }
+
+  @Test
+  public void testTimezoneAndAsyncSettings() {
+    String url = "jdbc:odps:http://example.com?project=test&timezone=UTC&async=true";
+    ConnectionResource resource = new ConnectionResource(url, null);
+
+    Assertions.assertEquals("UTC", resource.getTimeZone());
+    Assertions.assertTrue(resource.isAsync());
+  }
+
+  @Test
+  public void testLogviewVersion() {
+    String url = "jdbc:odps:http://example.com?project=test&logviewVersion=2";
+    ConnectionResource resource = new ConnectionResource(url, null);
+
+    Assertions.assertEquals(2, resource.getLogviewVersion());
+  }
+
+  @Test
+  public void testInvalidTableFormat() {
+    String url = "jdbc:odps:http://example.com?project=test&tableList=invalidformat";
+
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      new ConnectionResource(url, null);
+    });
+  }
 }
