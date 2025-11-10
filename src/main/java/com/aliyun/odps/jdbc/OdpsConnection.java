@@ -1069,34 +1069,25 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
 
     String getCatalog() {
-      if (twoTier) {
-        return null;
-      } else {
-        return odps.getDefaultProject();
-      }
+      return odps.getDefaultProject();
     }
 
     String getSchema() {
       if (twoTier) {
-        return odps.getDefaultProject();
+        return null;
       } else {
         return odps.getCurrentSchema();
       }
     }
 
     void setCatalog(String catalog) {
-      if (!twoTier) {
-        odps.setDefaultProject(catalog);
-      }
+      odps.setDefaultProject(catalog);
     }
 
     void setSchema(String schema) {
-      if (twoTier) {
-        this.odps.setDefaultProject(schema);
-      } else {
+      if (!twoTier) {
         this.odps.setCurrentSchema(schema);
       }
     }
-
   }
 }
