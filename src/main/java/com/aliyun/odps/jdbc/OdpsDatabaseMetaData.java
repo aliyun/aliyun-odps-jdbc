@@ -944,44 +944,15 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING));
     List<Object[]> rows = new ArrayList<>();
 
-    // In MaxCompute, catalog == schema == project.
+    // In MaxCompute, catalog == project.
     String schema = catalog;
-
-    // Project MAXCOMPUTE_PUBLIC_DATA includes MaxCompute public data sets. It is available in
-    // almost all the regions of every public MaxCompute service, but may not be available in
-    // private services.
-    try {
-      if (catalogMatches(catalog, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)
-          && schemaMatches(schemaPattern, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)
-          && conn.getOdps().projects().exists(PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)) {
-        rows.add(new String[]{PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
-      }
-    } catch (OdpsException e) {
-      String errMsg = "Failed to access project: " + e.getMessage();
-      conn.log.debug(errMsg);
-    }
 
     try {
       if (!conn.isOdpsNamespaceSchema()) {
         if (catalog == null) {
-          // The follow code block implements the actual interface DatabaseMetaData#getCatalogs. But
-          // since list projects is quite slow right now, this impl is commented out.
-//        for (Project p : conn.getOdps().projects().iterable(null)) {
-//          if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equals(p.getName())
-//              && Utils.matchPattern(p.getName(), schemaPattern)) {
-//            rows.add(new String[]{p.getName(), p.getName()});
-//          }
-//        }
-          if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(conn.getOdps().getDefaultProject())) {
-            rows.add(
-                new String[]{conn.getOdps().getDefaultProject(), conn.getOdps().getDefaultProject()});
-          }
+          rows.add(new String[]{"default", conn.getOdps().getDefaultProject()});
         } else {
-          if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(schema)
-              && Utils.matchPattern(schema, schemaPattern)
-              && conn.getOdps().projects().exists(schema)) {
-            rows.add(new String[]{schema, schema});
-          }
+          rows.add(new String[]{"default", catalog});
         }
       } else {
         List<String> schemaList;
@@ -995,7 +966,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           }
         }
       }
-    } catch (OdpsException | RuntimeException e) {
+    } catch (RuntimeException e) {
       throw new SQLException(e.getMessage(), e);
     }
 
