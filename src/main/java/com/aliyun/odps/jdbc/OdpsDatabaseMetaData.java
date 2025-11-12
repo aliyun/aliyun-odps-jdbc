@@ -49,7 +49,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   private static final String PRODUCT_NAME = "MaxCompute/ODPS";
   private static final String DRIVER_NAME = "odps-jdbc";
 
-  private static final String SCHEMA_TERM = "project";
+  private static final String SCHEMA_TERM = "schema";
   private static final String CATALOG_TERM = "project";
   private static final String PROCEDURE_TERM = "N/A";
 
@@ -981,32 +981,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         Collections.singletonList(TypeInfoFactory.STRING));
     List<Object[]> rows = new ArrayList<>();
 
-    // Project MAXCOMPUTE_PUBLIC_DATA includes MaxCompute public data sets. It is available in
-    // almost all the regions of every public MaxCompute service, but may not be available in
-    // private services.
-    try {
-      if (conn.getOdps().projects().exists(PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA)) {
-        rows.add(new String[]{PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA});
-      }
-    } catch (OdpsException e) {
-      String errMsg = "Failed to access project: " + e.getMessage();
-      conn.log.debug(errMsg);
-    }
-
-    // The follow code block implements the actual interface DatabaseMetaData#getCatalogs. But since
-    // list projects is quite slow right now, this impl is commented out.
-//    try {
-//      for (Project p : conn.getOdps().projects().iterable(null)) {
-//        rows.add(new String[] {p.getName()});
-//      }
-//    } catch (RuntimeException e) {
-//      throw new SQLException(e);
-//    }
-
-    if (!PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(conn.getOdps().getDefaultProject())) {
-      rows.add(new String[]{conn.getOdps().getDefaultProject()});
-    }
-
+    rows.add(new String[]{conn.getOdps().getDefaultProject()});
     sortRows(rows, new int[]{0});
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
@@ -1079,7 +1054,15 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       try {
         Table table;
         if (conn.isOdpsNamespaceSchema()) {
-          table = conn.getOdps().tables().get(conn.getOdps().getDefaultProject(), schemaPattern, tableNamePattern);
+          if (catalog == null) {
+            table =
+              conn.getOdps().tables()
+                .get(conn.getOdps().getDefaultProject(), schemaPattern, tableNamePattern);
+          } else {
+            table =
+              conn.getOdps().tables()
+                .get(catalog, schemaPattern, tableNamePattern);
+          }
         } else {
           if (StringUtils.isNullOrEmpty(catalog)) {
             table = conn.getOdps().tables().get(tableNamePattern);
