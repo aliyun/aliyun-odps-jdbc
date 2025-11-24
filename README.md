@@ -85,16 +85,16 @@ java.net.URLEncoder#encode(java.lang.String).
 
 #### Basic
 
-|      URL key       |     Property Key     | Required | Default value  | Description                                   |
-|:------------------:|:--------------------:|:--------:|:--------------:|:----------------------------------------------|
-|     `endpoint`     |     `end_point`      |   True   |                | The endpoint of your MaxCompute service       |
-|     `project`      |    `project_name`    |   True   |                | The name of your MaxCompute project           |
-|     `accessId`     |     `access_id`      |   True   |                | Your Alibaba Cloud access key ID              |
-|    `accessKey`     |     `access_key`     |   True   |                | Your Alibaba Cloud access key secret          |
-| `interactiveMode`  |  `interactive_mode`  |  False   |     false      | For MCQA, enable MCQA                         |
-|     `logview`      |    `logview_host`    |  False   | Provided by MC | The endpoint of MaxCompute Logview            |
-|  `tunnelEndpoint`  |  `tunnel_endpoint`   |  False   | Provided by MC | The endpoint of the MaxCompute Tunnel service |
-| `enableOdpsLogger` | `enable_odps_logger` |  False   |     false      | Enable MaxCompute JDBC logger                 |
+|      URL key       |     Property Key     | Required | Default value  | Description                                                                          |
+|:------------------:|:--------------------:|:--------:|:--------------:|:-------------------------------------------------------------------------------------|
+|     `endpoint`     |     `end_point`      |   True   |                | The endpoint of your MaxCompute service                                              |
+|     `project`      |    `project_name`    |   True   |                | The name of your MaxCompute project                                                  |
+|     `accessId`     |     `access_id`      |   True   |                | Your Alibaba Cloud access key ID                                                     |
+|    `accessKey`     |     `access_key`     |   True   |                | Your Alibaba Cloud access key secret                                                 |
+| `interactiveMode`  |  `interactive_mode`  |  False   |     false      | Enable MCQA (interactive mode: maxqa/mcqa/offline, or true/false for simple boolean) |
+|     `logview`      |    `logview_host`    |  False   | Provided by MC | The endpoint of MaxCompute Logview                                                   |
+|  `tunnelEndpoint`  |  `tunnel_endpoint`   |  False   | Provided by MC | The endpoint of the MaxCompute Tunnel service                                        |
+| `enableOdpsLogger` | `enable_odps_logger` |  False   |     false      | Enable MaxCompute JDBC logger                                                        |
 
 #### Advanced
 
@@ -107,8 +107,94 @@ java.net.URLEncoder#encode(java.lang.String).
 |     `alwaysFallback`      |      `always_fallback`       |  False   |          false          | For MCQA, fall back to regular mode if any exception happened                                                                                       |
 | `instanceTunnelMaxRecord` | `instance_tunnel_max_record` |  False   |     -1 (unlimited)      | For MCQA, max number of records within a result set, enableLimit option should set to false                                                         |
 |  `instanceTunnelMaxSize`  |  `instance_tunnel_max_size`  |  False   |     -1 (unlimited)      | For MCQA, max size of a result set in byte                                                                                                          |
-|       `enableLimit`       |        `enable_limit`        |  False   |      true(limited)      | For MCQA, download permission won't be checked if enableLimit is set true, but your result record count will be limited to 10000                    |
+|       `enableLimit`       |        `enable_limit`        |  False   |      true(limited)      | Download permission won't be checked if enableLimit is set true, but your result record count will be limited to 10000                              |
 |    `autoLimitFallback`    |    `auto_limit_fallback`     |  False   | False(no auto fallback) | For non-MCQA mode, result record count will be limited to 10000 when no download permission exception happened and autoLimitFallback is set to true |
+
+#### MCQA
+
+|             URL key             |           Property Key            | Required |  Default value   | Description                                                                                |
+|:-------------------------------:|:---------------------------------:|:--------:|:----------------:|:-------------------------------------------------------------------------------------------|
+|        `interactiveMode`        |        `interactive_mode`         |  False   |      false       | Enable MCQA (interactive mode: maxqa/mcqa/offline, or true/false for simple boolean)       |
+|    `interactiveServiceName`     |    `interactive_service_name`     |  False   | `public.default` | The interactive service name to use (for MCQA)                                             |
+|         `majorVersion`          |          `major_version`          |  False   |    `default`     | The major version to use for execution                                                     |
+|        `autoSelectLimit`        |        `auto_select_limit`        |  False   |   -1(limited)    | Set limit for number of records returned in selects without explicit limit conditions      |
+|    `fallbackForUnknownError`    |    `fallback_for_unknownerror`    |  False   |       true       | Whether to fall back for unknown errors                                                    |
+| `fallbackForResourceNotEnough`  | `fallback_for_resourcenotenough`  |  False   |       true       | Whether to fall back for resource not enough errors                                        |
+|     `fallbackForUpgrading`      |     `fallback_for_upgrading`      |  False   |       true       | Whether to fall back for service upgrading errors                                          |
+|   `fallbackForRunningTimeout`   |   `fallback_for_runningtimeout`   |  False   |       true       | Whether to fall back for running timeout errors                                            |
+| `fallbackForUnsupportedFeature` | `fallback_for_unsupportedfeature` |  False   |       true       | Whether to fall back for unsupported feature errors                                        |
+|        `disableFallback`        |        `disable_fallback`         |  False   |      false       | Disable all fallback behavior                                                              |
+|         `fallbackQuota`         |         `fallback_quota`          |  False   |                  | The fallback quota to use                                                                  |
+|         `attachTimeout`         |         `attach_timeout`          |  False   |        -1        | The timeout for attaching to running jobs, unit depends on specific timeout implementation |
+
+#### Tunnel and Network Settings
+
+|             URL key             |            Property Key             | Required | Default value | Description                                                                           |
+|:-------------------------------:|:-----------------------------------:|:--------:|:-------------:|:--------------------------------------------------------------------------------------|
+|        `tunnelRetryTime`        |         `tunnel_retry_time`         |  False   |       6       | The number of times to retry tunnel operations upon failure                           |
+|       `useInstanceTunnel`       |        `use_instance_tunnel`        |  False   |     true      | Whether to use instance tunnel for reading result sets, not recommend set it to false |
+|       `tunnelReadTimeout`       |        `tunnel_read_timeout`        |  False   |      -1       | Tunnel read timeout in milliseconds, -1 means no timeout                              |
+|     `tunnelConnectTimeout`      |      `tunnel_connect_timeout`       |  False   |      -1       | Tunnel connection timeout in milliseconds, -1 means no timeout                        |
+| `tunnelDownloadUseSingleReader` | `tunnel_download_use_single_reader` |  False   |    `true`     | Whether to use a single reader for tunnel downloads                                   |
+|     `fetchResultSplitSize`      |      `fetch_result_split_size`      |  False   |     10000     | The size of result splits for fetching                                                |
+|  `fetchResultPreloadSplitNum`   |  `fetch_result_preload_split_num`   |  False   |      `5`      | Number of splits to preload when fetching results                                     |
+|     `fetchResultThreadNum`      |      `fetch_result_thread_num`      |  False   |       5       | Number of threads to use for result fetching                                          |
+
+#### Security and Connection Settings
+
+|          URL key           |         Property Key         | Required | Default value | Description                                                 |
+|:--------------------------:|:----------------------------:|:--------:|:-------------:|:------------------------------------------------------------|
+|         `stsToken`         |         `sts_token`          |  False   |               | STS token for temporary security credentials                |
+| `disableConnectionSetting` | `disable_connection_setting` |  False   |     false     | Disable connection setting updates                          |
+|     `enableCommandApi`     |     `enable_command_api`     |  False   |     false     | Enable command API functionality                            |
+|        `httpsCheck`        |        `https_check`         |  False   |     false     | Enable HTTPS check for connection security                  |
+|      `skipSqlRewrite`      |      `skip_sql_rewrite`      |  False   |     false     | Skip SQL rewriting and optimization during query processing |
+|    `skipSqlInjectCheck`    |   `skip_sql_inject_check`    |  False   |     false     | Skip SQL injection check during query processing            |
+|    `skipCheckIfSelect`     |     `skipCheckIfSelect`      |  False   |     true      | Skip use antlr4 to check if query is select                 |
+|        `quotaName`         |         `quota_name`         |  False   |    Not set    | The name of the query quota class to use for execution      |
+
+#### Timeouts and Networking
+
+|     URL key      |   Property Key    | Required | Default value | Description                                                         |
+|:----------------:|:-----------------:|:--------:|:-------------:|:--------------------------------------------------------------------|
+|  `readTimeout`   |  `read_timeout`   |  False   |      -1       | Read timeout in milliseconds, -1 means no timeout                   |
+| `connectTimeout` | `connect_timeout` |  False   |      -1       | Connect timeout in milliseconds, -1 means no timeout                |
+|   `retryTime`    |   `retry_time`    |  False   |      -1       | Number of retry attempts for failed operations, -1 means no retries |
+
+#### Schema and Catalog Settings
+
+|        URL key        |      Property Key       | Required |       Default value       | Description                                                            |
+|:---------------------:|:-----------------------:|:--------:|:-------------------------:|:-----------------------------------------------------------------------|
+| `odpsNamespaceSchema` | `odps_namespace_schema` |  False   | Judge by project settings | Whether to use ODPS namespace schema feature (true/false)              |
+|       `schema`        |        `schema`         |  False   |          default          | Default schema to use for connection (used with namespace schema mode) |
+| `useProjectTimeZone`  | `use_project_time_zone` |  False   |           false           | Use project time zone instead of client time zone                      |
+|      `timeZone`       |       `timezone`        |  False   |        JVM default        | Explicit time zone setting for the connection                          |
+
+#### Logging and Debugging
+
+|      URL key       |     Property Key     | Required | Default value | Description                          |
+|:------------------:|:--------------------:|:--------:|:-------------:|:-------------------------------------|
+| `enableOdpsLogger` | `enable_odps_logger` |  False   |     false     | Enable MaxCompute JDBC logger        |
+|     `logLevel`     |     `log_level`      |  False   |     INFO      | Set the logging level for the driver |
+|     `verbose`      |      `verbose`       |  False   |     false     | Enable verbose output for debugging  |
+
+#### SQL Settings and Feature Control
+
+|          URL key          |         Property Key         | Required | Default value | Description                                                                  |
+|:-------------------------:|:----------------------------:|:--------:|:-------------:|:-----------------------------------------------------------------------------|
+|       `enableLimit`       |        `enable_limit`        |  False   |     true      | Enable result limits for MCQA mode                                           |
+|    `autoLimitFallback`    |    `auto_limit_fallback`     |  False   |     false     | Automatically fallback when auto limit is reached                            |
+|        `settings`         |          `settings`          |  False   |    Not set    | A JSON string with additional settings to apply on connection                |
+|        `tableList`        |         `table_list`         |  False   |    Not set    | CSV list of table names to preload: project.table[,project.table]            |
+|     `logviewVersion`      |      `logview_version`       |  False   |       1       | Set the LogView version to use, 1 or 2                                       |
+|          `async`          |           `async`            |  False   |     false     | Enable async execution mode for queries                                      |
+| `longJobWarningThreshold` | `long_job_warning_threshold` |  False   |      -1       | Threshold in milliseconds for long-running job warnings, -1 disables warning |
+
+#### ODPS Configuration File
+
+|    URL key    | Description                                              |
+|:-------------:|:---------------------------------------------------------|
+| `odps_config` | Path to an external ODPS configuration file to load from |
 
 ## Example
 
@@ -275,7 +361,7 @@ When the `getObject()` method is called, what is obtained is the Java type direc
 each ODPS type without any conversion operation. Please see the following table for he
 correspondence between ODPS types and Java types.
 
-|   ODPS Type   |           Java Type           | 
+|   ODPS Type   |           Java Type           |
 |:-------------:|:-----------------------------:|
 |    TINYINT    |        java.lang.Byte         |
 |   SMALLINT    |        java.lang.Short        |
@@ -283,10 +369,10 @@ correspondence between ODPS types and Java types.
 |    BIGINT     |        java.lang.Long         |
 |     FLOAT     |        java.lang.Float        |
 |    DOUBLE     |       java.lang.Double        |
-|    DECIMAL    |     java.math.BigDecimal      | 
-|    VARCHAR    | com.aliyun.odps.data.Varchar  | 
-|     CHAR      |   com.aliyun.odps.data.Char   | 
-|    STRING     |            byte[]             | 
+|    DECIMAL    |     java.math.BigDecimal      |
+|    VARCHAR    | com.aliyun.odps.data.Varchar  |
+|     CHAR      |   com.aliyun.odps.data.Char   |
+|    STRING     |            byte[]             |
 |    BOOLEAN    | java.sql.ResultSet.getBoolean |
 |     DATE      |      java.time.LocalDate      |
 |   DATETIME    |    java.time.ZonedDateTime    |
@@ -317,7 +403,7 @@ recommended one. Please see the following table for supported implicit conversio
 |    long    |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
 |   float    |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
 |   double   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
-| BigDecimal |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |      |          |           |               |    Y    |   Y    |
+| BigDecimal |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |  Y   |          |           |               |    Y    |   Y    |
 |   String   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |  Y   |    Y     |     Y     |       Y       |    Y    |   Y    |
 |  byte\[\]  |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |  Y   |    Y    |   Y    |  Y   |    Y     |     Y     |       Y       |    Y    |   Y    |
 |    Date    |         |          |     |        |       |        |         |      |         |   Y    |  Y   |    Y     |     Y     |       Y       |         |   Y    |
