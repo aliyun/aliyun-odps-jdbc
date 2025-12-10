@@ -63,7 +63,7 @@
   </repositories>
 
   <properties>
-    <sdk.version>0.53.1-public</sdk.version>
+    <sdk.version>0.57.0-SNAPSHOT</sdk.version>
     <junit.version>4.13.1</junit.version>
     <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

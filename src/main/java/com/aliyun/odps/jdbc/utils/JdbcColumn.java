@@ -67,6 +67,9 @@ public class JdbcColumn {
     ODPS_SQLTYPE_MAPPER.put(OdpsType.INTERVAL_YEAR_MONTH, java.sql.Types.OTHER);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.INTERVAL_DAY_TIME, java.sql.Types.OTHER);
     ODPS_SQLTYPE_MAPPER.put(OdpsType.JSON, Types.VARCHAR);
+
+    ODPS_SQLTYPE_MAPPER.put(OdpsType.GEOGRAPHY, Types.OTHER);
+    ODPS_SQLTYPE_MAPPER.put(OdpsType.BLOB, Types.BLOB);
   }
 
   private final String columnName;
@@ -137,6 +140,7 @@ public class JdbcColumn {
         return columnPrecision(typeInfo);
       case Types.ARRAY:
       case Types.STRUCT:
+      case Types.BLOB:
         return Integer.MAX_VALUE;
       default:
         throw new SQLException("Invalid odps type: " + columnType);
@@ -196,6 +200,7 @@ public class JdbcColumn {
       }
       case Types.ARRAY:
       case Types.STRUCT:
+      case Types.BLOB:
         return Integer.MAX_VALUE;
       default:
         throw new SQLException("Invalid odps type: " + columnType);
@@ -216,6 +221,7 @@ public class JdbcColumn {
       case Types.BIGINT:
       case Types.DATE:
       case Types.BINARY:
+      case Types.BLOB:
         return 0;
       case Types.FLOAT:
         return 7;
@@ -255,6 +261,7 @@ public class JdbcColumn {
       case Types.JAVA_OBJECT:
       case Types.ARRAY:
       case Types.STRUCT:
+      case Types.BLOB:
         return false;
       case Types.CHAR:
       case Types.VARCHAR:
@@ -279,6 +286,7 @@ public class JdbcColumn {
       case Types.STRUCT:
       case Types.CHAR:
       case Types.VARCHAR:
+      case Types.BLOB:
         return false;
       case Types.TINYINT:
       case Types.SMALLINT:
