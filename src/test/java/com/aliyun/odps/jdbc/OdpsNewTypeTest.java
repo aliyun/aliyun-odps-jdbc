@@ -304,10 +304,29 @@ public class OdpsNewTypeTest {
                                                                                Arrays.asList(
                                                                                    types))));
 
+        schema.addColumn(new Column("col19", TypeInfoFactory.GEOGRAPHY));
+        schema.addColumn(new Column("col20", TypeInfoFactory.BLOB));
+
         odps.tables().newTableCreator(odps.getDefaultProject(), tableName, schema)
             .withSchemaName("default")
             .ifNotExists()
             .debug()
             .create();
+    }
+
+    @Test
+    public void testBlobType() throws SQLException {
+        String sql = "select `col20` from " + table;
+        boolean execute = stmt.execute(sql);
+        System.out.println(execute);
+        System.out.println(stmt.getResultSet().getMetaData().getColumnTypeName(1));
+    }
+
+    @Test
+    public void testGeoType() throws SQLException {
+        String sql = "select `col19` from " + table;
+        boolean execute = stmt.execute(sql);
+        System.out.println(execute);
+        System.out.println(stmt.getResultSet().getMetaData().getColumnTypeName(1));
     }
 }
