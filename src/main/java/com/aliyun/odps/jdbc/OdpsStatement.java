@@ -26,19 +26,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
-import com.aliyun.odps.data.Record;
-import com.aliyun.odps.jdbc.utils.InstanceDataIterator;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.SettingParser;
 import com.aliyun.odps.jdbc.utils.Utils;
@@ -48,7 +44,6 @@ import com.aliyun.odps.sqa.SQLExecutorBuilder;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
-import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
 import com.aliyun.odps.utils.StringUtils;
@@ -399,16 +394,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     SQLExecutorBuilder executorBuilder = connHandle.getExecutorBuilder().clone();
 
     for (String key : properties.stringPropertyNames()) {
-      if (key.equalsIgnoreCase("odps.task.wlm.quota")) {
-        boolean enableMaxQA = connHandle.checkIfEnableMaxQA(properties.getProperty(key));
-        executorBuilder.enableMcqaV2(enableMaxQA);
-        if (enableMaxQA) {
-          executorBuilder.executeMode(ExecuteMode.INTERACTIVE_V2);
-          executorBuilder.quotaName(properties.getProperty(key));
-        }
-        connHandle.log.info("enable MaxQA: " + enableMaxQA + ", quota name: " + properties.getProperty(key));
-        needRebuildSql = true;
-      }
       if (key.equalsIgnoreCase("jdbc.tunnel.endpoint")) {
         executorBuilder.tunnelEndpoint(properties.getProperty(key));
         connHandle.log.info("use tunnel endpoint: " + properties.getProperty(key));
@@ -870,33 +855,14 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   protected void setResultSetInternal() throws OdpsException, IOException {
-    if (getExecuteMode() == ExecuteMode.OFFLINE && !enableLimit && resultSizeLimit == null) {
-      connHandle.log.info(
-          "Get result by instance tunnel (" + connHandle.getFetchResultThreadNum() + " Thread, "
-          + connHandle.getFetchResultSplitSize() + " records per split, cache "
-          + connHandle.getFetchResultPreloadSplitNum() + " split in memory" + ").");
-      executeInstance.waitForSuccess();
-      Instance instance = executeInstance;
-      InstanceDataIterator
-          instanceDataIterator =
-          new InstanceDataIterator(connHandle.getOdps(), instance, 0, resultCountLimit,
-                                   connHandle.getFetchResultSplitSize(),
-                                   connHandle.getFetchResultPreloadSplitNum(),
-                                   connHandle.getFetchResultThreadNum());
-      odpsResultSet = new com.aliyun.odps.data.ResultSet(
-          instanceDataIterator,
-          instanceDataIterator.getSchema(),
-          instanceDataIterator.getRecordCount());
+    if (sqlExecutor.isUseInstanceTunnel()) {
+      connHandle.log.info("Get result by instance tunnel.");
+      odpsResultSet =
+        sqlExecutor
+          .getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
     } else {
-      if (sqlExecutor.isUseInstanceTunnel()) {
-        connHandle.log.info("Get result by instance tunnel.");
-        odpsResultSet =
-            sqlExecutor
-                .getResultSet(0L, resultCountLimit, resultSizeLimit, enableLimit);
-      } else {
-        connHandle.log.info("Get result by rest api.");
-        odpsResultSet = sqlExecutor.getResultSet();
-      }
+      connHandle.log.info("Get result by rest api.");
+      odpsResultSet = sqlExecutor.getResultSet();
     }
   }
 

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.aliyun.odps</groupId>
   <artifactId>odps-jdbc</artifactId>
-  <version>3.10.2</version>
+  <version>3.10.3-SNAPSHOT</version>
   <name>odps-jdbc</name>
   <description>Aliyun ODPS JDBC driver</description>
   <url>http://odps.aliyun.com</url>
@@ -63,7 +63,7 @@
   </repositories>
 
   <properties>
-    <sdk.version>0.57.0-SNAPSHOT</sdk.version>
+    <sdk.version>0.58.0-SNAPSHOT</sdk.version>
     <junit.version>4.13.1</junit.version>
     <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -350,6 +350,13 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
       <version>4.5.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.cdimascio</groupId>
+      <artifactId>java-dotenv</artifactId>
+      <version>5.2.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

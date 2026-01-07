@@ -20,7 +20,6 @@
 
 package com.aliyun.odps.jdbc;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -54,7 +53,6 @@ import com.aliyun.odps.data.SimpleStruct;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
-import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.type.StructTypeInfo;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
@@ -206,8 +204,8 @@ public class OdpsNewTypeTest {
     private static void uploadData() throws Exception {
         Odps odps = TestUtils.getOdps();
         TableTunnel.UploadSession up =
-            odps.tableTunnel().createUploadSession(odps.getDefaultProject(),
-                                                   "default", table, true);
+          odps.tableTunnel().createUploadSession(odps.getDefaultProject(),
+                                                 "default", table, true);
         RecordWriter writer = up.openRecordWriter(0);
         ArrayRecord r = new ArrayRecord(up.getSchema().getColumns().toArray(new Column[0]));
 
@@ -258,8 +256,8 @@ public class OdpsNewTypeTest {
         String[] hobbies = {TestUtils.randomString(), TestUtils.randomString()};
         values.add(Arrays.asList(hobbies));
         v18 =
-            new SimpleStruct((StructTypeInfo) up.getSchema().getColumn("col18").getTypeInfo(),
-                             values);
+          new SimpleStruct((StructTypeInfo) up.getSchema().getColumn("col18").getTypeInfo(),
+                           values);
         r.setStruct(17, v18);
         writer.write(r);
         writer.close();
@@ -269,8 +267,8 @@ public class OdpsNewTypeTest {
     }
 
     private static void createTableWithAllNewTypes(Odps odps, String tableName)
-        throws OdpsException,
-               SQLException {
+      throws OdpsException,
+             SQLException {
         TableSchema schema = new TableSchema();
         schema.addColumn(new Column("col0", OdpsType.INT));
         schema.addColumn(new Column("col1", OdpsType.BIGINT));
@@ -288,45 +286,26 @@ public class OdpsNewTypeTest {
         schema.addColumn(new Column("col14", TypeInfoFactory.getCharTypeInfo(2)));
         schema.addColumn(new Column("col15", OdpsType.BINARY));
         schema.addColumn(
-            new Column("col16", TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.INT)));
+          new Column("col16", TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.INT)));
         schema.addColumn(new Column("col17", TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.BIGINT,
                                                                             TypeInfoFactory.STRING)));
         String[] names = {"name", "age", "parents", "salary", "hobbies"};
         TypeInfo[] types =
-            {
-                TypeInfoFactory.STRING,
-                TypeInfoFactory.INT,
-                TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.getVarcharTypeInfo(20),
-                                               TypeInfoFactory.getCharTypeInfo(20)),
-                TypeInfoFactory.FLOAT,
-                TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.STRING)};
+          {
+            TypeInfoFactory.STRING,
+            TypeInfoFactory.INT,
+            TypeInfoFactory.getMapTypeInfo(TypeInfoFactory.getVarcharTypeInfo(20),
+                                           TypeInfoFactory.getCharTypeInfo(20)),
+            TypeInfoFactory.FLOAT,
+            TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.STRING)};
         schema.addColumn(new Column("col18", TypeInfoFactory.getStructTypeInfo(Arrays.asList(names),
                                                                                Arrays.asList(
-                                                                                   types))));
-
-        schema.addColumn(new Column("col19", TypeInfoFactory.GEOGRAPHY));
-        schema.addColumn(new Column("col20", TypeInfoFactory.BLOB));
+                                                                                 types))));
 
         odps.tables().newTableCreator(odps.getDefaultProject(), tableName, schema)
-            .withSchemaName("default")
-            .ifNotExists()
-            .debug()
-            .create();
-    }
-
-    @Test
-    public void testBlobType() throws SQLException {
-        String sql = "select `col20` from " + table;
-        boolean execute = stmt.execute(sql);
-        System.out.println(execute);
-        System.out.println(stmt.getResultSet().getMetaData().getColumnTypeName(1));
-    }
-
-    @Test
-    public void testGeoType() throws SQLException {
-        String sql = "select `col19` from " + table;
-        boolean execute = stmt.execute(sql);
-        System.out.println(execute);
-        System.out.println(stmt.getResultSet().getMetaData().getColumnTypeName(1));
+          .withSchemaName("default")
+          .ifNotExists()
+          .debug()
+          .create();
     }
 }

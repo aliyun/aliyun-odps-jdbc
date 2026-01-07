@@ -438,7 +438,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
       builder.quotaName(quotaName);
-      builder.enableMcqaV2(true);
+      builder.enableMaxQA(true);
       this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
     }
     long startTime = System.currentTimeMillis();
