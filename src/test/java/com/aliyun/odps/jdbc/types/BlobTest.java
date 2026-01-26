@@ -27,13 +27,13 @@ import com.aliyun.odps.table.TableIdentifier;
 import com.aliyun.odps.table.arrow.ArrowWriter;
 import com.aliyun.odps.type.TypeInfo;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.junit.jupiter.api.Disabled;
 
 /**
  * @author dingxin (zhangdingxin.zdx@alibaba-inc.com)
  * cannot run yet
  */
-@Ignore
+@Disabled
 public class BlobTest {
 
   private static Odps odps;
@@ -86,7 +86,7 @@ public class BlobTest {
           .withOverwrite(true)
           .build();
 
-      ArrowWriter arrowWriter = writeSession.newArrowWriterBuilder("test", 1)
+      ArrowWriter arrowWriter = writeSession.createWriterBuilder("test", 1)
         .withBufferSize(4 * 1024 * 1024)
         .build();
 

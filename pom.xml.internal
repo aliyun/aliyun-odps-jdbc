@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>  
   <groupId>com.aliyun.odps</groupId>  
   <artifactId>odps-jdbc</artifactId>  
-  <version>3.10.4-SNAPSHOT</version>  
+  <version>3.10.3-SNAPSHOT</version>  
   <name>odps-jdbc</name>  
   <description>Aliyun ODPS JDBC driver</description>  
   <url>http://odps.aliyun.com</url>  
@@ -322,5 +322,5 @@
       <scope>test</scope> 
     </dependency> 
   </dependencies>  
-  <contributors><contributor><properties><provider>zhangdingxin.zdx@alibaba-inc.com</provider><codeName>null</codeName><codeUrl>null commit:618c088</codeUrl><description>contributors added by SCM Plugin, please don't modify it!</description></properties></contributor></contributors>
+  <contributors><contributor><properties><provider>zhangdingxin.zdx@alibaba-inc.com</provider><codeName>null</codeName><codeUrl>null commit:68f3955</codeUrl><description>contributors added by SCM Plugin, please don't modify it!</description></properties></contributor></contributors>
 </project>

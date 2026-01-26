@@ -21,6 +21,10 @@
 
 package com.aliyun.odps.jdbc.utils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +32,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
@@ -44,6 +49,11 @@ public class TestUtils {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(TestUtils.class);
     private static Random random = new Random();
+    private static boolean envLoaded = false;
+
+    static {
+        loadEnvFile();
+    }
 
     public static float randomFloat() {
         return random.nextFloat();
@@ -106,15 +116,110 @@ public class TestUtils {
             System.currentTimeMillis() + 86400000 * TestUtils.randomInt(100000));
     }
 
+    /**
+     * Load .env file from project root directory and set environment variables
+     */
+    public static void loadEnvFile() {
+        if (envLoaded) {
+            return;
+        }
+
+        try {
+            String projectRoot = System.getProperty("user.dir");
+            File envFile = new File(projectRoot, ".env");
+
+            if (envFile.exists() && envFile.isFile()) {
+                log.info("Loading .env file from: {}", envFile.getAbsolutePath());
+                Map<String, String> envVars = parseEnvFile(envFile);
+
+                for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    System.setProperty(key, value);
+                    log.debug("Set environment variable: {} = {}", key, maskSensitiveValue(key, value));
+                }
+
+                envLoaded = true;
+                log.info(".env file loaded successfully");
+            } else {
+                log.info(".env file not found at: {}", envFile.getAbsolutePath());
+            }
+        } catch (IOException e) {
+            log.warn("Failed to load .env file: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Parse .env file and return key-value pairs
+     */
+    private static Map<String, String> parseEnvFile(File envFile) throws IOException {
+        Map<String, String> envVars = new HashMap<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(envFile))) {
+            String line;
+            int lineNumber = 0;
+
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+
+                line = line.trim();
+
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+
+                int equalSignIndex = line.indexOf('=');
+                if (equalSignIndex == -1) {
+                    log.warn("Invalid .env file format at line {}: missing '='", lineNumber);
+                    continue;
+                }
+
+                String key = line.substring(0, equalSignIndex).trim();
+                String value = line.substring(equalSignIndex + 1).trim();
+
+                if (!key.isEmpty()) {
+                    envVars.put(key, value);
+                }
+            }
+        }
+
+        return envVars;
+    }
+
+    /**
+     * Get environment variable value, checking both system environment and .env loaded properties
+     */
+    public static String getEnvValue(String key) {
+        String value = System.getProperty(key);
+        if (value == null) {
+            value = System.getenv(key);
+        }
+        return value;
+    }
+
+    /**
+     * Mask sensitive values for logging
+     */
+    private static String maskSensitiveValue(String key, String value) {
+        if (key.toLowerCase().contains("secret") || key.toLowerCase().contains("key")
+            || key.toLowerCase().contains("token") || key.toLowerCase().contains("password")) {
+            return "***";
+        }
+        return value;
+    }
+
     public static Connection getConnection(Map<String, String> properties) throws Exception {
 
         Class.forName("com.aliyun.odps.jdbc.OdpsDriver");
 
-        String endpoint = System.getenv("odps_endpoint");
-        String project = System.getenv("MAXCOMPUTE_PROJECT");
-        String accessId = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID");
-        String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
-        String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
+        String endpoint = getEnvValue("MAXCOMPUTE_ENDPOINT");
+        if (StringUtils.isBlank(endpoint)) {
+            endpoint = getEnvValue("odps_endpoint");
+        }
+        String project = getEnvValue("MAXCOMPUTE_PROJECT");
+        String accessId = getEnvValue("ALIBABA_CLOUD_ACCESS_KEY_ID");
+        String accessKey = getEnvValue("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
+        String stsToken = getEnvValue("ALIBABA_CLOUD_SECURITY_TOKEN");
 
         String url = String.format("jdbc:odps:%s?project=%s&accessId=%s&accessKey=%s",
                                    endpoint, project, accessId, accessKey);
@@ -139,11 +244,14 @@ public class TestUtils {
     }
 
     public static Odps getOdps() throws Exception {
-        String endpoint = System.getenv("odps_endpoint");
-        String project = System.getenv("MAXCOMPUTE_PROJECT");
-        String accessId = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID");
-        String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
-        String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
+        String endpoint = getEnvValue("MAXCOMPUTE_ENDPOINT");
+        if (StringUtils.isBlank(endpoint)) {
+            endpoint = getEnvValue("odps_endpoint");
+        }
+        String project = getEnvValue("MAXCOMPUTE_PROJECT");
+        String accessId = getEnvValue("ALIBABA_CLOUD_ACCESS_KEY_ID");
+        String accessKey = getEnvValue("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
+        String stsToken = getEnvValue("ALIBABA_CLOUD_SECURITY_TOKEN");
         if (!StringUtils.isBlank(stsToken)) {
             stsToken = stsToken.replace("  ", " ");
         }

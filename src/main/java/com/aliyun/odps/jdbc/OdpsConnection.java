@@ -49,6 +49,7 @@ import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Project;
 import com.aliyun.odps.ReloadException;
+import com.aliyun.odps.UncheckedOdpsException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.account.StsAccount;
@@ -61,6 +62,8 @@ import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.sqa.v2.FallbackInfo;
+import com.aliyun.odps.sqa.v2.MaxQAConnInfo;
 import com.aliyun.odps.type.ArrayTypeInfo;
 import com.aliyun.odps.type.StructTypeInfo;
 import com.aliyun.odps.type.TypeInfo;
@@ -156,6 +159,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean tunnelDownloadUseSingleReader = false;
   private String quotaName;
   private boolean enableMaxQA = false;
+  private MaxQAConnInfo maxQAConnInfo;
+  private Boolean maxqaFallbackEnabled;
   private String serviceName = null;
   private FallbackPolicy fallbackPolicy;
   private boolean verbose;
@@ -313,6 +318,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fetchResultPreloadSplitNum = connRes.getFetchResultPreloadSplitNum();
     this.skipCheckIfSelect = connRes.isSkipCheckIfSelect();
     this.longJobWarningThreshold = connRes.getLongJobWarningThreshold();
+    this.maxqaFallbackEnabled = connRes.getMaxqaFallbackEnabled();
 
     if (!httpsCheck) {
       odps.getRestClient().setIgnoreCerts(true);
@@ -342,7 +348,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     this.quotaName = connRes.getQuotaName();
-    this.enableMaxQA = checkIfEnableMaxQA(this.quotaName);
+
+    if (interactiveMode != ExecuteMode.OFFLINE) {
+      this.maxQAConnInfo = checkIfEnableMaxQA(this.quotaName);
+    }
 
     try {
 
@@ -373,30 +382,28 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public boolean checkIfEnableMaxQA(String quotaName) {
-    if (quotaName != null) {
-      if ("default".equalsIgnoreCase(quotaName)) {
-        return false;
-      }
-      try {
-        boolean isMaxQAQuota =
-            odps.quotas().getWlmQuota(odps.getDefaultProject(), quotaName)
-                .isInteractiveQuota();
-        log.info("quotaName: " + quotaName + ", enableMaxQA: " + isMaxQAQuota);
-        return isMaxQAQuota;
-      } catch (Exception e) {
-        try {
-          log.warn(
-              "check quotaName: " + quotaName + " failed, enableMaxQA: "
-              + enableMaxQA
-              + " because " + e.getMessage());
-          String tenantId = odps.projects().get().getTenantId();
-          log.info("use project tenantId: " + tenantId);
-        } catch (OdpsException ignored){}
-        return enableMaxQA;
-      }
+  public MaxQAConnInfo checkIfEnableMaxQA(String quotaName) {
+    if ("default".equalsIgnoreCase(quotaName)) {
+      return null;
     }
-    return false;
+    try {
+      MaxQAConnInfo maxQAConnInfo = odps.quotas().getMaxQAConnInfo(quotaName);
+      log.info("quotaName: " + maxQAConnInfo.getQuotaName() + ", enableMaxQA: true");
+      if (Boolean.TRUE.equals(maxqaFallbackEnabled)) {
+        maxQAConnInfo.setFallbackInfo(FallbackInfo.enable(fallbackQuota));
+        log.info("MaxQA auto-fallback enabled: " + maxqaFallbackEnabled + ", fallback quota: "
+                 + fallbackQuota);
+      }
+      return maxQAConnInfo;
+    } catch (OdpsException e) {
+      if (this.interactiveMode == ExecuteMode.INTERACTIVE_V2) {
+        throw new UncheckedOdpsException(e);
+      }
+      log.warn(
+        "check quotaName: " + quotaName + " failed, enableMaxQA: false"
+        + " because " + e.getMessage());
+      return null;
+    }
   }
 
   public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy)
@@ -436,8 +443,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .logviewVersion(logviewVersion)
         .setSkipCheckIfSelect(skipCheckIfSelect);
 
-    if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
-      builder.quotaName(quotaName);
+    if (maxQAConnInfo != null) {
+      builder.maxQAConnInfo(maxQAConnInfo);
       builder.enableMaxQA(true);
       this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
     }

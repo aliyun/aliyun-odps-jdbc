@@ -105,6 +105,7 @@ public class ConnectionResource {
   private static final String FETCH_RESULT_THREAD_NUM = "fetchResultThreadNum";
   private static final String SKIP_CHECK_IF_SELECT = "skipCheckIfSelect";
   private static final String LONG_JOB_WARNING_THRESHOLD = "longJobWarningThreshold";
+  private static final String MAXQA_FALLBACK_ENABLED = "autoFallback";
 
 
   /**
@@ -170,6 +171,7 @@ public class ConnectionResource {
   private static final String VERBOSE_PROP_KEY = "verbose";
   private static final String LOGVIEW_VERSION_PROP_KEY = "logview_version";
   private static final String ASYNC_PROP_KEY = "async";
+  private static final String MAXQA_FALLBACK_ENABLED_PROP_KEY = "auto_fallback";
 
   private String endpoint;
   private String accessId;
@@ -206,6 +208,8 @@ public class ConnectionResource {
   private boolean async = false;
   private String quotaName;
   private int logviewVersion;
+  private Boolean maxqaFallbackEnabled;
+  private String maxqaFallbackQuota;
 
   public Boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
@@ -497,6 +501,13 @@ public class ConnectionResource {
     longJobWarningThreshold = Long.parseLong(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", LONG_JOB_WARNING_THRESHOLD, LONG_JOB_WARNING_THRESHOLD)
     );
+
+    String maxqaFallbackEnabledStr = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, MAXQA_FALLBACK_ENABLED_PROP_KEY, MAXQA_FALLBACK_ENABLED);
+    if (maxqaFallbackEnabledStr != null) {
+      checkValueIsValidBoolean(MAXQA_FALLBACK_ENABLED, maxqaFallbackEnabledStr);
+      maxqaFallbackEnabled = Boolean.parseBoolean(maxqaFallbackEnabledStr);
+    }
 
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
@@ -811,5 +822,9 @@ public class ConnectionResource {
 
   public int getFetchResultPreloadSplitNum() {
     return fetchResultPreloadSplitNum;
+  }
+
+  public Boolean getMaxqaFallbackEnabled() {
+    return maxqaFallbackEnabled;
   }
 }
