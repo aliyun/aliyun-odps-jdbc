@@ -348,7 +348,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     this.quotaName = connRes.getQuotaName();
-
+    if (StringUtils.isNotBlank(this.quotaName)) {
+      sqlTaskProperties.setProperty("odps.task.wlm.quota", this.quotaName);
+    }
     if (interactiveMode != ExecuteMode.OFFLINE) {
       this.maxQAConnInfo = checkIfEnableMaxQA(this.quotaName);
     }
