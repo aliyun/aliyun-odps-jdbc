@@ -134,7 +134,7 @@ public class JdbcTimeUtilTest {
     void testToJdbcTimestampWithNanos() {
         // Test timestamp with nanos
         Timestamp ts = JdbcTimeUtil.toJdbcTimestamp(UTC_MILLIS, 123456789, TimeZone.getTimeZone("UTC"));
-        assertEquals(LocalDateTime.of(2012, 1, 1, 0, 0, 0), ts.toLocalDateTime());
+        assertEquals(LocalDateTime.of(2012, 1, 1, 0, 0, 0, 123456789), ts.toLocalDateTime());
         assertEquals(123456789, ts.getNanos());
     }
 }

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;

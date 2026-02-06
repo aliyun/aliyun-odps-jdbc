@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

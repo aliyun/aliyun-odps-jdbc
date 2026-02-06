@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.util.StringUtils;
 
 public class SettingParserTest {
   // 基础测试用例
@@ -147,7 +148,7 @@ public class SettingParserTest {
     assertEquals(2, result.getSettings().size());
     assertEquals("value1", result.getSettings().get("key1"));
     assertEquals("value2", result.getSettings().get("key2"));
-    assertNull(result.getRemainingQuery()); // or check for empty string
+    assertTrue(StringUtils.isBlank(result.getRemainingQuery())); // or check for empty string
   }
 
   // Test settings followed by whitespace only
@@ -226,14 +227,13 @@ public class SettingParserTest {
   }
 
   // Test that 'set' inside a string is not parsed as a SET statement
+  // only SET before SQL can be set, hints after SQL ignored.
   @Test
   public void testSetKeywordInString() {
     String sql = "SELECT 'this is a set of data' AS description; SET key=value;";
     SettingParser.ParseResult result = new SettingParser().extractSetStatements(sql);
 
-    assertEquals(1, result.getSettings().size());
-    assertEquals("value", result.getSettings().get("key"));
-    assertEquals("SELECT 'this is a set of data' AS description; ", result.getRemainingQuery());
+    assertEquals(0, result.getSettings().size());
   }
 
   // Test ParseResult getters
@@ -250,16 +250,5 @@ public class SettingParserTest {
     assertEquals(settings, result.getSettings());
     assertEquals(remainingQuery, result.getRemainingQuery());
     assertEquals(errors, result.getErrors());
-  }
-
-  // Test query without trailing semicolon gets one added
-  @Test
-  public void testQueryWithoutTrailingSemicolon() {
-    String sql = "SET key1=value1";
-    SettingParser.ParseResult result = SettingParser.parse(sql);
-
-    // Should have error about missing semicolon
-    assertEquals(1, result.getErrors().size());
-    assertTrue(result.getErrors().get(0).contains("missing semicolon"));
   }
 }

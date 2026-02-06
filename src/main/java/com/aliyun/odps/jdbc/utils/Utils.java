@@ -75,7 +75,8 @@ public class Utils {
     Properties prop = new Properties();
     try {
       prop.load(Utils.class.getResourceAsStream("/maxcompute-version.properties"));
-      return prop.getProperty(key);
+      String value = prop.getProperty(key);
+      return value != null ? value : "unknown";
     } catch (IOException e) {
       return "unknown";
     }

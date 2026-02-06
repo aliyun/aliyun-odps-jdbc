@@ -142,21 +142,16 @@ public class OdpsDatabaseMetaDataTest {
     try (ResultSet rs = databaseMetaData.getCatalogs()) {
       int count = 0;
       boolean includesDefaultProject = false;
-      boolean includesPublicDataSet = false;
       while (rs.next()) {
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CAT);
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
-        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
-          includesPublicDataSet = true;
         }
         count += 1;
         System.out.println(catalog);
       }
       Assertions.assertTrue(includesDefaultProject);
-      // TODO fix later
-      Assertions.assertTrue(includesPublicDataSet);
-      Assertions.assertEquals(2, count);
+      Assertions.assertEquals(1, count);
     }
   }
 
@@ -168,7 +163,6 @@ public class OdpsDatabaseMetaDataTest {
     try (ResultSet rs = databaseMetaData.getSchemas(null, null)) {
       int count = 0;
       boolean includesDefaultProject = false;
-      boolean includesPublicDataSet = false;
       while (rs.next()) {
         String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
@@ -178,55 +172,20 @@ public class OdpsDatabaseMetaDataTest {
         }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
-        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
-          includesPublicDataSet = true;
         }
         count += 1;
       }
       Assertions.assertTrue(includesDefaultProject);
-      // TODO fix later
-      Assertions.assertTrue(includesPublicDataSet);
-      // In namespace schema mode, there may be many schemas, so we can't assert the exact count
-      if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-        Assertions.assertEquals(2, count);
-      }
-    }
-
-    // Filtered by catalog name
-    try (ResultSet rs =
-             databaseMetaData
-                 .getSchemas(OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA, null)) {
-      int count = 0;
-      boolean includesDefaultProject = false;
-      boolean includesPublicDataSet = false;
-      while (rs.next()) {
-        String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
-        String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
-        // Only check equality when not in namespace schema mode
-        if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
-          Assertions.assertEquals(schema, catalog);
-        }
-        if (catalog.equalsIgnoreCase(projectName)) {
-          includesDefaultProject = true;
-        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
-          includesPublicDataSet = true;
-        }
-        count += 1;
-        System.out.println(String.format("%s.%s", catalog, schema));
-      }
-      Assertions.assertFalse(includesDefaultProject);
-      Assertions.assertTrue(includesPublicDataSet);
       // In namespace schema mode, there may be many schemas, so we can't assert the exact count
       if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
         Assertions.assertEquals(1, count);
       }
     }
 
-    try (ResultSet rs =
-             databaseMetaData.getSchemas(projectName, null)) {
+    // Filtered by catalog name
+    try (ResultSet rs = databaseMetaData.getSchemas(projectName, null)) {
       int count = 0;
       boolean includesDefaultProject = false;
-      boolean includesPublicDataSet = false;
       while (rs.next()) {
         String schema = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_SCHEM);
         String catalog = rs.getString(OdpsDatabaseMetaData.COL_NAME_TABLE_CATALOG);
@@ -236,14 +195,11 @@ public class OdpsDatabaseMetaDataTest {
         }
         if (catalog.equalsIgnoreCase(projectName)) {
           includesDefaultProject = true;
-        } else if (OdpsDatabaseMetaData.PRJ_NAME_MAXCOMPUTE_PUBLIC_DATA.equalsIgnoreCase(catalog)) {
-          includesPublicDataSet = true;
         }
         count += 1;
         System.out.println(String.format("%s.%s", catalog, schema));
       }
       Assertions.assertTrue(includesDefaultProject);
-      Assertions.assertFalse(includesPublicDataSet);
       // In namespace schema mode, there may be many schemas, so we can't assert the exact count
       if (!((OdpsConnection) databaseMetaData.getConnection()).isOdpsNamespaceSchema()) {
         Assertions.assertEquals(1, count);

@@ -63,7 +63,7 @@
   </repositories>
 
   <properties>
-    <sdk.version>0.57.0-SNAPSHOT</sdk.version>
+    <sdk.version>0.56.1-public</sdk.version>
     <junit.version>4.13.1</junit.version>
     <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -299,6 +299,12 @@
       <groupId>org.apache.arrow</groupId>
       <artifactId>arrow-memory-netty</artifactId>
       <version>17.0.0</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>netty-common</artifactId>
+          <groupId>io.netty</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -346,6 +352,13 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
       <version>4.5.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.cdimascio</groupId>
+      <artifactId>java-dotenv</artifactId>
+      <version>5.2.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
