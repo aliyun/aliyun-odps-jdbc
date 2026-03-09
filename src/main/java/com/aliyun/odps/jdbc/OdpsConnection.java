@@ -48,6 +48,7 @@ import org.slf4j.MDC;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Project;
+import com.aliyun.odps.Quota;
 import com.aliyun.odps.ReloadException;
 import com.aliyun.odps.account.Account;
 import com.aliyun.odps.account.AliyunAccount;
@@ -61,6 +62,7 @@ import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.sqa.v2.MaxQAConnInfo;
 import com.aliyun.odps.type.ArrayTypeInfo;
 import com.aliyun.odps.type.StructTypeInfo;
 import com.aliyun.odps.type.TypeInfo;
@@ -342,16 +344,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     this.quotaName = connRes.getQuotaName();
-    this.enableMaxQA = checkIfEnableMaxQA(this.quotaName);
+
+    MaxQAConnInfo maxQAQuota = checkIfEnableMaxQA(this.quotaName);
+    this.enableMaxQA = maxQAQuota != null;
 
     try {
-
       // Default value for odps.sql.timezone
-      String projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
+      String projectTimeZoneId = "not-fetched";
       if (!StringUtils.isNullOrEmpty(connRes.getTimeZone())) {
         tz = TimeZone.getTimeZone(connRes.getTimeZone());
         sqlTaskProperties.setProperty("odps.sql.timezone", connRes.getTimeZone());
       } else {
+          projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
         if (useProjectTimeZone && !StringUtils.isNullOrEmpty(projectTimeZoneId)) {
           tz = TimeZone.getTimeZone(projectTimeZoneId);
         } else {
@@ -363,7 +367,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format("load project meta infos time cost=%d", cost));
-      initSQLExecutor(serviceName, fallbackPolicy);
+      initSQLExecutor(serviceName, fallbackPolicy, maxQAQuota);
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
 
@@ -373,33 +377,24 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public boolean checkIfEnableMaxQA(String quotaName) {
+  public MaxQAConnInfo checkIfEnableMaxQA(String quotaName) {
     if (quotaName != null) {
       if ("default".equalsIgnoreCase(quotaName)) {
-        return false;
+        return null;
       }
       try {
-        boolean isMaxQAQuota =
-            odps.quotas().getWlmQuota(odps.getDefaultProject(), quotaName)
-                .isInteractiveQuota();
-        log.info("quotaName: " + quotaName + ", enableMaxQA: " + isMaxQAQuota);
-        return isMaxQAQuota;
+        MaxQAConnInfo wlmQuota = odps.quotas().getMaxQAConnInfo(quotaName);
+        return wlmQuota;
       } catch (Exception e) {
-        try {
-          log.warn(
-              "check quotaName: " + quotaName + " failed, enableMaxQA: "
-              + enableMaxQA
-              + " because " + e.getMessage());
-          String tenantId = odps.projects().get().getTenantId();
-          log.info("use project tenantId: " + tenantId);
-        } catch (OdpsException ignored){}
-        return enableMaxQA;
+        log.warn(
+              "check quotaName: " + quotaName + " failed because " + e.getMessage());
+        return null;
       }
     }
-    return false;
+    return null;
   }
 
-  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy)
+  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy, MaxQAConnInfo maxQAQuota)
       throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
@@ -437,8 +432,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .setSkipCheckIfSelect(skipCheckIfSelect);
 
     if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
-      builder.quotaName(quotaName);
-      builder.enableMcqaV2(true);
+      builder.maxQAConnInfo(maxQAQuota);
+      builder.enableMaxQA(true);
       this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
     }
     long startTime = System.currentTimeMillis();
@@ -1013,6 +1008,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isEnableCommandApi() {
     return enableCommandApi;
+  }
+
+  public boolean isEnableMaxQA() {
+    return enableMaxQA;
   }
 
   public boolean isHttpsCheck() {

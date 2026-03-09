@@ -401,6 +401,11 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     public Record clone() {
       return null;
     }
+
+    @Override
+    public void clear() {
+
+    }
     // Implement other Record methods as no-op
   }
 }
