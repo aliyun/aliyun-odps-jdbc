@@ -1,23 +1,144 @@
 # Changelog
+
+## [3.10.3] - 2026-03-25
+### Bug Fixes
+- **Data Iterator Concurrency & Resource Management**
+  Fixed concurrency safety issues and resource release problems in `InstanceDataIterator`:
+  - Added `AtomicBoolean` to control close state and prevent concurrent access
+  - Integrated `OdpsLogger` for error and warning logging
+  - Removed `synchronized` keyword from `submitNextSplit` method to improve concurrent performance
+  - Implemented graceful thread pool shutdown and queue cleanup in `close` method
+  - Fixed resource leak issues in `ResultSet` constructor
+  - Ensured proper `ResultSet` closure after `Statement` execution
+
+---
+
+## [3.10.2] - 2025-11-12
+### Bug Fixes
+- **Catalog and Schema Query Logic**
+  Fixed directory and schema query logic to correctly handle namespace mode and three-tier model scenarios in `OdpsDatabaseMetaData`.
+- **Catalog and Schema Get/Set Methods**
+  Corrected the retrieval and setting methods for Catalog and Schema operations in `OdpsConnection` and related classes.
+- **Connection Namespace Mode Property Key**
+  Updated the property key for namespace mode configuration from incorrect value to proper connection settings.
+
+---
+
+## [3.10.1] - 2025-09-01
+### Improvements
+- **Dependency Shading Optimization**
+  Excluded `netty-arrow` from shading exclusion list to prevent Arrow-Netty compatibility issues.
+
+---
+
+## [3.10.0] - 2025-08-21
+### New Features
+- **ARRAY Type Support**
+  Full support for MaxCompute ARRAY type with new `OdpsArray` class implementing `java.sql.Array` interface:
+  - Implemented `getBaseTypeName()`, `getBaseType()`, `getArray()` methods
+  - Support for array data transformation and type conversion
+  - Compatible with JDBC standard array operations
+  
+- **MaxQA v2 Integration**
+  Integrated MaxQA v2 connection support with comprehensive improvements:
+  - Added `MaxQAConnInfo` class for dedicated MaxQA connection information handling
+  - Removed dynamic quota switching via SET clause in favor of explicit connection configuration
+  - Optimized WLM quota fetching mechanism to avoid unnecessary project property access
+  - Updated SDK version to `0.57.x` for MaxQA v2 compatibility
+
+### Changes
+- **Dependency Relocation**
+  Comprehensive dependency relocation to prevent classpath conflicts:
+  - All third-party dependencies shaded under `com.aliyun.odps.jdbc.shaded.*` namespace
+  - Includes ANTLR, Netty, Jackson, Guava, Commons, Arrow, Protobuf, and other libraries
+  - Excluded SLF4J from shading to maintain logging compatibility
+  
+- **Testing Framework Migration**
+  Migrated from JUnit 4 to JUnit 5:
+  - Updated test annotations and assertions to modern JUnit Jupiter API
+  - Improved test organization and preparation code with timezone settings
+  
+- **SDK Version Update**
+  Upgraded `odps-sdk` to version `0.57.0-public`
+
+---
+
+## [3.9.4] - 2025-07-31
+### New Features
+- **OffsetDateTime Support**
+  `PreparedStatement` now supports `OffsetDateTime` type when setting `Timestamp` parameters.
+- **Logview Configuration Fix**
+  Fixed issue where `logviewHost` setting was not being applied correctly.
+
+---
+
+## [3.9.3] - 2025-06-04
+### New Features
+- **Enhanced Interactive Mode**
+  The `interactMode` parameter has been converted from Boolean to Enum type with optional values: `Offline`, `MCQA`, and `MaxQA`, providing more granular control over execution modes.
+
+### Bug Fixes
+- **Settings Parser Semicolon Handling**
+  Fixed SettingsParser to always terminate with a semicolon for proper SQL statement parsing.
+
+---
+
+## [3.9.2] - 2025-05-08
+### New Features
+- **SQL Validation Skip Parameter**
+  Added new parameter `skipCheckIfSelect` to bypass SELECT statement validation when needed.
+
+### Bug Fixes
+- **SQL Hints with Timezone**
+  Fixed issue where SQL hints were incorrectly set when specifying timezone configurations.
+- **Tunnel Error Workaround**
+  Implemented workaround for Tunnel errors when using `InstanceDataIterator`.
+
+---
+
+## [3.9.1] - 2025-04-22
+### New Features
+- **WLM Quota Configuration**
+  Added support for setting `odps.task.wlm.quota` parameter for workload management quota configuration.
+- **Multi-thread Download Support**
+  Enabled multi-threaded download capability for improved data retrieval performance.
+
+---
+
+## [3.9.0] - 2024-12-02
+### New Features
+- **Timezone-Aware Time Types**
+  Enhanced time type handling to support specified timezones. Improved getter methods for better compatibility across different timezone configurations.
+- **ZonedDateTime Conversion**
+  Properly handled `ZonedDateTime` to `Timestamp` conversion for accurate temporal data representation.
+- **Default Timezone and Null Value Parsing**
+  Added support for default timezone values and improved null value parsing in JDBC operations.
+
+### Bug Fixes
+- **Three-Tier Model Settings Configuration**
+  Fixed settings configuration for three-tier model (project.schema.table) scenarios in `OdpsConnection`.
+
+---
+
 ## [3.8.5] - 2025-03-18
 ### Improvements
-- **Dependency Update**  
+- **Dependency Update**
   Upgraded `odps-sdk` to version `0.51.11-public`. The new SDK version refactors the `MCQA 2.0 ResultDescriptor` entity to ensure compatibility with MCQA 2.0. Users of MCQA 2.0 are **strongly recommended** to upgrade to this version. For details, refer to the [SDK Changelog](https://github.com/aliyun/aliyun-odps-java-sdk/releases/tag/v0.51.11-public).
 ---
 
 ## [3.8.3] - 2025-02-11
 ### Enhancements
-- **SQL Settings Extraction**  
+- **SQL Settings Extraction**
   Replaced regular expressions with a state machine for SQL settings parsing, improving accuracy and resolving issues where JDBC-side SQL rewriting caused execution failures.
-- **Dependency Update**  
+- **Dependency Update**
   Upgraded `odps-sdk` to version `0.51.6-public`.
 ---
 
 ## [3.8.2] - 2025-01-15
 ### Features
-- **Execution Mode**  
+- **Execution Mode**
   Added `getExecuteMode` method in `OdpsStatement` to retrieve the current execution mode (`INTERACTIVE`, `INTERACTIVE_V2`, or `OFFLINE`).
-- **Dependency Update**  
+- **Dependency Update**
   Upgraded `odps-sdk` to version `0.51.5-public`.
 ---
 
