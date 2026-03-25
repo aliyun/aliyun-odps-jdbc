@@ -23,13 +23,13 @@ package com.aliyun.odps.jdbc;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Collections;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.sqa.ExecuteMode;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Tests for MaxQA (MaxCompute Query Acceleration) connection support.
@@ -60,14 +60,15 @@ public class MaxQAConnectionTest {
    */
   @Test
   public void testExplicitQuotaMayEnableMaxQA() throws Exception {
-    String quotaName = System.getenv("MAXCOMPUTE_QUOTA_NAME");
+    String quotaName = "maxqa_perf_s56";
     if (quotaName == null || quotaName.isEmpty()) {
       // Skip test if no quota name is configured
       return;
     }
     
     Connection conn = TestUtils.getConnection(
-        Collections.singletonMap("quotaName", quotaName));
+        ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true", "timezone", 
+        "Asia/Shanghai", "odpsNamespaceSchema", "true"));
     try {
       OdpsConnection odpsConn = (OdpsConnection) conn;
       // If quota is "default", MaxQA should not be enabled
@@ -86,14 +87,13 @@ public class MaxQAConnectionTest {
    */
   @Test
   public void testQueryExecutionWithMaxQA() throws Exception {
-    String quotaName = System.getenv("MAXCOMPUTE_QUOTA_NAME");
-    Connection conn;
-    if (quotaName != null && !quotaName.isEmpty()) {
-      conn = TestUtils.getConnection(
-          Collections.singletonMap("quotaName", quotaName));
-    } else {
-      conn = TestUtils.getConnection();
+    String quotaName = "maxqa_perf_s56";
+    if (quotaName == null || quotaName.isEmpty()) {
+      // Skip test if no quota name is configured
+      return;
     }
+    Connection conn = TestUtils.getConnection(
+        ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true"));
     
     try (Statement stmt = conn.createStatement()) {
       // Test simple query

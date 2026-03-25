@@ -59,7 +59,7 @@ public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
    */
   private long cachedUpperRow;
 
-  private boolean isClosed = false;
+  private volatile boolean isClosed = false;
 
   OdpsScrollResultSet(OdpsStatement stmt, OdpsResultSetMetaData meta, DownloadSession session,
                      ResultMode mode)
@@ -77,9 +77,19 @@ public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
     } else {
       // In interactive mode, createDownloadSession won't call server
       // Before get total record count, openRecordReader must be called
-      TunnelRecordReader reader = sessionHandle.openRecordReader(0, -1, -1);
-      recordCount = sessionHandle.getRecordCount();
-      reader.close();
+      TunnelRecordReader reader = null;
+      try {
+        reader = sessionHandle.openRecordReader(0, -1, -1);
+        recordCount = sessionHandle.getRecordCount();
+      } finally {
+        if (reader != null) {
+          try {
+            reader.close();
+          } catch (IOException e) {
+            conn.log.warn("Failed to close TunnelRecordReader in constructor: " + e.getMessage());
+          }
+        }
+      }
     }
 
     // maxRows take effect only if it > 0

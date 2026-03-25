@@ -9,6 +9,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.aliyun.odps.Column;
@@ -18,6 +20,7 @@ import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.sqa.SQLExecutorConstants;
 import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
@@ -33,12 +36,14 @@ import com.aliyun.odps.type.TypeInfoFactory;
 public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   private static final Record EOF_RECORD = new EOFRecord();
+  private static final OdpsLogger LOG = new OdpsLogger(InstanceDataIterator.class.getName(), null, null, null, false, false, null);
   private boolean isSelect = true;
 
   private ExecutorService executor;
   private int splitNum;
   private BlockingQueue<Record>[] queues;
   private AtomicReference<Throwable> error = new AtomicReference<>();
+  private AtomicBoolean closed = new AtomicBoolean(false);
   private long offset;
   private long recordCount;
   private int preloadSplitNum;
@@ -73,6 +78,7 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
     this.executor = Executors.newFixedThreadPool(this.threadNum);
     this.queues = new LinkedBlockingQueue[this.splitNum];
+    
     // Initialize first batch of splits
     for (int i = 0; i < this.preloadSplitNum && i < this.splitNum; i++) {
       submitNextSplit(i);
@@ -84,8 +90,8 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     return (int) ((recordCount + splitSize - 1) / splitSize);
   }
 
-  private synchronized void submitNextSplit(int splitIndex) {
-    if (splitIndex >= splitNum) return;
+  private void submitNextSplit(int splitIndex) {
+    if (splitIndex >= splitNum || closed.get()) return;
 
     long start = offset + splitIndex * splitSize;
     long count = Math.min(splitSize, recordCount - (splitIndex * splitSize));
@@ -97,34 +103,49 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
         reader = downloadSession.openRecordReader(start, count);
         Record record;
         while ((record = reader.read()) != null) {
+          if (closed.get()) {
+            break;
+          }
           queues[splitIndex].put(record);
         }
-        queues[splitIndex].put(EOF_RECORD);
+        if (!closed.get()) {
+          queues[splitIndex].put(EOF_RECORD);
+        }
       } catch (Throwable t) {
         error.compareAndSet(null, t);
-        queues[splitIndex].offer(EOF_RECORD); // Ensure queue is marked as complete
+        LOG.error("Error reading from split index " + splitIndex, t);
+        if (queues[splitIndex] != null) {
+          queues[splitIndex].offer(EOF_RECORD); // Ensure queue is marked as complete
+        }
       } finally {
         if (reader != null) {
           try {
             reader.close();
-          } catch (IOException ignored) {
+          } catch (IOException e) {
+            LOG.warn("Failed to close TunnelRecordReader for split " + splitIndex + ": " + e.getMessage());
           }
         }
       }
     });
   }
 
-  private synchronized boolean hasNextInternal() {
+  private boolean hasNextInternal() {
+    checkClosed();
     checkError();
     if (currentSplit >= splitNum) {
       currentRecord = EOF_RECORD;
       return false;
     }
     BlockingQueue<Record> currentQueue = queues[currentSplit];
+    if (currentQueue == null) {
+      // Queue already consumed, move to next split
+      currentSplit++;
+      return hasNextInternal();
+    }
     try {
       Record record = currentQueue.take();
       if (record == EOF_RECORD) {
-        queues[currentSplit] = null;
+        queues[currentSplit] = null; // Help GC collect the queue
         submitNextSplit(currentSplit + preloadSplitNum); // Submit next split after current is done
         currentSplit++;
         return hasNextInternal();
@@ -166,9 +187,37 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     }
   }
 
+  private void checkClosed() {
+    if (closed.get()) {
+      throw new IllegalStateException("InstanceDataIterator is already closed");
+    }
+  }
+
   @Override
   public void close() {
-    executor.shutdownNow();
+    if (closed.compareAndSet(false, true)) {
+      // Clean up queues to help GC
+      if (queues != null) {
+        for (int i = 0; i < queues.length; i++) {
+          queues[i] = null;
+        }
+      }
+      
+      // Shutdown executor gracefully
+      if (executor != null && !executor.isShutdown()) {
+        executor.shutdown();
+        try {
+          // Wait a bit for tasks to complete
+          if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+            LOG.warn("Executor did not terminate in time, forcing shutdown");
+            executor.shutdownNow();
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          executor.shutdownNow();
+        }
+      }
+    }
   }
 
   public long getSplitSize() {

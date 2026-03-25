@@ -39,7 +39,7 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
   private long fetchedRows = 0;
   private final long totalRows;
-  private boolean isClosed = false;
+  private volatile boolean isClosed = false;
 
   private long startTime;
 

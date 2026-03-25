@@ -186,11 +186,19 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       resultSet = null;
     }
 
+    if (odpsResultSet != null) {
+      try {
+        odpsResultSet.close();
+      } catch (Exception e) {
+        connHandle.log.warn("Failed to close odpsResultSet: " + e.getMessage());
+      }
+      odpsResultSet = null;
+    }
+
     connHandle.log.info("the statement has been closed");
 
     connHandle = null;
     executeInstance = null;
-    odpsResultSet = null;
     isClosed = true;
   }
 
@@ -205,7 +213,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   @Override
-  public synchronized ResultSet executeQuery(String query) throws SQLException {
+  public ResultSet executeQuery(String query) throws SQLException {
     Properties properties = new Properties();
 
     if (!connHandle.isSkipSqlCheck()) {
@@ -237,7 +245,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   @Override
-  public synchronized int executeUpdate(String query) throws SQLException {
+  public int executeUpdate(String query) throws SQLException {
 
     Properties properties = new Properties();
     if (!connHandle.isSkipSqlCheck()) {
@@ -370,6 +378,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     } catch (IOException e) {
       throw new SQLException(e.getMessage(), e);
+    } finally {
+      try {
+        reader.close();
+      } catch (IOException e) {
+        // Ignore close exception for BufferedReader
+      }
     }
     return false;
   }

@@ -383,8 +383,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         return null;
       }
       try {
-        MaxQAConnInfo wlmQuota = odps.quotas().getMaxQAConnInfo(quotaName);
-        return wlmQuota;
+        Quota wlmQuota = odps.quotas().getWlmQuota(odps.getDefaultProject(), quotaName, null, null);
+        return MaxQAConnInfo.builder().connInfo(wlmQuota.getMcqaConnHeader()).build();
       } catch (Exception e) {
         log.warn(
               "check quotaName: " + quotaName + " failed because " + e.getMessage());

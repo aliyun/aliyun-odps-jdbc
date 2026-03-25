@@ -118,4 +118,9 @@ public class OdpsAsyncStatement extends OdpsStatement {
       return null;
     }
   }
+
+  @Override
+  protected boolean hasResultSet() {
+    return this.sqlExecutor != null && this.sqlExecutor.getInstance() != null;
+  }
 }
