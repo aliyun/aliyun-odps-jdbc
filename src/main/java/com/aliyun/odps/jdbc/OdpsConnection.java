@@ -87,7 +87,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private final String logviewHost;
 
-  private boolean isClosed = false;
+  private volatile boolean isClosed = false;
 
   /**
    * Per-connection logger. All its statements produced by this connection will share this logger

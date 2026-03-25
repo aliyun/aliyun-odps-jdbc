@@ -206,7 +206,7 @@ public class OdpsResultSetMetaData extends WrapperAdapter implements ResultSetMe
         return -1;
       }
 
-      index = nameIndexMap.get(name);
+      index = nameIndexMap.get(lowerName);
     }
 
     if (index == null) {

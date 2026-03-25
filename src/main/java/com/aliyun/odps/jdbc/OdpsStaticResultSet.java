@@ -68,7 +68,7 @@ class OdpsStaticResultSet extends OdpsResultSet implements ResultSet {
     if (isEmptyResultSet) {
       return false;
     }
-    if (iterator.hasNext()) {
+    if (iterator != null && iterator.hasNext()) {
       row = iterator.next();
       return true;
     } else {

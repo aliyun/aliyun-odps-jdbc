@@ -41,16 +41,14 @@ public class AcidTableUploader extends DataUploader {
 
   protected void upload(List<Object[]> data, int batchSize, int[] updateCounts)
       throws OdpsException, IOException, SQLException {
-    UpsertStream stream = upsertSession.buildUpsertStream().build();
-
-    for (int i = 0; i < data.size(); i++) {
-      Object[] row = data.get(i);
-      setReusedRecord(row, tableSchema);
-      stream.upsert(reuseRecord);
-      updateCounts[i] = 1;
+    try (UpsertStream stream = upsertSession.buildUpsertStream().build()) {
+      for (int i = 0; i < data.size(); i++) {
+        Object[] row = data.get(i);
+        setReusedRecord(row, tableSchema);
+        stream.upsert(reuseRecord);
+        updateCounts[i] = 1;
+      }
     }
-
-    stream.close();
   }
 
   public void commit() throws TunnelException, IOException {

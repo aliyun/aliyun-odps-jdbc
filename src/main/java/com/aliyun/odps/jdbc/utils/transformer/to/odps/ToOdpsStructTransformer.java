@@ -19,7 +19,7 @@ public class ToOdpsStructTransformer extends AbstractToOdpsTransformer {
         if (Struct.class.isInstance(o)) {
             return o;
         } else {
-            String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Long.class);
+            String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Struct.class);
             throw new SQLException(errorMsg);
         }
     }

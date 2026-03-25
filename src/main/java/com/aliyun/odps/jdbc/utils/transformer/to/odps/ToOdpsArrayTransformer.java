@@ -17,7 +17,7 @@ public class ToOdpsArrayTransformer extends AbstractToOdpsTransformer {
         if (List.class.isInstance(o)) {
             return o;
         } else {
-            String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), Long.class);
+            String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), List.class);
             throw new SQLException(errorMsg);
         }
     }
