@@ -21,7 +21,7 @@ public class OdpsStatementCommandApiTest {
   @BeforeAll
   public static void prepare() throws Exception {
     conn = TestUtils.getConnection(
-            ImmutableMap.of("enableCommandApi", "true", "interactiveMode", "true"));
+            ImmutableMap.of("enableCommandApi", "true", "interactiveMode", "false"));
 
     Statement statement = conn.createStatement();
     statement.execute("drop table if exists " + tableName);
