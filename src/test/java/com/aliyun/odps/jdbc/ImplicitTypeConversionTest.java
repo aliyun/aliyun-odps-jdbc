@@ -223,7 +223,7 @@ public class ImplicitTypeConversionTest {
     schema.addColumn(
         new Column(DOUBLE_COL, TypeInfoFactory.getPrimitiveTypeInfo(OdpsType.DOUBLE)));
     schema.addColumn(
-        new Column(DECIMAL_COL, TypeInfoFactory.getDecimalTypeInfo(54, 18)));
+        new Column(DECIMAL_COL, TypeInfoFactory.DECIMAL));
     schema.addColumn(
         new Column(VARCHAR_COL, TypeInfoFactory.getVarcharTypeInfo(200)));
     schema.addColumn(
