@@ -313,10 +313,13 @@
       <version>3.25.5</version>
     </dependency>
 
+    <!-- SLF4J API - must be provided scope to avoid being shaded into the fat jar -->
+    <!-- This prevents version conflicts with the application's SLF4J dependency -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>2.0.17</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- for test -->
