@@ -74,39 +74,28 @@ import com.aliyun.odps.utils.StringUtils;
 public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private static final AtomicLong CONNECTION_ID_GENERATOR = new AtomicLong(0);
-
+  private static final String MAJOR_VERSION = "odps.task.major.version";
+  private static String ODPS_SETTING_PREFIX = "odps.";
   private final Odps odps;
   private final TimeZone tz;
   private final Properties info;
   private final List<Statement> stmtHandles;
-
   /**
    * For each connection, keep a character set label for layout the ODPS's byte[] storage
    */
   private final String charset;
-
   private final String logviewHost;
-
-  private volatile boolean isClosed = false;
-
+  private final Properties sqlTaskProperties = new Properties();
   /**
    * Per-connection logger. All its statements produced by this connection will share this logger
    */
   protected OdpsLogger log;
-
+  private volatile boolean isClosed = false;
   private SQLWarning warningChain = null;
-
   private String connectionId;
-
-  private final Properties sqlTaskProperties = new Properties();
-
   private String tunnelEndpoint;
-
   private String majorVersion;
-
   private String fallbackQuota;
-  private static final String MAJOR_VERSION = "odps.task.major.version";
-  private static String ODPS_SETTING_PREFIX = "odps.";
   private ExecuteMode interactiveMode;
   private Long autoSelectLimit = null;
   private Map<String, Map<String, List<String>>> tables;
@@ -134,25 +123,16 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String executeProject = null;
 
   private CatalogSchema catalogSchema = null;
-
-  public boolean isOdpsNamespaceSchema() {
-    return odpsNamespaceSchema;
-  }
-
   private boolean odpsNamespaceSchema = false;
-
   private int retryTime = -1;
   private int readTimeout = -1;
   private int connectTimeout = -1;
-
   private boolean enableCommandApi;
   private boolean useInstanceTunnel;
   private boolean httpsCheck;
   private boolean skipSqlCheck;
   private boolean skipSqlInjectCheck;
-
   private Level logLevel = Level.INFO;
-
   private int tunnelReadTimeout = -1;
   private int tunnelConnectTimeout = -1;
   private boolean tunnelDownloadUseSingleReader = false;
@@ -165,11 +145,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean async;
   private boolean skipCheckIfSelect;
   private long longJobWarningThreshold;
-
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
   private int fetchResultThreadNum;
-
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -330,7 +308,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (null == connRes.isOdpsNamespaceSchema()) {
       try {
         this.odpsNamespaceSchema =
-            Boolean.parseBoolean(currentProject.getProperty("odps.schema.model.enabled"));
+          Boolean.parseBoolean(currentProject.getProperty("odps.schema.model.enabled"));
       } catch (ReloadException e) {
         this.odpsNamespaceSchema = false;
       }
@@ -345,7 +323,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     this.quotaName = connRes.getQuotaName();
 
-    MaxQAConnInfo maxQAQuota = checkIfEnableMaxQA(this.quotaName);
+    MaxQAConnInfo maxQAQuota = null;
+    if (this.interactiveMode == ExecuteMode.OFFLINE) {
+      if (StringUtils.isNotBlank(this.quotaName)) {
+        sqlTaskProperties.put("odps.task.wlm.quota", this.quotaName);
+      }
+    } else {
+      maxQAQuota = checkIfEnableMaxQA(this.quotaName);
+    }
     this.enableMaxQA = maxQAQuota != null;
 
     try {
@@ -355,7 +340,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         tz = TimeZone.getTimeZone(connRes.getTimeZone());
         sqlTaskProperties.setProperty("odps.sql.timezone", connRes.getTimeZone());
       } else {
-          projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
+        projectTimeZoneId = currentProject.getProperty("odps.sql.timezone");
         if (useProjectTimeZone && !StringUtils.isNullOrEmpty(projectTimeZoneId)) {
           tz = TimeZone.getTimeZone(projectTimeZoneId);
         } else {
@@ -377,25 +362,24 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
   }
 
-  public MaxQAConnInfo checkIfEnableMaxQA(String quotaName) {
-    if (quotaName != null) {
-      if ("default".equalsIgnoreCase(quotaName)) {
-        return null;
-      }
-      try {
-        Quota wlmQuota = odps.quotas().getWlmQuota(odps.getDefaultProject(), quotaName, null, null);
-        return MaxQAConnInfo.builder().connInfo(wlmQuota.getMcqaConnHeader()).build();
-      } catch (Exception e) {
-        log.warn(
-              "check quotaName: " + quotaName + " failed because " + e.getMessage());
-        return null;
-      }
-    }
-    return null;
+  public boolean isOdpsNamespaceSchema() {
+    return odpsNamespaceSchema;
   }
 
-  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy, MaxQAConnInfo maxQAQuota)
-      throws OdpsException {
+  public MaxQAConnInfo checkIfEnableMaxQA(String quotaName) {
+    try {
+      MaxQAConnInfo quotaInfo = odps.quotas().getMaxQAConnInfo(quotaName);
+      return quotaInfo;
+    } catch (Exception e) {
+      log.warn(
+        "Get MaxQA connection(" + quotaName + ") failed because " + e.getMessage());
+      return null;
+    }
+  }
+
+  public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy,
+                              MaxQAConnInfo maxQAQuota)
+    throws OdpsException {
     // only support major version when attaching a session
     Map<String, String> hints = new HashMap<>();
     if (!StringUtils.isNullOrEmpty(majorVersion)) {
@@ -413,23 +397,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       executeOdps.setDefaultProject(executeProject);
     }
     builder.odps(executeOdps)
-        .executeMode(interactiveMode)
-        .properties(hints)
-        .serviceName(serviceName)
-        .fallbackPolicy(fallbackPolicy)
-        .enableReattach(true)
-        .attachTimeout(attachTimeout)
-        .quotaName(fallbackQuota)
-        .tunnelEndpoint(tunnelEndpoint)
-        .tunnelGetResultMaxRetryTime(tunnelRetryTime)
-        .taskName(OdpsStatement.getDefaultTaskName())
-        .enableCommandApi(enableCommandApi)
-        .tunnelSocketTimeout(tunnelConnectTimeout)
-        .tunnelReadTimeout(tunnelReadTimeout)
-        .enableOdpsNamespaceSchema(odpsNamespaceSchema)
-        .useInstanceTunnel(useInstanceTunnel)
-        .logviewVersion(logviewVersion)
-        .setSkipCheckIfSelect(skipCheckIfSelect);
+      .executeMode(interactiveMode)
+      .properties(hints)
+      .serviceName(serviceName)
+      .fallbackPolicy(fallbackPolicy)
+      .enableReattach(true)
+      .attachTimeout(attachTimeout)
+      .quotaName(fallbackQuota)
+      .tunnelEndpoint(tunnelEndpoint)
+      .tunnelGetResultMaxRetryTime(tunnelRetryTime)
+      .taskName(OdpsStatement.getDefaultTaskName())
+      .enableCommandApi(enableCommandApi)
+      .tunnelSocketTimeout(tunnelConnectTimeout)
+      .tunnelReadTimeout(tunnelReadTimeout)
+      .enableOdpsNamespaceSchema(odpsNamespaceSchema)
+      .useInstanceTunnel(useInstanceTunnel)
+      .logviewVersion(logviewVersion)
+      .setSkipCheckIfSelect(skipCheckIfSelect);
 
     if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
       builder.maxQAConnInfo(maxQAQuota);
@@ -442,8 +426,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (interactiveMode == ExecuteMode.INTERACTIVE && executor.getInstance() != null) {
       long cost = System.currentTimeMillis() - startTime;
       log.info(String.format(
-          "Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d",
-          executor.getInstance().getId(), cost));
+        "Attach success, instanceId:%s, attach and get tunnel endpoint time cost=%d",
+        executor.getInstance().getId(), cost));
     }
   }
 
@@ -515,7 +499,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public PreparedStatement prepareStatement(String sql, int resultSetType,
                                             int resultSetConcurrency, int resultSetHoldability)
-      throws SQLException {
+    throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
   }
@@ -528,7 +512,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency)
-      throws SQLException {
+    throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -546,17 +530,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
+  public boolean getAutoCommit() throws SQLException {
+    return true;
+  }
+
+  @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
     if (!autoCommit) {
       log.error(Thread.currentThread().getStackTrace()[1].getMethodName()
                 + " to false is not supported!!!");
       throw new SQLFeatureNotSupportedException("disabling autocommit is not supported");
     }
-  }
-
-  @Override
-  public boolean getAutoCommit() throws SQLException {
-    return true;
   }
 
   @Override
@@ -606,6 +590,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
+  public boolean isReadOnly() throws SQLException {
+    return false;
+  }
+
+  @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
     if (readOnly) {
       log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
@@ -614,8 +603,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
-  public boolean isReadOnly() throws SQLException {
-    return false;
+  public String getCatalog() throws SQLException {
+    return catalogSchema.getCatalog();
   }
 
   /**
@@ -628,19 +617,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
-  public String getCatalog() throws SQLException {
-    return catalogSchema.getCatalog();
+  public int getTransactionIsolation() throws SQLException {
+    return Connection.TRANSACTION_NONE;
   }
 
   @Override
   public void setTransactionIsolation(int level) throws SQLException {
     log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
     throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getTransactionIsolation() throws SQLException {
-    return Connection.TRANSACTION_NONE;
   }
 
   @Override
@@ -666,14 +650,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
-  public void setHoldability(int holdability) throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+  public int getHoldability() throws SQLException {
+    return ResultSet.HOLD_CURSORS_OVER_COMMIT;
   }
 
   @Override
-  public int getHoldability() throws SQLException {
-    return ResultSet.HOLD_CURSORS_OVER_COMMIT;
+  public void setHoldability(int holdability) throws SQLException {
+    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -717,7 +701,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
    */
   @Override
   public OdpsStatement createStatement(int resultSetType, int resultSetConcurrency)
-      throws SQLException {
+    throws SQLException {
     checkClosed();
 
     boolean isResultSetScrollable;
@@ -731,7 +715,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         break;
       default:
         throw new SQLFeatureNotSupportedException(
-            "only support statement with ResultSet type: TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_FORWARD_ONLY");
+          "only support statement with ResultSet type: TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_FORWARD_ONLY");
     }
 
     switch (resultSetConcurrency) {
@@ -739,7 +723,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         break;
       default:
         throw new SQLFeatureNotSupportedException(
-            "only support statement with ResultSet concurrency: CONCUR_READ_ONLY");
+          "only support statement with ResultSet concurrency: CONCUR_READ_ONLY");
     }
     OdpsStatement stmt;
     if (async) {
@@ -789,11 +773,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   }
 
   @Override
-  public void setClientInfo(Properties properties) throws SQLClientInfoException {
-    this.info.putAll(properties);
-  }
-
-  @Override
   public void setClientInfo(String name, String value) throws SQLClientInfoException {
     this.info.put(name, value);
   }
@@ -801,6 +780,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public Properties getClientInfo() throws SQLException {
     return info;
+  }
+
+  @Override
+  public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    this.info.putAll(properties);
   }
 
   @Override
@@ -822,20 +806,20 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       return new OdpsStruct(attributes, (StructTypeInfo) typeInfo);
     } else {
       throw new SQLException(
-          "createStruct only support StructTypeInfo, but got " + typeInfo.getTypeName());
+        "createStruct only support StructTypeInfo, but got " + typeInfo.getTypeName());
     }
-  }
-
-  @Override
-  public void setSchema(String schema) throws SQLException {
-    checkClosed();
-    catalogSchema.setSchema(schema);
   }
 
   @Override
   public String getSchema() throws SQLException {
     checkClosed();
     return catalogSchema.getSchema();
+  }
+
+  @Override
+  public void setSchema(String schema) throws SQLException {
+    checkClosed();
+    catalogSchema.setSchema(schema);
   }
 
   @Override
@@ -1071,16 +1055,16 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       return odps.getDefaultProject();
     }
 
+    void setCatalog(String catalog) {
+      odps.setDefaultProject(catalog);
+    }
+
     String getSchema() {
       if (twoTier) {
         return null;
       } else {
         return odps.getCurrentSchema();
       }
-    }
-
-    void setCatalog(String catalog) {
-      odps.setDefaultProject(catalog);
     }
 
     void setSchema(String schema) {
