@@ -1,5 +1,30 @@
 # Changelog
 
+## [3.10.5] - 2026-04-08
+### Bug Fixes
+- **Fix thread leak in OdpsStatement when reusing Statement or creating ScrollResultSet**
+  Fixed a critical thread leak where `InstanceDataIterator`'s internal `ExecutorService` was not
+  properly shut down, causing threads to accumulate indefinitely.
+
+  **Root Cause:** When a `Statement` was reused to execute another query (`beforeExecute()`), or
+  when the result set was converted to `OdpsScrollResultSet` (`getResultSet()`), the previous
+  `odpsResultSet` was set to `null` without calling `close()`, leaving its thread pool running forever.
+
+  **Impact:** Each leaked query accumulated `threadNum` threads (default: `min(preloadSplitNum,
+  availableProcessors * 2)`). In long-running applications or connection pool scenarios where
+  `Statement` objects are reused, this caused continuous growth in thread count, eventually leading
+  to resource exhaustion.
+
+  **Affected versions:** v3.9.0 ~ v3.10.4. Users of these versions are **strongly recommended** to
+  upgrade. The issue is triggered when:
+  1. A `Statement` object is reused to execute multiple queries (most common in connection pool scenarios)
+  2. A `ResultSet` is accessed in scrollable mode (`OdpsScrollResultSet`)
+
+  **Fix:** Extracted `closeOdpsResultSet()` method to ensure the underlying `InstanceDataIterator`
+  is always properly closed (and its thread pool shut down) before the reference is released.
+
+---
+
 ## [3.10.3] - 2026-03-25
 ### Bug Fixes
 - **Data Iterator Concurrency & Resource Management**
