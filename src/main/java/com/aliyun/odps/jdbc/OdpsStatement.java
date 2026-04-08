@@ -186,14 +186,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       resultSet = null;
     }
 
-    if (odpsResultSet != null) {
-      try {
-        odpsResultSet.close();
-      } catch (Exception e) {
-        connHandle.log.warn("Failed to close odpsResultSet: " + e.getMessage());
-      }
-      odpsResultSet = null;
-    }
+    closeOdpsResultSet();
 
     connHandle.log.info("the statement has been closed");
 
@@ -598,7 +591,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                                                ? OdpsScrollResultSet.ResultMode.INTERACTIVE
                                                                : OdpsScrollResultSet.ResultMode.OFFLINE);
           }
-          odpsResultSet = null;
+          closeOdpsResultSet();
         } catch (TunnelException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
@@ -726,7 +719,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     executeInstance = null;
-    odpsResultSet = null;
+    closeOdpsResultSet();
     isClosed = false;
     isCancelled = false;
     updateCount = -1;
@@ -735,6 +728,17 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   protected OdpsLogger getParentLogger() {
     return connHandle.log;
+  }
+
+  private void closeOdpsResultSet() {
+    if (odpsResultSet != null) {
+      try {
+        odpsResultSet.close();
+      } catch (Exception e) {
+        connHandle.log.warn("Failed to close odpsResultSet: " + e.getMessage());
+      }
+      odpsResultSet = null;
+    }
   }
 
   protected void checkClosed() throws SQLException {
