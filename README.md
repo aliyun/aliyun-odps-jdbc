@@ -411,6 +411,27 @@ recommended one. Please see the following table for supported implicit conversio
 | Timestamp  |         |          |     |        |       |        |         |      |         |   Y    |      |    Y     |     Y     |       Y       |         |   Y    |
 |  boolean   |    Y    |    Y     |  Y  |   Y    |   Y   |   Y    |    Y    |      |         |   Y    |      |          |           |               |    Y    |        |
 
+## Known Issues
+
+### Thread Leak in v3.9.0 ~ v3.10.4
+
+Versions v3.9.0 through v3.10.4 have a thread leak bug. The internal thread pool used for
+multi-threaded result fetching (`InstanceDataIterator`) is not properly shut down in the
+following scenarios:
+
+1. **Reusing a `Statement` to execute multiple queries** — the most common case in connection pool
+   scenarios. Each new query execution leaks the previous thread pool.
+2. **Accessing a `ResultSet` in scrollable mode** — the thread pool is abandoned when converting
+   to `OdpsScrollResultSet`.
+
+Each leaked query accumulates `fetchResultThreadNum` threads (default:
+`min(fetchResultPreloadSplitNum, availableProcessors * 2)`). In long-running applications, this
+causes continuous thread count growth, eventually leading to resource exhaustion.
+
+**Recommendation:** Upgrade to v3.10.5 or later. If upgrading is not immediately possible, ensure
+that each `Statement` object is only used once (create a new `Statement` for each query) as a
+temporary workaround.
+
 ## MaxCompute Service Compatibility and Recommended JDBC version
 
 Since Sprint27, MaxCompute tunnel service supported a feature named instance tunnel that allowing
