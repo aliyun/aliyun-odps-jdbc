@@ -148,6 +148,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
   private int fetchResultThreadNum;
+  private boolean readOnly = false;
   OdpsConnection(String url, Properties info) throws SQLException {
 
     ConnectionResource connRes = new ConnectionResource(url, info);
@@ -288,6 +289,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.useInstanceTunnel = connRes.isUseInstanceTunnel();
     this.verbose = connRes.isVerbose();
     this.async = connRes.isAsync();
+    this.readOnly = connRes.isReadOnly();
     this.fetchResultSplitSize = connRes.getFetchResultSplitSize();
     this.fetchResultThreadNum = connRes.getFetchResultThreadNum();
     this.fetchResultPreloadSplitNum = connRes.getFetchResultPreloadSplitNum();
@@ -591,14 +593,16 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public boolean isReadOnly() throws SQLException {
-    return false;
+    return readOnly;
   }
 
   @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
+    this.readOnly = readOnly;
     if (readOnly) {
-      log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-      throw new SQLFeatureNotSupportedException("enabling read-only is not supported");
+      log.info("Read-only mode enabled");
+    } else {
+      log.info("Read-only mode disabled");
     }
   }
 
@@ -1020,6 +1024,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isVerbose() {
     return verbose;
+  }
+
+  public boolean isReadOnlyConnection() {
+    return readOnly;
   }
 
   public long getFetchResultSplitSize() {

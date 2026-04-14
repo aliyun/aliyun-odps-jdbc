@@ -170,6 +170,7 @@ public class ConnectionResource {
   private static final String VERBOSE_PROP_KEY = "verbose";
   private static final String LOGVIEW_VERSION_PROP_KEY = "logview_version";
   private static final String ASYNC_PROP_KEY = "async";
+  private static final String READ_ONLY_PROP_KEY = "readOnly";
 
   private String endpoint;
   private String accessId;
@@ -204,6 +205,7 @@ public class ConnectionResource {
   private boolean skipSqlInjectCheck = false;
   private boolean verbose = false;
   private boolean async = false;
+  private boolean readOnly = false;
   private String quotaName;
   private int logviewVersion;
 
@@ -472,6 +474,10 @@ public class ConnectionResource {
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "async", ASYNC_PROP_KEY,
                                                      ASYNC_PROP_KEY));
+    readOnly =
+        Boolean.parseBoolean(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", READ_ONLY_PROP_KEY,
+                                                     READ_ONLY_PROP_KEY));
     timeZone =
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TIME_ZONE_URL_KEY,
                                                      TIME_ZONE_URL_KEY);
@@ -676,6 +682,10 @@ public class ConnectionResource {
 
   public boolean isAsync() {
     return async;
+  }
+
+  public boolean isReadOnly() {
+    return readOnly;
   }
 
   public boolean isSkipCheckIfSelect() {
