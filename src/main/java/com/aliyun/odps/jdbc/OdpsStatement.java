@@ -801,6 +801,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       if (autoSelectLimit != null && autoSelectLimit > 0) {
         settings.put("odps.sql.select.auto.limit", autoSelectLimit.toString());
       }
+      if (connHandle.isReadOnlyConnection()) {
+        settings.put("odps.sql.read.only", "true");
+      }
       connHandle.log.info("Run SQL: " + sql + ", Begin time: " + begin);
       executor.run(sql, settings);
       logviewUrl = executor.getLogView();
