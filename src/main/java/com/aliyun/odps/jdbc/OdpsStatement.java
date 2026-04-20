@@ -556,6 +556,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         try {
           if (!isResultSetScrollable || sqlExecutor.getInstance() == null) {
             resultSet = new OdpsSessionForwardResultSet(this, meta, odpsResultSet, startTime);
+            odpsResultSet = null; // Transfer ownership to ForwardResultSet, do not close
           } else {
             DownloadSession session;
             InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
@@ -590,8 +591,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                                 executeMode == ExecuteMode.INTERACTIVE
                                                                ? OdpsScrollResultSet.ResultMode.INTERACTIVE
                                                                : OdpsScrollResultSet.ResultMode.OFFLINE);
+            closeOdpsResultSet();
           }
-          closeOdpsResultSet();
         } catch (TunnelException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
