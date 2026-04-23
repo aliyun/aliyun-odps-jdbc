@@ -784,6 +784,10 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       String tableNamePattern,
       String[] types) throws SQLException {
     long begin = System.currentTimeMillis();
+    log.info("getTables called: catalog=" + catalog
+             + ", schemaPattern=" + schemaPattern
+             + ", tableNamePattern=" + tableNamePattern
+             + ", types=" + (types == null ? "null" : Arrays.toString(types)));
     List<Object[]> rows = new ArrayList<>();
 
     try {
@@ -928,6 +932,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
+    log.info("getSchemas called: catalog=" + catalog + ", schemaPattern=" + schemaPattern);
     /** ResultSet Format:
      *  odpsnamespace=true
      *  TABLE_SCHEM    TABLE_CATALOG
