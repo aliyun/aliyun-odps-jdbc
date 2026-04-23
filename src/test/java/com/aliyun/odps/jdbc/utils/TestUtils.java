@@ -116,7 +116,7 @@ public class TestUtils {
         String accessKey = System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET");
         String stsToken = System.getenv("ALIBABA_CLOUD_SECURITY_TOKEN");
 
-        String url = String.format("jdbc:odps:%s?project=%s&accessId=%s&accessKey=%s",
+        String url = String.format("jdbc:odps:%s?project=%s&accessId=%s&accessKey=%s&enableLimit=false",
                                    endpoint, project, accessId, accessKey);
         if (!StringUtils.isBlank(stsToken)) {
             stsToken = stsToken.replace("  ", " ");

@@ -105,6 +105,7 @@ public class ConnectionResource {
   private static final String FETCH_RESULT_THREAD_NUM = "fetchResultThreadNum";
   private static final String SKIP_CHECK_IF_SELECT = "skipCheckIfSelect";
   private static final String LONG_JOB_WARNING_THRESHOLD = "longJobWarningThreshold";
+  private static final String SKIP_CHECK_IF_EPV2_URL_KEY = "skipCheckIfEpv2";
 
 
   /**
@@ -171,6 +172,7 @@ public class ConnectionResource {
   private static final String LOGVIEW_VERSION_PROP_KEY = "logview_version";
   private static final String ASYNC_PROP_KEY = "async";
   private static final String READ_ONLY_PROP_KEY = "readOnly";
+  private static final String SKIP_CHECK_IF_EPV2_PROP_KEY = "skip_check_if_epv2";
 
   private String endpoint;
   private String accessId;
@@ -196,6 +198,7 @@ public class ConnectionResource {
   private String stsToken;
   private boolean disableConnSetting = false;
   private boolean useProjectTimeZone = false;
+  private Boolean skipCheckIfEpv2 = null;
   private boolean enableLimit = false;
   private boolean autoLimitFallback = false;
   private boolean enableCommandApi = false;
@@ -414,6 +417,12 @@ public class ConnectionResource {
     useProjectTimeZone = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, "false", USE_PROJECT_TIME_ZONE_PROP_KEY, USE_PROJECT_TIME_ZONE_URL_KEY)
     );
+
+    String skipCheckIfEpv2Raw = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, null, SKIP_CHECK_IF_EPV2_PROP_KEY, SKIP_CHECK_IF_EPV2_URL_KEY);
+    if (skipCheckIfEpv2Raw != null) {
+      skipCheckIfEpv2 = Boolean.parseBoolean(skipCheckIfEpv2Raw);
+    }
 
     enableLimit = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, "true", ENABLE_LIMIT_PROP_KEY, ENABLE_LIMIT_URL_KEY)
@@ -745,6 +754,10 @@ public class ConnectionResource {
 
   public boolean isUseProjectTimeZone() {
     return useProjectTimeZone;
+  }
+
+  public Boolean getSkipCheckIfEpv2() {
+    return skipCheckIfEpv2;
   }
 
   public boolean isEnableLimit() {

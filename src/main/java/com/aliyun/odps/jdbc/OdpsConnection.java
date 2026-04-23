@@ -43,8 +43,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
-import org.slf4j.MDC;
-
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Project;
@@ -169,7 +167,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     sqlTaskProperties.put(Utils.JDBC_USER_AGENT, Utils.JDBCVersion + " " + Utils.SDKVersion);
 
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
-    MDC.put("connectionId", connectionId);
 
     int readTimeout;
     try {
@@ -243,6 +240,11 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     odps.setCurrentSchema(schema);
     odps.setUserAgent("odps-jdbc-" + version);
     odps.setLogViewHost(logviewHost);
+
+    Boolean skipCheckIfEpv2 = connRes.getSkipCheckIfEpv2();
+    if (skipCheckIfEpv2 != null) {
+      odps.options().setSkipCheckIfEpv2(skipCheckIfEpv2);
+    }
 
     int retryTime = connRes.getRetryTime();
     if (retryTime > 0) {
@@ -421,6 +423,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       builder.maxQAConnInfo(maxQAQuota);
       builder.enableMaxQA(true);
       this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
+      log.info(String.format(
+        "Attach success, instanceId:%s, attach and get tunnel endpoint time",
+        executor.getInstance().getId()));
     }
     long startTime = System.currentTimeMillis();
     this.executorBuilder = builder;
@@ -565,7 +570,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void close() throws SQLException {
-    MDC.remove("connectionId");
     if (!isClosed) {
       for (Statement stmt : stmtHandles) {
         if (stmt != null && !stmt.isClosed()) {
