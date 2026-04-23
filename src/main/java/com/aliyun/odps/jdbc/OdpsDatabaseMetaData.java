@@ -788,6 +788,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
              + ", schemaPattern=" + schemaPattern
              + ", tableNamePattern=" + tableNamePattern
              + ", types=" + (types == null ? "null" : Arrays.toString(types)));
+
+    // Performance optimization: when caller (e.g. Tableau) does not specify a schema
+    // and the connection has a default schema configured via the URL `schema` parameter,
+    // restrict the lookup to that schema. This avoids iterating tables across every
+    // schema in the project. Only applies in odps namespace schema mode.
+    if (schemaPattern == null
+        && Boolean.TRUE.equals(conn.isOdpsNamespaceSchema())
+        && conn.getSchema() != null) {
+      log.info("getTables: schemaPattern is null, restricting to connection schema: "
+               + conn.getSchema());
+      schemaPattern = conn.getSchema();
+    }
+
     List<Object[]> rows = new ArrayList<>();
 
     try {
