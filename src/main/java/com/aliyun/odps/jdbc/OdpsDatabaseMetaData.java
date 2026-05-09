@@ -35,6 +35,7 @@ import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Table;
+import com.aliyun.odps.TableFilter;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
@@ -817,8 +818,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
               continue;
             }
             for (String tableName : tableEntry.getValue()) {
-              if (Utils.matchPattern(tableName, tableNamePattern)
-                  && conn.getOdps().tables().exists(projectName, tableName)) {
+              if (Utils.matchPattern(tableName, tableNamePattern)) {
                 tables.add(tableName);
               }
             }
@@ -831,6 +831,16 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         ResultSet schemas = getSchemas(catalog, schemaPattern);
         List<Table> tables = new LinkedList<>();
 
+        // Push tableNamePattern down to the server as a prefix filter when possible.
+        // TableFilter.setName matches by prefix; the unescaped literal prefix preceding the
+        // first SQL wildcard is a safe over-approximation, refined by client-side matchPattern.
+        TableFilter tableFilter = null;
+        String namePrefix = extractLiteralPrefix(tableNamePattern);
+        if (namePrefix != null && !namePrefix.isEmpty()) {
+          tableFilter = new TableFilter();
+          tableFilter.setName(namePrefix);
+        }
+
         // Iterate through all the available catalog & schemas
         while (schemas.next()) {
           if (catalogMatches(catalog, schemas.getString(COL_NAME_TABLE_CATALOG))
@@ -839,7 +849,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
             // information needed by JDBC, like comment and type.
             Iterator<Table> iter = conn.getOdps().tables().iterator(
                 schemas.getString(COL_NAME_TABLE_CATALOG), schemas.getString(COL_NAME_TABLE_SCHEM),
-                 null, true);
+                 tableFilter, true);
             while (iter.hasNext()) {
               Table t = iter.next();
               String tableName = t.getName();
@@ -900,6 +910,61 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   private boolean schemaMatches(String schemaPattern, String actual) {
     return Utils.matchPattern(actual, schemaPattern);
+  }
+
+  /**
+   * Returns true if {@code pattern} contains any unescaped SQL wildcard ({@code %} or
+   * {@code _}). Backslash-escaped wildcards are treated as literals, matching the semantics
+   * of {@link Utils#matchPattern(String, String)}.
+   */
+  private static boolean hasWildcard(String pattern) {
+    if (pattern == null) {
+      return false;
+    }
+    for (int i = 0; i < pattern.length(); i++) {
+      char c = pattern.charAt(i);
+      if ((c == '%' || c == '_') && (i == 0 || pattern.charAt(i - 1) != '\\')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns the literal prefix of {@code pattern} preceding the first unescaped SQL wildcard,
+   * with {@code \%} and {@code \_} unescaped. Returns null when the pattern is null/empty.
+   */
+  private static String extractLiteralPrefix(String pattern) {
+    if (StringUtils.isNullOrEmpty(pattern)) {
+      return null;
+    }
+    StringBuilder sb = new StringBuilder(pattern.length());
+    for (int i = 0; i < pattern.length(); i++) {
+      char c = pattern.charAt(i);
+      if (c == '\\' && i + 1 < pattern.length()) {
+        char next = pattern.charAt(i + 1);
+        if (next == '%' || next == '_') {
+          sb.append(next);
+          i++;
+          continue;
+        }
+      }
+      if (c == '%' || c == '_') {
+        break;
+      }
+      sb.append(c);
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Removes backslash escapes for {@code %} and {@code _} from a wildcard-free pattern.
+   */
+  private static String unescapePattern(String pattern) {
+    if (pattern == null || pattern.indexOf('\\') < 0) {
+      return pattern;
+    }
+    return pattern.replace("\\%", "%").replace("\\_", "_");
   }
 
   private void convertTableNamesToRows(
@@ -973,14 +1038,22 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           rows.add(new String[]{"default", catalog});
         }
       } else {
-        List<String> schemaList;
         if (catalog == null) {
           catalog = conn.getOdps().getDefaultProject();
         }
-        schemaList = Utils.getSchemaList(conn.getOdps(), "show schemas in " + catalog + ";");
-        for (String schemaName: schemaList) {
-          if (schemaMatches(schemaPattern, schemaName)) {
-            rows.add(new String[]{schemaName, catalog});
+        // Performance optimization: when caller passes an exact schema name (no wildcard),
+        // skip the `show schemas` SQL job — it can take tens of seconds in projects with
+        // thousands of schemas. We trust the caller; downstream getTables on a non-existent
+        // schema simply returns empty.
+        if (schemaPattern != null && !hasWildcard(schemaPattern)) {
+          rows.add(new String[]{unescapePattern(schemaPattern), catalog});
+        } else {
+          List<String> schemaList =
+              Utils.getSchemaList(conn.getOdps(), "show schemas in " + catalog + ";");
+          for (String schemaName: schemaList) {
+            if (schemaMatches(schemaPattern, schemaName)) {
+              rows.add(new String[]{schemaName, catalog});
+            }
           }
         }
       }
