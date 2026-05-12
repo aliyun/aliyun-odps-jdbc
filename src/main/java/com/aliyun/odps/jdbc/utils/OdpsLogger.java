@@ -91,36 +91,48 @@ public class OdpsLogger {
       }
     }
 
-    // Init sl4j logger
-    sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
+    // Init sl4j logger (gracefully degrade if slf4j-api is not on classpath)
+    try {
+      sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
+    } catch (NoClassDefFoundError e) {
+      sl4jLogger = null;
+    }
   }
 
   public synchronized void debug(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.fine(String.format("[connection-%s] %s", connectionId, msg));
     }
-    sl4jLogger.debug(msg);
+    if (sl4jLogger != null) {
+      sl4jLogger.debug(msg);
+    }
   }
 
   public synchronized void info(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.info(String.format("[connection-%s] %s", connectionId, msg));
     }
-    sl4jLogger.info(msg);
+    if (sl4jLogger != null) {
+      sl4jLogger.info(msg);
+    }
   }
 
   public synchronized void warn(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.warning(String.format("[connection-%s] %s", connectionId, msg));
     }
-    sl4jLogger.warn(msg);
+    if (sl4jLogger != null) {
+      sl4jLogger.warn(msg);
+    }
   }
 
   public synchronized void error(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.severe(String.format("[connection-%s] %s", connectionId, msg));
     }
-    sl4jLogger.error(msg);
+    if (sl4jLogger != null) {
+      sl4jLogger.error(msg);
+    }
   }
 
   public synchronized void error(String msg, Throwable e) {
@@ -131,7 +143,9 @@ public class OdpsLogger {
       odpsLogger.severe(String.format("[connection-%s] %s", connectionId, msg));
       odpsLogger.severe(String.format("[connection-%s] %s", connectionId, sw.toString()));
     }
-    sl4jLogger.error(msg, e);
+    if (sl4jLogger != null) {
+      sl4jLogger.error(msg, e);
+    }
   }
 
   /**
