@@ -457,27 +457,27 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public boolean supportsSchemasInDataManipulation() throws SQLException {
-    return false;
+    return conn.isOdpsNamespaceSchema();
   }
 
   @Override
   public boolean supportsSchemasInProcedureCalls() throws SQLException {
-    return false;
+    return conn.isOdpsNamespaceSchema();
   }
 
   @Override
   public boolean supportsSchemasInTableDefinitions() throws SQLException {
-    return false;
+    return conn.isOdpsNamespaceSchema();
   }
 
   @Override
   public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-    return false;
+    return conn.isOdpsNamespaceSchema();
   }
 
   @Override
   public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
-    return false;
+    return conn.isOdpsNamespaceSchema();
   }
 
   @Override
@@ -847,19 +847,27 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
               && schemaMatches(schemaPattern, schemas.getString(COL_NAME_TABLE_SCHEM))) {
             // Enable the argument 'extended' so that the returned table objects contains all the
             // information needed by JDBC, like comment and type.
+            String schemaCatalog = schemas.getString(COL_NAME_TABLE_CATALOG);
+            String schemaName = schemas.getString(COL_NAME_TABLE_SCHEM);
             Iterator<Table> iter = conn.getOdps().tables().iterator(
-                schemas.getString(COL_NAME_TABLE_CATALOG), schemas.getString(COL_NAME_TABLE_SCHEM),
-                 tableFilter, true);
-            while (iter.hasNext()) {
-              Table t = iter.next();
-              String tableName = t.getName();
-              if (!Utils.matchPattern(tableName, tableNamePattern)) {
-                continue;
+                schemaCatalog, schemaName, tableFilter, true);
+            try {
+              while (iter.hasNext()) {
+                Table t = iter.next();
+                String tableName = t.getName();
+                if (!Utils.matchPattern(tableName, tableNamePattern)) {
+                  continue;
+                }
+                tables.add(t);
+                if (tables.size() == 100) {
+                  convertTablesToRows(types, rows, tables);
+                }
               }
-              tables.add(t);
-              if (tables.size() == 100) {
-                convertTablesToRows(types, rows, tables);
-              }
+            } catch (Exception e) {
+              // Some schemas may contain tables with invalid XML characters in comments,
+              // causing the SDK iterator to fail. Skip the problematic schema and continue.
+              log.warn("getTables: failed to list tables in schema "
+                       + schemaCatalog + "." + schemaName + ": " + e.getMessage());
             }
           }
         }
@@ -869,6 +877,9 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         schemas.close();
       }
     } catch (Exception e) {
+      log.error("getTables failed: catalog=" + catalog
+                + ", schemaPattern=" + schemaPattern
+                + ", tableNamePattern=" + tableNamePattern, e);
       throw new SQLException(e.getMessage(), e);
     }
 
@@ -1169,16 +1180,20 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         columns.addAll(table.getSchema().getPartitionColumns());
         for (int i = 0; i < columns.size(); i++) {
           Column col = columns.get(i);
+          String colSchema = table.getProject();
+          if (conn.isOdpsNamespaceSchema()) {
+            colSchema = table.getSchemaName();
+          }
           JdbcColumn jdbcCol = new JdbcColumn(col.getName(),
                                               tableNamePattern,
-                                              table.getProject(),
+                                              colSchema,
                                               col.getTypeInfo().getOdpsType(),
                                               col.getTypeInfo(),
                                               col.getComment(),
                                               i + 1);
           Object[] rowVals =
               {catalog, // table catalog (odps project)
-               jdbcCol.getTableSchema(), // table schema （odps project)
+               jdbcCol.getTableSchema(), // table schema
                jdbcCol.getTableName(), // table name
                jdbcCol.getColumnName(), // column name
                (long) jdbcCol.getType(), // SQL type from java.sql.Types
