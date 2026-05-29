@@ -312,7 +312,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (null == connRes.isOdpsNamespaceSchema()) {
       try {
         this.odpsNamespaceSchema =
-          Boolean.parseBoolean(currentProject.getProperty("odps.schema.model.enabled"));
+          Boolean.parseBoolean(currentProject.getProperty(OdpsConstants.ODPS_NAMESPACE_SCHEMA));
       } catch (ReloadException e) {
         this.odpsNamespaceSchema = false;
       }
