@@ -1,0 +1,5 @@
+end_point=http://service.cn-shanghai.maxcompute.aliyun.com/api
+project_name=your_project
+quota_name=your_quota
+access_id=your_access_id
+access_key=your_access_key

@@ -1,0 +1,7 @@
+target/
+*.out
+*.log
+config.ini
+.idea/
+.DS_Store
+*.iml
