@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.sqa.ExecuteMode;
+import com.aliyun.odps.sqa.v2.FallbackInfo;
+import com.aliyun.odps.sqa.v2.MaxQAConnInfo;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -60,7 +62,7 @@ public class MaxQAConnectionTest {
    */
   @Test
   public void testExplicitQuotaMayEnableMaxQA() throws Exception {
-    String quotaName = "maxqa_perf_s56";
+    String quotaName = "maxqa_huigui_quota";
     if (quotaName == null || quotaName.isEmpty()) {
       // Skip test if no quota name is configured
       return;
@@ -87,7 +89,7 @@ public class MaxQAConnectionTest {
    */
   @Test
   public void testQueryExecutionWithMaxQA() throws Exception {
-    String quotaName = "maxqa_perf_s56";
+    String quotaName = "maxqa_huigui_quota";
     if (quotaName == null || quotaName.isEmpty()) {
       // Skip test if no quota name is configured
       return;
@@ -130,6 +132,78 @@ public class MaxQAConnectionTest {
       // MaxQA state should remain unchanged after SET
       Assertions.assertEquals(initialMaxQAState, odpsConn.isEnableMaxQA(),
           "SET odps.task.wlm.quota should not dynamically change MaxQA state");
+    } finally {
+      conn.close();
+    }
+  }
+
+  @Test
+  public void testFallbackInfoEnabledByDefault() throws Exception {
+    String quotaName = "maxqa_huigui_quota";
+    Connection conn = TestUtils.getConnection(
+        ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true"));
+    try {
+      OdpsConnection odpsConn = (OdpsConnection) conn;
+      Assertions.assertTrue(odpsConn.isEnableMaxQA(), "MaxQA should be enabled");
+      MaxQAConnInfo connInfo = odpsConn.getExecutorBuilder().getMaxQAConnInfo();
+      Assertions.assertNotNull(connInfo, "MaxQAConnInfo should not be null");
+      FallbackInfo fallbackInfo = connInfo.getFallbackInfo();
+      Assertions.assertNotNull(fallbackInfo, "FallbackInfo should be set by default");
+      Assertions.assertNull(fallbackInfo.getFallbackQuota(),
+          "FallbackQuota should be null when not specified");
+    } finally {
+      conn.close();
+    }
+  }
+
+  @Test
+  public void testFallbackInfoWithQuota() throws Exception {
+    String quotaName = "maxqa_huigui_quota";
+    String fallbackQuota = "my_offline_quota";
+    Connection conn = TestUtils.getConnection(
+        ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true",
+                        "fallbackQuota", fallbackQuota));
+    try {
+      OdpsConnection odpsConn = (OdpsConnection) conn;
+      Assertions.assertTrue(odpsConn.isEnableMaxQA(), "MaxQA should be enabled");
+      MaxQAConnInfo connInfo = odpsConn.getExecutorBuilder().getMaxQAConnInfo();
+      FallbackInfo fallbackInfo = connInfo.getFallbackInfo();
+      Assertions.assertNotNull(fallbackInfo, "FallbackInfo should be set");
+      Assertions.assertEquals(fallbackQuota, fallbackInfo.getFallbackQuota(),
+          "FallbackQuota should match the configured value");
+    } finally {
+      conn.close();
+    }
+  }
+
+  @Test
+  public void testFallbackInfoDisabled() throws Exception {
+    String quotaName = "maxqa_huigui_quota";
+    Connection conn = TestUtils.getConnection(
+        ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true",
+                        "disableFallback", "true"));
+    try {
+      OdpsConnection odpsConn = (OdpsConnection) conn;
+      Assertions.assertTrue(odpsConn.isEnableMaxQA(), "MaxQA should be enabled");
+      MaxQAConnInfo connInfo = odpsConn.getExecutorBuilder().getMaxQAConnInfo();
+      FallbackInfo fallbackInfo = connInfo.getFallbackInfo();
+      Assertions.assertNull(fallbackInfo,
+          "FallbackInfo should be null when disableFallback=true");
+    } finally {
+      conn.close();
+    }
+  }
+
+  @Test
+  public void testFallbackQueryWithMaxQA() throws Exception {
+    String quotaName = "maxqa_huigui_quota";
+    Connection conn = TestUtils.getConnection(
+        ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true"));
+    try (Statement stmt = conn.createStatement()) {
+      ResultSet rs = stmt.executeQuery("SELECT 1");
+      Assertions.assertTrue(rs.next());
+      Assertions.assertEquals(1, rs.getInt(1));
+      rs.close();
     } finally {
       conn.close();
     }

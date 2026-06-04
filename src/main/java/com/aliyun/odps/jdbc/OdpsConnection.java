@@ -60,6 +60,7 @@ import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.sqa.v2.FallbackInfo;
 import com.aliyun.odps.sqa.v2.MaxQAConnInfo;
 import com.aliyun.odps.type.ArrayTypeInfo;
 import com.aliyun.odps.type.StructTypeInfo;
@@ -136,6 +137,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean tunnelDownloadUseSingleReader = false;
   private String quotaName;
   private boolean enableMaxQA = false;
+  private boolean disableFallback = false;
   private String serviceName = null;
   private FallbackPolicy fallbackPolicy;
   private boolean verbose;
@@ -282,6 +284,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
     this.enableLimit = connRes.isEnableLimit();
     this.fallbackQuota = connRes.getFallbackQuota();
+    this.disableFallback = connRes.isDisableFallback();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
     this.enableCommandApi = connRes.isEnableCommandApi();
     this.httpsCheck = connRes.isHttpsCheck();
@@ -336,6 +339,12 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       maxQAQuota = checkIfEnableMaxQA(this.quotaName);
     }
     this.enableMaxQA = maxQAQuota != null;
+    if (this.enableMaxQA && !this.disableFallback) {
+      FallbackInfo fallbackInfo = StringUtils.isNullOrEmpty(fallbackQuota)
+          ? FallbackInfo.enable()
+          : FallbackInfo.enable(fallbackQuota);
+      maxQAQuota.setFallbackInfo(fallbackInfo);
+    }
 
     try {
       // Default value for odps.sql.timezone
@@ -423,9 +432,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       builder.maxQAConnInfo(maxQAQuota);
       builder.enableMaxQA(true);
       this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
-      log.info(String.format(
-        "Attach success, instanceId:%s, attach and get tunnel endpoint time",
-        executor.getInstance().getId()));
     }
     long startTime = System.currentTimeMillis();
     this.executorBuilder = builder;
