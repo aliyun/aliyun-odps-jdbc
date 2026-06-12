@@ -81,6 +81,8 @@ public class ConnectionResource {
   private static final String USE_PROJECT_TIME_ZONE_URL_KEY = "useProjectTimeZone";
   private static final String ENABLE_LIMIT_URL_KEY = "enableLimit";
   private static final String AUTO_LIMIT_FALLBACK_URL_KEY = "autoLimitFallback";
+  private static final String AUTO_PARTITION_FILTER_URL_KEY = "autoPartitionFilter";
+  private static final String AUTO_PARTITION_FILTER_LIMIT_URL_KEY = "autoPartitionFilterLimit";
   private static final String SETTINGS_URL_KEY = "settings";
   private static final String ODPS_NAMESPACE_SCHEMA_URL_KEY = "odpsNamespaceSchema";
   private static final String SCHEMA_URL_KEY = "schema";
@@ -147,6 +149,8 @@ public class ConnectionResource {
   private static final String ENABLE_LIMIT_PROP_KEY = "enable_limit";
   // only applied in non-interactive mode
   private static final String AUTO_FALLBACK_PROP_KEY = "auto_limit_fallback";
+  private static final String AUTO_PARTITION_FILTER_PROP_KEY = "auto_partition_filter";
+  private static final String AUTO_PARTITION_FILTER_LIMIT_PROP_KEY = "auto_partition_filter_limit";
   private static final String SETTINGS_PROP_KEY = "settings";
   // This is to support DriverManager.getConnection(url, user, password) API,
   // which put the 'user' and 'password' to the 'info'.
@@ -201,6 +205,8 @@ public class ConnectionResource {
   private Boolean skipCheckIfEpv2 = null;
   private boolean enableLimit = false;
   private boolean autoLimitFallback = false;
+  private boolean autoPartitionFilter = false;
+  private Long autoPartitionFilterLimit;
   private boolean enableCommandApi = false;
   private boolean useInstanceTunnel = true;
   private boolean httpsCheck = false;
@@ -451,6 +457,14 @@ public class ConnectionResource {
 
     autoLimitFallback = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
         maps, "false", AUTO_FALLBACK_PROP_KEY, AUTO_LIMIT_FALLBACK_URL_KEY));
+
+    autoPartitionFilter = Boolean.parseBoolean(tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "false", AUTO_PARTITION_FILTER_PROP_KEY, AUTO_PARTITION_FILTER_URL_KEY));
+
+    autoPartitionFilterLimit = Long.valueOf(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "100", AUTO_PARTITION_FILTER_LIMIT_PROP_KEY,
+                                                 AUTO_PARTITION_FILTER_LIMIT_URL_KEY)
+    );
 
     enableCommandApi =
         Boolean.parseBoolean(
@@ -771,6 +785,14 @@ public class ConnectionResource {
 
   public boolean isAutoLimitFallback() {
     return autoLimitFallback;
+  }
+
+  public boolean isAutoPartitionFilter() {
+    return autoPartitionFilter;
+  }
+
+  public Long getAutoPartitionFilterLimit() {
+    return autoPartitionFilterLimit;
   }
 
   public Map<String, String> getSettings() {

@@ -115,6 +115,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private boolean autoLimitFallback = false;
 
+  private boolean autoPartitionFilter = false;
+
+  private Long autoPartitionFilterLimit;
+
   private SQLExecutorBuilder executorBuilder;
 
   private SQLExecutor executor = null;
@@ -286,6 +290,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fallbackQuota = connRes.getFallbackQuota();
     this.disableFallback = connRes.isDisableFallback();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
+    this.autoPartitionFilter = connRes.isAutoPartitionFilter();
+    this.autoPartitionFilterLimit = connRes.getAutoPartitionFilterLimit();
     this.enableCommandApi = connRes.isEnableCommandApi();
     this.httpsCheck = connRes.isHttpsCheck();
     this.skipSqlCheck = connRes.isSkipSqlRewrite();
@@ -943,6 +949,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isAutoLimitFallback() {
     return autoLimitFallback;
+  }
+
+  public boolean isAutoPartitionFilter() {
+    return autoPartitionFilter;
+  }
+
+  public Long getAutoPartitionFilterLimit() {
+    return autoPartitionFilterLimit;
   }
 
   public void setEnableLimit(boolean enableLimit) {

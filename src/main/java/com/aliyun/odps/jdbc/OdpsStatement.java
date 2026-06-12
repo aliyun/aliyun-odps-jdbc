@@ -31,12 +31,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Instance;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.Table;
 import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.InstanceDataIterator;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
@@ -805,6 +808,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       if (connHandle.isReadOnlyConnection()) {
         settings.put("odps.sql.read.only", "true");
       }
+      String rewritten = rewriteBareSelect(sql, isUpdate);
+      if (rewritten != null) {
+        connHandle.log.info("Auto-rewrote bare SELECT to: " + rewritten);
+        sql = rewritten;
+      }
+
       connHandle.log.info("Run SQL: " + sql + ", Begin time: " + begin);
       executor.run(sql, settings);
       logviewUrl = executor.getLogView();
@@ -858,6 +867,95 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     } catch (OdpsException | IOException e) {
       throwSQLException(e, sql, executor.getInstance(), executor.getLogView());
+    }
+  }
+
+  private String rewriteBareSelect(String sql, boolean isUpdate) {
+    if (isUpdate || !connHandle.isAutoPartitionFilter()) {
+      return null;
+    }
+
+    String stripped = Utils.removeComments(sql);
+    stripped = stripped.trim();
+    if (stripped.endsWith(";")) {
+      stripped = stripped.substring(0, stripped.length() - 1).trim();
+    }
+
+    try {
+      if (!isQuery(stripped)) {
+        return null;
+      }
+    } catch (SQLException e) {
+      return null;
+    }
+
+    Pattern forbiddenPattern = Pattern.compile(
+        "(?i)\\b(WHERE|LIMIT|GROUP\\s+BY|ORDER\\s+BY|HAVING|UNION|JOIN|INTO)\\b");
+    if (forbiddenPattern.matcher(stripped).find()) {
+      return null;
+    }
+
+    Pattern fromPattern = Pattern.compile("(?i)\\bFROM\\s+([`\\w.]+)\\b");
+    Matcher matcher = fromPattern.matcher(stripped);
+    if (!matcher.find()) {
+      return null;
+    }
+
+    String tableName = matcher.group(1).replace("`", "");
+
+    // Avoid rewriting multi-table queries like "FROM table1, table2"
+    int afterTable = matcher.end();
+    if (afterTable < stripped.length() && stripped.charAt(afterTable) == ',') {
+      return null;
+    }
+
+    try {
+      String project = null;
+      String schema = null;
+      String table = tableName;
+
+      if (tableName.contains(".")) {
+        String[] parts = tableName.split("\\.");
+        if (parts.length == 2) {
+          if (connHandle.isOdpsNamespaceSchema()) {
+            project = connHandle.getOdps().getDefaultProject();
+            schema = parts[0];
+            table = parts[1];
+          } else {
+            project = parts[0];
+            table = parts[1];
+          }
+        } else if (parts.length == 3) {
+          project = parts[0];
+          schema = parts[1];
+          table = parts[2];
+        } else {
+          return null;
+        }
+      }
+
+      Table odpsTable;
+      if (project != null && schema != null) {
+        odpsTable = connHandle.getOdps().tables().get(project, schema, table);
+      } else if (project != null) {
+        odpsTable = connHandle.getOdps().tables().get(project, table);
+      } else {
+        odpsTable = connHandle.getOdps().tables().get(table);
+      }
+      odpsTable.reload();
+
+      List<Column> partitionColumns = odpsTable.getSchema().getPartitionColumns();
+      if (partitionColumns == null || partitionColumns.isEmpty()) {
+        return null;
+      }
+
+      String partitionCol = partitionColumns.get(0).getName();
+      long limit = connHandle.getAutoPartitionFilterLimit();
+
+      return stripped + " WHERE `" + partitionCol + "` IS NOT NULL LIMIT " + limit + ";";
+    } catch (Exception e) {
+      connHandle.log.warn("Failed to apply auto partition filter for table '" + tableName + "': " + e.getMessage());
+      return null;
     }
   }
 
