@@ -136,6 +136,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int tunnelConnectTimeout = -1;
   private boolean tunnelDownloadUseSingleReader = false;
   private String quotaName;
+  private String tunnelQuotaName;
   private boolean enableMaxQA = false;
   private boolean disableFallback = false;
   private String serviceName = null;
@@ -329,6 +330,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.catalogSchema = new CatalogSchema(odps, this.odpsNamespaceSchema);
 
     this.quotaName = connRes.getQuotaName();
+    this.tunnelQuotaName = connRes.getTunnelQuotaName();
 
     MaxQAConnInfo maxQAQuota = null;
     if (this.interactiveMode == ExecuteMode.OFFLINE) {
@@ -417,6 +419,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       .enableReattach(true)
       .attachTimeout(attachTimeout)
       .quotaName(fallbackQuota)
+      .tunnelQuotaName(tunnelQuotaName)
       .tunnelEndpoint(tunnelEndpoint)
       .tunnelGetResultMaxRetryTime(tunnelRetryTime)
       .taskName(OdpsStatement.getDefaultTaskName())
@@ -895,6 +898,10 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public String getTunnelEndpoint() {
     return tunnelEndpoint;
+  }
+
+  public String getTunnelQuotaName() {
+    return tunnelQuotaName;
   }
 
   public SQLExecutor getExecutor() {

@@ -96,6 +96,7 @@ public class ConnectionResource {
   private static final String RETRY_TIME_URL_KEY = "retryTime";
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
+  private static final String TUNNEL_QUOTA_NAME_URL_KEY = "tunnelQuotaName";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
   private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
   private static final String TIME_ZONE_URL_KEY = "timezone";
@@ -168,6 +169,7 @@ public class ConnectionResource {
   private static final String SKIP_SQL_REWRITE_PROP_KEY = "skip_sql_rewrite";
   private static final String SKIP_SQL_INJECT_CHECK_PROP_KEY = "skip_sql_inject_check";
   private static final String QUOTA_NAME_PROP_KEY = "quota_name";
+  private static final String TUNNEL_QUOTA_NAME_PROP_KEY = "tunnel_quota_name";
   private static final String VERBOSE_PROP_KEY = "verbose";
   private static final String LOGVIEW_VERSION_PROP_KEY = "logview_version";
   private static final String ASYNC_PROP_KEY = "async";
@@ -211,6 +213,7 @@ public class ConnectionResource {
   private boolean async = false;
   private boolean readOnly = false;
   private String quotaName;
+  private String tunnelQuotaName;
   private int logviewVersion;
 
   public Boolean isOdpsNamespaceSchema() {
@@ -476,6 +479,8 @@ public class ConnectionResource {
     logLevel = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_LEVEL_PROP_KEY, LOG_LEVEL_URL_KEY);
 
     quotaName = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, QUOTA_NAME_PROP_KEY, QUOTA_NAME_URL_KEY);
+
+    tunnelQuotaName = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_QUOTA_NAME_PROP_KEY, TUNNEL_QUOTA_NAME_URL_KEY);
     verbose =
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", VERBOSE_PROP_KEY,
@@ -827,6 +832,10 @@ public class ConnectionResource {
 
   public String getQuotaName() {
     return quotaName;
+  }
+
+  public String getTunnelQuotaName() {
+    return tunnelQuotaName;
   }
 
   public long getFetchResultSplitSize() {

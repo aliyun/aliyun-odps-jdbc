@@ -571,6 +571,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
             if (connHandle.getTunnelReadTimeout() >= 0) {
               tunnel.getConfig().setSocketTimeout(connHandle.getTunnelReadTimeout());
             }
+            if (!StringUtils.isNullOrEmpty(connHandle.getTunnelQuotaName())) {
+              ((com.aliyun.odps.tunnel.Configuration) tunnel.getConfig()).setQuotaName(
+                  connHandle.getTunnelQuotaName());
+            }
             ExecuteMode executeMode = getExecuteMode();
             if (executeMode == ExecuteMode.INTERACTIVE) {
               session = tunnel.createDirectDownloadSession(
@@ -894,7 +898,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           new InstanceDataIterator(connHandle.getOdps(), instance, 0, resultCountLimit,
                                    connHandle.getFetchResultSplitSize(),
                                    connHandle.getFetchResultPreloadSplitNum(),
-                                   connHandle.getFetchResultThreadNum());
+                                   connHandle.getFetchResultThreadNum(),
+                                   connHandle.getTunnelQuotaName());
       odpsResultSet = new com.aliyun.odps.data.ResultSet(
           instanceDataIterator,
           instanceDataIterator.getSchema(),

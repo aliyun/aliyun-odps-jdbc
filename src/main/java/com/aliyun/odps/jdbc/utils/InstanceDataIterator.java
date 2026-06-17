@@ -26,6 +26,7 @@ import com.aliyun.odps.tunnel.InstanceTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 import com.aliyun.odps.type.TypeInfoFactory;
+import com.aliyun.odps.utils.StringUtils;
 
 /**
  * Use sharded concurrent download mode to download sample data.
@@ -55,10 +56,17 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   private Record currentRecord;
 
-  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount, long splitSize, int preloadSplitNum, int threadNum)
+  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount,
+      long splitSize, int preloadSplitNum, int threadNum) throws OdpsException {
+    this(odps, instance, offset, readCount, splitSize, preloadSplitNum, threadNum, null);
+  }
+
+  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount,
+      long splitSize, int preloadSplitNum, int threadNum, String tunnelQuotaName)
       throws OdpsException {
     try {
-      this.downloadSession = new InstanceTunnel(odps).createDownloadSession(instance.getProject(), instance.getId(), false);
+      this.downloadSession = createInstanceTunnel(odps, tunnelQuotaName)
+          .createDownloadSession(instance.getProject(), instance.getId(), false);
     } catch (TunnelException e) {
       if (e.getErrorCode().equals(SQLExecutorConstants.sessionNotSelectException)
           || e.getErrorMsg().contains(SQLExecutorConstants.sessionNotSelectMessage)) {
@@ -85,6 +93,14 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     }
   }
 
+
+  static InstanceTunnel createInstanceTunnel(Odps odps, String tunnelQuotaName) {
+    InstanceTunnel tunnel = new InstanceTunnel(odps);
+    if (!StringUtils.isNullOrEmpty(tunnelQuotaName)) {
+      ((com.aliyun.odps.tunnel.Configuration) tunnel.getConfig()).setQuotaName(tunnelQuotaName);
+    }
+    return tunnel;
+  }
 
   private int computeSplitNum(long splitSize, long recordCount) {
     return (int) ((recordCount + splitSize - 1) / splitSize);
