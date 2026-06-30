@@ -176,7 +176,7 @@ public class Utils {
   private static final Pattern INLINE_COMMENT_PATTERN = Pattern.compile("(?ms)--.*?$");
   private static final Pattern MULTILINE_COMMENT_PATTERN = Pattern.compile("(?ms)/\\*(?!\\+).*?\\*/");
 
-  private static String removeComments(String sql) {
+  public static String removeComments(String sql) {
     sql = removePattern(sql, INLINE_COMMENT_PATTERN);
     sql = removePattern(sql, MULTILINE_COMMENT_PATTERN);
     return sql;
