@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.10.10] - 2026-07-01
+### Dependency Updates
+- **SDK Upgrade**: Upgraded `odps-sdk-core` from `0.57.3-public` to `0.58.1-public`
+  - Includes shared Jackson (`2.21.4`) and Netty (`4.1.135.Final`) security upgrades
+  - Adds support for `VECTOR<FLOAT,N>` angle-bracket type syntax returned by runtime
+- **Netty BOM Upgrade**: Upgraded `io.netty:netty-bom` from `4.1.133.Final` to `4.1.135.Final` to align with SDK and address known Netty CVEs
+
+---
+
 ## [3.10.5] - 2026-04-08
 ### Bug Fixes
 - **Fix thread leak in OdpsStatement when reusing Statement or creating ScrollResultSet**
