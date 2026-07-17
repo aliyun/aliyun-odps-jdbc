@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -820,15 +822,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       if (isUpdate) {
         if (executeInstance != null) {
           executeInstance.waitForSuccess();
-          Instance.TaskSummary taskSummary = null;
-          try {
-            taskSummary = executeInstance.getTaskSummary(JDBC_SQL_OFFLINE_TASK_NAME);
-          } catch (OdpsException e) {
-            // update count become uncertain here
-            connHandle.log.warn(
-                "Failed to get TaskSummary: instance_id=" + executeInstance.getId() + ", taskname="
-                + JDBC_SQL_OFFLINE_TASK_NAME);
-          }
+          Instance.TaskSummary taskSummary = getUpdateTaskSummary(executeInstance, executor);
           if (taskSummary != null) {
             updateCount = Utils.getSinkCountFromTaskSummary(
                 StringEscapeUtils.unescapeJava(taskSummary.getJsonSummary()));
@@ -867,6 +861,31 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   public Instance getExecuteInstance() {
     return executeInstance;
+  }
+
+  private Instance.TaskSummary getUpdateTaskSummary(Instance instance, SQLExecutor executor)
+      throws OdpsException {
+    Set<String> candidateTaskNames = new LinkedHashSet<>();
+    if (executor != null && !StringUtils.isNullOrEmpty(executor.getTaskName())) {
+      candidateTaskNames.add(executor.getTaskName());
+    }
+    candidateTaskNames.add(JDBC_SQL_TASK_NAME);
+    candidateTaskNames.add(JDBC_SQL_OFFLINE_TASK_NAME);
+    candidateTaskNames.addAll(instance.getTaskNames());
+
+    for (String taskName : candidateTaskNames) {
+      try {
+        Instance.TaskSummary taskSummary = instance.getTaskSummary(taskName);
+        if (taskSummary != null) {
+          return taskSummary;
+        }
+      } catch (OdpsException e) {
+        connHandle.log.warn(
+            "Failed to get TaskSummary: instance_id=" + instance.getId() + ", taskname="
+            + taskName);
+      }
+    }
+    return null;
   }
 
   public static String getDefaultTaskName() {

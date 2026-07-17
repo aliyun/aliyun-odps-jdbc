@@ -178,6 +178,16 @@ public class OdpsStatementTest {
     stmt.close();
   }
 
+  @Test
+  public void testExecuteUpdateWithJdbcTaskName() throws Exception {
+    Statement stmt = conn.createStatement();
+    String sql =
+        "insert into table " + OUTPUT_TABLE_NAME + " select * from " + INPUT_TABLE_NAME;
+    int updateCount = stmt.executeUpdate(sql);
+    Assertions.assertEquals(ROWS, updateCount);
+    stmt.close();
+  }
+
   /**
    * Thread for a sql to be cancelled
    */
