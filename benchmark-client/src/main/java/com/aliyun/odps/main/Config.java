@@ -9,6 +9,7 @@ import lombok.ToString;
 @ToString
 public class Config {
     private String endpoint;
+    private String delimiter = "\t";
 
     private Properties configProps = new Properties();
 
@@ -20,6 +21,7 @@ public class Config {
         try (FileReader reader = new FileReader(configFilePath)) {
             configProps.load(reader);
             this.endpoint = configProps.getProperty("end_point");
+            this.delimiter = configProps.getProperty("delimiter", "\t");
         }
         String[] keys = new String[] {"end_point", "project_name", "quota_name", "access_id", "access_key"};
 
@@ -36,6 +38,10 @@ public class Config {
 
     public Properties getConfigProps() {
         return configProps;
+    }
+
+    public String getDelimiter() {
+        return delimiter;
     }
 
     public String buildJdbcUrl() {

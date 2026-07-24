@@ -76,7 +76,7 @@ public class Main {
         // execute each sql file with one OdpsStatement
         // Ensure that the flag setting in each SQL file affects only the current file.
         try (OdpsAsyncStatement statement = (OdpsAsyncStatement)conn.createStatement()) {
-            StatementWrapper statementWrapper = new StatementWrapper(statement);
+            StatementWrapper statementWrapper = new StatementWrapper(statement, Config.getInstance().getDelimiter());
             int sqlNo = 1;
             for (String sql : file.sqlList) {
                 boolean isNormalQuery = isNormalQuery(sql);

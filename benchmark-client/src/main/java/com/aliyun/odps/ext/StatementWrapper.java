@@ -13,10 +13,12 @@ import com.aliyun.odps.jdbc.OdpsAsyncStatement;
 
 public class StatementWrapper {
     private final OdpsAsyncStatement statement;
+    private final String delimiter;
     private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-    public StatementWrapper(OdpsAsyncStatement statement) {
+    public StatementWrapper(OdpsAsyncStatement statement, String delimiter) {
         this.statement = statement;
+        this.delimiter = delimiter;
     }
 
     public void executeForTest(String sql, PrintStream stdout, PrintStream errout)
@@ -75,7 +77,7 @@ public class StatementWrapper {
         StringBuilder head = new StringBuilder();
         for (int index = 1; index <= columnCount; index++) {
             String columnName = metadata.getColumnName(index);
-            head.append(columnName).append("\t");
+            head.append(columnName).append(delimiter);
         }
         stdout.println(head.toString());
         while (true) {
@@ -90,7 +92,7 @@ public class StatementWrapper {
 
             for (int i = 0; i < columnCount; i++) {
                 stdout.print(resultSet.getString(i + 1));
-                stdout.print("\t");
+                stdout.print(delimiter);
             }
             stdout.println();
         }
