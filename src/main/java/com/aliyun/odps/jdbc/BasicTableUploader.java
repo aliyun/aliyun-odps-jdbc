@@ -11,6 +11,7 @@ import com.aliyun.odps.data.ArrayRecord;
 import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordWriter;
+import com.aliyun.odps.utils.StringUtils;
 
 public class BasicTableUploader extends DataUploader {
 
@@ -25,6 +26,10 @@ public class BasicTableUploader extends DataUploader {
 
 
   public void setUpSession() throws OdpsException {
+    String tunnelEndpoint = conn.getTunnelEndpoint();
+    if (!StringUtils.isNullOrEmpty(tunnelEndpoint)) {
+      tunnel.setEndpoint(tunnelEndpoint);
+    }
     if (null != partitionSpec) {
       uploadSession = tunnel.createUploadSession(projectName, schemaName, tableName, partitionSpec, false);
     } else {
