@@ -1331,8 +1331,19 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
   @Override
   public ResultSet getExportedKeys(String catalog, String schema, String table)
       throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    // MaxCompute does not support foreign keys. JDBC callers still need the
+    // standard metadata schema when the result contains no rows.
+    OdpsResultSetMetaData meta = new OdpsResultSetMetaData(
+        Arrays.asList("PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME", "PKCOLUMN_NAME",
+                      "FKTABLE_CAT", "FKTABLE_SCHEM", "FKTABLE_NAME", "FKCOLUMN_NAME",
+                      "KEY_SEQ", "UPDATE_RULE", "DELETE_RULE", "FK_NAME", "PK_NAME",
+                      "DEFERRABILITY"),
+        Arrays.asList(TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                      TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.STRING,
+                      TypeInfoFactory.STRING, TypeInfoFactory.STRING, TypeInfoFactory.SMALLINT,
+                      TypeInfoFactory.SMALLINT, TypeInfoFactory.SMALLINT, TypeInfoFactory.STRING,
+                      TypeInfoFactory.STRING, TypeInfoFactory.SMALLINT));
+    return new OdpsStaticResultSet(getConnection(), meta);
   }
 
   @Override

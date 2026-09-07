@@ -66,6 +66,10 @@ public class OdpsLogger {
     }
     if (enableOdpsLogger) {
       odpsLogger = Logger.getLogger(name);
+      // This logger owns its JUL handlers and separately calls SLF4J below.
+      // Forwarding again through the JUL root (for example SLF4JBridgeHandler)
+      // would duplicate each event in the application's SLF4J backend.
+      odpsLogger.setUseParentHandlers(false);
       odpsLogger.setLevel(level);
       if (toConsole) {
         if (!this.toConsole) {
@@ -99,7 +103,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void debug(String msg) {
+  public void debug(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.fine(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -108,7 +112,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void info(String msg) {
+  public void info(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.info(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -117,7 +121,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void warn(String msg) {
+  public void warn(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.warning(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -126,7 +130,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void error(String msg) {
+  public void error(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.severe(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -135,7 +139,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void error(String msg, Throwable e) {
+  public void error(String msg, Throwable e) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
