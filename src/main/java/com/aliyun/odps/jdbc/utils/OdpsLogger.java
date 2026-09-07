@@ -66,10 +66,6 @@ public class OdpsLogger {
     }
     if (enableOdpsLogger) {
       odpsLogger = Logger.getLogger(name);
-      // This logger owns its JUL handlers and separately calls SLF4J below.
-      // Forwarding again through the JUL root (for example SLF4JBridgeHandler)
-      // would duplicate each event in the application's SLF4J backend.
-      odpsLogger.setUseParentHandlers(false);
       odpsLogger.setLevel(level);
       if (toConsole) {
         if (!this.toConsole) {
@@ -100,6 +96,12 @@ public class OdpsLogger {
       sl4jLogger = LoggerFactory.getLogger(configFilePath, name);
     } catch (NoClassDefFoundError e) {
       sl4jLogger = null;
+    }
+    if (enableOdpsLogger) {
+      // Suppress the root bridge only when a local JUL destination is available
+      // and we also write to SLF4J. If opening the local file failed, retain the
+      // application's JUL root handlers as a fallback destination.
+      odpsLogger.setUseParentHandlers(sl4jLogger == null || odpsLogger.getHandlers().length == 0);
     }
   }
 

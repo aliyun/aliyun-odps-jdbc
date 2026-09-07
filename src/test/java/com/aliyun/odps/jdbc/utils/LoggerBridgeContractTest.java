@@ -28,6 +28,47 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LoggerBridgeContractTest {
+  @Test void missingSlf4jApiAndFailedFileRetainJulOutput() throws Exception {
+    String name = "offline.no.slf4j." + UUID.randomUUID();
+    Path directory = Files.createTempDirectory("jdbc-no-slf4j");
+    AtomicInteger rootCalls = new AtomicInteger();
+    Handler rootHandler = new Handler() {
+      public void publish(LogRecord record) { if (name.equals(record.getLoggerName())) rootCalls.incrementAndGet(); }
+      public void flush() { }
+      public void close() { }
+    };
+    Logger root = Logger.getLogger(""); root.addHandler(rootHandler);
+    try (java.net.URLClassLoader loader = new java.net.URLClassLoader(
+        new java.net.URL[]{OdpsLogger.class.getProtectionDomain().getCodeSource().getLocation()},
+        ClassLoader.getSystemClassLoader().getParent())) {
+      assertThrows(ClassNotFoundException.class, () -> loader.loadClass("org.slf4j.Logger"));
+      Class<?> type = loader.loadClass(OdpsLogger.class.getName());
+      Object logger = type.getConstructor(String.class, String.class, String.class, String.class,
+          boolean.class, boolean.class).newInstance(name, "test", directory.resolve("missing/file.log").toString(), null, false, true);
+      type.getMethod("info", String.class).invoke(logger, "root fallback without SLF4J");
+      assertEquals(1, rootCalls.get());
+    } finally { root.removeHandler(rootHandler); Files.deleteIfExists(directory); }
+  }
+
+  @Test void failedLocalFileKeepsTheRootFallback() throws Exception {
+    String name = "offline.fallback." + UUID.randomUUID();
+    Path directory = Files.createTempDirectory("jdbc-log-fallback");
+    AtomicInteger rootCalls = new AtomicInteger();
+    Handler rootHandler = new Handler() {
+      public void publish(LogRecord record) { if (name.equals(record.getLoggerName())) rootCalls.incrementAndGet(); }
+      public void flush() { }
+      public void close() { }
+    };
+    Logger root = Logger.getLogger("");
+    root.addHandler(rootHandler);
+    try {
+      OdpsLogger logger = new OdpsLogger(name, "test", directory.resolve("missing/file.log").toString(), null, false, true);
+      logger.info("fallback event");
+      assertTrue(Logger.getLogger(name).getUseParentHandlers());
+      assertEquals(1, rootCalls.get());
+    } finally { root.removeHandler(rootHandler); Files.deleteIfExists(directory); }
+  }
+
   @Test void driverOwnedJulHandlerDoesNotAlsoForwardToRootBridge() throws Exception {
     String name = "offline.bridge." + UUID.randomUUID();
     Path output = Files.createTempFile("jdbc-log-contract", ".log");
