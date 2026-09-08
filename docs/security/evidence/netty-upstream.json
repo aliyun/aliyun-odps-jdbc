@@ -1,0 +1,2095 @@
+[
+  {
+    "ghsa_id": "GHSA-p85m-gvr3-788c",
+    "cve_id": null,
+    "summary": "Hostname verification disabled on the OpenSSL client path when trust-manager wrapping is unavailable (Java 25+)",
+    "published_at": "2026-08-07T20:47:39Z",
+    "updated_at": "2026-08-07T20:47:39Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-p85m-gvr3-788c",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-4mp9-239f-g9hg",
+    "cve_id": "CVE-2026-59898",
+    "summary": "WebSockets V07/V08 handshaker missing Connection/Upgrade validation",
+    "published_at": "2026-07-14T19:58:58Z",
+    "updated_at": "2026-07-14T19:58:58Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-4mp9-239f-g9hg",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "< 4.1.136.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-q4f6-jm68-57ww",
+    "cve_id": "CVE-2026-59899",
+    "summary": "[HttpContentEncoder] Unbounded Per-Connection Queue Growth via HTTP/1.1 Pipelining Leads to Denial of Service",
+    "published_at": "2026-07-14T20:01:15Z",
+    "updated_at": "2026-07-14T20:01:15Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-q4f6-jm68-57ww",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "< 4.1.136.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-c69g-56f8-xwqj",
+    "cve_id": "CVE-2026-59900",
+    "summary": "[codec-http2] Lack of Host Header Deduplication in HTTP/2\u2192HTTP/1.x Translation Leads to Request Routing Bypass",
+    "published_at": "2026-07-14T20:03:07Z",
+    "updated_at": "2026-07-14T20:03:07Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-c69g-56f8-xwqj",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "< 4.1.136.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-558v-64gr-wgg4",
+    "cve_id": "CVE-2026-59901",
+    "summary": "[Bzip2Decoder] Infinite Loop in RLE State Machine Leads to Event-Loop Thread Hang",
+    "published_at": "2026-07-14T19:58:34Z",
+    "updated_at": "2026-07-14T19:58:34Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-558v-64gr-wgg4",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-compression"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, < 4.2.16.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec"
+        },
+        "vulnerable_version_range": "< 4.1.136.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-fccg-mwvh-qqg4",
+    "cve_id": "CVE-2026-75596",
+    "summary": "Fragmented ClientHello records trigger quadratic pre-handshake reassembly in default SNI parsing",
+    "published_at": "2026-08-07T20:45:30Z",
+    "updated_at": "2026-08-18T23:13:16Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-fccg-mwvh-qqg4",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-g7hg-vrcf-mvmr",
+    "cve_id": "CVE-2026-56821",
+    "summary": "Out-of-date OCSP Responses Accepted by OcspServerCertificateValidator",
+    "published_at": "2026-07-14T19:57:31Z",
+    "updated_at": "2026-07-14T19:57:31Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-g7hg-vrcf-mvmr",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-ssl-ocsp"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-ssl-ocsp"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-4qhr-g3c6-fcfx",
+    "cve_id": "CVE-2026-56817",
+    "summary": "XML: Injection / Risky Sink \u2014 unconfigured XML factory with active DTD and entity handling",
+    "published_at": "2026-07-14T20:02:02Z",
+    "updated_at": "2026-07-14T20:02:02Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-4qhr-g3c6-fcfx",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-xml"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-xml"
+        },
+        "vulnerable_version_range": ">= 4.1.0.Final, <= 4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-c4c3-7fpv-j4q5",
+    "cve_id": "CVE-2026-75595",
+    "summary": "SNI Routing Bypass via Fragmented TLS ClientHello Causing Fallback to Default SslContext",
+    "published_at": "2026-08-07T20:46:00Z",
+    "updated_at": "2026-08-18T22:34:07Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-c4c3-7fpv-j4q5",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-93wv-jw9v-4972",
+    "cve_id": "CVE-2026-56819",
+    "summary": "HTTP/2 decompression leaks ByteBuf reference count when the decompressor channel is already closed (Direct memory leak / OOM DoS)",
+    "published_at": "2026-07-14T19:59:40Z",
+    "updated_at": "2026-07-14T19:59:40Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-93wv-jw9v-4972",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": ">= 4.2.0, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": ">= 4.1.0.Final, <= 4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-jppx-w49h-x2qq",
+    "cve_id": "CVE-2026-56745",
+    "summary": "[SpdyHttpDecoder] ByteBuf Reference Leak on RST_STREAM Leads to Native Memory Exhaustion",
+    "published_at": "2026-07-14T19:52:42Z",
+    "updated_at": "2026-07-14T19:52:42Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-jppx-w49h-x2qq",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.1.0.Final, <= 4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-q6cq-mhr2-jmr5",
+    "cve_id": "CVE-2026-55851",
+    "summary": "[codec-haproxy] Signed-Byte Sentinel Collision in HAProxyMessageDecoder Leads to Unbounded Memory Exhaustion",
+    "published_at": "2026-07-14T19:57:57Z",
+    "updated_at": "2026-07-14T19:57:57Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-q6cq-mhr2-jmr5",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": ">= 4.1.0.Final, <= 4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-p9jm-q85p-7mcp",
+    "cve_id": "CVE-2026-56818",
+    "summary": "RedisArrayAggregator max-elements failure leaves retained partial aggregate state",
+    "published_at": "2026-08-04T20:25:29Z",
+    "updated_at": "2026-08-04T20:25:29Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-p9jm-q85p-7mcp",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-hpcc-26xq-25fv",
+    "cve_id": "CVE-2026-56816",
+    "summary": "Memory Exhaustion via HTTP/3 Reserved Frame Types",
+    "published_at": "2026-07-14T20:00:11Z",
+    "updated_at": "2026-07-14T20:00:11Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-hpcc-26xq-25fv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http3"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-2qj4-mmr9-4v2f",
+    "cve_id": "CVE-2026-59902",
+    "summary": "Memory Exhaustion in SctpMessageCompletionHandler",
+    "published_at": "2026-08-07T20:46:26Z",
+    "updated_at": "2026-08-07T20:46:26Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-2qj4-mmr9-4v2f",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-sctp"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-sctp"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-mvh2-crg5-v77c",
+    "cve_id": "CVE-2026-55833",
+    "summary": "Netty SPDY zlib header block continues decoded expansion after maxHeaderSize truncation",
+    "published_at": "2026-07-14T19:56:10Z",
+    "updated_at": "2026-07-14T19:56:10Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-mvh2-crg5-v77c",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.1.0.Final, <= 4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-6jqx-86gh-f27w",
+    "cve_id": "CVE-2026-55831",
+    "summary": "Netty SPDY SETTINGS frame count materializes unbounded settings map",
+    "published_at": "2026-07-14T19:56:49Z",
+    "updated_at": "2026-07-14T19:56:49Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-6jqx-86gh-f27w",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">=  4.2.0.Final, <= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.1.0.Final, <= 4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-mfg7-5gfp-c4w3",
+    "cve_id": "CVE-2026-73508",
+    "summary": "Memory Leak in DNS Record Decoder via Malformed Domain Names",
+    "published_at": "2026-07-23T23:15:16Z",
+    "updated_at": "2026-08-13T14:26:13Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-mfg7-5gfp-c4w3",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-dns"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-dns"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-8c42-7qj2-3j46",
+    "cve_id": "CVE-2026-59903",
+    "summary": "Cache Poisoning and Information Disclosure via CORS Vary Header Overwrite",
+    "published_at": "2026-08-07T20:46:54Z",
+    "updated_at": "2026-08-07T20:46:54Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-8c42-7qj2-3j46",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-h2qv-fj59-j46j",
+    "cve_id": "CVE-2026-48059",
+    "summary": "[HAProxy] Unbalanced Reference Count in Nested PP2_TYPE_SSL TLV Parsing Leads to Memory Exhaustion",
+    "published_at": "2026-06-05T18:59:47Z",
+    "updated_at": "2026-06-05T18:59:47Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-h2qv-fj59-j46j",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-c2gf-v879-257j",
+    "cve_id": "CVE-2026-48043",
+    "summary": "[codec-http2] ByteBuf Reference-Count Leak in DelegatingDecompressorFrameListener Leads to Memory Exhaustion",
+    "published_at": "2026-06-05T19:05:21Z",
+    "updated_at": "2026-06-05T19:05:21Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-c2gf-v879-257j",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final, <= 4.2.14.Final",
+        "patched_versions": "4.1.135.Final, 4.2.15.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-4grm-h2qv-h6w6",
+    "cve_id": "CVE-2026-48748",
+    "summary": "Netty HTTP/3 QPACK Blocked Streams Memory Exhaustion",
+    "published_at": "2026-06-05T19:05:08Z",
+    "updated_at": "2026-06-05T19:05:08Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-4grm-h2qv-h6w6",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http3"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-6jv9-x5w9-2ccm",
+    "cve_id": "CVE-2026-48006",
+    "summary": "Lack of Lifecycle Cleanup Leads to Pooled ByteBuf Leak in RedisArrayAggregator",
+    "published_at": "2026-06-05T19:04:56Z",
+    "updated_at": "2026-06-05T19:04:56Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-6jv9-x5w9-2ccm",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-5pvg-856g-cp85",
+    "cve_id": "CVE-2026-47691",
+    "summary": "Insufficient Bailiwick Validation for NS Records",
+    "published_at": "2026-06-05T19:00:02Z",
+    "updated_at": "2026-06-05T19:00:02Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-5pvg-856g-cp85",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-resolver-dns"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-resolver-dns"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-5x3r-wrvg-rp6q",
+    "cve_id": "CVE-2026-47244",
+    "summary": "HTTP/2: Advertised MAX_CONCURRENT_STREAMS not enforced",
+    "published_at": "2026-06-05T19:04:44Z",
+    "updated_at": "2026-06-05T19:04:44Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-5x3r-wrvg-rp6q",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-5xrh-qmmq-w6ch",
+    "cve_id": "CVE-2026-46340",
+    "summary": "SCTP reassembly nests buffers without bound",
+    "published_at": "2026-06-05T19:04:34Z",
+    "updated_at": "2026-06-05T19:04:34Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-5xrh-qmmq-w6ch",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-sctp"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-sctp"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final,",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-676x-f7gg-47vc",
+    "cve_id": "CVE-2026-45674",
+    "summary": "DNS Cache Poisoning via Missing Bailiwick Checks in CNAME Records",
+    "published_at": "2026-06-05T19:04:22Z",
+    "updated_at": "2026-06-05T19:04:22Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-676x-f7gg-47vc",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-resolver-dns"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-resolver-dns"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-w573-9ffj-6ff9",
+    "cve_id": "CVE-2026-45536",
+    "summary": "Unix-socket fd receive leaks descriptors when peer sends two at once",
+    "published_at": "2026-06-05T19:04:07Z",
+    "updated_at": "2026-06-05T19:04:07Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-w573-9ffj-6ff9",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-native-epoll"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-native-kqueue"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-native-kqueue"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-native-epoll"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-x4gw-5cx5-pgmh",
+    "cve_id": "CVE-2026-45416",
+    "summary": "SNI handler pre-allocates up to 16 MiB from nine attacker bytes",
+    "published_at": "2026-06-05T19:03:54Z",
+    "updated_at": "2026-06-05T19:03:54Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-x4gw-5cx5-pgmh",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-xmv7-r254-6q78",
+    "cve_id": "CVE-2026-45673",
+    "summary": "DNS Cache Poisoning due to Predictable PRNG and Default Static Source Port",
+    "published_at": "2026-06-05T19:03:42Z",
+    "updated_at": "2026-06-05T19:03:42Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-xmv7-r254-6q78",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-resolver-dns"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final,<=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-resolver-dns"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-wc96-39fc-566f",
+    "cve_id": "CVE-2026-56822",
+    "summary": "TOCTOU in OcspServerCertificateValidator",
+    "published_at": "2026-07-14T19:55:02Z",
+    "updated_at": "2026-07-14T19:55:02Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-wc96-39fc-566f",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-ssl-ocsp"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-ssl-ocsp"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-c653-97m9-rcg9",
+    "cve_id": "CVE-2026-50010",
+    "summary": "Wrapping plain trust manager silently disables hostname verification",
+    "published_at": "2026-06-05T19:03:33Z",
+    "updated_at": "2026-06-05T19:03:33Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-c653-97m9-rcg9",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final, <= 4.2.14.Final",
+        "patched_versions": "4.1.135.Final, 4.2.15.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-272m-gcwp-mpwg",
+    "cve_id": "CVE-2026-56820",
+    "summary": "Missing CertificateID Validation in OCSP Response Allows Replay Attacks",
+    "published_at": "2026-07-14T19:54:32Z",
+    "updated_at": "2026-07-14T19:54:32Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-272m-gcwp-mpwg",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-ssl-ocsp"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-ssl-ocsp"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-cmm3-54f8-px4j",
+    "cve_id": "CVE-2026-44894",
+    "summary": " Default QUIC token handler accepts any client-supplied token",
+    "published_at": "2026-06-05T19:03:25Z",
+    "updated_at": "2026-06-05T19:03:25Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-cmm3-54f8-px4j",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-classes-quic"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": " 4.2.15.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-cc37-9q2j-3hfv",
+    "cve_id": "CVE-2026-44893",
+    "summary": "HAProxy SSL TLV parsing leaks retained slice on invalid TLV length",
+    "published_at": "2026-06-05T19:03:14Z",
+    "updated_at": "2026-06-05T19:03:14Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-cc37-9q2j-3hfv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <= 4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-c2rx-5r8w-8xr2",
+    "cve_id": "CVE-2026-44892",
+    "summary": "Vulnerable Default Configuration: Denial of Service via Unbounded HTTP/3 Header Size",
+    "published_at": "2026-06-05T19:02:58Z",
+    "updated_at": "2026-06-05T19:02:58Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-c2rx-5r8w-8xr2",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http3"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-v74w-7mr3-4qg3",
+    "cve_id": "CVE-2026-73507",
+    "summary": "Denial of Service in XmlFrameDecoder via CPU Exhaustion",
+    "published_at": "2026-07-23T23:16:19Z",
+    "updated_at": "2026-08-13T14:24:09Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-v74w-7mr3-4qg3",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-xml"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-xml"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-6cqp-g7gg-8hr5",
+    "cve_id": "CVE-2026-56746",
+    "summary": "Security Control Bypass via CORS Short-Circuit Failure",
+    "published_at": "2026-07-20T22:25:09Z",
+    "updated_at": "2026-07-20T22:25:09Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-6cqp-g7gg-8hr5",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-vhch-2wf3-m8rp",
+    "cve_id": "CVE-2026-44891",
+    "summary": "Denial of Service via Unbounded Headers in StompSubframeDecoder",
+    "published_at": "2026-07-14T19:53:31Z",
+    "updated_at": "2026-07-14T19:53:31Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-vhch-2wf3-m8rp",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-stomp"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-stomp"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-hvcg-qmg6-jm4c",
+    "cve_id": "CVE-2026-50020",
+    "summary": "HttpObjectDecoder skips arbitrary initial control characters when only initial CRLF characters are permitted",
+    "published_at": "2026-06-05T19:02:43Z",
+    "updated_at": "2026-06-05T19:02:43Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-hvcg-qmg6-jm4c",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<= 4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-3qp7-7mw8-wx86",
+    "cve_id": "CVE-2026-44249",
+    "summary": "IPv6 Subnet Filter Bypass via Incorrect Comparator Masking",
+    "published_at": "2026-06-05T19:02:30Z",
+    "updated_at": "2026-06-05T19:02:30Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-3qp7-7mw8-wx86",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-cq4q-cv5g-r8q5",
+    "cve_id": null,
+    "summary": "QUIC stateless reset token material exposed through header-visible connection IDs",
+    "published_at": "2026-06-05T19:02:14Z",
+    "updated_at": "2026-06-05T19:02:14Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-cq4q-cv5g-r8q5",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-classes-quic"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-6ghj-frrj-jjj3",
+    "cve_id": "CVE-2026-44890",
+    "summary": "Unbounded Direct Memory Consumption in RedisDecoder",
+    "published_at": "2026-06-05T19:01:55Z",
+    "updated_at": "2026-06-05T19:01:56Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-6ghj-frrj-jjj3",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-3244-j874-rhc2",
+    "cve_id": "CVE-2026-44250",
+    "summary": "Memory Exhaustion in RedisArrayAggregator due to Deeply Nested Arrays",
+    "published_at": "2026-06-05T19:01:46Z",
+    "updated_at": "2026-06-05T19:01:46Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-3244-j874-rhc2",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-jfg9-48mv-9qgx",
+    "cve_id": "CVE-2026-44248",
+    "summary": "MQTT: Resource exhaustion in MqttDecoder",
+    "published_at": "2026-05-05T18:26:42Z",
+    "updated_at": "2026-05-05T18:26:42Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-jfg9-48mv-9qgx",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-mqtt"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-5w86-c3rq-vjj7",
+    "cve_id": null,
+    "summary": "Unbounded pre-allocation in RedisArrayAggregator from RESP array length",
+    "published_at": "2026-06-05T19:01:32Z",
+    "updated_at": "2026-06-05T19:01:32Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-5w86-c3rq-vjj7",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-57rv-r2g8-2cj3",
+    "cve_id": "CVE-2026-42584",
+    "summary": "HttpClientCodec response desynchronization",
+    "published_at": "2026-05-05T18:11:31Z",
+    "updated_at": "2026-05-05T18:11:32Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-57rv-r2g8-2cj3",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-mj4r-2hfc-f8p6",
+    "cve_id": "CVE-2026-42583",
+    "summary": "Lz4FrameDecoder resource exhaustion ",
+    "published_at": "2026-05-05T18:10:58Z",
+    "updated_at": "2026-05-05T18:10:58Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-mj4r-2hfc-f8p6",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-compression"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final",
+        "patched_versions": "4.2.13.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec"
+        },
+        "vulnerable_version_range": "<=4.1.132.Final",
+        "patched_versions": "4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-2c5c-chwr-9hqw",
+    "cve_id": "CVE-2026-42582",
+    "summary": "Netty HTTP/3 QPACK literal unbounded allocation",
+    "published_at": "2026-05-05T18:10:33Z",
+    "updated_at": "2026-05-05T18:10:33Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-2c5c-chwr-9hqw",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http3"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, <=4.2.12.Final",
+        "patched_versions": "4.2.13.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-cc6x-ffm5-83wf",
+    "cve_id": null,
+    "summary": "SOCKS4/5 Proxy Encoder Null Byte and Credential Injection",
+    "published_at": "2026-08-07T20:45:44Z",
+    "updated_at": "2026-08-07T20:45:44Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-cc6x-ffm5-83wf",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-socks"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-socks"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-43fm-7cxg-hf3j",
+    "cve_id": "CVE-2026-76816",
+    "summary": "MQTT Topic Name and Client ID Validation Bypass",
+    "published_at": "2026-08-07T20:47:13Z",
+    "updated_at": "2026-08-20T18:59:43Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-43fm-7cxg-hf3j",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-mqtt"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.16.Final",
+        "patched_versions": "4.2.17.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-mqtt"
+        },
+        "vulnerable_version_range": "<=4.1.136.Final",
+        "patched_versions": "4.1.137.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-wh89-7897-x99h",
+    "cve_id": "CVE-2026-59919",
+    "summary": "HAProxy V1 Protocol CRLF Injection via AF_UNIX Address",
+    "published_at": "2026-07-20T22:20:30Z",
+    "updated_at": "2026-07-25T01:06:34Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-wh89-7897-x99h",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-haproxy"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-cm33-6792-r9fm",
+    "cve_id": "CVE-2026-42579",
+    "summary": "DNS Codec Input Validation Bypass in Netty (Encoder + Decoder)",
+    "published_at": "2026-05-05T18:10:10Z",
+    "updated_at": "2026-05-05T18:10:10Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-cm33-6792-r9fm",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-dns"
+        },
+        "vulnerable_version_range": "<= 4.2.12.Final",
+        "patched_versions": "4.2.13.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-dns"
+        },
+        "vulnerable_version_range": "<= 4.1.132.Final",
+        "patched_versions": "4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-rwm7-x88c-3g2p",
+    "cve_id": "CVE-2026-42577",
+    "summary": "Netty epoll transport denial of service via RST on half-closed TCP connection",
+    "published_at": "2026-05-05T18:06:24Z",
+    "updated_at": "2026-05-05T18:06:24Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-rwm7-x88c-3g2p",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-transport-native-epoll"
+        },
+        "vulnerable_version_range": ">= 4.2.0.Final, < 4.2.13.Final",
+        "patched_versions": "4.2.13.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-38f8-5428-x5cv",
+    "cve_id": "CVE-2026-42585",
+    "summary": "HTTP Request Smuggling due to malformed Transfer-Encoding",
+    "published_at": "2026-05-05T18:09:42Z",
+    "updated_at": "2026-05-05T18:09:43Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-38f8-5428-x5cv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-m4cv-j2px-7723",
+    "cve_id": "CVE-2026-42580",
+    "summary": "HTTP Request Smuggling due to incorrect chunk size parsing",
+    "published_at": "2026-05-05T18:09:16Z",
+    "updated_at": "2026-05-05T18:09:16Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-m4cv-j2px-7723",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-gcjf-9mgh-3p7g",
+    "cve_id": "CVE-2026-59921",
+    "summary": "CRLF Injection via Multipart Filename in Netty HttpPostRequestEncoder",
+    "published_at": "2026-07-14T19:51:56Z",
+    "updated_at": "2026-07-25T01:07:45Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-gcjf-9mgh-3p7g",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-45q3-82m4-75jr",
+    "cve_id": "CVE-2026-42578",
+    "summary": "HTTP Header Injection via HttpProxyHandler Disabled Validation in Netty",
+    "published_at": "2026-05-05T18:05:31Z",
+    "updated_at": "2026-05-05T18:05:31Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-45q3-82m4-75jr",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler-proxy"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-3g8r-4pfx-jmfh",
+    "cve_id": "CVE-2026-59920",
+    "summary": "STOMP CONNECT Frame Header Injection in Netty",
+    "published_at": "2026-07-14T19:50:37Z",
+    "updated_at": "2026-07-25T01:08:28Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-3g8r-4pfx-jmfh",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-stomp"
+        },
+        "vulnerable_version_range": "<= 4.2.15.Final",
+        "patched_versions": "4.2.16.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-stomp"
+        },
+        "vulnerable_version_range": "<=4.1.135.Final",
+        "patched_versions": "4.1.136.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-rgrr-p7gp-5xj7",
+    "cve_id": "CVE-2026-42586",
+    "summary": "CRLF Injection in Netty Redis Codec Encoder",
+    "published_at": "2026-05-05T18:03:14Z",
+    "updated_at": "2026-05-05T18:03:15Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-rgrr-p7gp-5xj7",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-redis"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-xxqh-mfjm-7mv9",
+    "cve_id": "CVE-2026-42581",
+    "summary": "HTTP/1.0 TE+CL Coexistence Bypasses Smuggling Sanitization",
+    "published_at": "2026-05-05T18:08:44Z",
+    "updated_at": "2026-05-05T18:08:44Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-xxqh-mfjm-7mv9",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-f6hv-jmp6-3vwv",
+    "cve_id": "CVE-2026-42587",
+    "summary": "HttpContentDecompressor maxAllocation bypass via Content-Encoding: br/zstd/snappy enables decompression bomb DoS",
+    "published_at": "2026-05-05T18:07:09Z",
+    "updated_at": "2026-05-05T18:07:10Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-f6hv-jmp6-3vwv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<= 4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-v8h7-rr48-vmmv",
+    "cve_id": "CVE-2026-41417",
+    "summary": "Start-Line Injection in DefaultHttpRequest.setUri() Allows HTTP Request Smuggling and RTSP Request Injection",
+    "published_at": "2026-05-05T18:08:15Z",
+    "updated_at": "2026-05-05T18:08:15Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-v8h7-rr48-vmmv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.12.Final, <=4.1.132.Final",
+        "patched_versions": "4.2.13.Final, 4.1.133.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-w9fj-cfpg-grvv",
+    "cve_id": "CVE-2026-33871",
+    "summary": "HTTP/2 CONTINUATION Frame Flood Denial of Service",
+    "published_at": "2026-03-24T21:24:24Z",
+    "updated_at": "2026-03-25T18:54:43Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-w9fj-cfpg-grvv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "<= 4.1.131.Final, <= 4.2.10.Final",
+        "patched_versions": "4.1.132.Final, 4.2.12.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-pwqr-wmgm-9rr8",
+    "cve_id": "CVE-2026-33870",
+    "summary": "RFC violation: HTTP Request Smuggling primitive via Chunked Extension Quoted-String Parsing",
+    "published_at": "2026-03-24T21:24:00Z",
+    "updated_at": "2026-03-24T21:27:44Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-pwqr-wmgm-9rr8",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.1.131.Final, <=4.2.10.Final",
+        "patched_versions": "4.2.12.Final, 4.1.132.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-84h7-rjj3-6jx4",
+    "cve_id": "CVE-2025-67735",
+    "summary": "CRLF injection vulnerability in io.netty.handler.codec.http.HttpRequestEncoder",
+    "published_at": "2025-12-15T14:39:48Z",
+    "updated_at": "2025-12-15T14:39:48Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-84h7-rjj3-6jx4",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<= 4.2.7.Final, <= 4.1.128.Final",
+        "patched_versions": ">= 4.2.8.Final, >) 4.1.129.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-jq43-27x9-3v86",
+    "cve_id": "CVE-2025-59419",
+    "summary": "SMTP Command Injection Vulnerability Allowing Email Forgery",
+    "published_at": "2025-10-15T14:36:33Z",
+    "updated_at": "2025-10-15T14:36:34Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-jq43-27x9-3v86",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-smtp"
+        },
+        "vulnerable_version_range": "< 4.2.7.Final, < 4.1.128.Final",
+        "patched_versions": "4.2.7.Final, 4.1.128.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-3p8m-j85q-pgmj",
+    "cve_id": "CVE-2025-58057",
+    "summary": "Decompression codecs vulnerable to DoS via zip bomb style attack",
+    "published_at": "2025-09-03T14:52:18Z",
+    "updated_at": "2025-09-03T14:52:18Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-3p8m-j85q-pgmj",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-compression"
+        },
+        "vulnerable_version_range": "<= 4.2.4.Final",
+        "patched_versions": "4.2.5.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec"
+        },
+        "vulnerable_version_range": "<= 4.1.124.Final",
+        "patched_versions": "4.1.125.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-prj3-ccx8-p6x4",
+    "cve_id": "CVE-2025-55163",
+    "summary": "MadeYouReset HTTP/2 DDoS vulnerability",
+    "published_at": "2025-08-13T13:26:52Z",
+    "updated_at": "2025-08-13T13:26:52Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-prj3-ccx8-p6x4",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "netty-codec-http2"
+        },
+        "vulnerable_version_range": "<=4.2.3.Final, <= 4.1.123.Final",
+        "patched_versions": "4.2.4.Final , 4.1.124.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-389x-839f-4rhx",
+    "cve_id": "CVE-2025-25193",
+    "summary": "Denial of Service attack on windows app using Netty, again",
+    "published_at": "2025-02-10T16:54:30Z",
+    "updated_at": "2025-02-10T16:54:30Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-389x-839f-4rhx",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-common"
+        },
+        "vulnerable_version_range": "< 4.1.118.Final",
+        "patched_versions": "4.1.118.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-4g8c-wm8x-jfhw",
+    "cve_id": "CVE-2025-24970",
+    "summary": "SslHandler doesn't correctly validate packets which can lead to native crash when using native SSLEngine",
+    "published_at": "2025-02-10T16:53:44Z",
+    "updated_at": "2025-02-10T16:53:44Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-4g8c-wm8x-jfhw",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "4.1.91.Final =< 4.1.117.Final",
+        "patched_versions": ">= 4.1.118.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-fghv-69vj-qj49",
+    "cve_id": "CVE-2025-58056",
+    "summary": "Request smuggling due to incorrect parsing of chunk extensions",
+    "published_at": "2025-09-03T14:52:36Z",
+    "updated_at": "2025-09-03T14:52:37Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-fghv-69vj-qj49",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.1.124.Final",
+        "patched_versions": "4.1.125.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "<=4.2.4.Final",
+        "patched_versions": "4.2.5.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-563q-j3cm-6jxm",
+    "cve_id": "CVE-2026-50560",
+    "summary": "Netty susceptible to HTTP/2 Reset Attack with different on-the-wire signature",
+    "published_at": "2026-06-08T16:18:10Z",
+    "updated_at": "2026-06-08T16:18:10Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-563q-j3cm-6jxm",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": ">=4.2.0.Final, <=4.2.14.Final",
+        "patched_versions": "4.2.15.Final",
+        "vulnerable_functions": []
+      },
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "<=4.1.134.Final",
+        "patched_versions": "4.1.135.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-xq3w-v528-46rv",
+    "cve_id": "CVE-2024-47535",
+    "summary": "Denial of Service attack on windows app using netty",
+    "published_at": "2024-11-12T14:03:40Z",
+    "updated_at": "2024-11-12T14:03:40Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-xq3w-v528-46rv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-common"
+        },
+        "vulnerable_version_range": "<= 4.1.114",
+        "patched_versions": " 4.1.115",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-5jpm-x58v-624v",
+    "cve_id": "CVE-2024-29025",
+    "summary": "HttpPostRequestDecoder can OOM",
+    "published_at": "2024-03-25T09:44:26Z",
+    "updated_at": "2024-03-25T09:44:27Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-5jpm-x58v-624v",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "< 4.1.108.Final",
+        "patched_versions": "4.1.108.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-xpw8-rcwv-8f8p",
+    "cve_id": "CVE-2023-44487",
+    "summary": "HTTP/2 Rapid Reset Attack - DDoS vector in the HTTP/2 protocol due RST frames",
+    "published_at": "2023-10-10T16:09:47Z",
+    "updated_at": "2023-10-10T16:09:47Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-xpw8-rcwv-8f8p",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "< 4.1.100.Final",
+        "patched_versions": "4.1.100.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-6mjq-h674-j845",
+    "cve_id": "CVE-2023-34462",
+    "summary": "SniHandler 16MB allocation",
+    "published_at": "2023-06-20T14:45:23Z",
+    "updated_at": "2023-06-20T14:45:23Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-6mjq-h674-j845",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-handler"
+        },
+        "vulnerable_version_range": "< 4.1.94.Final",
+        "patched_versions": "4.1.94.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-hh82-3pmq-7frp",
+    "cve_id": "CVE-2022-41915",
+    "summary": "HTTP Response splitting from assigning header value iterator",
+    "published_at": "2022-12-12T15:22:16Z",
+    "updated_at": "2022-12-12T15:22:16Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-hh82-3pmq-7frp",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty.codec:codec-http"
+        },
+        "vulnerable_version_range": "4.1.83.Final, 4.1.84.Final, 4.1.85.Final",
+        "patched_versions": "4.1.86.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-fx2c-96vj-985v",
+    "cve_id": "CVE-2022-41881",
+    "summary": "HAProxyMessageDecoder Stack Exhaustion DoS",
+    "published_at": "2022-12-12T15:22:08Z",
+    "updated_at": "2022-12-12T15:22:08Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-fx2c-96vj-985v",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty.codec:codec-haproxy"
+        },
+        "vulnerable_version_range": "< 4.1.86.Final",
+        "patched_versions": "4.1.86.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-269q-hmxg-m83q",
+    "cve_id": "CVE-2022-24823",
+    "summary": "Local Information Disclosure Vulnerability in Netty on Unix-Like systems due temporary files for Java 6 and lower in io.netty:netty-codec-http",
+    "published_at": "2022-05-06T11:42:53Z",
+    "updated_at": "2022-05-06T11:42:53Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-269q-hmxg-m83q",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "netty-common"
+        },
+        "vulnerable_version_range": "<= 4.1.76.Final",
+        "patched_versions": "4.1.77.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-wx5j-54mm-rqqq",
+    "cve_id": "CVE-2021-43797",
+    "summary": "HTTP fails to validate against control chars in header names which may lead to HTTP request smuggling",
+    "published_at": "2021-12-09T15:02:49Z",
+    "updated_at": "2021-12-09T15:02:49Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-wx5j-54mm-rqqq",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "netty-codec-http"
+        },
+        "vulnerable_version_range": "< 4.1.71..Final",
+        "patched_versions": "",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-grg4-wf29-r9vv",
+    "cve_id": "CVE-2021-37136",
+    "summary": "Bzip2Decoder doesn't allow setting size restrictions for decompressed data",
+    "published_at": "2021-09-09T14:28:40Z",
+    "updated_at": "2021-10-04T13:43:08Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-grg4-wf29-r9vv",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "netty-codec"
+        },
+        "vulnerable_version_range": "< 4.1.68.Final",
+        "patched_versions": "4.1.68.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-9vjp-v76f-g363",
+    "cve_id": "CVE-2021-37137",
+    "summary": " SnappyFrameDecoder doesn't restrict chunk length any may buffer skippable chunks in an unnecessary way",
+    "published_at": "2021-09-09T14:28:55Z",
+    "updated_at": "2021-10-04T13:43:49Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-9vjp-v76f-g363",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "netty-codec"
+        },
+        "vulnerable_version_range": "< 4.1.68.Final",
+        "patched_versions": "4.1.68.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-f256-j965-7f32",
+    "cve_id": "CVE-2021-21409",
+    "summary": "Possible request smuggling in HTTP/2 due missing validation of content-length",
+    "published_at": "2021-03-30T12:14:53Z",
+    "updated_at": "2021-03-30T12:14:53Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-f256-j965-7f32",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2 "
+        },
+        "vulnerable_version_range": "< 4.1.61.Final",
+        "patched_versions": "4.1.61.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-wm47-8v5p-wjpj",
+    "cve_id": "CVE-2021-21295",
+    "summary": "Possible request smuggling in HTTP/2 due missing validation",
+    "published_at": "2021-03-09T10:33:27Z",
+    "updated_at": "2021-03-09T10:33:27Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-wm47-8v5p-wjpj",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http2"
+        },
+        "vulnerable_version_range": "< 4.1.60.Final",
+        "patched_versions": "4.1.60.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  },
+  {
+    "ghsa_id": "GHSA-5mcr-gq6c-3hq2",
+    "cve_id": "CVE-2021-21290",
+    "summary": "Local Information Disclosure Vulnerability in Netty on Unix-Like systems due temporary files",
+    "published_at": "2021-02-08T13:49:56Z",
+    "updated_at": "2021-02-08T13:49:56Z",
+    "html_url": "https://github.com/netty/netty/security/advisories/GHSA-5mcr-gq6c-3hq2",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "maven",
+          "name": "io.netty:netty-codec-http"
+        },
+        "vulnerable_version_range": "< 4.1.59.Final",
+        "patched_versions": "4.1.59.Final",
+        "vulnerable_functions": []
+      }
+    ]
+  }
+]

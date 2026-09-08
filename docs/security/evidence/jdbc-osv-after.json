@@ -1,0 +1,959 @@
+{
+  "observed_at": "2026-09-08T06:20:10.690105+00:00",
+  "source": "https://api.osv.dev/v1/querybatch",
+  "complete": true,
+  "packages": [
+    {
+      "name": "at.yawk.lz4:lz4-java",
+      "version": "1.11.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "ch.qos.logback:logback-classic",
+      "version": "1.3.16",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "ch.qos.logback:logback-core",
+      "version": "1.3.16",
+      "scopes": [
+        "test"
+      ],
+      "advisories": [
+        "GHSA-jhq6-gfmj-v8fx",
+        "GHSA-p47f-322f-whfh",
+        "GHSA-qqpg-mvqg-649v"
+      ]
+    },
+    {
+      "name": "com.fasterxml.jackson.core:jackson-annotations",
+      "version": "2.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.fasterxml.jackson.core:jackson-core",
+      "version": "2.21.5",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.fasterxml.jackson.core:jackson-databind",
+      "version": "2.21.5",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.github.luben:zstd-jni",
+      "version": "1.5.7-2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.code.findbugs:jsr305",
+      "version": "3.0.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.code.gson:gson",
+      "version": "2.13.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.errorprone:error_prone_annotations",
+      "version": "2.36.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.flatbuffers:flatbuffers-java",
+      "version": "24.3.25",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.guava:failureaccess",
+      "version": "1.0.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.guava:guava",
+      "version": "33.4.8-jre",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.guava:listenablefuture",
+      "version": "9999.0-empty-to-avoid-conflict-with-guava",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.j2objc:j2objc-annotations",
+      "version": "3.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.protobuf:protobuf-java",
+      "version": "3.25.5",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.ibm.icu:icu4j",
+      "version": "71.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.squareup.okhttp3:okhttp",
+      "version": "4.12.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.squareup.okio:okio",
+      "version": "3.6.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.squareup.okio:okio-jvm",
+      "version": "3.6.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "commons-codec:commons-codec",
+      "version": "1.18.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "commons-io:commons-io",
+      "version": "2.20.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "commons-logging:commons-logging",
+      "version": "1.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.github.cdimascio:java-dotenv",
+      "version": "5.2.2",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-all",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-buffer",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-dns",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-haproxy",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-http",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-http2",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-memcache",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-mqtt",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-redis",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-smtp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-socks",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-stomp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-xml",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-common",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-handler",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-handler-proxy",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-handler-ssl-ocsp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver-dns",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver-dns-classes-macos",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver-dns-native-macos",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "runtime"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-classes-epoll",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-classes-kqueue",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-native-epoll",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "runtime"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-native-kqueue",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "runtime"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-native-unix-common",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-rxtx",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-sctp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-udt",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "javax.activation:activation",
+      "version": "1.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "javax.mail:mail",
+      "version": "1.4.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "net.bytebuddy:byte-buddy",
+      "version": "1.12.9",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "net.bytebuddy:byte-buddy-agent",
+      "version": "1.12.9",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "net.sourceforge.javacsv:javacsv",
+      "version": "2.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.abego.treelayout:org.abego.treelayout.core",
+      "version": "1.0.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:ST4",
+      "version": "4.3.4",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:antlr-runtime",
+      "version": "3.5.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:antlr4",
+      "version": "4.11.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:antlr4-runtime",
+      "version": "4.11.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-compression",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-format",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-memory-core",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-memory-netty",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-memory-netty-buffer-patch",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-vector",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.commons:commons-compress",
+      "version": "1.28.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.commons:commons-lang3",
+      "version": "3.18.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apiguardian:apiguardian-api",
+      "version": "1.1.2",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.aspectj:aspectjrt",
+      "version": "1.9.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.glassfish:javax.json",
+      "version": "1.1.4",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib-common",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains:annotations",
+      "version": "13.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jspecify:jspecify",
+      "version": "1.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter-api",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter-engine",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter-params",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.platform:junit-platform-commons",
+      "version": "1.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.platform:junit-platform-engine",
+      "version": "1.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.locationtech.jts:jts-core",
+      "version": "1.19.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.mockito:mockito-core",
+      "version": "4.5.1",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.mockito:mockito-junit-jupiter",
+      "version": "4.5.1",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.objenesis:objenesis",
+      "version": "3.2",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.opentest4j:opentest4j",
+      "version": "1.3.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.slf4j:slf4j-api",
+      "version": "2.0.17",
+      "scopes": [
+        "provided"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.xerial.snappy:snappy-java",
+      "version": "1.1.10.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.yaml:snakeyaml",
+      "version": "2.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "stax:stax",
+      "version": "1.2.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "stax:stax-api",
+      "version": "1.0.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "xpp3:xpp3",
+      "version": "1.1.3.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    }
+  ],
+  "advisories": {
+    "GHSA-jhq6-gfmj-v8fx": {
+      "id": "GHSA-jhq6-gfmj-v8fx",
+      "aliases": [
+        "CVE-2026-10532"
+      ],
+      "summary": "Logback vulnerable to Object Injection through HardenedObjectInputStream modules",
+      "modified": "2026-07-15T22:00:52.732394384Z",
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10532"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/qos-ch/logback"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/qos-ch/logback/releases/tag/v_1.5.34"
+        },
+        {
+          "type": "WEB",
+          "url": "https://logback.qos.ch/news.html#1.5.34"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "ch.qos.logback:logback-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/ch.qos.logback/logback-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.5.34"
+                }
+              ]
+            }
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/06/GHSA-jhq6-gfmj-v8fx/GHSA-jhq6-gfmj-v8fx.json"
+          }
+        }
+      ]
+    },
+    "GHSA-p47f-322f-whfh": {
+      "id": "GHSA-p47f-322f-whfh",
+      "aliases": [
+        "CVE-2026-9828"
+      ],
+      "summary": "QOS.CH Sarl logback logback-core has a deserialization of untrusted data vulnerability",
+      "modified": "2026-07-03T10:14:36.248327289Z",
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9828"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/qos-ch/logback"
+        },
+        {
+          "type": "WEB",
+          "url": "https://logback.qos.ch/news.html#1.5.33"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "ch.qos.logback:logback-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/ch.qos.logback/logback-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.5.33"
+                }
+              ]
+            }
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/05/GHSA-p47f-322f-whfh/GHSA-p47f-322f-whfh.json",
+            "last_known_affected_version_range": "<= 1.5.32"
+          }
+        }
+      ]
+    },
+    "GHSA-qqpg-mvqg-649v": {
+      "id": "GHSA-qqpg-mvqg-649v",
+      "aliases": [
+        "CVE-2026-1225"
+      ],
+      "summary": "Logback allows an attacker to instantiate classes already present on the class path",
+      "modified": "2026-02-04T04:14:42.648926Z",
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-1225"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/qos-ch/logback/issues/997"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/qos-ch/logback/commit/1f97ae1844b1be8486e4e9cade98d7123d3eded5"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/qos-ch/logback"
+        },
+        {
+          "type": "WEB",
+          "url": "https://logback.qos.ch/news.html#1.5.25"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "ch.qos.logback:logback-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/ch.qos.logback/logback-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.5.25"
+                }
+              ]
+            }
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/01/GHSA-qqpg-mvqg-649v/GHSA-qqpg-mvqg-649v.json"
+          }
+        }
+      ]
+    }
+  }
+}

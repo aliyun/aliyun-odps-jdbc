@@ -1,0 +1,111 @@
+com.aliyun.odps:odps-jdbc:jar:3.10.12
++- com.aliyun.odps:odps-sdk-core:jar:0.58.1-public:compile
+|  +- com.aliyun.odps:odps-sdk-commons:jar:0.58.1-public:compile
+|  |  +- commons-logging:commons-logging:jar:1.2:compile
+|  |  +- org.aspectj:aspectjrt:jar:1.9.7:compile
+|  |  \- com.aliyun:credentials-api:jar:1.0.0:compile
+|  +- com.aliyun.odps:odps-sdk-simplexml:jar:0.58.1-public:compile
+|  |  +- stax:stax-api:jar:1.0.1:compile
+|  |  +- stax:stax:jar:1.2.0:compile
+|  |  \- xpp3:xpp3:jar:1.1.3.3:compile
+|  +- com.aliyun.odps:odps-arrow-helper:jar:0.58.1-public:compile
+|  +- com.aliyun.odps:odps-sdk-storage-api:jar:0.58.1-public:compile
+|  |  \- com.squareup.okhttp3:okhttp:jar:4.12.0:compile
+|  |     +- com.squareup.okio:okio:jar:3.6.0:compile
+|  |     |  \- com.squareup.okio:okio-jvm:jar:3.6.0:compile
+|  |     \- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.8.21:compile
+|  |        \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.8.21:compile
+|  +- commons-codec:commons-codec:jar:1.18.0:compile
+|  +- org.apache.commons:commons-compress:jar:1.28.0:compile
+|  +- org.antlr:antlr4:jar:4.11.1:compile
+|  |  +- org.antlr:antlr-runtime:jar:3.5.3:compile
+|  |  +- org.antlr:ST4:jar:4.3.4:compile
+|  |  +- org.abego.treelayout:org.abego.treelayout.core:jar:1.0.3:compile
+|  |  +- org.glassfish:javax.json:jar:1.1.4:compile
+|  |  \- com.ibm.icu:icu4j:jar:71.1:compile
+|  +- com.google.guava:guava:jar:33.4.8-jre:compile
+|  |  +- com.google.guava:failureaccess:jar:1.0.3:compile
+|  |  +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
+|  |  +- org.jspecify:jspecify:jar:1.0.0:compile
+|  |  +- com.google.errorprone:error_prone_annotations:jar:2.36.0:compile
+|  |  \- com.google.j2objc:j2objc-annotations:jar:3.0.0:compile
+|  +- com.google.code.gson:gson:jar:2.13.2:compile
+|  +- net.sourceforge.javacsv:javacsv:jar:2.0:compile
+|  +- org.xerial.snappy:snappy-java:jar:1.1.10.7:compile
+|  +- at.yawk.lz4:lz4-java:jar:1.11.2:compile
+|  +- com.github.luben:zstd-jni:jar:1.5.7-2:compile
+|  +- commons-io:commons-io:jar:2.20.0:compile
+|  +- javax.mail:mail:jar:1.4.7:compile
+|  |  \- javax.activation:activation:jar:1.1:compile
+|  +- org.apache.arrow:arrow-vector:jar:17.0.0:compile
+|  |  +- org.apache.arrow:arrow-format:jar:17.0.0:compile
+|  |  \- com.google.flatbuffers:flatbuffers-java:jar:24.3.25:compile
+|  +- org.apache.arrow:arrow-compression:jar:17.0.0:compile
+|  +- org.apache.commons:commons-lang3:jar:3.18.0:compile
+|  +- io.netty:netty-all:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-buffer:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-dns:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-haproxy:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-http:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-http2:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-memcache:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-mqtt:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-redis:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-smtp:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-socks:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-stomp:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-codec-xml:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-common:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-handler:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-native-unix-common:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-handler-proxy:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-handler-ssl-ocsp:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-resolver:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-resolver-dns:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-rxtx:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-sctp:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-udt:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-classes-epoll:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-classes-kqueue:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.137.Final:compile
+|  |  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.137.Final:runtime
+|  |  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.137.Final:runtime
+|  |  +- io.netty:netty-transport-native-epoll:jar:linux-riscv64:4.1.137.Final:runtime
+|  |  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.137.Final:runtime
+|  |  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.137.Final:runtime
+|  |  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.137.Final:runtime
+|  |  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.137.Final:runtime
+|  +- org.yaml:snakeyaml:jar:2.0:compile
+|  \- org.locationtech.jts:jts-core:jar:1.19.0:compile
++- com.fasterxml.jackson.core:jackson-databind:jar:2.21.5:compile
+|  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile
++- com.fasterxml.jackson.core:jackson-core:jar:2.21.5:compile
++- org.antlr:antlr4-runtime:jar:4.11.1:compile
++- org.apache.arrow:arrow-memory-netty:jar:17.0.0:compile
+|  +- org.apache.arrow:arrow-memory-core:jar:17.0.0:compile
+|  |  \- com.google.code.findbugs:jsr305:jar:3.0.2:compile
+|  \- org.apache.arrow:arrow-memory-netty-buffer-patch:jar:17.0.0:compile
++- com.google.protobuf:protobuf-java:jar:3.25.5:compile
++- org.slf4j:slf4j-api:jar:2.0.17:provided
++- org.junit.jupiter:junit-jupiter:jar:5.10.0:test
+|  +- org.junit.jupiter:junit-jupiter-api:jar:5.10.0:test
+|  |  +- org.opentest4j:opentest4j:jar:1.3.0:test
+|  |  +- org.junit.platform:junit-platform-commons:jar:1.10.0:test
+|  |  \- org.apiguardian:apiguardian-api:jar:1.1.2:test
+|  +- org.junit.jupiter:junit-jupiter-params:jar:5.10.0:test
+|  \- org.junit.jupiter:junit-jupiter-engine:jar:5.10.0:test
+|     \- org.junit.platform:junit-platform-engine:jar:1.10.0:test
++- com.alibaba:druid:jar:1.0.14:test
++- ch.qos.logback:logback-classic:jar:1.3.16:test
++- ch.qos.logback:logback-core:jar:1.3.16:test
++- org.mockito:mockito-junit-jupiter:jar:4.5.1:test
+|  \- org.mockito:mockito-core:jar:4.5.1:test
+|     +- net.bytebuddy:byte-buddy:jar:1.12.9:test
+|     +- net.bytebuddy:byte-buddy-agent:jar:1.12.9:test
+|     \- org.objenesis:objenesis:jar:3.2:test
+\- io.github.cdimascio:java-dotenv:jar:5.2.2:test
+   \- org.jetbrains.kotlin:kotlin-stdlib:jar:1.8.21:compile
+      +- org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.8.21:compile
+      \- org.jetbrains:annotations:jar:13.0:compile
