@@ -8,17 +8,27 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
+  core-tests:
+    uses: ./.github/workflows/core-tests.yml
+    secrets: inherit
+
   release:
+    needs: core-tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Java and Maven
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 8
+          distribution: temurin
+          java-version: '8'
       
       - name: Setup gpg
         run: |

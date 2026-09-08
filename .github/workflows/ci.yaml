@@ -34,14 +34,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up JDK 8
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'adopt'
 
       - name: Build with Maven (fail at end)
         run: mvn clean test -fae
-        continue-on-error: true
 
       # 发布测试结果到 Actions UI 和 PR
       - name: Publish Test Report
