@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.10.13 - 2026-09-08
+
+- Update shaded Netty to 4.1.137.Final and LZ4 to 1.11.2.
+- Align Kotlin runtime modules to 1.8.21; update test-only Logback to 1.3.16.
+- Add offline dependency compatibility tests and a scoped CVE applicability report.
+- Packaging: rebuild relocated dependencies inside the JDBC JAR; applications cannot replace these copies through ordinary Maven exclusions.
+- Keep protobuf 3.25.5. This release does not claim that all dependency CVEs are unexploitable; remaining legacy/test constraints are documented in docs/security/dependency-cve-assessment-2026-09-08.md.
+
+
 ## [3.10.10] - 2026-07-01
 ### Dependency Updates
 - **SDK Upgrade**: Upgraded `odps-sdk-core` from `0.57.3-public` to `0.58.1-public`
