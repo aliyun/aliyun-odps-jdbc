@@ -79,9 +79,9 @@ public class OdpsScollResultSet extends OdpsResultSet implements ResultSet {
     } else {
       // In interactive mode, createDownloadSession won't call server
       // Before get total record count, openRecordReader must be called
-      TunnelRecordReader reader = sessionHandle.openRecordReader(0, -1, -1);
-      recordCount = sessionHandle.getRecordCount();
-      reader.close();
+      try (TunnelRecordReader reader = sessionHandle.openRecordReader(0, -1, -1)) {
+        recordCount = sessionHandle.getRecordCount();
+      }
     }
 
     // maxRows take effect only if it > 0

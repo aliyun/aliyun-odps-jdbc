@@ -186,6 +186,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       resultSet = null;
     }
 
+    closeOdpsResultSet();
+
     connHandle.log.info("the statement has been closed");
 
     connHandle = null;
@@ -555,34 +557,38 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         try {
           if (!isResultSetScrollable || sqlExecutor.getInstance() == null) {
             resultSet = new OdpsSessionForwardResultSet(this, meta, odpsResultSet, startTime);
+            odpsResultSet = null; // ForwardResultSet now owns the underlying iterator.
           } else {
-            DownloadSession session;
-            InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
-            String te = connHandle.getTunnelEndpoint();
-            if (!StringUtils.isNullOrEmpty(te)) {
-              connHandle.log.info("using tunnel endpoint: " + te);
-              tunnel.setEndpoint(te);
-            }
-            if (connHandle.getTunnelConnectTimeout() >= 0) {
-              tunnel.getConfig().setSocketConnectTimeout(connHandle.getTunnelConnectTimeout());
-            }
-            if (connHandle.getTunnelReadTimeout() >= 0) {
-              tunnel.getConfig().setSocketTimeout(connHandle.getTunnelReadTimeout());
-            }
-            session = tunnel.createDirectDownloadSession(
-                connHandle.getOdps().getDefaultProject(),
-                sqlExecutor.getInstance().getId(),
-                sqlExecutor.getTaskName(),
-                sqlExecutor.getSubqueryId(),
-                enableLimit);
+            try {
+              DownloadSession session;
+              InstanceTunnel tunnel = new InstanceTunnel(connHandle.getOdps());
+              String te = connHandle.getTunnelEndpoint();
+              if (!StringUtils.isNullOrEmpty(te)) {
+                connHandle.log.info("using tunnel endpoint: " + te);
+                tunnel.setEndpoint(te);
+              }
+              if (connHandle.getTunnelConnectTimeout() >= 0) {
+                tunnel.getConfig().setSocketConnectTimeout(connHandle.getTunnelConnectTimeout());
+              }
+              if (connHandle.getTunnelReadTimeout() >= 0) {
+                tunnel.getConfig().setSocketTimeout(connHandle.getTunnelReadTimeout());
+              }
+              session = tunnel.createDirectDownloadSession(
+                  connHandle.getOdps().getDefaultProject(),
+                  sqlExecutor.getInstance().getId(),
+                  sqlExecutor.getTaskName(),
+                  sqlExecutor.getSubqueryId(),
+                  enableLimit);
 
-            resultSet = new OdpsScollResultSet(this, meta, session,
-                                               sqlExecutor
-                                                                   .getExecuteMode() == ExecuteMode.INTERACTIVE
-                                                               ? OdpsScollResultSet.ResultMode.INTERACTIVE
-                                                               : OdpsScollResultSet.ResultMode.OFFLINE);
+              resultSet = new OdpsScollResultSet(this, meta, session,
+                                                 sqlExecutor
+                                                                     .getExecuteMode() == ExecuteMode.INTERACTIVE
+                                                                 ? OdpsScollResultSet.ResultMode.INTERACTIVE
+                                                                 : OdpsScollResultSet.ResultMode.OFFLINE);
+            } finally {
+              closeOdpsResultSet();
+            }
           }
-          odpsResultSet = null;
         } catch (TunnelException e) {
           connHandle.log.error("create download session for session failed: " + e.getMessage());
           e.printStackTrace();
@@ -710,7 +716,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     }
 
     executeInstance = null;
-    odpsResultSet = null;
+    closeOdpsResultSet();
     isClosed = false;
     isCancelled = false;
     updateCount = -1;
@@ -719,6 +725,18 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   protected OdpsLogger getParentLogger() {
     return connHandle.log;
+  }
+
+  private void closeOdpsResultSet() {
+    if (odpsResultSet != null) {
+      try {
+        odpsResultSet.close();
+      } catch (Exception e) {
+        connHandle.log.warn("Failed to close odpsResultSet: " + e.getMessage());
+      } finally {
+        odpsResultSet = null;
+      }
+    }
   }
 
   protected void checkClosed() throws SQLException {

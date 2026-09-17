@@ -80,6 +80,15 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
     }
 
     isClosed = true;
+    if (resultSet != null) {
+      try {
+        resultSet.close();
+      } catch (Exception e) {
+        conn.log.warn("Failed to close underlying resultSet: " + e.getMessage());
+      } finally {
+        resultSet = null;
+      }
+    }
     conn.log.debug("the result set has been closed");
   }
 

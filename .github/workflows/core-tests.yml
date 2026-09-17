@@ -21,7 +21,7 @@ jobs:
           distribution: temurin
           java-version: '8'
       - name: Build candidate and run dependency regression tests
-        run: mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
+        run: mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,ResultSetLifecycleTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
       - name: Obtain regression project credentials
         id: credentials
         uses: aliyun/configure-aliyun-credentials-action@v1.0.7
