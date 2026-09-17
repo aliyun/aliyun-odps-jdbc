@@ -757,7 +757,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected void throwSQLException(Exception e, String sql, Instance instance, String logviewUrl) throws SQLException {
     connHandle.log.error("LogView: " + logviewUrl);
     connHandle.log.error("Run SQL failed", e);
-    throw new SQLException(
+    throw connHandle.createSQLException(
         "execute sql [ " + sql + " ] + failed. " + (instance == null ? "" : "instanceId:["
                                                                             + instance.getId()
                                                                             + "]")

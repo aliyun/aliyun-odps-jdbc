@@ -138,6 +138,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private String quotaName;
   private String tunnelQuotaName;
   private boolean enableMaxQA = false;
+  private Exception maxQARoutingCheckFailure;
   private boolean disableFallback = false;
   private String serviceName = null;
   private FallbackPolicy fallbackPolicy;
@@ -373,7 +374,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     } catch (OdpsException e) {
       log.error("Connect to odps failed:" + e.getMessage());
-      throw new SQLException(e.getMessage(), e);
+      throw createSQLException(e.getMessage(), e);
     }
   }
 
@@ -388,8 +389,34 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     } catch (Exception e) {
       log.warn(
         "Get MaxQA connection(" + quotaName + ") failed because " + e.getMessage());
+      if (interactiveMode == ExecuteMode.INTERACTIVE) {
+        maxQARoutingCheckFailure = e;
+      }
       return null;
     }
+  }
+
+  SQLException createSQLException(String message, Exception cause) {
+    return createSQLException(message, cause, maxQARoutingCheckFailure);
+  }
+
+  static SQLException createSQLException(String message, Exception cause,
+                                        Exception maxQARoutingCheckFailure) {
+    String combinedMessage = message;
+    if (maxQARoutingCheckFailure != null
+        && !StringUtils.isNullOrEmpty(maxQARoutingCheckFailure.getMessage())) {
+      String routingFailure = "MaxQA routing check failed before fallback: "
+                              + maxQARoutingCheckFailure.getMessage();
+      combinedMessage = StringUtils.isNullOrEmpty(message)
+                        ? routingFailure
+                        : message + "\n" + routingFailure;
+    }
+
+    SQLException sqlException = new SQLException(combinedMessage, cause);
+    if (maxQARoutingCheckFailure != null && maxQARoutingCheckFailure != cause) {
+      sqlException.addSuppressed(maxQARoutingCheckFailure);
+    }
+    return sqlException;
   }
 
   public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy,
