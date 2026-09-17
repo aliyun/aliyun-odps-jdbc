@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.9.6]
+Based on 3.9.4, includes MaxQA server-side Fallback, Statement/ResultSet lifecycle fixes, actual-task INSERT affected-row counts, and coordinated download-iterator shutdown (reader release, queued-task cancellation, consumer wakeup and empty results).
+
+See [3.9.6 release notes](RELEASE_NOTES_3.9.6.md) for the complete changes, remaining Catalog/Schema limitation and retained 3.9 feature/packaging differences.
+
 ## [3.9.5]
 
 Backport MaxQA server-side Fallback to 3.9.4 and upgrade SDK to 0.61.2-public.

@@ -1,4 +1,4 @@
-> **3.9.5 compatibility release:** MaxQA server-side Fallback and result-set lifecycle thread-leak fixes are included; other documented 3.9 limitations remain. Read the [release notes and limitations](RELEASE_NOTES_3.9.5.md) before upgrading.
+> **3.9.6 compatibility release:** Includes MaxQA server-side Fallback, result-set thread-leak fixes, coordinated download-iterator shutdown and INSERT affected-row counts. Read the [release notes and limitations](RELEASE_NOTES_3.9.6.md) before upgrading.
 
 # ODPS JDBC
 

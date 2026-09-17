@@ -3,6 +3,9 @@ package com.aliyun.odps.jdbc.utils;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
@@ -48,7 +51,24 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   private int currentSplit = 0;
 
-  private Record currentRecord;
+  private volatile Record currentRecord;
+  // Never hold this lock across reader I/O or queue.take(): close must wake both.
+  private final Object lifecycle = new Object();
+  private volatile boolean closed;
+  private final Set<ReaderHandle> readers = new HashSet<>();
+
+  private static final class ReaderHandle {
+    private final TunnelRecordReader reader;
+    private final AtomicBoolean released = new AtomicBoolean();
+
+    private ReaderHandle(TunnelRecordReader reader) { this.reader = reader; }
+
+    private void close() {
+      if (released.compareAndSet(false, true)) {
+        try { reader.close(); } catch (IOException ignored) { }
+      }
+    }
+  }
 
   public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount, long splitSize, int preloadSplitNum, int threadNum)
       throws OdpsException {
@@ -63,16 +83,29 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
       }
       throw e;
     }
+    initialize(offset, readCount, splitSize, preloadSplitNum, threadNum);
+  }
+
+  InstanceDataIterator(InstanceTunnel.DownloadSession session, long offset, Long readCount,
+                       long splitSize, int preloadSplitNum, int threadNum) {
+    this.downloadSession = session;
+    initialize(offset, readCount, splitSize, preloadSplitNum, threadNum);
+  }
+
+  private void initialize(long offset, Long readCount, long splitSize, int preloadSplitNum,
+                          int threadNum) {
     this.offset = offset;
     this.recordCount = (readCount == null || readCount < 0) ? downloadSession.getRecordCount() - offset : Math.min(readCount, (downloadSession.getRecordCount() - offset));
-    this.splitSize = (splitSize <= 0) ? this.recordCount : splitSize;
+    this.recordCount = Math.max(0, this.recordCount);
+    this.splitSize = (splitSize <= 0) ? Math.max(1, this.recordCount) : splitSize;
     this.splitNum = computeSplitNum(this.splitSize, recordCount);
     this.preloadSplitNum = (preloadSplitNum == -1) ? splitNum : Math.max(preloadSplitNum, 1);
     this.threadNum = (threadNum == -1) ? Math.min(this.preloadSplitNum, Runtime.getRuntime()
                                                                             .availableProcessors() * 2) : threadNum;
 
-    this.executor = Executors.newFixedThreadPool(this.threadNum);
     this.queues = new LinkedBlockingQueue[this.splitNum];
+    if (this.splitNum == 0) return;
+    this.executor = Executors.newFixedThreadPool(this.threadNum);
     // Initialize first batch of splits
     for (int i = 0; i < this.preloadSplitNum && i < this.splitNum; i++) {
       submitNextSplit(i);
@@ -84,56 +117,76 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     return (int) ((recordCount + splitSize - 1) / splitSize);
   }
 
-  private synchronized void submitNextSplit(int splitIndex) {
-    if (splitIndex >= splitNum) return;
+  private void submitNextSplit(int splitIndex) {
+    synchronized (lifecycle) {
+      if (closed || splitIndex >= splitNum) return;
+      long start = offset + splitIndex * splitSize;
+      long count = Math.min(splitSize, recordCount - splitIndex * splitSize);
+      // Workers retain their queue even after the consumer releases its array slot.
+      BlockingQueue<Record> queue = new LinkedBlockingQueue<>();
+      queues[splitIndex] = queue;
+      executor.submit(() -> downloadSplit(start, count, queue));
+    }
+  }
 
-    long start = offset + splitIndex * splitSize;
-    long count = Math.min(splitSize, recordCount - (splitIndex * splitSize));
-
-    queues[splitIndex] = new LinkedBlockingQueue<>();
-    executor.submit(() -> {
-      TunnelRecordReader reader = null;
-      try {
-        reader = downloadSession.openRecordReader(start, count);
-        Record record;
-        while ((record = reader.read()) != null) {
-          queues[splitIndex].put(record);
-        }
-        queues[splitIndex].put(EOF_RECORD);
-      } catch (Throwable t) {
-        error.compareAndSet(null, t);
-        queues[splitIndex].offer(EOF_RECORD); // Ensure queue is marked as complete
-      } finally {
-        if (reader != null) {
-          try {
-            reader.close();
-          } catch (IOException ignored) {
-          }
-        }
+  private void downloadSplit(long start, long count, BlockingQueue<Record> queue) {
+    ReaderHandle handle = null;
+    try {
+      if (closed) return;
+      handle = new ReaderHandle(downloadSession.openRecordReader(start, count));
+      synchronized (lifecycle) {
+        if (closed) return;
+        readers.add(handle);
       }
-    });
+      while (!closed) {
+        Record record = handle.reader.read();
+        synchronized (lifecycle) {
+          if (closed) return;
+          queue.offer(record == null ? EOF_RECORD : record);
+        }
+        if (record == null) return;
+      }
+    } catch (Throwable t) {
+      synchronized (lifecycle) {
+        if (!closed) error.compareAndSet(null, t);
+      }
+      close();
+    } finally {
+      if (handle != null) {
+        handle.close();
+        synchronized (lifecycle) { readers.remove(handle); }
+      }
+    }
   }
 
   private synchronized boolean hasNextInternal() {
-    checkError();
-    if (currentSplit >= splitNum) {
-      currentRecord = EOF_RECORD;
-      return false;
-    }
-    BlockingQueue<Record> currentQueue = queues[currentSplit];
-    try {
-      Record record = currentQueue.take();
-      if (record == EOF_RECORD) {
-        queues[currentSplit] = null;
-        submitNextSplit(currentSplit + preloadSplitNum); // Submit next split after current is done
-        currentSplit++;
-        return hasNextInternal();
+    while (true) {
+      BlockingQueue<Record> queue;
+      synchronized (lifecycle) {
+        checkError();
+        if (closed || currentSplit >= splitNum) {
+          currentRecord = EOF_RECORD;
+          return false;
+        }
+        queue = queues[currentSplit];
       }
-      this.currentRecord = record;
-      return true;
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted during read", e);
+      try {
+        Record record = queue.take();
+        synchronized (lifecycle) {
+          checkError();
+          if (closed) return false;
+          if (record != EOF_RECORD) {
+            currentRecord = record;
+            return true;
+          }
+          queues[currentSplit] = null;
+          submitNextSplit(currentSplit + preloadSplitNum);
+          currentSplit++;
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Interrupted during read", e);
+      }
     }
   }
 
@@ -142,13 +195,13 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
     if (isSelect) {
       return hasNextInternal();
     } else {
-      return currentRecord != EOF_RECORD;
+      return !closed && currentRecord != EOF_RECORD;
     }
   }
 
   @Override
   public Record next() {
-    if (currentRecord == EOF_RECORD) {
+    if (closed || currentRecord == EOF_RECORD) {
       throw new NoSuchElementException("No more records.");
     }
     if (isSelect) {
@@ -168,7 +221,25 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   @Override
   public void close() {
-    executor.shutdownNow();
+    ReaderHandle[] active;
+    synchronized (lifecycle) {
+      if (closed) return;
+      closed = true;
+      currentRecord = EOF_RECORD;
+      if (executor != null) executor.shutdownNow();
+      if (queues != null) {
+        for (int i = 0; i < queues.length; i++) {
+          if (queues[i] != null) {
+            queues[i].clear();
+            queues[i].offer(EOF_RECORD);
+            queues[i] = null;
+          }
+        }
+      }
+      active = readers.toArray(new ReaderHandle[0]);
+      readers.clear();
+    }
+    for (ReaderHandle reader : active) reader.close();
   }
 
   public long getSplitSize() {

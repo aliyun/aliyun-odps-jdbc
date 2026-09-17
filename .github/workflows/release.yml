@@ -61,7 +61,7 @@ jobs:
       - name: Upload Release
         uses: ncipollo/release-action@v1
         with:
-          bodyFile: RELEASE_NOTES_3.9.5.md
+          bodyFile: RELEASE_NOTES_3.9.6.md
           allowUpdates: false
           omitName: true
           artifacts: 'target/odps-jdbc-*.jar'

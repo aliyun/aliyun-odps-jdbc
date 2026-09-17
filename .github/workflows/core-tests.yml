@@ -28,7 +28,7 @@ jobs:
           distribution: temurin
           java-version: '8'
       - name: Build candidate and run dependency regression tests
-        run: mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
+        run: mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,InstanceDataIteratorCloseTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
       - name: Obtain regression project credentials
         id: credentials
         uses: aliyun/configure-aliyun-credentials-action@v1.0.7
@@ -63,7 +63,7 @@ jobs:
         run: |
           export JAVA_HOME="${JDBC_RELEASE_JAVA_HOME:?}"
           export PATH="$JAVA_HOME/bin:$PATH"
-          mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
+          mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,InstanceDataIteratorCloseTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
       - name: Test packaged driver against MaxCompute using approved local broker
         timeout-minutes: 10
         shell: bash
