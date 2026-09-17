@@ -60,6 +60,8 @@ import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.sqa.SQLExecutorBuilder;
+import com.aliyun.odps.sqa.v2.FallbackInfo;
+import com.aliyun.odps.sqa.v2.MaxQAConnInfo;
 import com.aliyun.odps.utils.OdpsConstants;
 import com.aliyun.odps.utils.StringUtils;
 
@@ -150,6 +152,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private boolean tunnelDownloadUseSingleReader = false;
   private String quotaName;
   private boolean enableMaxQA = false;
+  private boolean disableFallback = false;
   private String serviceName = null;
   private FallbackPolicy fallbackPolicy;
   private boolean verbose;
@@ -291,6 +294,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.useProjectTimeZone = connRes.isUseProjectTimeZone();
     this.enableLimit = connRes.isEnableLimit();
     this.fallbackQuota = connRes.getFallbackQuota();
+    this.disableFallback = connRes.isDisableFallback();
     this.autoLimitFallback = connRes.isAutoLimitFallback();
     this.enableCommandApi = connRes.isEnableCommandApi();
     this.httpsCheck = connRes.isHttpsCheck();
@@ -386,6 +390,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return false;
   }
 
+  /** Preserve the 3.9 SET-quota path while passing server-side fallback configuration. */
+  void configureMaxQA(SQLExecutorBuilder builder, String quota, boolean enabled) {
+    builder.enableMaxQA(enabled);
+    // A cloned builder can contain connection information for the previous quota.
+    builder.maxQAConnInfo(null);
+    if (enabled) {
+      FallbackInfo fallback = disableFallback ? null
+          : (StringUtils.isNullOrEmpty(fallbackQuota)
+              ? FallbackInfo.enable() : FallbackInfo.enable(fallbackQuota));
+      builder.maxQAConnInfo(MaxQAConnInfo.builder().quotaName(quota)
+          .fallbackInfo(fallback).build());
+      builder.quotaName(quota).executeMode(ExecuteMode.INTERACTIVE_V2);
+    } else {
+      builder.quotaName(quota).executeMode(ExecuteMode.OFFLINE);
+    }
+  }
+
   public void initSQLExecutor(String serviceName, FallbackPolicy fallbackPolicy)
       throws OdpsException {
     // only support major version when attaching a session
@@ -424,8 +445,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
         .setSkipCheckIfSelect(skipCheckIfSelect);
 
     if (enableMaxQA || interactiveMode == ExecuteMode.INTERACTIVE_V2) {
-      builder.quotaName(quotaName);
-      builder.enableMcqaV2(true);
+      configureMaxQA(builder, quotaName, true);
+      this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
     }
     long startTime = System.currentTimeMillis();
     this.executorBuilder = builder;

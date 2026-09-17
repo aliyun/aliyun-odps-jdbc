@@ -1,4 +1,10 @@
 # Changelog
+
+## [3.9.5]
+
+Backport MaxQA server-side Fallback to 3.9.4 and upgrade SDK to 0.61.2-public.
+Preserve 3.9 packaging and SET-quota behavior. This release retains known thread/resource, namespace metadata, dependency isolation and affected-row-count issues fixed in 3.10.
+See [3.9.5 release notes](RELEASE_NOTES_3.9.5.md) for configuration, limitations and migration guidance.
 ## [3.8.5] - 2025-03-18
 ### Improvements
 - **Dependency Update**  

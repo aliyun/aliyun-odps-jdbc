@@ -1,3 +1,5 @@
+> **3.9.5 compatibility release:** MaxQA server-side Fallback is supported; known 3.9 issues remain. Read the [release notes and limitations](RELEASE_NOTES_3.9.5.md) before upgrading.
+
 # ODPS JDBC
 
 ![build](https://github.com/aliyun/aliyun-odps-jdbc/actions/workflows/maven.yml/badge.svg)

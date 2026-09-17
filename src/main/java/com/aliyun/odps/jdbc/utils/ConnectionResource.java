@@ -203,6 +203,7 @@ public class ConnectionResource {
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
   private boolean verbose = false;
+  private boolean disableFallback = false;
   private boolean async = false;
   private String quotaName;
   private int logviewVersion;
@@ -361,7 +362,7 @@ public class ConnectionResource {
       fallbackPolicy = FallbackPolicy.alwaysFallbackPolicy();
     }
 
-    boolean disableFallback = Boolean.valueOf(
+    disableFallback = Boolean.valueOf(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", DISABLE_FALLBACK_PROP_KEY,
                                                  DISABLE_FALLBACK_URL_KEY)
     );
@@ -639,6 +640,10 @@ public class ConnectionResource {
 
   public String getMajorVersion() {
     return majorVersion;
+  }
+
+  public boolean isDisableFallback() {
+    return disableFallback;
   }
 
   public String getFallbackQuota() {

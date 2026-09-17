@@ -401,11 +401,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     for (String key : properties.stringPropertyNames()) {
       if (key.equalsIgnoreCase("odps.task.wlm.quota")) {
         boolean enableMaxQA = connHandle.checkIfEnableMaxQA(properties.getProperty(key));
-        executorBuilder.enableMcqaV2(enableMaxQA);
-        if (enableMaxQA) {
-          executorBuilder.executeMode(ExecuteMode.INTERACTIVE_V2);
-          executorBuilder.quotaName(properties.getProperty(key));
-        }
+        connHandle.configureMaxQA(executorBuilder, properties.getProperty(key), enableMaxQA);
         connHandle.log.info("enable MaxQA: " + enableMaxQA + ", quota name: " + properties.getProperty(key));
         needRebuildSql = true;
       }

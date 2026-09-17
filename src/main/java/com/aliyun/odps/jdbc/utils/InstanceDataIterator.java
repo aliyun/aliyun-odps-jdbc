@@ -213,6 +213,7 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
 
   private static class EOFRecord implements Record {
+    @Override public void clear() { }
     @Override public int getColumnCount() { return 0; }
 
     @Override
