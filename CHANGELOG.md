@@ -3,7 +3,7 @@
 ## [3.9.5]
 
 Backport MaxQA server-side Fallback to 3.9.4 and upgrade SDK to 0.61.2-public.
-Preserve 3.9 packaging and SET-quota behavior. Fix download-thread leaks on Statement reuse/close and scroll conversion; transfer forward-result ownership without premature or duplicate closure. The release notes separately list fixes not yet backported (iterator close coordination, namespace metadata and affected-row counts) and retained feature/packaging differences. Lifecycle thread leaks are fixed in this release.
+Preserve 3.9 packaging and SET-quota behavior. Fix download-thread leaks on Statement reuse/close and scroll conversion; transfer forward-result ownership without premature or duplicate closure. Fix non-tunnel INSERT affected-row counts by resolving the executor/server task name, with legacy-name fallback. The release notes separately list fixes not yet backported (iterator close coordination and namespace metadata) and retained feature/packaging differences. Lifecycle thread leaks are fixed in this release.
 See [3.9.5 release notes](RELEASE_NOTES_3.9.5.md) for configuration, limitations and migration guidance.
 ## [3.8.5] - 2025-03-18
 ### Improvements

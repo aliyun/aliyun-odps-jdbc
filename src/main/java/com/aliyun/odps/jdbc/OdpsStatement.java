@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
@@ -805,15 +807,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       if (isUpdate) {
         if (executeInstance != null) {
           executeInstance.waitForSuccess();
-          Instance.TaskSummary taskSummary = null;
-          try {
-            taskSummary = executeInstance.getTaskSummary(JDBC_SQL_OFFLINE_TASK_NAME);
-          } catch (OdpsException e) {
-            // update count become uncertain here
-            connHandle.log.warn(
-                "Failed to get TaskSummary: instance_id=" + executeInstance.getId() + ", taskname="
-                + JDBC_SQL_OFFLINE_TASK_NAME);
-          }
+          Instance.TaskSummary taskSummary = getUpdateTaskSummary(executeInstance, executor);
           if (taskSummary != null) {
             updateCount = Utils.getSinkCountFromTaskSummary(
                 StringEscapeUtils.unescapeJava(taskSummary.getJsonSummary()));
@@ -852,6 +846,42 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   public Instance getExecuteInstance() {
     return executeInstance;
+  }
+
+  private Instance.TaskSummary getUpdateTaskSummary(Instance instance, SQLExecutor executor)
+      throws OdpsException {
+    Set<String> taskNames = new LinkedHashSet<>();
+    if (executor != null && !StringUtils.isNullOrEmpty(executor.getTaskName())) {
+      taskNames.add(executor.getTaskName());
+    }
+    taskNames.add(JDBC_SQL_TASK_NAME);
+    taskNames.add(JDBC_SQL_OFFLINE_TASK_NAME);
+    for (String taskName : taskNames) {
+      Instance.TaskSummary summary = tryGetUpdateTaskSummary(instance, taskName);
+      if (summary != null) {
+        return summary;
+      }
+    }
+    // Only discover server-side task names if the executor and legacy names did not resolve.
+    for (String taskName : instance.getTaskNames()) {
+      if (taskNames.add(taskName)) {
+        Instance.TaskSummary summary = tryGetUpdateTaskSummary(instance, taskName);
+        if (summary != null) {
+          return summary;
+        }
+      }
+    }
+    return null;
+  }
+
+  private Instance.TaskSummary tryGetUpdateTaskSummary(Instance instance, String taskName) {
+    try {
+      return instance.getTaskSummary(taskName);
+    } catch (OdpsException e) {
+      connHandle.log.warn("Failed to get TaskSummary: instance_id=" + instance.getId()
+          + ", taskname=" + taskName);
+      return null;
+    }
   }
 
   public static String getDefaultTaskName() {

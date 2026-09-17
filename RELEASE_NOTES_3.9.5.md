@@ -4,6 +4,8 @@
 
 ## 本次变更
 
+- 修复非 Tunnel INSERT 因 task 名不匹配而返回错误影响行数的问题（回移 3.10.12）：优先查询 executor 的实际 task 名，再尝试旧名称和实例 task 列表；保留零行更新的正确计数。
+
 - 修复 Statement 复用、未取出 ResultSet 就关闭 Statement、滚动结果集转换时遗留底层下载线程的问题（回移 3.10.5 资源释放修复）。
 - 同时回移后续前向 ResultSet 所有权修复：包装时不提前关闭底层数据，关闭前向结果集时释放底层迭代器，避免重复关闭；滚动转换失败同样释放旧下载任务。滚动结果集初始化读取计数的临时 reader 通过 try-with-resources 释放。
 - 将 `disableFallback` / `fallbackQuota` 接入 `MaxQAConnInfo.FallbackInfo`，由 SDK 通过 `x-odps-fallback-infos` 请求头提交给 MaxQA 服务端。
@@ -21,6 +23,8 @@ jdbc:odps:https://service.<region>.maxcompute.aliyun.com/api?project=<project>&i
 
 ## 已修复的问题
 
+非 Tunnel INSERT 的 TaskSummary 已按实际 task 名解析；固定 task 名导致的错误影响行数不再属于保留问题。无法取得有效 TaskSummary 的情况不代表成功验证了写入行数。
+
 3.9.5 已修复 Statement 复用、未取出结果即关闭 Statement、前向结果集关闭，以及滚动结果集转换成功/失败时遗留底层下载任务的问题。前向结果集在关闭前仍可读取，底层迭代器只关闭一次。**这些生命周期线程泄漏不再属于本版本的保留问题。**
 
 ## 尚未回移的缺陷修复
@@ -29,7 +33,6 @@ jdbc:odps:https://service.<region>.maxcompute.aliyun.com/api?project=<project>&i
 | --- | --- | --- |
 | 下载迭代器自身的并发关闭协调 | 本次修复了调用方遗漏 `close()`；`InstanceDataIterator` 内部仍沿用 3.9 实现，未回移原子关闭状态、关闭期间停止提交任务及队列清理。并发读取与关闭同一结果集仍有竞态风险，避免跨线程同时操作同一结果集。 | [3.10.3](https://github.com/aliyun/aliyun-odps-jdbc/releases/tag/v3.10.3) 的迭代器并发及关闭协调修复。 |
 | Catalog / Schema 与 namespace 模式处理 | 三层模型下元数据查询及 catalog/schema 读写可能不符合预期，影响 BI 工具的库表浏览。 | [3.10.2](https://github.com/aliyun/aliyun-odps-jdbc/releases/tag/v3.10.2) 修正相关查询、get/set 及配置键。 |
-| 非 Tunnel INSERT 的影响行数获取使用固定 task 名 | task 名不匹配时，即使 SQL 成功也可能拿不到正确的 affected-row count；不要只凭该计数判断写入结果。 | [3.10.12](https://github.com/aliyun/aliyun-odps-jdbc/releases/tag/v3.10.12) 根据实际 executor / instance task 名获取 TaskSummary。 |
 
 上述项目是尚未回移的缺陷修复，不属于有意保留的功能差异。本版线程泄漏回归通过不代表这些问题也已解决。
 
