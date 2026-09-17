@@ -7,6 +7,12 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      local_core_runner:
+        description: Optional ephemeral runner label; requires explicit local profile authorization
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -16,6 +22,8 @@ jobs:
   core-tests:
     uses: ./.github/workflows/core-tests.yml
     secrets: inherit
+    with:
+      local_core_runner: ${{ inputs.local_core_runner || '' }}
 
   release:
     needs: core-tests

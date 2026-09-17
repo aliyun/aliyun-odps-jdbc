@@ -5,6 +5,12 @@ on:
     branches: [master, "codex/jdbc-395-maxqa-fallback"]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      local_core_runner:
+        description: Ephemeral runner label for explicitly authorized local live SQL acceptance
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -12,6 +18,7 @@ permissions:
 
 jobs:
   core:
+    if: ${{ !inputs.local_core_runner }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -42,3 +49,26 @@ jobs:
         run: |
           version=$(python3 -c 'import xml.etree.ElementTree as E; print(E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)')
           bash scripts/jdbc-core-smoke.sh "target/odps-jdbc-${version}-jar-with-dependencies.jar"
+
+  local-core:
+    if: ${{ inputs.local_core_runner != '' }}
+    runs-on: [self-hosted, "${{ inputs.local_core_runner }}"]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build candidate and run regression tests
+        shell: bash
+        run: |
+          export JAVA_HOME="${JDBC_RELEASE_JAVA_HOME:?}"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          mvn -B -ntp clean package -Dtest=MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
+      - name: Test packaged driver against MaxCompute using approved local broker
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          export JAVA_HOME="${JDBC_RELEASE_JAVA_HOME:?}"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          version=$(python3 -c 'import xml.etree.ElementTree as E; print(E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)')
+          "${JDBC_RELEASE_BROKER:?}" run --confirm-write "${JDBC_RELEASE_CREDENTIAL_PROFILE:?}" -- bash scripts/jdbc-core-smoke.sh "target/odps-jdbc-${version}-jar-with-dependencies.jar"
