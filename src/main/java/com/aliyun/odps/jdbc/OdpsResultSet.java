@@ -39,8 +39,11 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
+import com.aliyun.odps.OdpsType;
 
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
@@ -209,7 +212,28 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       String charset = conn.getCharset();
       return AbstractToJdbcTransformer.encodeBytes((byte[]) obj, charset);
     }
+    if (isSqlArrayColumn(obj, columnIndex)) {
+      // Same wrapping as getArray(): the record reader hands us a java.util.List for an
+      // ARRAY column, but this driver advertises the column as java.sql.Types.ARRAY, whose
+      // standard Java mapping (JDBC 4.x spec, Table 25-1) is java.sql.Array. Generic
+      // consumers such as BI drivers read values through getObject() and honour that
+      // declared type, so returning the raw List makes them fail with ClassCastException.
+      return transformToJdbcType(obj, Array.class, meta.getColumnOdpsType(columnIndex));
+    }
     return obj;
+  }
+
+  /**
+   * An ARRAY column whose value still needs wrapping into {@code java.sql.Array}.
+   * The {@code legacy_array_get_object} connection property keeps the previous
+   * raw-List behaviour for applications that cast the value to {@code java.util.List}.
+   */
+  private boolean isSqlArrayColumn(Object obj, int columnIndex) throws SQLException {
+    if (!(obj instanceof List) || obj instanceof Array || conn == null
+        || conn.isLegacyArrayGetObject()) {
+      return false;
+    }
+    return meta.getColumnOdpsType(columnIndex).getOdpsType() == OdpsType.ARRAY;
   }
 
   // The implementation stores STRING as byte[], but JDBC can only see String.

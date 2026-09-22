@@ -151,6 +151,7 @@ java.net.URLEncoder#encode(java.lang.String).
 |      `skipSqlRewrite`      |      `skip_sql_rewrite`      |  False   |     false     | Skip SQL rewriting and optimization during query processing |
 |    `skipSqlInjectCheck`    |   `skip_sql_inject_check`    |  False   |     false     | Skip SQL injection check during query processing            |
 |    `skipCheckIfSelect`     |     `skipCheckIfSelect`      |  False   |     true      | Skip use antlr4 to check if query is select                 |
+|  `legacyArrayGetObject`  |  `legacy_array_get_object`  |  False   |     false     | Keep the legacy raw `java.util.List` from `getObject()` on ARRAY columns instead of the standard `java.sql.Array` mapping |
 |        `quotaName`         |         `quota_name`         |  False   |    Not set    | The name of the query quota class to use for execution      |
 
 #### Timeouts and Networking

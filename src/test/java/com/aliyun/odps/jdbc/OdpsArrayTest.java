@@ -19,12 +19,16 @@
 
 package com.aliyun.odps.jdbc;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -450,6 +454,70 @@ public class OdpsArrayTest {
             if (conn != null) {
                 conn.close();
             }
+        }
+    }
+    /**
+     * A generic consumer (BI tool, ORM) reads a column through {@code getObject()} and honours the
+     * declared {@code java.sql.Types.ARRAY} mapping. Before the fix the driver returned the raw
+     * {@code java.util.ArrayList} produced by the record reader here, so such a cast failed with
+     * "class java.util.ArrayList cannot be cast to class java.sql.Array" even though
+     * {@code getArray()} had always worked.
+     */
+    @Test
+    public void testSelectArrayGetObjectReturnsSqlArray() throws Exception {
+        Connection conn = TestUtils.getConnection();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("select array(1, 2) as big_array, array('x', 'y') as str_array;")) {
+            ResultSetMetaData meta = rs.getMetaData();
+            Assertions.assertEquals(Types.ARRAY, meta.getColumnType(1));
+            Assertions.assertTrue(rs.next(), "expected one result row");
+
+            Object big = rs.getObject(1);
+            Assertions.assertTrue(big instanceof Array,
+                                  "getObject() on ARRAY<BIGINT> must return java.sql.Array, but was "
+                                  + big.getClass().getName());
+            Assertions.assertEquals("BIGINT", ((Array) big).getBaseTypeName());
+            Assertions.assertEquals("[1, 2]", Arrays.toString((Object[]) ((Array) big).getArray()));
+
+            Object str = rs.getObject(2);
+            Assertions.assertTrue(str instanceof Array,
+                                  "getObject() on ARRAY<STRING> must return java.sql.Array, but was "
+                                  + str.getClass().getName());
+            Assertions.assertEquals("[x, y]", Arrays.toString((Object[]) ((Array) str).getArray()));
+
+            // getObject(int, Class) reads the same column, so it must keep working. The wrapper
+            // is created per call, so compare contents instead of identity.
+            Array typed = rs.getObject(2, Array.class);
+            Assertions.assertArrayEquals((Object[]) ((Array) str).getArray(),
+                                        (Object[]) typed.getArray());
+
+            // The dedicated accessor stays consistent with getObject().
+            Assertions.assertArrayEquals((Object[]) ((Array) big).getArray(),
+                                         (Object[]) rs.getArray(1).getArray());
+            Assertions.assertFalse(rs.next(), "expected exactly one result row");
+        } finally {
+            conn.close();
+        }
+    }
+
+    /**
+     * Escape hatch for applications that relied on the pre-fix raw List from getObject().
+     */
+    @Test
+    public void testLegacyArrayGetObjectKeepsRawList() throws Exception {
+        Connection conn = TestUtils.getConnection(
+            Collections.singletonMap("legacyArrayGetObject", "true"));
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("select array(1, 2) as a;")) {
+            Assertions.assertTrue(rs.next(), "expected one result row");
+            Object value = rs.getObject(1);
+            Assertions.assertFalse(value instanceof Array,
+                                   "legacyArrayGetObject must keep returning the raw List");
+            Assertions.assertEquals("[1, 2]", value.toString());
+            // getArray() is unaffected by the flag and still returns java.sql.Array.
+            Assertions.assertEquals("[1, 2]", Arrays.toString((Object[]) rs.getArray(1).getArray()));
+        } finally {
+            conn.close();
         }
     }
 }
