@@ -151,7 +151,7 @@ java.net.URLEncoder#encode(java.lang.String).
 |      `skipSqlRewrite`      |      `skip_sql_rewrite`      |  False   |     false     | Skip SQL rewriting and optimization during query processing |
 |    `skipSqlInjectCheck`    |   `skip_sql_inject_check`    |  False   |     false     | Skip SQL injection check during query processing            |
 |    `skipCheckIfSelect`     |     `skipCheckIfSelect`      |  False   |     true      | Skip use antlr4 to check if query is select                 |
-|  `legacyArrayGetObject`  |  `legacy_array_get_object`  |  False   |     false     | Keep the legacy raw `java.util.List` from `getObject()` on ARRAY columns instead of the standard `java.sql.Array` mapping. `getObject(int, Class)` always honours the explicitly requested type, so `getObject(i, List.class)` returns the list regardless of this flag |
+|  `legacyArrayGetObject`  |  `legacy_array_get_object`  |  False   |     false     | Keep the legacy raw `java.util.List` returned by the untyped `getObject()` on ARRAY columns instead of the standard `java.sql.Array` mapping. Only the untyped path is affected: `getObject(int, Class)` always honours the explicitly requested type, so `getObject(i, List.class)` returns the list and `getObject(i, Array.class)` returns a `java.sql.Array` regardless of this flag |
 |        `quotaName`         |         `quota_name`         |  False   |    Not set    | The name of the query quota class to use for execution      |
 
 #### Timeouts and Networking

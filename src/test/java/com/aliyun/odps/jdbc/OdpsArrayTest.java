@@ -551,4 +551,39 @@ public class OdpsArrayTest {
             conn.close();
         }
     }
+
+    /**
+     * {@code legacy_array_get_object} restores the raw List on the untyped path; it must not
+     * re-arm the trap for callers that explicitly name {@code java.sql.Array}. On 3.10.13 an
+     * {@code getObject(i, Array.class)} request on an ARRAY column threw the very same
+     * ClassCastException as {@code getObject(i)}, which is half of what this fix exists for.
+     */
+    @Test
+    public void testLegacyFlagKeepsTypedArrayRequestWorking() throws Exception {
+        Connection conn = TestUtils.getConnection(
+            Collections.singletonMap("legacy_array_get_object", "true"));
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("select array(1, 2) as a, 'hello' as s;")) {
+            Assertions.assertTrue(rs.next(), "expected one result row");
+
+            Object raw = rs.getObject(1);
+            Assertions.assertTrue(raw instanceof List && !(raw instanceof Array),
+                                  "legacy flag must keep getObject() raw, but was "
+                                  + raw.getClass().getName());
+            Assertions.assertEquals("[1, 2]", ((List<?>) raw).toString());
+
+            Array typed = rs.getObject(1, Array.class);
+            Assertions.assertEquals("[1, 2]", Arrays.toString((Object[]) typed.getArray()));
+            Assertions.assertArrayEquals((Object[]) rs.getArray(1).getArray(),
+                                         (Object[]) typed.getArray());
+
+            // Requests that do not name java.sql.Array keep the legacy value.
+            Assertions.assertTrue(rs.getObject(1, Object.class) instanceof List,
+                                  "Object.class is the untyped mapping and stays raw under the flag");
+            Assertions.assertEquals("[1, 2]", rs.getObject(1, List.class).toString());
+            Assertions.assertEquals("hello", rs.getObject(2, String.class));
+        } finally {
+            conn.close();
+        }
+    }
 }

@@ -242,6 +242,15 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
         || conn.isLegacyArrayGetObject()) {
       return false;
     }
+    return isArrayColumn(columnIndex);
+  }
+
+  /**
+   * Whether the column is declared ARRAY, regardless of whether the driver is allowed to wrap
+   * its value. {@code legacy_array_get_object} suppresses the wrapping on the untyped path only,
+   * so a typed caller still needs this check.
+   */
+  private boolean isArrayColumn(int columnIndex) throws SQLException {
     return meta.getColumnOdpsType(columnIndex).getOdpsType() == OdpsType.ARRAY;
   }
 
@@ -290,6 +299,14 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
       // request wins over the column's declared mapping, so typed getters keep the pre-fix
       // value instead of failing the cast at the call site.
       return Utils.convertToSqlType(getObject(columnIndex, false), type, timeZone);
+    }
+    if (value instanceof List && type != null && Array.class.isAssignableFrom(type)
+        && isArrayColumn(columnIndex)) {
+      // The only way an ARRAY column reaches here as a raw List with a java.sql.Array request is
+      // legacy_array_get_object, which is documented to restore the old untyped value -- not to
+      // re-arm the cast failure that callers naming Array.class used to hit on 3.10.13. An
+      // explicit request wins over the flag, so wrap the value here.
+      value = transformToJdbcType(value, Array.class, meta.getColumnOdpsType(columnIndex));
     }
     return Utils.convertToSqlType(value, type, timeZone);
   }
