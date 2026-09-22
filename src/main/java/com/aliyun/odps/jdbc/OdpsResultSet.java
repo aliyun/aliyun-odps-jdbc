@@ -39,8 +39,11 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
+import com.aliyun.odps.OdpsType;
 
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.jdbc.utils.transformer.to.jdbc.AbstractToJdbcDateTypeTransformer;
@@ -203,13 +206,53 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   // Do not call this method within OdpsResultSet class, call getInnerObject instead
   @Override
   public Object getObject(int columnIndex) throws SQLException {
+    return getObject(columnIndex, true);
+  }
+
+  /**
+   * @param wrapArrayColumn whether an ARRAY column keeps the {@code java.sql.Array} mapping that
+   *     {@code Types.ARRAY} advertises. Typed {@code getObject(int, Class)} callers pass
+   *     {@code false} when the value they asked for cannot be the wrapper, see that method.
+   */
+  private Object getObject(int columnIndex, boolean wrapArrayColumn) throws SQLException {
     Object obj = getInnerObject(columnIndex);
 
     if (obj instanceof byte[]) {
       String charset = conn.getCharset();
       return AbstractToJdbcTransformer.encodeBytes((byte[]) obj, charset);
     }
+    if (wrapArrayColumn && isSqlArrayColumn(obj, columnIndex)) {
+      // Same wrapping as getArray(): the record reader hands us a java.util.List for an
+      // ARRAY column, but this driver advertises the column as java.sql.Types.ARRAY, whose
+      // standard Java mapping (JDBC 4.x spec, Table 25-1) is java.sql.Array. Generic
+      // consumers such as BI drivers read values through getObject() and honour that
+      // declared type, so returning the raw List makes them fail with ClassCastException.
+      return transformToJdbcType(obj, Array.class, meta.getColumnOdpsType(columnIndex));
+    }
     return obj;
+  }
+
+  /**
+   * An ARRAY column whose value still needs wrapping into {@code java.sql.Array}.
+   * {@code legacy_array_get_object} defaults to {@code true}, so the untyped {@code
+   * getObject()} keeps returning the raw {@code java.util.List} produced by the record reader;
+   * applications that want the standard mapping opt out with {@code legacy_array_get_object=false}.
+   */
+  private boolean isSqlArrayColumn(Object obj, int columnIndex) throws SQLException {
+    if (!(obj instanceof List) || obj instanceof Array || conn == null
+        || conn.isLegacyArrayGetObject()) {
+      return false;
+    }
+    return isArrayColumn(columnIndex);
+  }
+
+  /**
+   * Whether the column is declared ARRAY, regardless of whether the driver is allowed to wrap
+   * its value. {@code legacy_array_get_object} suppresses the wrapping on the untyped path only,
+   * so a typed caller still needs this check.
+   */
+  private boolean isArrayColumn(int columnIndex) throws SQLException {
+    return meta.getColumnOdpsType(columnIndex).getOdpsType() == OdpsType.ARRAY;
   }
 
   // The implementation stores STRING as byte[], but JDBC can only see String.
@@ -249,12 +292,29 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    return Utils.convertToSqlType(getObject(columnIndex), type, timeZone);
+    Object value = getObject(columnIndex);
+    if (value instanceof Array && type != null && !type.isInstance(value)
+        && !Array.class.isAssignableFrom(type)) {
+      // The caller named the Java type it wants and that type cannot hold the wrapper -- most
+      // commonly java.util.List, which is exactly what the record reader produced. An explicit
+      // request wins over the column's declared mapping, so typed getters keep the pre-fix
+      // value instead of failing the cast at the call site.
+      return Utils.convertToSqlType(getObject(columnIndex, false), type, timeZone);
+    }
+    if (value instanceof List && type != null && Array.class.isAssignableFrom(type)
+        && isArrayColumn(columnIndex)) {
+      // The only way an ARRAY column reaches here as a raw List with a java.sql.Array request is
+      // legacy_array_get_object, which is documented to restore the old untyped value -- not to
+      // re-arm the cast failure that callers naming Array.class used to hit on 3.10.13. An
+      // explicit request wins over the flag, so wrap the value here.
+      value = transformToJdbcType(value, Array.class, meta.getColumnOdpsType(columnIndex));
+    }
+    return Utils.convertToSqlType(value, type, timeZone);
   }
 
   @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-    return Utils.convertToSqlType(getObject(columnLabel), type, timeZone);
+    return getObject(findColumn(columnLabel), type);
   }
 
   @Override

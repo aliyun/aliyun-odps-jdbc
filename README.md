@@ -151,6 +151,7 @@ java.net.URLEncoder#encode(java.lang.String).
 |      `skipSqlRewrite`      |      `skip_sql_rewrite`      |  False   |     false     | Skip SQL rewriting and optimization during query processing |
 |    `skipSqlInjectCheck`    |   `skip_sql_inject_check`    |  False   |     false     | Skip SQL injection check during query processing            |
 |    `skipCheckIfSelect`     |     `skipCheckIfSelect`      |  False   |     true      | Skip use antlr4 to check if query is select                 |
+|  `legacyArrayGetObject`  |  `legacy_array_get_object`  |  False   |     true      | Keep the raw `java.util.List` produced by the record reader when an ARRAY column is read through the untyped `getObject()` -- the behaviour shipped since 3.6.x, so existing applications that cast the value to `java.util.List` keep working. Set it to `false` to get the standard `java.sql.Array` mapping declared by `Types.ARRAY` instead. Only the untyped path is affected: `getObject(int, Class)` always honours the explicitly requested type, so `getObject(i, List.class)` returns the list and `getObject(i, Array.class)` returns a `java.sql.Array` regardless of this flag |
 |        `quotaName`         |         `quota_name`         |  False   |    Not set    | The name of the query quota class to use for execution      |
 
 #### Timeouts and Networking
@@ -380,6 +381,12 @@ correspondence between ODPS types and Java types.
 | TIMESTAMP_NTZ |    java.time.LocalDateTime    |
 |    BINARY     |  com.aliyun.odps.data.Binary  |
 |     ARRAY     |    java.util.List<Object>     |
+
+`ARRAY` is the one row above that depends on a connection property: it is `java.util.List<Object>`
+by default (`legacy_array_get_object=true`) and `java.sql.Array` when the connection sets
+`legacy_array_get_object=false`. `ResultSet.getObject(i, java.sql.Array.class)` returns a
+`java.sql.Array` either way, because an explicitly requested type wins over the column's declared
+mapping.
 
 NOTE: Possible timezone issue
 

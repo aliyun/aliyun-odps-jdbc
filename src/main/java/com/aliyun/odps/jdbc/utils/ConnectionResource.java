@@ -98,6 +98,7 @@ public class ConnectionResource {
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
   private static final String TUNNEL_QUOTA_NAME_URL_KEY = "tunnelQuotaName";
   private static final String SKIP_SQL_INJECT_CHECK_URL_KEY = "skipSqlInjectCheck";
+  private static final String LEGACY_ARRAY_GET_OBJECT_URL_KEY = "legacyArrayGetObject";
   private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
   private static final String TIME_ZONE_URL_KEY = "timezone";
 
@@ -105,6 +106,7 @@ public class ConnectionResource {
   private static final String FETCH_RESULT_PRELOAD_SPLIT_NUM = "fetchResultPreloadSplitNum";
   private static final String FETCH_RESULT_THREAD_NUM = "fetchResultThreadNum";
   private static final String SKIP_CHECK_IF_SELECT = "skipCheckIfSelect";
+  private static final String LEGACY_ARRAY_GET_OBJECT_PROP_KEY = "legacy_array_get_object";
   private static final String LONG_JOB_WARNING_THRESHOLD = "longJobWarningThreshold";
   private static final String SKIP_CHECK_IF_EPV2_URL_KEY = "skipCheckIfEpv2";
 
@@ -208,6 +210,7 @@ public class ConnectionResource {
   private boolean httpsCheck = false;
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
+  private boolean legacyArrayGetObject = true;
   private boolean verbose = false;
   private boolean disableFallback = false;
   private boolean async = false;
@@ -472,6 +475,13 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_SQL_INJECT_CHECK_PROP_KEY,
                                                  SKIP_SQL_INJECT_CHECK_URL_KEY));
 
+    // Default is true: an ARRAY column keeps returning the raw java.util.List from the untyped
+    // getObject(), which is the behaviour shipped since 3.6.x. Callers that want the standard
+    // java.sql.Array mapping declared by Types.ARRAY opt in with legacy_array_get_object=false.
+    legacyArrayGetObject = Boolean.parseBoolean(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", LEGACY_ARRAY_GET_OBJECT_PROP_KEY,
+                                                 LEGACY_ARRAY_GET_OBJECT_URL_KEY));
+
     retryTime = Integer.parseInt(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY)
     );
@@ -709,6 +719,15 @@ public class ConnectionResource {
 
   public boolean isSkipCheckIfSelect() {
     return skipCheckIfSelect;
+  }
+
+  /**
+   * @return true to keep the pre-3.10.14 behaviour of {@code ResultSet#getObject()} on ARRAY
+   *     columns (raw {@code java.util.List}) instead of the standard {@code java.sql.Array}
+   *     mapping that {@code Types.ARRAY} advertises.
+   */
+  public boolean isLegacyArrayGetObject() {
+    return legacyArrayGetObject;
   }
 
   public long getLongJobWarningThreshold() {

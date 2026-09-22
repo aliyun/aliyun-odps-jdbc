@@ -146,6 +146,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int logviewVersion;
   private boolean async;
   private boolean skipCheckIfSelect;
+  private boolean legacyArrayGetObject = true;
   private long longJobWarningThreshold;
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
@@ -301,6 +302,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.fetchResultThreadNum = connRes.getFetchResultThreadNum();
     this.fetchResultPreloadSplitNum = connRes.getFetchResultPreloadSplitNum();
     this.skipCheckIfSelect = connRes.isSkipCheckIfSelect();
+    this.legacyArrayGetObject = connRes.isLegacyArrayGetObject();
     this.longJobWarningThreshold = connRes.getLongJobWarningThreshold();
 
     if (!httpsCheck) {
@@ -380,6 +382,14 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public boolean isOdpsNamespaceSchema() {
     return odpsNamespaceSchema;
+  }
+
+  /**
+   * @return true when ARRAY columns must keep returning {@code java.util.List} from
+   *     {@code getObject()} for backward compatibility.
+   */
+  public boolean isLegacyArrayGetObject() {
+    return legacyArrayGetObject;
   }
 
   public MaxQAConnInfo checkIfEnableMaxQA(String quotaName) {
