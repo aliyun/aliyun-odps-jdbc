@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.10.14 - 2026-09-22
+
+- Add opt-in JDBC ARRAY mapping with `legacy_array_get_object=false`; preserve the default raw List behavior.
+- Honor explicit `java.sql.Array` and `List` requests in typed `getObject()` accessors.
+- Preserve MaxQA routing failure details when fallback SQL execution fails.
+- See [release notes](RELEASE_NOTES_3.10.14.md) for configuration and compatibility.
+
 ## 3.10.13 - 2026-09-08
 
 - Update shaded Netty to 4.1.137.Final and LZ4 to 1.11.2.

@@ -7,15 +7,24 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      local_core_sha:
+        description: Optional exact commit SHA with authenticated local live SQL acceptance
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
+  statuses: read
   id-token: write
 
 jobs:
   core-tests:
     uses: ./.github/workflows/core-tests.yml
     secrets: inherit
+    with:
+      local_core_sha: ${{ inputs.local_core_sha || '' }}
 
   release:
     needs: core-tests
@@ -53,7 +62,8 @@ jobs:
       - name: Upload Release
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          bodyFile: RELEASE_NOTES_3.10.14.md
+          allowUpdates: false
           omitName: true
           artifacts: 'target/odps-jdbc-*.jar'
           token: ${{ secrets.RELEASE_TOKEN }}

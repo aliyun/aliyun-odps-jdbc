@@ -57,6 +57,35 @@ public final class JdbcCoreSmoke {
           + ", errorCode=" + failure.getErrorCode());
       System.exit(1);
     }
+    for (String legacy : new String[] {"default", "true", "false"}) {
+      Properties arrayProperties = new Properties();
+      arrayProperties.putAll(properties);
+      if (!"default".equals(legacy)) arrayProperties.setProperty("legacy_array_get_object", legacy);
+      try (Connection connection = DriverManager.getConnection("jdbc:odps:" + endpoint, arrayProperties);
+           Statement statement = connection.createStatement();
+           ResultSet rows = statement.executeQuery("select array(1, 2) as a, array('x', 'y') as b")) {
+        check(rows.getMetaData().getColumnType(1) == Types.ARRAY, "Wrong ARRAY metadata");
+        check(rows.next(), "No ARRAY row");
+        boolean standard = "false".equals(legacy);
+        check(standard ? rows.getObject(1) instanceof Array : rows.getObject(1) instanceof java.util.List,
+            "Wrong untyped ARRAY mapping: " + legacy);
+        check(standard ? rows.getObject("b") instanceof Array : rows.getObject("b") instanceof java.util.List,
+            "Wrong label ARRAY mapping: " + legacy);
+        check("[1, 2]".equals(rows.getObject(1, java.util.List.class).toString()), "Wrong typed List");
+        check("[x, y]".equals(rows.getObject("b", java.util.List.class).toString()), "Wrong label typed List");
+        check("[1, 2]".equals(java.util.Arrays.toString((Object[]) rows.getObject(1, Array.class).getArray())),
+            "Wrong typed Array");
+        check("[x, y]".equals(java.util.Arrays.toString((Object[]) rows.getObject("b", Array.class).getArray())),
+            "Wrong label typed Array");
+        check("[1, 2]".equals(java.util.Arrays.toString((Object[]) rows.getArray(1).getArray())), "Wrong getArray");
+        check(!rows.next(), "Unexpected extra ARRAY row");
+      } catch (SQLException failure) {
+        System.err.println("FAIL JDBC ARRAY test: mode=" + legacy + ", SQLState=" + failure.getSQLState()
+            + ", errorCode=" + failure.getErrorCode());
+        System.exit(1);
+      }
+      System.out.println("PASS ARRAY mapping and typed getters: legacy=" + legacy);
+    }
     System.out.println("PASS JDBC core acceptance: connection, real SQL, results and resource closure");
   }
 }
