@@ -210,7 +210,7 @@ public class ConnectionResource {
   private boolean httpsCheck = false;
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
-  private boolean legacyArrayGetObject = false;
+  private boolean legacyArrayGetObject = true;
   private boolean verbose = false;
   private boolean disableFallback = false;
   private boolean async = false;
@@ -475,8 +475,11 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", SKIP_SQL_INJECT_CHECK_PROP_KEY,
                                                  SKIP_SQL_INJECT_CHECK_URL_KEY));
 
+    // Default is true: an ARRAY column keeps returning the raw java.util.List from the untyped
+    // getObject(), which is the behaviour shipped since 3.6.x. Callers that want the standard
+    // java.sql.Array mapping declared by Types.ARRAY opt in with legacy_array_get_object=false.
     legacyArrayGetObject = Boolean.parseBoolean(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "false", LEGACY_ARRAY_GET_OBJECT_PROP_KEY,
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", LEGACY_ARRAY_GET_OBJECT_PROP_KEY,
                                                  LEGACY_ARRAY_GET_OBJECT_URL_KEY));
 
     retryTime = Integer.parseInt(

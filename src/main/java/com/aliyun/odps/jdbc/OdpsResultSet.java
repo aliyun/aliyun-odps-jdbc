@@ -234,8 +234,9 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   /**
    * An ARRAY column whose value still needs wrapping into {@code java.sql.Array}.
-   * The {@code legacy_array_get_object} connection property keeps the previous
-   * raw-List behaviour for applications that cast the value to {@code java.util.List}.
+   * {@code legacy_array_get_object} defaults to {@code true}, so the untyped {@code
+   * getObject()} keeps returning the raw {@code java.util.List} produced by the record reader;
+   * applications that want the standard mapping opt out with {@code legacy_array_get_object=false}.
    */
   private boolean isSqlArrayColumn(Object obj, int columnIndex) throws SQLException {
     if (!(obj instanceof List) || obj instanceof Array || conn == null

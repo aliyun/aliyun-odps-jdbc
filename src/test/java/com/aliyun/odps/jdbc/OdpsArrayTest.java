@@ -30,6 +30,7 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
@@ -458,14 +459,16 @@ public class OdpsArrayTest {
     }
     /**
      * A generic consumer (BI tool, ORM) reads a column through {@code getObject()} and honours the
-     * declared {@code java.sql.Types.ARRAY} mapping. Before the fix the driver returned the raw
+     * declared {@code java.sql.Types.ARRAY} mapping. The driver returned the raw
      * {@code java.util.ArrayList} produced by the record reader here, so such a cast failed with
      * "class java.util.ArrayList cannot be cast to class java.sql.Array" even though
-     * {@code getArray()} had always worked.
+     * {@code getArray()} had always worked. Opting out of the legacy behaviour with
+     * {@code legacy_array_get_object=false} -- which is not the default, on purpose -- returns the
+     * wrapper instead.
      */
     @Test
-    public void testSelectArrayGetObjectReturnsSqlArray() throws Exception {
-        Connection conn = TestUtils.getConnection();
+    public void testSqlArrayGetObjectWhenLegacyDisabled() throws Exception {
+        Connection conn = standardMappingConnection();
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("select array(1, 2) as big_array, array('x', 'y') as str_array;")) {
             ResultSetMetaData meta = rs.getMetaData();
@@ -501,13 +504,15 @@ public class OdpsArrayTest {
     }
 
     /**
-     * An explicit target type wins over the column's declared mapping: code that names
-     * {@code java.util.List} in {@code getObject(int, Class)} keeps getting the list the record
-     * reader produced, instead of a {@code java.sql.Array} wrapper it cannot cast.
+     * An explicit target type wins over the column's declared mapping and over
+     * {@code legacy_array_get_object}: code that names {@code java.util.List} in
+     * {@code getObject(int, Class)} keeps getting the list the record reader produced, instead of a
+     * {@code java.sql.Array} wrapper it cannot cast. Run on a standard-mapping connection, where
+     * the untyped path returns the wrapper.
      */
     @Test
     public void testTypedGetObjectHonoursRequestedType() throws Exception {
-        Connection conn = TestUtils.getConnection();
+        Connection conn = standardMappingConnection();
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("select array(1, 2) as a, 'hello' as s;")) {
             Assertions.assertTrue(rs.next(), "expected one result row");
@@ -532,12 +537,14 @@ public class OdpsArrayTest {
     }
 
     /**
-     * Escape hatch for applications that relied on the pre-fix raw List from getObject().
+     * The default connection keeps returning the raw {@code java.util.List} from the untyped
+     * {@code getObject()} on an ARRAY column. Applications written against 3.6.x..3.10.13 cast that
+     * value to {@code java.util.List}, so flipping it by default would break them; the standard
+     * {@code java.sql.Array} mapping is opt-in through {@code legacy_array_get_object=false}.
      */
     @Test
-    public void testLegacyArrayGetObjectKeepsRawList() throws Exception {
-        Connection conn = TestUtils.getConnection(
-            Collections.singletonMap("legacyArrayGetObject", "true"));
+    public void testDefaultGetObjectKeepsLegacyRawList() throws Exception {
+        Connection conn = TestUtils.getConnection();
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("select array(1, 2) as a;")) {
             Assertions.assertTrue(rs.next(), "expected one result row");
@@ -560,6 +567,8 @@ public class OdpsArrayTest {
      */
     @Test
     public void testLegacyFlagKeepsTypedArrayRequestWorking() throws Exception {
+        // Explicitly set, even though true is the default: the point is that naming
+        // java.sql.Array must not depend on the flag.
         Connection conn = TestUtils.getConnection(
             Collections.singletonMap("legacy_array_get_object", "true"));
         try (Statement stmt = conn.createStatement();
@@ -585,5 +594,30 @@ public class OdpsArrayTest {
         } finally {
             conn.close();
         }
+    }
+
+    private static Connection standardMappingConnection() throws Exception {
+        return TestUtils.getConnection(Collections.singletonMap("legacy_array_get_object", "false"));
+    }
+
+    /**
+     * The connection property itself, without touching a service: what a caller gets when it sets
+     * nothing, when it opts into the standard mapping, and when it passes the URL form.
+     */
+    @Test
+    public void testLegacyArrayGetObjectConnectionDefault() {
+        Assertions.assertTrue(legacyFlag(new Properties(), "jdbc:odps:http://localhost:1/api"),
+                              "legacy_array_get_object must default to true");
+        Properties off = new Properties();
+        off.setProperty("legacy_array_get_object", "false");
+        Assertions.assertFalse(legacyFlag(off, "jdbc:odps:http://localhost:1/api"),
+                               "legacy_array_get_object=false must opt into java.sql.Array");
+        Assertions.assertTrue(
+            legacyFlag(new Properties(), "jdbc:odps:http://localhost:1/api?legacyArrayGetObject=true"),
+            "the legacyArrayGetObject URL form must be accepted");
+    }
+
+    private static boolean legacyFlag(Properties info, String url) {
+        return new com.aliyun.odps.jdbc.utils.ConnectionResource(url, info).isLegacyArrayGetObject();
     }
 }

@@ -146,7 +146,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int logviewVersion;
   private boolean async;
   private boolean skipCheckIfSelect;
-  private boolean legacyArrayGetObject = false;
+  private boolean legacyArrayGetObject = true;
   private long longJobWarningThreshold;
   private long fetchResultSplitSize;
   private int fetchResultPreloadSplitNum;
