@@ -27,6 +27,8 @@ jobs:
       local_core_sha: ${{ inputs.local_core_sha || '' }}
 
   release:
+    permissions:
+      contents: write
     needs: core-tests
     runs-on: ubuntu-latest
     steps:
@@ -66,4 +68,4 @@ jobs:
           allowUpdates: false
           omitName: true
           artifacts: 'target/odps-jdbc-*.jar'
-          token: ${{ secrets.RELEASE_TOKEN }}
+          token: ${{ github.token }}

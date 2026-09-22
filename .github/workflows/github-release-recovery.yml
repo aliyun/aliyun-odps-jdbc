@@ -1,0 +1,56 @@
+name: Recover GitHub release
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing tag whose Maven publication already succeeded
+        required: true
+        type: string
+      release_sha:
+        description: Full SHA with successful packaged live SQL acceptance
+        required: true
+        type: string
+permissions:
+  contents: write
+  statuses: read
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Verify immutable tag and exact-commit live SQL evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_ACTOR: ${{ github.actor }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_SHA/statuses" --paginate > "$RUNNER_TEMP/live-status.json"
+          python3 - <<'PYCODE'
+          import json, os, re, xml.etree.ElementTree as E
+          tag = os.environ["RELEASE_TAG"]
+          assert re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag)
+          version = E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text
+          assert tag == "v" + version
+          statuses = json.load(open(os.environ["RUNNER_TEMP"] + "/live-status.json"))
+          matching = [s for s in statuses if s["context"] == "jdbc-packaged-live-core"]
+          assert matching and matching[0]["state"] == "success"
+          assert matching[0]["creator"]["login"] == os.environ["RELEASE_ACTOR"]
+          print("Verified live SQL acceptance and immutable tag " + tag)
+          PYCODE
+      - name: Build and test original candidate on JDK 8
+        run: mvn -B -ntp clean package -Dtest=DependencyCompatibilityTest,MaxQARoutingFailureTest,OdpsArrayTest#testLegacyArrayGetObjectConnectionDefault -DfailIfNoTests=true
+      - name: Publish GitHub assets without redeploying Maven
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release create "$RELEASE_TAG" target/odps-jdbc-*.jar --verify-tag --title "$RELEASE_TAG" --notes-file "RELEASE_NOTES_${RELEASE_TAG#v}.md" --latest
