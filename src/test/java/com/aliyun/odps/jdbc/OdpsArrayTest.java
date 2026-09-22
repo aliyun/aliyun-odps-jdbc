@@ -501,6 +501,37 @@ public class OdpsArrayTest {
     }
 
     /**
+     * An explicit target type wins over the column's declared mapping: code that names
+     * {@code java.util.List} in {@code getObject(int, Class)} keeps getting the list the record
+     * reader produced, instead of a {@code java.sql.Array} wrapper it cannot cast.
+     */
+    @Test
+    public void testTypedGetObjectHonoursRequestedType() throws Exception {
+        Connection conn = TestUtils.getConnection();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("select array(1, 2) as a, 'hello' as s;")) {
+            Assertions.assertTrue(rs.next(), "expected one result row");
+
+            List<?> typedList = rs.getObject(1, List.class);
+            Assertions.assertEquals("[1, 2]", typedList.toString(),
+                                    "getObject(int, List.class) must keep the raw list");
+            Assertions.assertEquals("[1, 2]", rs.getObject("a", List.class).toString(),
+                                    "the column-label overload must behave the same");
+
+            // A caller that asks for the standard mapping still gets java.sql.Array.
+            Assertions.assertTrue(rs.getObject(1, Array.class) instanceof Array);
+            Assertions.assertTrue(rs.getObject(1, Object.class) instanceof Array,
+                                  "Object.class is the untyped path and follows Types.ARRAY");
+
+            // Plain JDBC mappings for other columns are untouched by the ARRAY wrapper.
+            Assertions.assertEquals("hello", rs.getObject(2, String.class));
+            Assertions.assertEquals("hello", rs.getObject(2));
+        } finally {
+            conn.close();
+        }
+    }
+
+    /**
      * Escape hatch for applications that relied on the pre-fix raw List from getObject().
      */
     @Test

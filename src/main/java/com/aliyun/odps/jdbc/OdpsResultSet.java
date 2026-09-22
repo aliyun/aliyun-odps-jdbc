@@ -206,13 +206,22 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
   // Do not call this method within OdpsResultSet class, call getInnerObject instead
   @Override
   public Object getObject(int columnIndex) throws SQLException {
+    return getObject(columnIndex, true);
+  }
+
+  /**
+   * @param wrapArrayColumn whether an ARRAY column keeps the {@code java.sql.Array} mapping that
+   *     {@code Types.ARRAY} advertises. Typed {@code getObject(int, Class)} callers pass
+   *     {@code false} when the value they asked for cannot be the wrapper, see that method.
+   */
+  private Object getObject(int columnIndex, boolean wrapArrayColumn) throws SQLException {
     Object obj = getInnerObject(columnIndex);
 
     if (obj instanceof byte[]) {
       String charset = conn.getCharset();
       return AbstractToJdbcTransformer.encodeBytes((byte[]) obj, charset);
     }
-    if (isSqlArrayColumn(obj, columnIndex)) {
+    if (wrapArrayColumn && isSqlArrayColumn(obj, columnIndex)) {
       // Same wrapping as getArray(): the record reader hands us a java.util.List for an
       // ARRAY column, but this driver advertises the column as java.sql.Types.ARRAY, whose
       // standard Java mapping (JDBC 4.x spec, Table 25-1) is java.sql.Array. Generic
@@ -273,12 +282,21 @@ public abstract class OdpsResultSet extends WrapperAdapter implements ResultSet 
 
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    return Utils.convertToSqlType(getObject(columnIndex), type, timeZone);
+    Object value = getObject(columnIndex);
+    if (value instanceof Array && type != null && !type.isInstance(value)
+        && !Array.class.isAssignableFrom(type)) {
+      // The caller named the Java type it wants and that type cannot hold the wrapper -- most
+      // commonly java.util.List, which is exactly what the record reader produced. An explicit
+      // request wins over the column's declared mapping, so typed getters keep the pre-fix
+      // value instead of failing the cast at the call site.
+      return Utils.convertToSqlType(getObject(columnIndex, false), type, timeZone);
+    }
+    return Utils.convertToSqlType(value, type, timeZone);
   }
 
   @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-    return Utils.convertToSqlType(getObject(columnLabel), type, timeZone);
+    return getObject(findColumn(columnLabel), type);
   }
 
   @Override
