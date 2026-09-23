@@ -121,6 +121,22 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Pin the test provider. The suite is JUnit 5 only (26 test classes import
+           org.junit.jupiter.api.Test; none use org.junit.Test), while Maven's default
+           lifecycle binding is surefire 2.12.4, which has no Jupiter provider.
+           Measured on 2026-09-22 (JDK 8 + Maven 3.8.7): 2.12.4 executed 95 of the 123
+           tests and silently scheduled 0 for six classes, including
+           DependencyCompatibilityTest, the class the core acceptance job selects.
+           3.x also fails loudly when an explicit -Dtest filter matches nothing. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <failIfNoTests>true</failIfNoTests>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
