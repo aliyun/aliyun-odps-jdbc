@@ -103,6 +103,8 @@ public class OdpsJdbcDateTimeTest {
     public void dateTest() throws SQLException {
         Statement stmt = conn.createStatement();
         stmt.execute("drop table if exists " + DATE_TABLE_NAME);
+        // DATE 列属于 odps2 扩展类型系统：不带这个 set，服务端在语义分析阶段就拒绝建表（ODPS-0130071）。
+        stmt.execute("set odps.sql.type.system.odps2=true;");
         stmt.execute("create table " + DATE_TABLE_NAME + " (key string, value date)");
 
         String sql;
@@ -141,6 +143,8 @@ public class OdpsJdbcDateTimeTest {
     public void timeStampTest() throws SQLException {
         Statement stmt = conn.createStatement();
         stmt.execute("drop table if exists " + TIMESTAMP_TABLE_NAME);
+        // TIMESTAMP 列同上，需要 odps2 扩展类型系统。
+        stmt.execute("set odps.sql.type.system.odps2=true;");
         stmt.execute("create table " + TIMESTAMP_TABLE_NAME + " (key string, value TIMESTAMP)");
 
         String sql;
@@ -325,6 +329,8 @@ public class OdpsJdbcDateTimeTest {
         Statement stmt = conn.createStatement();
         ResultSet res;
 
+        // 显式 cast 到 DATE 同样依赖 odps2 类型系统。
+        stmt.execute("set odps.sql.type.system.odps2=true;");
         res = stmt.executeQuery("SELECT cast(to_date('20410314','yyyymmdd') as DATE);");
         if (res.next()) {
             Assertions.assertEquals("2041-03-14", res.getDate(1).toString());
