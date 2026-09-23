@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.condition.DisabledIf;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -42,6 +43,12 @@ import com.aliyun.odps.tunnel.TableTunnel;
 import com.google.common.collect.ImmutableMap;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisabledIf(value = "com.aliyun.odps.jdbc.utils.ServerCapabilities#namespaceSchemaDisabled",
+    disabledReason = "Every case in this class addresses the table as <project>.default.<table>, "
+        + "which the service accepts only for a project running in the three-tier model. "
+        + "The test project reports odps.schema.model.enabled=false. Enable namespace schemas "
+        + "for it, or run the tests against a project that has them enabled "
+        + "(MAXCOMPUTE_PROJECT).")
 public class OdpsScrollResultSetTest {
 
   private static Connection conn;
