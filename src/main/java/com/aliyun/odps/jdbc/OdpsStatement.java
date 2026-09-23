@@ -905,7 +905,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   protected void setResultSetInternal() throws OdpsException, IOException {
-    if (getExecuteMode() == ExecuteMode.OFFLINE && !enableLimit && resultSizeLimit == null) {
+    // The offline branch below downloads results through the instance tunnel, so it needs an
+    // instance. Some statements never create one: a synchronous Command API statement
+    // (`desc <table>`, `whoami`, `show tables`, ...) returns a null instance from
+    // SQLExecutorImpl#getInstance() by design. Those statements must fall back to the
+    // SQLExecutor result path, which reads the command/task result instead. Without this guard
+    // `executeInstance.waitForSuccess()` throws a NullPointerException, which escapes to JDBC
+    // callers as a raw runtime exception with no server error code and no way to locate it.
+    if (executeInstance != null && getExecuteMode() == ExecuteMode.OFFLINE && !enableLimit
+        && resultSizeLimit == null) {
       connHandle.log.info(
           "Get result by instance tunnel (" + connHandle.getFetchResultThreadNum() + " Thread, "
           + connHandle.getFetchResultSplitSize() + " records per split, cache "
