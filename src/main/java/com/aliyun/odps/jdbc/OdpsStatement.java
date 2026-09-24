@@ -262,6 +262,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       conn.log.info("the statement has been closed");
     }
 
+    // A pooled connection can outlive every statement made on it, so the connection must not keep
+    // a handle to a statement that is already closed.
+    connHandle.forgetStatement(this);
+
     connHandle = null;
     executeInstance = null;
     if (owned != null) {
