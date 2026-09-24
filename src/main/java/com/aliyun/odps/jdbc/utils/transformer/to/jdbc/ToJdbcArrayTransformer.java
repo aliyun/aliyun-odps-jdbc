@@ -20,6 +20,12 @@ public class ToJdbcArrayTransformer extends AbstractToJdbcTransformer {
     }
 
     public Object transform(Object o, String charset, TypeInfo odpsType) throws SQLException {
+        if (o == null) {
+            // A NULL ARRAY column is a NULL value, not an un-transformable object. Every other
+            // accessor of this result set returns null for SQL NULL -- and ResultSet#getArray
+            // documents exactly that -- so wrapping must not fail here.
+            return null;
+        }
         if (o instanceof List) {
             return new OdpsArray((List) o, (ArrayTypeInfo) odpsType);
         }
