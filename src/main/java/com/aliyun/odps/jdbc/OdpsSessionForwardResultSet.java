@@ -95,19 +95,28 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
   public boolean next() throws SQLException {
     checkClosed();
 
-    if (fetchedRows == totalRows || !resultSet.hasNext()) {
-      conn.log.info("It took me " + (System.currentTimeMillis() - startTime)
-                    + " ms to fetch all records, count:" + fetchedRows);
-      return false;
+    try {
+      if (fetchedRows == totalRows || !resultSet.hasNext()) {
+        conn.log.info("It took me " + (System.currentTimeMillis() - startTime)
+                      + " ms to fetch all records, count:" + fetchedRows);
+        return false;
+      }
+      Record record = resultSet.next();
+      int columns = record.getColumnCount();
+      currentRow = new Object[columns];
+      for (int i = 0; i < columns; i++) {
+        currentRow[i] = record.get(i);
+      }
+      fetchedRows++;
+      return true;
+    } catch (IllegalStateException e) {
+      // The statement (or its connection) was closed underneath this read.
+      throw new SQLException("The result set has been closed", e);
+    } catch (RuntimeException e) {
+      // A failed split reaches us as an unchecked download failure; a JDBC caller can only act
+      // on SQLException, so translate it and keep the original as the cause.
+      throw new SQLException("Failed to read the next record: " + e.getMessage(), e);
     }
-    Record record = resultSet.next();
-    int columns = record.getColumnCount();
-    currentRow = new Object[columns];
-    for (int i = 0; i < columns; i++) {
-      currentRow[i] = record.get(i);
-    }
-    fetchedRows++;
-    return true;
   }
 
   @Override
