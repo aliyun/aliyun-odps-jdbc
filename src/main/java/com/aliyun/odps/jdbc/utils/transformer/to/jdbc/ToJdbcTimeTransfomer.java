@@ -78,20 +78,24 @@ public class ToJdbcTimeTransfomer extends AbstractToJdbcDateTypeTransformer {
             typeInfo = TypeInfoFactory.TIMESTAMP;
         }
         try {
+            boolean parsedWithCalendar = false;
             if (o instanceof byte[]) {
                 String str = encodeBytes((byte[]) o, charset);
                 // convert to local date
                 o = RecordConverterCache.get(parserTimezone).parseObject(str, typeInfo);
+                parsedWithCalendar = true;
             }
             if (o instanceof Binary) {
                 String str = encodeBytes(((Binary) o).data(), charset);
                 // convert to local date
                 o = RecordConverterCache.get(parserTimezone).parseObject(str, typeInfo);
+                parsedWithCalendar = true;
             }
 
             if (o instanceof ZonedDateTime || o instanceof Instant
                 || o instanceof LocalDateTime) {
-                return JdbcTimeUtil.toJdbcTime(JdbcTimeUtil.getEpochMillis(o), timeZone);
+                return JdbcTimeUtil.nativeToJdbcTime(o, timeZone,
+                                                     parsedWithCalendar ? null : cal);
             } else {
                 String
                     errorMsg =

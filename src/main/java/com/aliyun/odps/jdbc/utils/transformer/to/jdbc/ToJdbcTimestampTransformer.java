@@ -78,18 +78,23 @@ public class ToJdbcTimestampTransformer extends AbstractToJdbcDateTypeTransforme
       typeInfo = TypeInfoFactory.TIMESTAMP;
     }
     try {
+      // A character value spends the Calendar while it is being parsed; a native value has not
+      // been given the Calendar at all, so the render step below has to apply it.
+      boolean parsedWithCalendar = false;
       if (o instanceof byte[]) {
         String str = encodeBytes((byte[]) o, charset);
         // convert to local date
         o = RecordConverterCache.get(parserTimezone).parseObject(str, typeInfo);
+        parsedWithCalendar = true;
       }
       if (o instanceof Binary) {
         String str = encodeBytes(((Binary) o).data(), charset);
         // convert to local date
         o = RecordConverterCache.get(parserTimezone).parseObject(str, typeInfo);
+        parsedWithCalendar = true;
       }
       if (o instanceof ZonedDateTime || o instanceof Instant || o instanceof LocalDateTime) {
-        return JdbcTimeUtil.toJdbcTimestamp(JdbcTimeUtil.getEpochMillis(o), JdbcTimeUtil.getNanos(o), timeZone);
+        return JdbcTimeUtil.nativeToJdbcTimestamp(o, timeZone, parsedWithCalendar ? null : cal);
       } else {
         String errorMsg = getInvalidTransformationErrorMsg(o.getClass(), java.sql.Timestamp.class);
         throw new SQLException(errorMsg);
