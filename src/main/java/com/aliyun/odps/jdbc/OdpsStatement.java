@@ -87,6 +87,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   protected static final int POLLING_INTERVAL = 3000;
   protected static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
   protected static final String JDBC_SQL_OFFLINE_TASK_NAME = "sqlrt_fallback_task";
+
+  // SQLState carried by every SQLException that the driver throws because a public
+  // method was invoked after close(). The JDBC javadoc requires SQLException for
+  // "this method is called on a closed Statement" on nearly every method except
+  // close()/isClosed(); the SQL standard has no dedicated code for that state, and
+  // class 55 "object not in state of system" is its established meaning.
+  public static final String SQLSTATE_OBJECT_CLOSED = "55000";
   protected static ResultSet EMPTY_RESULT_SET = null;
 
   static {
@@ -236,6 +243,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void clearWarnings() throws SQLException {
+    checkClosed();
     warningChain = null;
   }
 
@@ -319,7 +327,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (processUseClause(query)) {
       return EMPTY_RESULT_SET;
     }
-    checkClosed();
     beforeExecute();
     runSQL(query, properties, false);
 
@@ -349,7 +356,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     }
 
-    checkClosed();
     beforeExecute();
     runSQL(query, properties, true);
 
@@ -415,7 +421,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       return false;
     }
 
-    checkClosed();
     beforeExecute();
     runSQL(query, properties);
 
@@ -429,6 +434,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Deprecated
   public boolean hasResultSet(String sql) throws SQLException {
+    checkClosed();
     if (connHandle.runningInInteractiveMode()) {
       return true;
     }
@@ -556,6 +562,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public OdpsConnection getConnection() throws SQLException {
+    checkClosed();
     return connHandle;
   }
 
@@ -601,11 +608,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getMaxRows() throws SQLException {
+    checkClosed();
     return resultSetMaxRows;
   }
 
   @Override
   public void setMaxRows(int max) throws SQLException {
+    checkClosed();
     if (max < 0) {
       throw new SQLException("max must be >= 0");
     }
@@ -614,6 +623,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean getMoreResults() throws SQLException {
+    checkClosed();
     return false;
   }
 
@@ -624,6 +634,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getQueryTimeout() throws SQLException {
+    checkClosed();
     if (!connHandle.runningInInteractiveMode()) {
       throw new SQLFeatureNotSupportedException();
     } else {
@@ -633,6 +644,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
+    checkClosed();
     if (seconds <= 0) {
       throw new IllegalArgumentException("Invalid query timeout:" + String.valueOf(seconds));
     }
@@ -645,6 +657,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet getResultSet() throws SQLException {
+    checkClosed();
     long startTime = System.currentTimeMillis();
     if ((resultSet == null || resultSet.isClosed()) && odpsResultSet != null) {
         OdpsResultSetMetaData
@@ -734,6 +747,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getResultSetType() throws SQLException {
+    checkClosed();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
 
@@ -752,11 +766,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
+    checkClosed();
     return warningChain;
   }
 
   @Override
   public boolean isCloseOnCompletion() throws SQLException {
+    checkClosed();
     return false;
   }
 
@@ -767,6 +783,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean isPoolable() throws SQLException {
+    checkClosed();
     return false;
   }
 
@@ -777,11 +794,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setEscapeProcessing(boolean enable) throws SQLException {
+    checkClosed();
 
   }
 
   @Override
   public void setFetchDirection(int direction) throws SQLException {
+    checkClosed();
 
     switch (direction) {
       case ResultSet.FETCH_FORWARD:
@@ -849,7 +868,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   protected void checkClosed() throws SQLException {
     if (isClosed) {
-      throw new SQLException("The statement has been closed");
+      throw new SQLException("The statement has been closed", SQLSTATE_OBJECT_CLOSED);
     }
   }
 

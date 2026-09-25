@@ -266,11 +266,13 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void clearParameters() throws SQLException {
+    checkClosed();
     parameters.clear();
   }
 
   @Override
   public void clearBatch() throws SQLException {
+    checkClosed();
     batchedRows.clear();
   }
 
