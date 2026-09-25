@@ -84,6 +84,12 @@ them if they ever become JVM-specific.
    switches above against a closed port), `statement.close()`, then `statement.executeQuery(...)`.
    JDBC requires `SQLException` on a closed `Statement`. `Connection` use-after-close already throws
    `SQLException`, so only the statement classes are affected.
+   *Update 2026-09-25: fixed by the runtime-behaviour batch, PR #193, which moves `checkClosed()` to
+   the entry of every affected path and gives the closed-state failure SQLState `55000`, with
+   `ClosedStatementContractTest` pinning the call matrix. Measured with this probe against that
+   branch's packaged jar: `statement_use_after_close` and `prepared_use_after_close` report
+   `java.sql.SQLException` on JDK 8, 11, 17 and 21 and the two `FINDING` lines are gone. The original
+   observation is kept above as the record of what `master` @ `3311761` did, not deleted.*
 2. Relocated Arrow classes (`com.aliyun.odps.jdbc.shaded.org.apache.arrow.*`) initialize through
    `org.slf4j`, which the build keeps in `provided` scope on purpose and therefore does not put in
    the shaded jar. An application that runs the packaged jar alone and reaches an Arrow code path
