@@ -165,6 +165,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void addBatch() throws SQLException {
+    checkClosed();
     Object[] arr = new Object[parametersNum];
     for (int i = 0; i < arr.length; i++) {
       arr[i] = parameters.get(i + 1);
@@ -175,11 +176,13 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void clearParameters() throws SQLException {
+    checkClosed();
     parameters.clear();
   }
 
   @Override
   public void clearBatch() throws SQLException {
+    checkClosed();
     batchedRows.clear();
   }
 
@@ -198,6 +201,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public int[] executeBatch() throws SQLException {
+    checkClosed();
     if (!parsed) {
       parse();
     }
@@ -317,6 +321,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public boolean execute() throws SQLException {
+    checkClosed();
     return super.execute(updateSql(sql, parameters));
   }
 
@@ -327,6 +332,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public ResultSet executeQuery() throws SQLException {
+    checkClosed();
     return super.executeQuery(updateSql(sql, parameters));
   }
 
@@ -340,6 +346,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public int executeUpdate() throws SQLException {
+    checkClosed();
     addBatch();
     return executeBatch().length;
   }
@@ -354,12 +361,14 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setNull(int parameterIndex, int sqlType, String typeName)
       throws SQLException {
+    checkClosed();
     // ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
     parameters.put(parameterIndex, null);
   }
@@ -374,6 +383,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public void setObject(int parameterIndex, Object x) throws SQLException {
+    checkClosed();
     if (x == null) {
       setNull(parameterIndex, Types.NULL);
     } else if (x instanceof String) {
@@ -433,56 +443,67 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   public void setDate(int parameterIndex, Date x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
+    checkClosed();
     // ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
     parameters.put(parameterIndex, null);
   }
 
   @Override
   public void setShort(int parameterIndex, short x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
+    checkClosed();
     if (x == null) {
       parameters.put(parameterIndex, null);
       return;
@@ -492,6 +513,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void setArray(int parameterIndex, Array x) throws SQLException {
+    checkClosed();
     if (x == null) {
       parameters.put(parameterIndex, null);
       return;
@@ -502,11 +524,13 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+    checkClosed();
     parameters.put(parameterIndex, x);
   }
 

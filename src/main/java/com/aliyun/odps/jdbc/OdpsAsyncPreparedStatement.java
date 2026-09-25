@@ -29,6 +29,7 @@ public class OdpsAsyncPreparedStatement extends OdpsPreparedStatement {
 
   @Override
   public synchronized boolean execute(String query) throws SQLException {
+    checkClosed();
     // short cut for SET clause
     Properties properties = new Properties();
     if (!connHandle.isSkipSqlCheck()) {
@@ -51,7 +52,6 @@ public class OdpsAsyncPreparedStatement extends OdpsPreparedStatement {
     if (processUseClause(query)) {
       return false;
     }
-    checkClosed();
     beforeExecute();
     runSQL(query, properties);
     return hasResultSet();
@@ -102,6 +102,7 @@ public class OdpsAsyncPreparedStatement extends OdpsPreparedStatement {
 
   @Override
   public synchronized ResultSet getResultSet() throws SQLException {
+    checkClosed();
     SQLExecutor executor = this.sqlExecutor;
     try {
       long startTime = System.currentTimeMillis();
