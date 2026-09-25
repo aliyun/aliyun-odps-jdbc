@@ -107,15 +107,22 @@ Verified by mutating the probe (and reverting the mutation), not by reasoning ab
 Measured on 2026-09-25 against the jar produced by `mvn clean package -DskipTests` at this commit,
 one JVM per cell, same 57 MB packaged driver in every cell:
 
-| JVM | Offline cells | Live SQL cells | Parity vs JDK 8 cell |
+| JVM (Ubuntu 24.04 OpenJDK packages) | Offline cells | Live SQL cells | Parity vs JDK 8 cell |
 | --- | --- | --- | --- |
-| OpenJDK 1.8.0_502 | PASS | PASS | baseline |
-| OpenJDK 11.0.32.1 | PASS | PASS | identical |
-| OpenJDK 17.0.20 | PASS | PASS | identical |
-| OpenJDK 21.0.12 | PASS | PASS | identical |
+| 1.8.0_502 | PASS | PASS | baseline |
+| 11.0.32.1 | PASS | PASS | identical |
+| 17.0.20 | PASS | PASS | identical |
+| 21.0.12 | PASS | PASS | identical |
 
-Live SQL ran against the public MaxCompute service in the regression project, read-only: no table
-was created, altered or dropped. The two `FINDING` lines below appear on all four JVMs.
+Live SQL ran read-only against the regression project reached by the component test credentials —
+constant-value queries plus `DatabaseMetaData.getColumns`, no table created, altered or dropped.
+The CI workflow has no credentials, so its live cells report `SKIPPED`; the four-JVM live result
+above comes from the local run: the same script, four JDK homes, credentials injected through the environment.
+
+After excluding the JVM-identifying keys (`runtime_*`) and latency buckets, the JDK 8 cell and each
+other cell are byte-for-byte identical, offline and live. The workflow itself was verified on pull
+request: package job plus the four consumer cells all green, each cell printing
+`live_sql=SKIPPED:no-credentials-in-environment`.
 
 ## Scope and non-claims
 
