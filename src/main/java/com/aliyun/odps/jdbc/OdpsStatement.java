@@ -160,7 +160,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     // Snapshot first: close() may run on another thread and nulls connHandle when it finishes.
     OdpsConnection conn = connHandle;
     if (isClosed || conn == null) {
-      throw new SQLException("The statement has been closed");
+      // Same exception shape as checkClosed(): ClosedStatementContractTest pins message+SQLState
+      // for every public Statement call, and the mid-close race has to answer the same way.
+      throw new SQLException("The statement has been closed", SQLSTATE_OBJECT_CLOSED);
     }
     if (isCancelled) {
       return;
