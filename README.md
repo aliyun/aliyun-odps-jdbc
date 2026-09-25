@@ -333,6 +333,16 @@ charset=UTF-8
 mvn test
 ```
 
+### JDK compatibility matrix
+
+The driver is compiled for Java 8 and is consumed inside JVMs chosen by the application.
+`scripts/jdk-consumer-matrix.sh` runs the packaged jar through classloading, JDBC contract and
+resource-close probes on several JVMs at once and fails when a JVM behaves differently; the
+`JDK consumer matrix` workflow does the same for JDK 8, 11, 17 and 21 on every pull request. See
+[docs/jdk-consumer-matrix.md](docs/jdk-consumer-matrix.md) for how to run it locally, what the
+cells prove, what they do not, and the consumer-facing findings recorded so far (including the
+`slf4j-api` requirement for Arrow code paths inside the shaded jar).
+
 ### Data Type Mapping
 
 Currently, 16 ODPS data types are supported. Please see the following table for supported ODPS data

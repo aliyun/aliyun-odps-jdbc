@@ -33,6 +33,17 @@ mvn test
 mvn test -Dtest=OdpsStatementTest
 ```
 
+### Consumer compatibility across JVMs
+
+After packaging, probe the same jar on several JVMs (classloading, JDBC contract, resource
+closure, and live SQL when credentials are in the environment):
+
+```bash
+bash scripts/jdk-consumer-matrix.sh target/odps-jdbc-<version>.jar   /usr/lib/jvm/java-8-openjdk-amd64 /usr/lib/jvm/java-21-openjdk-amd64
+```
+It exits nonzero if a JVM behaves differently or if a JVM cannot terminate after closing
+resources. See `docs/jdk-consumer-matrix.md`.
+
 ## Project Structure
 
 - `src/main/java/com/aliyun/odps/jdbc/` - Main JDBC driver implementation

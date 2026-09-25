@@ -1,0 +1,83 @@
+name: JDK consumer matrix
+
+# A JDBC driver is consumed inside a JVM the application owner picks, not the JVM that built it.
+# Release packaging and the existing test jobs run on JDK 8 only, so nothing in CI proved the
+# packaged jar behaves the same on the JVMs consumers actually run today. This job builds the
+# shaded driver once and runs scripts/JdkConsumerMatrix.java against that same artifact on
+# JDK 8/11/17/21, then the runner compares the observables across JVMs.
+#
+# The cells are credential-free on purpose: connection and statement behaviour is exercised
+# against a closed loopback port, so the gate is reproducible from a fork and cannot flake on
+# service availability. Live SQL acceptance stays in core-tests.yml; this job never replaces it.
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package driver (JDK 8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build one packaged driver for every cell
+        run: mvn -B -ntp clean package -DskipTests
+      - name: Locate the packaged driver
+        id: jar
+        run: |
+          jar="$(ls target/odps-jdbc-*.jar | grep -Ev -- '-(sources|javadoc)\.jar$' | head -1)"
+          test -n "$jar" || { echo "no driver jar produced" >&2; exit 1; }
+          # A thin jar here means the shade step did not run, and the matrix would test nothing.
+          size="$(stat -c %s "$jar")"
+          test "$size" -gt 1000000 || { echo "unexpectedly small driver jar: $size bytes" >&2; exit 1; }
+          echo "path=$jar" >> "$GITHUB_OUTPUT"
+          echo "packaged $jar ($size bytes)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packaged-driver
+          path: ${{ steps.jar.outputs.path }}
+          retention-days: 14
+
+  consumer:
+    name: Consumer matrix (JDK ${{ matrix.java }})
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # One JVM behaving differently is the finding this job exists for; do not hide the others.
+      fail-fast: false
+      matrix:
+        java: [ '8', '11', '17', '21' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: packaged-driver
+          path: driver
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Run the consumer matrix on JDK ${{ matrix.java }}
+        env:
+          MATRIX_RESULTS_DIR: ${{ runner.temp }}/matrix-cells
+        run: bash scripts/jdk-consumer-matrix.sh driver/*.jar
+      - name: Upload cell observables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-observables-jdk${{ matrix.java }}
+          path: ${{ runner.temp }}/matrix-cells
+          if-no-files-found: ignore
+          retention-days: 14
