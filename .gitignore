@@ -19,3 +19,5 @@
 
 logback/jdbc.log
 test.sh
+# maven-shade-plugin byproduct of a local package run
+/dependency-reduced-pom.xml
