@@ -8,6 +8,8 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.TimeZone;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.aliyun.odps.Odps;
@@ -32,11 +34,40 @@ public class ServerSideTest {
 
     private static final long TIMESTAMP_MILLIS_MINUS_8 = 1325347200000L;
 
+    /**
+     * The cases below call TimeZone.setDefault() and one of them also reads the default back through
+     * TimeZone.getDefault(), so the zone cannot be restored per case without changing what this class
+     * itself measures. It is restored once the class is finished.
+     *
+     * Without that restore the last setDefault(UTC) stays in force for every class that runs after
+     * this one in surefire's reused fork: OdpsResultSetTest then builds its expected wall-clock
+     * strings in UTC while the service answers in the session timezone, and three of its cases fail
+     * by exactly eight hours. Measured on this branch and on the branch this change came from with
+     * identical results, so it is a test-isolation defect, not a driver defect.
+     */
+    private static TimeZone defaultZoneBefore;
+
+    @BeforeAll
+    public static void rememberDefaultZone() {
+        defaultZoneBefore = TimeZone.getDefault();
+    }
+
+    @AfterAll
+    public static void restoreDefaultZone() {
+        if (defaultZoneBefore != null) {
+            TimeZone.setDefault(defaultZoneBefore);
+        }
+    }
+
     @Test
     public void testDate() throws Exception {
         try (Connection conn = TestUtils.getConnectionWithTimezone(
             "UTC"); Statement st = conn.createStatement()) {
             st.execute("DROP TABLE IF EXISTS odps_jdbc_date_test");
+            // The service rejects these types until the odps2 extended type system is on:
+            // "DATE/TIMESTAMP/TIMESTAMP_NTZ type is not enabled in current mode. Please set
+            // odps.sql.type.system.odps2=true to use it." (ODPS-0130071).
+            st.execute("set odps.sql.type.system.odps2=true;");
             st.execute("CREATE TABLE odps_jdbc_date_test (k STRING, v DATE) ");
             st.execute("INSERT INTO odps_jdbc_date_test VALUES ('test', DATE'" + DATE_UTC + "')");
         }
@@ -113,6 +144,10 @@ public class ServerSideTest {
         try (Connection conn = TestUtils.getConnectionWithTimezone(
             "UTC"); Statement st = conn.createStatement()) {
             st.execute("DROP TABLE IF EXISTS odps_jdbc_timestamp_test");
+            // The service rejects these types until the odps2 extended type system is on:
+            // "DATE/TIMESTAMP/TIMESTAMP_NTZ type is not enabled in current mode. Please set
+            // odps.sql.type.system.odps2=true to use it." (ODPS-0130071).
+            st.execute("set odps.sql.type.system.odps2=true;");
             st.execute("CREATE TABLE odps_jdbc_timestamp_test (k STRING, v TIMESTAMP)");
             st.execute(
                 "INSERT INTO odps_jdbc_timestamp_test VALUES ('test', TIMESTAMP'" + TIMESTAMP_UTC
@@ -120,6 +155,10 @@ public class ServerSideTest {
         }
         try (Connection conn = TestUtils.getConnectionWithTimezone(
             "Asia/Shanghai"); Statement st = conn.createStatement()) {
+            // The service rejects these types until the odps2 extended type system is on:
+            // "DATE/TIMESTAMP/TIMESTAMP_NTZ type is not enabled in current mode. Please set
+            // odps.sql.type.system.odps2=true to use it." (ODPS-0130071).
+            st.execute("set odps.sql.type.system.odps2=true;");
             st.execute(
                 "INSERT INTO odps_jdbc_timestamp_test VALUES ('sh', TIMESTAMP'" + DATETIME_SHANGHAI
                 + "')");
@@ -155,6 +194,10 @@ public class ServerSideTest {
         try (Connection conn = TestUtils.getConnectionWithTimezone(
             "UTC"); Statement st = conn.createStatement()) {
             st.execute("DROP TABLE IF EXISTS odps_jdbc_timestamp_ntz_test");
+            // The service rejects these types until the odps2 extended type system is on:
+            // "DATE/TIMESTAMP/TIMESTAMP_NTZ type is not enabled in current mode. Please set
+            // odps.sql.type.system.odps2=true to use it." (ODPS-0130071).
+            st.execute("set odps.sql.type.system.odps2=true;");
             st.execute("CREATE TABLE odps_jdbc_timestamp_ntz_test (k STRING, v TIMESTAMP_NTZ)");
             st.execute("INSERT INTO odps_jdbc_timestamp_ntz_test VALUES ('test', TIMESTAMP_NTZ'"
                        + TIMESTAMP_NTZ_LITERAL + "')");
