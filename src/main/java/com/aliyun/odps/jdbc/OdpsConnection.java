@@ -78,7 +78,17 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private final Odps odps;
   private final TimeZone tz;
   private final Properties info;
-  private final List<Statement> stmtHandles;
+  /**
+   * Statements created by this connection, kept so that {@link #close()} can close the ones the
+   * caller left open. A closed statement removes itself (see {@link #forgetStatement}); without
+   * that, a connection that a pool keeps open for hours accumulates one entry per statement ever
+   * created on it.
+   *
+   * <p>Synchronized view: pooled connections are handed to different application threads over
+   * time, and {@code HikariCP} may close the connection's statements from the returning thread
+   * while {@link #close()} walks the same list.
+   */
+  private final List<Statement> stmtHandles = Collections.synchronizedList(new ArrayList<>());
   /**
    * For each connection, keep a character set label for layout the ODPS's byte[] storage
    */
@@ -271,7 +281,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.charset = charset;
     this.logviewHost = logviewHost;
     this.tunnelEndpoint = tunnelEndpoint;
-    this.stmtHandles = new ArrayList<>();
     this.sqlTaskProperties.putAll(connRes.getSettings());
 
     this.tunnelRetryTime = connRes.getTunnelRetryTime();
@@ -617,7 +626,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   @Override
   public void close() throws SQLException {
     if (!isClosed) {
-      for (Statement stmt : stmtHandles) {
+      // Snapshot: stmt.close() removes the handle from the live list.
+      for (Statement stmt : snapshotOfStatementHandles()) {
         if (stmt != null && !stmt.isClosed()) {
           stmt.close();
         }
@@ -820,10 +830,26 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
+  /**
+   * Report whether this connection can still be used.
+   *
+   * <p>There is nothing to probe: {@code OdpsConnection} holds no server session in the default
+   * (offline) mode and the REST layer re-authenticates per request, so the checks the constructor
+   * already performed are the checks. What must not happen is answering {@code true} for a
+   * connection that was closed -- a pool uses this call to decide whether to keep or discard the
+   * physical connection, and a {@code true} there makes it hand a dead connection to the next
+   * caller instead of opening a new one.
+   *
+   * @param timeout seconds to wait for the validity check; {@code 0} means no timeout is applied
+   * @return {@code false} once this connection has been closed, {@code true} while it is open
+   * @throws SQLException if {@code timeout} is negative
+   */
   @Override
   public boolean isValid(int timeout) throws SQLException {
-    // connection validation is already done in constructor, always return true here
-    return true;
+    if (timeout < 0) {
+      throw new SQLException("isValid timeout must not be negative, but was " + timeout);
+    }
+    return !isClosed;
   }
 
   @Override
@@ -896,6 +922,23 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   public Odps getOdps() {
     return this.odps;
+  }
+
+  /**
+   * Drop a statement handle that the caller has already closed.
+   *
+   * <p>Called from {@link OdpsStatement#close()}. Statements are only tracked so that
+   * {@link #close()} can clean up handles the application forgot; keeping closed ones costs the
+   * pool a per-statement leak over the life of the connection.
+   */
+  void forgetStatement(Statement stmt) {
+    stmtHandles.remove(stmt);
+  }
+
+  private List<Statement> snapshotOfStatementHandles() {
+    synchronized (stmtHandles) {
+      return new ArrayList<>(stmtHandles);
+    }
   }
 
   public TimeZone getTimezone() {

@@ -432,6 +432,18 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Consumer-side connection pool regression (HikariPoolLifecycleTest).
+         4.0.3 is the last HikariCP release that runs on the JDK 8 bytecode this
+         driver still targets (5.x requires Java 11), so it is also the version a
+         JDK 8 consumer of odps-jdbc is limited to. Test scope only: the driver
+         artifact must never depend on a pool. -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>4.0.3</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>io.github.cdimascio</groupId>
       <artifactId>java-dotenv</artifactId>
