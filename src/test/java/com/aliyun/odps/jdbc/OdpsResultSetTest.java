@@ -16,6 +16,7 @@
 package com.aliyun.odps.jdbc;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -56,6 +57,10 @@ public class OdpsResultSetTest {
     OdpsConnection conn = (OdpsConnection) TestUtils.getConnection();
     stmt = conn.createStatement();
     stmt.execute("set odps.default.schema=default;");
+    // cast(... as decimal(38,18)) in this class is a decimal2 value: without this flag the service
+    // rejects it at semantic analysis (ODPS-0130071), which reads like a driver regression. Same
+    // session flag OdpsPreparedStatementTest already sets for its decimal columns.
+    stmt.execute("set odps.sql.decimal.odps2=true;");
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
 
@@ -131,9 +136,16 @@ public class OdpsResultSetTest {
 
   @Test
   public void testGetSelectEmbedded() throws Exception {
+    // The type names asserted below are the odps2 ones: the service types the integer literal `1`
+    // as BIGINT in legacy mode and as INT once the extended type system is on. The flag is set on a
+    // connection of this test's own so that it cannot leak into the rest of the class, which shares
+    // the static connection -- a session `set` persists for the lifetime of a connection.
+    Connection odps2Conn = TestUtils.getConnection();
+    Statement odps2Stmt = odps2Conn.createStatement();
+    odps2Stmt.execute("set odps.sql.type.system.odps2=true;");
     // ResultSet
     // rs = stmt.executeQuery("select 1 c1, 2.2 c2, null c3, 'haha' c4 from dual;");
-    ResultSet rs = stmt.executeQuery("select 1 c1, 2.2 c2, 'haha' c3 from dual;");
+    ResultSet rs = odps2Stmt.executeQuery("select 1 c1, 2.2 c2, 'haha' c3 from dual;");
 
     ResultSetMetaData meta = rs.getMetaData();
 
@@ -156,6 +168,8 @@ public class OdpsResultSetTest {
     Assertions.assertEquals("haha", rs.getString(3));
 
     rs.close();
+    odps2Stmt.close();
+    odps2Conn.close();
   }
 
   @Test
