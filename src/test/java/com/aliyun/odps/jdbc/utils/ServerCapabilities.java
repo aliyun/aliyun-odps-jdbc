@@ -20,6 +20,7 @@
 package com.aliyun.odps.jdbc.utils;
 
 import com.aliyun.odps.Odps;
+import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Project;
 
 /**
@@ -54,24 +55,20 @@ public final class ServerCapabilities {
   }
 
   /**
-   * @return whether the default project of {@code odps} runs in the three-tier model. A project
-   *         whose property cannot be read counts as not enabled, so the caller skips with a reason
-   *         instead of failing on a statement the service would reject anyway.
+   * @return whether the default project of {@code odps} runs in the three-tier model
+   * @throws OdpsException if capability discovery fails; an unavailable or unauthorized
+   *         service must fail the test condition rather than look like an unsupported capability
    */
-  public static boolean namespaceSchemaEnabled(Odps odps) {
-    try {
-      Project project = odps.projects().get(odps.getDefaultProject());
-      project.reload();
-      String value = project.getProperty(NAMESPACE_SCHEMA_PROPERTY);
-      if (value != null) {
-        return Boolean.parseBoolean(value.trim());
-      }
-      // Property absent on this service build: fall back to the schema list, which the service
-      // answers only for three-tier projects.
-      return odps.schemas().exists("default");
-    } catch (Throwable t) {
-      return false;
+  public static boolean namespaceSchemaEnabled(Odps odps) throws OdpsException {
+    Project project = odps.projects().get(odps.getDefaultProject());
+    project.reload();
+    String value = project.getProperty(NAMESPACE_SCHEMA_PROPERTY);
+    if (value != null) {
+      return Boolean.parseBoolean(value.trim());
     }
+    // Property absent on this service build: fall back to the schema list, which the service
+    // answers only for three-tier projects. Discovery errors still propagate to the condition.
+    return odps.schemas().exists("default");
   }
 
   /**
@@ -84,13 +81,7 @@ public final class ServerCapabilities {
    * pinning the surefire version was meant to make loud. This way every affected case stays visible
    * as skipped, with the reason.
    */
-  public static boolean namespaceSchemaDisabled() {
-    Odps odps;
-    try {
-      odps = TestUtils.getOdps();
-    } catch (Throwable t) {
-      return true; // no test identity at all: nothing here can run, and the reason below says so
-    }
-    return !namespaceSchemaEnabled(odps);
+  public static boolean namespaceSchemaDisabled() throws Exception {
+    return !namespaceSchemaEnabled(TestUtils.getOdps());
   }
 }
