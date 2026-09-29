@@ -140,6 +140,93 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   private HashMap<Integer, Object> parameters = new HashMap<>();
 
+  /**
+   * Number of bindable placeholders, resolved with the same lexer that performs the substitution.
+   * Counting '?' characters by hand also counts the marks inside string literals and comments, so
+   * the naive count is only ever an upper bound.
+   */
+  private Integer bindablePlaceholders;
+
+  private int bindableCount() {
+    if (bindablePlaceholders == null) {
+      int n;
+      try {
+        n = SqlParserUtil.getPlaceholderIndexList(sql).size();
+      } catch (RuntimeException e) {
+        // Never turn an unexpected lexer failure into "you may not bind anything".
+        n = parametersNum;
+      }
+      bindablePlaceholders = n;
+    }
+    return bindablePlaceholders;
+  }
+
+  /**
+   * Parameters are substituted by position, so an index outside 1..n cannot mean anything. It used
+   * to be accepted into the parameter map, where it either widened the map by accident and was
+   * reported as "wrong number of parameters", or was never read at all: the value the caller bound
+   * was dropped and the placeholder was replaced with NULL.
+   */
+  private void checkBindPosition(int parameterIndex) throws SQLException {
+    checkClosed();
+    int n = bindableCount();
+    if (parameterIndex < 1 || parameterIndex > n) {
+      throw new SQLException(
+          "parameter index " + parameterIndex + " is out of range: this statement has " + n
+          + " bindable parameter(s), numbered from 1");
+    }
+  }
+
+  /** The map is keyed by position, so a missing key means "the caller never bound that parameter". */
+  private void checkAllParametersBound(int count) throws SQLException {
+    for (int i = 1; i <= count; i++) {
+      if (!parameters.containsKey(i)) {
+        throw new SQLException(
+            "parameter " + i + " of " + count + " has not been set; call setNull() to bind NULL");
+      }
+    }
+  }
+
+  /**
+   * Renders a value as a MaxCompute string literal.
+   *
+   * <p>Backslash introduces an escape sequence in a MaxCompute literal, so a value cannot simply be
+   * wrapped in quotes: on origin/master@3311761 binding {@code C:\new_folder\path} through the
+   * constant-SQL path stored {@code C:<newline>ew_folderpath}. Escaping is also what makes
+   * {@code skipSqlInjectCheck=true} usable for legitimate data instead of letting a quote break the
+   * value out of its own literal (ODPS-0130161).
+   *
+   * <p>Control characters that the XML request body cannot carry are refused here. On the same
+   * baseline they were refused later and far less clearly, by
+   * {@code ODPS-0420031: Invalid xml in HTTP request body}.
+   */
+  private String quoteLiteral(String value, int parameterIndex) throws SQLException {
+    if (isIllegal(value)) {
+      throw new SQLException(
+          "parameter " + parameterIndex + " was rejected by the SQL injection check because it "
+          + "contains a quote, a comment marker or a reserved word. Bind it through "
+          + "executeUpdate()/executeBatch(), which sends the value over the tunnel and never puts "
+          + "it in the SQL text, or open the connection with skipSqlInjectCheck=true");
+    }
+    StringBuilder sb = new StringBuilder(value.length() + 2);
+    sb.append('\'');
+    for (int i = 0; i < value.length(); i++) {
+      char c = value.charAt(i);
+      if (c == '\'' || c == '\\') {
+        sb.append('\\').append(c);
+      } else if (c < 0x20 && c != '\t' && c != '\n' && c != '\r') {
+        throw new SQLException(
+            "parameter " + parameterIndex + " contains the control character U+" + String
+                .format("%04X", (int) c) + ", which cannot be sent as a SQL literal. Bind binary "
+                + "data through executeUpdate()/executeBatch() (tunnel) instead");
+      } else {
+        sb.append(c);
+      }
+    }
+    sb.append('\'');
+    return sb.toString();
+  }
+
   // When addBatch(), compress the parameters into a row
   private List<Object[]> batchedRows = new ArrayList<>();
 
@@ -165,6 +252,10 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void addBatch() throws SQLException {
+    checkClosed();
+    // A hole here used to be queued as a NULL column, so "clearParameters() then executeUpdate()"
+    // reported one updated row while writing a row of NULLs.
+    checkAllParametersBound(parametersNum);
     Object[] arr = new Object[parametersNum];
     for (int i = 0; i < arr.length; i++) {
       arr[i] = parameters.get(i + 1);
@@ -175,11 +266,13 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void clearParameters() throws SQLException {
+    checkClosed();
     parameters.clear();
   }
 
   @Override
   public void clearBatch() throws SQLException {
+    checkClosed();
     batchedRows.clear();
   }
 
@@ -198,6 +291,13 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public int[] executeBatch() throws SQLException {
+    checkClosed();
+    if (batchedRows.isEmpty()) {
+      // Nothing was queued. Master instead reached parse() and threw IndexOutOfBoundsException
+      // ("Index: 0, Size: 0") for an insert with an explicit column list, while the same call on
+      // an insert without one returned int[0].
+      return new int[0];
+    }
     if (!parsed) {
       parse();
     }
@@ -287,6 +387,16 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       throw new SQLException(e.getMessage());
     }
 
+    // Without an explicit column list the count only becomes visible once the uploader resolved
+    // the table schema; a mismatch used to surface as an ArrayIndexOutOfBoundsException whose
+    // message was the bare index ("2").
+    if (batchedRows.get(0).length != uploader.specificColumns.size()) {
+      throw new SQLException(
+          "batched insert into " + tableName + " expects one parameter per column ("
+          + uploader.specificColumns.size() + " columns: " + uploader.specificColumns
+          + "), but this statement binds " + batchedRows.get(0).length);
+    }
+
     parsed = true;
   }
 
@@ -317,6 +427,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public boolean execute() throws SQLException {
+    checkClosed();
     return super.execute(updateSql(sql, parameters));
   }
 
@@ -327,6 +438,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public ResultSet executeQuery() throws SQLException {
+    checkClosed();
     return super.executeQuery(updateSql(sql, parameters));
   }
 
@@ -340,6 +452,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public int executeUpdate() throws SQLException {
+    checkClosed();
     addBatch();
     return executeBatch().length;
   }
@@ -354,12 +467,14 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setNull(int parameterIndex, int sqlType, String typeName)
       throws SQLException {
+    checkBindPosition(parameterIndex);
     // ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
     parameters.put(parameterIndex, null);
   }
@@ -374,6 +489,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    */
   @Override
   public void setObject(int parameterIndex, Object x) throws SQLException {
+    checkBindPosition(parameterIndex);
     if (x == null) {
       setNull(parameterIndex, Types.NULL);
     } else if (x instanceof String) {
@@ -423,6 +539,12 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
     } else if (x instanceof List) {
       parameters.put(parameterIndex, x);
     } else if (x instanceof Struct) {
+      if (!(x instanceof OdpsStruct)) {
+        // A foreign java.sql.Struct implementation used to reach an unchecked ClassCastException.
+        throw new SQLException(
+            "parameter " + parameterIndex + " is a Struct of type " + x.getClass().getName()
+            + ", which this driver cannot read; use com.aliyun.odps.jdbc.data.OdpsStruct");
+      }
       parameters.put(parameterIndex,
                      new SimpleStruct(((OdpsStruct) x).getTypeInfo(),
                                       Arrays.asList(((Struct) x).getAttributes())));
@@ -433,80 +555,112 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   @Override
   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   public void setDate(int parameterIndex, Date x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
+    checkBindPosition(parameterIndex);
     // ODPS doesn't care the type of NULL. So the second parameter is simply ignored.
     parameters.put(parameterIndex, null);
   }
 
   @Override
   public void setShort(int parameterIndex, short x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
+    checkBindPosition(parameterIndex);
     if (x == null) {
       parameters.put(parameterIndex, null);
       return;
     }
-    parameters.put(parameterIndex, x.getBytes());
+    // The stored bytes are decoded with the *connection* charset on both execution paths, so they
+    // have to be encoded with it too. Encoding with the JVM default charset made every value a
+    // round trip through two charsets: start the JVM with a file.encoding other than the
+    // connection charset (GBK is common on Chinese Windows clients) and non-ASCII parameters were
+    // corrupted before the driver sent anything.
+    String charset = getConnection().getCharset();
+    try {
+      parameters.put(parameterIndex, charset == null ? x.getBytes() : x.getBytes(charset));
+    } catch (UnsupportedEncodingException e) {
+      throw new SQLException(
+          "the connection charset " + charset + " cannot encode this parameter value", e);
+    }
   }
 
   @Override
   public void setArray(int parameterIndex, Array x) throws SQLException {
+    checkBindPosition(parameterIndex);
     if (x == null) {
       parameters.put(parameterIndex, null);
       return;
     }
-    parameters.put(parameterIndex,
-                   Arrays.stream(((Object[]) x.getArray())).collect(Collectors.toList()));
+    Object[] elements = (Object[]) x.getArray();
+    if (elements == null) {
+      // Since 3.10.14 a released OdpsArray answers getArray() with null. This used to be an
+      // NullPointerException out of a method whose contract says SQLException.
+      throw new SQLException(
+          "parameter " + parameterIndex + " cannot be bound from a released Array: free() dropped "
+          + "its value. Bind a fresh Array, or use setNull() for NULL");
+    }
+    parameters.put(parameterIndex, Arrays.stream(elements).collect(Collectors.toList()));
   }
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+    checkBindPosition(parameterIndex);
     parameters.put(parameterIndex, x);
   }
 
@@ -519,8 +673,17 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       return sql;
     }
 
-    if (parameters == null || parameters.size() != indexList.size()) {
-      throw new SQLException("wrong number of parameters.");
+    if (parameters == null) {
+      parameters = new HashMap<>();
+    }
+    // "wrong number of parameters" said nothing about which one; a HashMap counts keys, so a bind
+    // at index 0 plus a bind at index 1 used to look like a correctly bound pair of parameters and
+    // the real placeholder was substituted with NULL.
+    checkAllParametersBound(indexList.size());
+    if (parameters.size() != indexList.size()) {
+      throw new SQLException(
+          "wrong number of parameters: this statement has " + indexList.size() + " placeholder(s) "
+          + "but " + parameters.size() + " parameter(s) are bound");
     }
 
     StringBuilder newSql = new StringBuilder(sql);
@@ -530,7 +693,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
     for (Integer index : indexList) {
       index += pos;
       newSql.deleteCharAt(index);
-      String str = convertJavaTypeToSqlString(parameters.get(paramIndex));
+      String str = convertJavaTypeToSqlString(parameters.get(paramIndex), paramIndex);
       newSql.insert(index, str);
       pos += str.length() - 1;
       paramIndex++;
@@ -554,7 +717,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
    * @return
    * @throws SQLException
    */
-  private String convertJavaTypeToSqlString(Object x) throws SQLException {
+  private String convertJavaTypeToSqlString(Object x, int parameterIndex) throws SQLException {
     if (Byte.class.isInstance(x)) {
       return String.format("%sY", x.toString());
     } else if (Short.class.isInstance(x)) {
@@ -570,19 +733,12 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
     } else if (BigDecimal.class.isInstance(x)) {
       return String.format("%sBD", x.toString());
     } else if (String.class.isInstance(x)) {
-      if (isIllegal((String) x)) {
-        throw new IllegalArgumentException("");
-      }
-      return "'" + x + "'";
+      return quoteLiteral((String) x, parameterIndex);
     } else if (byte[].class.isInstance(x)) {
       try {
         String charset = getConnection().getCharset();
         if (charset != null) {
-          String str = new String((byte[]) x, charset);
-          if (isIllegal(str)) {
-            throw new IllegalArgumentException("");
-          }
-          return "'" + str + "'";
+          return quoteLiteral(new String((byte[]) x, charset), parameterIndex);
         } else {
           throw new SQLException("charset is null");
         }
@@ -624,16 +780,8 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       return "NULL";
     } else if (Binary.class.isInstance(x)) {
       return String.format("unhex('%s')", x);
-    } else if (Varchar.class.isInstance(x)) {
-      if (isIllegal(x.toString())) {
-        throw new IllegalArgumentException("");
-      }
-      return "'" + x.toString() + "'";
-    } else if (Char.class.isInstance(x)) {
-      if (isIllegal(x.toString())) {
-        throw new IllegalArgumentException("");
-      }
-      return "'" + x.toString() + "'";
+    } else if (Varchar.class.isInstance(x) || Char.class.isInstance(x)) {
+      return quoteLiteral(x.toString(), parameterIndex);
     } else {
       throw new SQLException("unrecognized Java class: " + x.getClass().getName());
     }

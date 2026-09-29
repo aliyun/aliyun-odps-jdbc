@@ -15,8 +15,10 @@
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
+            <!-- 4.0.3: the last HikariCP that runs on JDK 8, which is what odps-jdbc targets.
+                 5.x and later require Java 11. -->
             <artifactId>HikariCP</artifactId>
-            <version>2.4.2</version>
+            <version>4.0.3</version>
         </dependency>
     </dependencies>
 </project>

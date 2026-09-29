@@ -58,7 +58,9 @@ import com.aliyun.odps.utils.StringUtils;
 public class OdpsStatement extends WrapperAdapter implements Statement {
 
   protected OdpsConnection connHandle;
-  protected Instance executeInstance = null;
+  // cancel() is allowed to run on another thread while execute() is in flight, so everything
+  // that pair touches is published through a volatile field.
+  protected volatile Instance executeInstance = null;
   protected ResultSet resultSet = null;
   protected int updateCount = -1;
   protected int queryTimeout = -1;
@@ -73,12 +75,25 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   // see Issue #15
   boolean updateCountFetched = false;
 
-  protected boolean isClosed = false;
-  protected boolean isCancelled = false;
+  protected volatile boolean isClosed = false;
+  protected volatile boolean isCancelled = false;
+  /** True between beforeExecute() and the end of runSQL(), i.e. while cancel() is meaningful. */
+  private volatile boolean executing = false;
+  /** A cancel() that arrived before the submitted query exposed its instance. */
+  private volatile boolean cancelRequested = false;
+  /** True when processSetClauseExtra() replaced the shared SQLExecutor for this statement. */
+  private volatile boolean ownsSqlExecutor = false;
 
   protected static final int POLLING_INTERVAL = 3000;
   protected static final String JDBC_SQL_TASK_NAME = "jdbc_sql_task";
   protected static final String JDBC_SQL_OFFLINE_TASK_NAME = "sqlrt_fallback_task";
+
+  // SQLState carried by every SQLException that the driver throws because a public
+  // method was invoked after close(). The JDBC javadoc requires SQLException for
+  // "this method is called on a closed Statement" on nearly every method except
+  // close()/isClosed(); the SQL standard has no dedicated code for that state, and
+  // class 55 "object not in state of system" is its established meaning.
+  public static final String SQLSTATE_OBJECT_CLOSED = "55000";
   protected static ResultSet EMPTY_RESULT_SET = null;
 
   static {
@@ -142,29 +157,85 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void cancel() throws SQLException {
-    checkClosed();
-    if (isCancelled || executeInstance == null) {
+    // Snapshot first: close() may run on another thread and nulls connHandle when it finishes.
+    OdpsConnection conn = connHandle;
+    if (isClosed || conn == null) {
+      // Same exception shape as checkClosed(): ClosedStatementContractTest pins message+SQLState
+      // for every public Statement call, and the mid-close race has to answer the same way.
+      throw new SQLException("The statement has been closed", SQLSTATE_OBJECT_CLOSED);
+    }
+    if (isCancelled) {
       return;
     }
 
-    try {
-      if (connHandle.runningInInteractiveMode()) {
-        sqlExecutor.cancel();
-        connHandle.log.info("submit cancel query instance id=" + executeInstance.getId());
-      } else {
-        // If the instance has already terminated, calling Instance.stop# results in an exception.
-        // Checking the instance status before calling Instance.stop# could handle most cases. But
-        // if the instance terminated after the checking, an exception would still be thrown.
-        if (!executeInstance.isTerminated()) {
-          executeInstance.stop();
-          connHandle.log.info("submit cancel to instance id=" + executeInstance.getId());
-        }
+    Instance instance = executeInstance;
+    if (instance == null) {
+      if (!executing) {
+        // Nothing is in flight: cancelling an idle statement stays the no-op it has always been.
+        return;
       }
+      if (conn.runningInInteractiveMode()) {
+        // MaxQA / session: the subquery is already running and the SDK can stop it without an
+        // instance handle. Waiting for the submission call to return would return a finished
+        // (and already billed) query.
+        try {
+          sqlExecutor.cancel();
+          conn.log.info("submit cancel to the running query, instance not published yet");
+        } catch (OdpsException e) {
+          throw new SQLException(e.getMessage(), e);
+        }
+        isCancelled = true;
+        return;
+      }
+      // The query is being submitted and has not exposed its instance yet. Remember the
+      // request instead of dropping it: runSQL() stops the instance as soon as it appears.
+      cancelRequested = true;
+      if (executeInstance == null) {
+        isCancelled = true;
+        return;
+      }
+      // The submitting thread published the instance between the two reads; cancel it here.
+      instance = executeInstance;
+    }
+
+    try {
+      cancelRunningQuery(instance, conn);
     } catch (OdpsException e) {
       throw new SQLException(e.getMessage(), e);
     }
 
     isCancelled = true;
+  }
+
+  /**
+   * Ask the server to stop what this statement is running. An instance that terminated in the
+   * meantime is not a failure: the caller asked for it to stop.
+   */
+  private void cancelRunningQuery(Instance instance, OdpsConnection conn) throws OdpsException {
+    if (conn.runningInInteractiveMode()) {
+      sqlExecutor.cancel();
+      conn.log.info("submit cancel query instance id=" + instance.getId());
+      return;
+    }
+
+    // If the instance has already terminated, calling Instance.stop# results in an exception.
+    // Checking the instance status before calling Instance.stop# could handle most cases. But
+    // if the instance terminated after the checking, an exception would still be thrown, so
+    // the failed stop is re-qualified by a second status read below.
+    if (instance.isTerminated()) {
+      conn.log.info("instance id=" + instance.getId() + " already terminated, nothing to cancel");
+      return;
+    }
+    try {
+      instance.stop();
+      conn.log.info("submit cancel to instance id=" + instance.getId());
+    } catch (OdpsException e) {
+      if (!instance.isTerminated()) {
+        throw e;
+      }
+      conn.log.info("instance id=" + instance.getId()
+                    + " terminated while the cancel was being submitted");
+    }
   }
 
   @Override
@@ -174,6 +245,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void clearWarnings() throws SQLException {
+    checkClosed();
     warningChain = null;
   }
 
@@ -182,6 +254,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (isClosed) {
       return;
     }
+    // Publish the closed state before releasing anything, so a cancel() racing on another
+    // thread sees either a usable statement or a closed one - never a torn-down middle state.
+    isClosed = true;
+    executing = false;
+    OdpsConnection conn = connHandle;
+    SQLExecutor owned = ownsSqlExecutor ? sqlExecutor : null;
 
     if (resultSet != null) {
       resultSet.close();
@@ -190,11 +268,28 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
     closeOdpsResultSet();
 
-    connHandle.log.info("the statement has been closed");
+    if (conn != null) {
+      conn.log.info("the statement has been closed");
+    }
+
+    // A pooled connection can outlive every statement made on it, so the connection must not keep
+    // a handle to a statement that is already closed.
+    connHandle.forgetStatement(this);
 
     connHandle = null;
     executeInstance = null;
-    isClosed = true;
+    if (owned != null) {
+      // An executor rebuilt by processSetClauseExtra() belongs to this statement only, so
+      // closing the statement is the point where its session resources can be released.
+      try {
+        owned.close();
+      } catch (Exception e) {
+        if (conn != null) {
+          conn.log.warn("Failed to close statement level SQLExecutor: " + e.getMessage());
+        }
+      }
+      ownsSqlExecutor = false;
+    }
   }
 
   @Override
@@ -209,6 +304,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet executeQuery(String query) throws SQLException {
+    checkClosed();
+
     Properties properties = new Properties();
 
     if (!connHandle.isSkipSqlCheck()) {
@@ -232,7 +329,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (processUseClause(query)) {
       return EMPTY_RESULT_SET;
     }
-    checkClosed();
     beforeExecute();
     runSQL(query, properties, false);
 
@@ -241,6 +337,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int executeUpdate(String query) throws SQLException {
+    checkClosed();
 
     Properties properties = new Properties();
     if (!connHandle.isSkipSqlCheck()) {
@@ -261,7 +358,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     }
 
-    checkClosed();
     beforeExecute();
     runSQL(query, properties, true);
 
@@ -297,6 +393,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
    */
   @Override
   public boolean execute(String query) throws SQLException {
+    // Reject a closed statement before touching the connection: the SET / USE shortcuts below
+    // used to dereference connHandle first and threw NullPointerException instead of SQLException.
+    checkClosed();
+
     // short cut for SET clause
     Properties properties = new Properties();
 
@@ -323,7 +423,6 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       return false;
     }
 
-    checkClosed();
     beforeExecute();
     runSQL(query, properties);
 
@@ -337,6 +436,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Deprecated
   public boolean hasResultSet(String sql) throws SQLException {
+    checkClosed();
     if (connHandle.runningInInteractiveMode()) {
       return true;
     }
@@ -422,9 +522,12 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     if (needRebuildSql) {
       try {
         this.sqlExecutor = executorBuilder.build();
+        // This one is ours to close; the connection level executor is not.
+        this.ownsSqlExecutor = true;
       } catch (Exception e) {
         connHandle.log.error("rebuild sql executor failed.", e);
         this.sqlExecutor = connHandle.getExecutor();
+        this.ownsSqlExecutor = false;
       }
     }
   }
@@ -461,6 +564,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public OdpsConnection getConnection() throws SQLException {
+    checkClosed();
     return connHandle;
   }
 
@@ -506,11 +610,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getMaxRows() throws SQLException {
+    checkClosed();
     return resultSetMaxRows;
   }
 
   @Override
   public void setMaxRows(int max) throws SQLException {
+    checkClosed();
     if (max < 0) {
       throw new SQLException("max must be >= 0");
     }
@@ -519,6 +625,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean getMoreResults() throws SQLException {
+    checkClosed();
     return false;
   }
 
@@ -529,6 +636,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getQueryTimeout() throws SQLException {
+    checkClosed();
     if (!connHandle.runningInInteractiveMode()) {
       throw new SQLFeatureNotSupportedException();
     } else {
@@ -538,6 +646,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
+    checkClosed();
     if (seconds <= 0) {
       throw new IllegalArgumentException("Invalid query timeout:" + String.valueOf(seconds));
     }
@@ -550,6 +659,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public ResultSet getResultSet() throws SQLException {
+    checkClosed();
     long startTime = System.currentTimeMillis();
     if ((resultSet == null || resultSet.isClosed()) && odpsResultSet != null) {
         OdpsResultSetMetaData
@@ -639,6 +749,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public int getResultSetType() throws SQLException {
+    checkClosed();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
 
@@ -657,11 +768,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
+    checkClosed();
     return warningChain;
   }
 
   @Override
   public boolean isCloseOnCompletion() throws SQLException {
+    checkClosed();
     return false;
   }
 
@@ -672,6 +785,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public boolean isPoolable() throws SQLException {
+    checkClosed();
     return false;
   }
 
@@ -682,11 +796,13 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   @Override
   public void setEscapeProcessing(boolean enable) throws SQLException {
+    checkClosed();
 
   }
 
   @Override
   public void setFetchDirection(int direction) throws SQLException {
+    checkClosed();
 
     switch (direction) {
       case ResultSet.FETCH_FORWARD:
@@ -729,6 +845,10 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     closeOdpsResultSet();
     isClosed = false;
     isCancelled = false;
+    cancelRequested = false;
+    // Set before the query is submitted: a cancel() that lands in the submission window must
+    // not be lost just because the instance is not visible yet.
+    executing = true;
     updateCount = -1;
     updateCountFetched = false;
   }
@@ -750,7 +870,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
 
   protected void checkClosed() throws SQLException {
     if (isClosed) {
-      throw new SQLException("The statement has been closed");
+      throw new SQLException("The statement has been closed", SQLSTATE_OBJECT_CLOSED);
     }
   }
 
@@ -819,6 +939,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       if (executeInstance != null) {
         connHandle.log.info("InstanceId: " + executeInstance.getId());
       }
+      if (cancelRequested) {
+        applyPendingCancel();
+      }
       if (isUpdate) {
         if (executeInstance != null) {
           executeInstance.waitForSuccess();
@@ -856,7 +979,38 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       }
     } catch (OdpsException | IOException e) {
       throwSQLException(e, sql, executor.getInstance(), executor.getLogView());
+    } finally {
+      executing = false;
     }
+  }
+
+  /**
+   * A cancel() that arrived during submission is applied as soon as the query is identifiable.
+   * The instance is stopped (or the interactive subquery cancelled) and the caller gets an
+   * exception instead of the result set nobody is waiting for any more.
+   */
+  private void applyPendingCancel() throws SQLException {
+    Instance instance = executeInstance;
+    OdpsConnection conn = connHandle;
+    executing = false;
+    if (conn == null) {
+      throw new SQLException("The statement has been closed");
+    }
+    try {
+      if (instance != null) {
+        cancelRunningQuery(instance, conn);
+      } else if (conn.runningInInteractiveMode()) {
+        // MaxQA / session query that never exposed an offline instance.
+        sqlExecutor.cancel();
+      }
+    } catch (OdpsException e) {
+      throw new SQLException("Failed to cancel the query submitted by this statement: "
+                             + e.getMessage(), e);
+    } finally {
+      isCancelled = true;
+    }
+    throw new SQLException("Statement cancelled while the query was being submitted"
+                           + (instance == null ? "" : ", instanceId:[" + instance.getId() + "]"));
   }
 
   public Instance getExecuteInstance() {
@@ -905,7 +1059,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   }
 
   protected void setResultSetInternal() throws OdpsException, IOException {
-    if (getExecuteMode() == ExecuteMode.OFFLINE && !enableLimit && resultSizeLimit == null) {
+    // The offline branch below downloads results through the instance tunnel, so it needs an
+    // instance. Some statements never create one: a synchronous Command API statement
+    // (`desc <table>`, `whoami`, `show tables`, ...) returns a null instance from
+    // SQLExecutorImpl#getInstance() by design. Those statements must fall back to the
+    // SQLExecutor result path, which reads the command/task result instead. Without this guard
+    // `executeInstance.waitForSuccess()` throws a NullPointerException, which escapes to JDBC
+    // callers as a raw runtime exception with no server error code and no way to locate it.
+    if (executeInstance != null && getExecuteMode() == ExecuteMode.OFFLINE && !enableLimit
+        && resultSizeLimit == null) {
       connHandle.log.info(
           "Get result by instance tunnel (" + connHandle.getFetchResultThreadNum() + " Thread, "
           + connHandle.getFetchResultSplitSize() + " records per split, cache "

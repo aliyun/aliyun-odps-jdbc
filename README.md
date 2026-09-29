@@ -279,6 +279,31 @@ stmt.execute("set biz_id=xxxxxx;");
 stmt.execute("set odps.sql.mapper.split.size=512;");
 ```
 
+### Connection Pooling
+
+`OdpsConnection` holds no server session in the default (offline) mode, so a pool may keep and
+re-use connections for as long as it likes. Some JDBC knobs behave differently here than on a
+transactional database, and the pool will not paper over that for us:
+
+| Pool setting | What the driver actually does |
+|:---|:---|
+| `autoCommit` | Always `true`. `setAutoCommit(false)` throws `SQLFeatureNotSupportedException`, so a pool configured for manual commits fails at start up. `commit()` and `rollback()` are unsupported for the same reason. |
+| `transactionIsolation` | `TRANSACTION_NONE`, and `setTransactionIsolation(..)` throws. Leave the pool's isolation unset. |
+| `isValid(timeout)` | `false` once the connection has been closed, `true` while it is open, `SQLException` for a negative timeout. Nothing is probed -- there is no session to keep alive. This is the answer a pool uses to throw away a connection that something else closed and open a fresh one, so leave validation on. HikariCP re-validates a connection that has been idle longer than its bypass window (500 ms by default) and on every keepalive tick. |
+| network timeout, `abort()` | Unsupported (both throw). HikariCP detects that and stops calling them. Retire connections with `maxLifetime`/`keepaliveTime` instead. |
+| `readOnly` | Remembered, and sent as `odps.sql.read.only=true` with every query; the service enforces it. The pool resets it when the connection comes back. |
+| `catalog` | `getCatalog()` is the MaxCompute *project*. `setCatalog(..)` switches the project of that connection and is **not** undone on return unless the pool has a catalog configured: pin `catalog` on the pool if any borrower calls `setCatalog()`. |
+| `schema` | Ignored on a two-tier project (`getSchema()` keeps reporting `null`); honoured with `odpsNamespaceSchema=true` / a three-tier project. |
+
+Close your statements. The connection keeps a handle to every statement it created so that closing
+the connection can clean up after a caller that did not, and a closed statement drops its handle
+again -- on a connection that a pool keeps for hours, that is the difference between a flat
+footprint and one retained object per query ever run on it.
+
+HikariCP 4.0.3 is the last release that runs on JDK 8, which is the bytecode this driver targets;
+JDK 8 consumers should not put 5.x on the classpath. The regression that pins the behaviour above
+is `src/test/java/com/aliyun/odps/jdbc/pool/`.
+
 ## Third-party Integration
 
 It is also recommended to use ODPS by using other third-party BI tools or DB visualizer that

@@ -57,23 +57,17 @@ public class OdpsArray implements Array {
 
     @Override
     public Object getArray(Map<String, Class<?>> map) throws SQLException {
-        if (map == null || !map.containsKey(getBaseTypeName())) {
-            return getArray();
-        }
-        Class<?> elementClass = map.get(getBaseTypeName());
-        if (arrayData.length == 0) {
-            return arrayData;
-        }
-        if (arrayData[0].getClass() == elementClass) {
-            return arrayData;
-        }
-        throw new SQLFeatureNotSupportedException(
-            "Not support convert " + arrayData[0].getClass() + " to " + elementClass.getName()
-            + " yet.");
+        return applyTypeMap(arrayData, map);
     }
 
     @Override
     public Object getArray(long index, int count) throws SQLException {
+        if (arrayData == null) {
+            // Released by free(). The zero-argument getArray() returns null for the same state --
+            // and that is what 3.10.14 pinned -- so a sub-range must not fail with an
+            // NullPointerException here either.
+            return null;
+        }
         if (index < 1 || index > arrayData.length || count < 0) {
             throw new SQLException("Invalid index or count");
         }
@@ -89,18 +83,35 @@ public class OdpsArray implements Array {
 
     @Override
     public Object getArray(long index, int count, Map<String, Class<?>> map) throws SQLException {
-        if (map == null || !map.containsKey(getBaseTypeName())) {
-            return getArray(index, count);
+        // The window asked for by index/count, then the type map -- never the whole array, which
+        // is what this method used to hand back whenever the map happened to match.
+        return applyTypeMap((Object[]) getArray(index, count), map);
+    }
+
+    /**
+     * Check a {@code Map} type mapping against the elements actually being returned. NULL
+     * elements carry no class to compare, so the first non-null element decides; an array that is
+     * empty, all-NULL or already released has nothing to contradict the mapping.
+     */
+    private Object[] applyTypeMap(Object[] data, Map<String, Class<?>> map) throws SQLException {
+        if (map == null || map.isEmpty() || !map.containsKey(getBaseTypeName())) {
+            return data;
         }
         Class<?> elementClass = map.get(getBaseTypeName());
-        if (arrayData.length == 0) {
-            return arrayData;
+        Object probe = null;
+        if (data != null) {
+            for (Object element : data) {
+                if (element != null) {
+                    probe = element;
+                    break;
+                }
+            }
         }
-        if (arrayData[0].getClass() == elementClass) {
-            return arrayData;
+        if (probe == null || probe.getClass() == elementClass) {
+            return data;
         }
         throw new SQLFeatureNotSupportedException(
-            "Not support convert " + arrayData[0].getClass() + " to " + elementClass.getName()
+            "Not support convert " + probe.getClass() + " to " + elementClass.getName()
             + " yet.");
     }
 
@@ -128,6 +139,9 @@ public class OdpsArray implements Array {
     @Override
     public void free() throws SQLException {
         arrayData = null;
-        arrayTypeInfo = null;
+        // The element type is metadata of the column, not of the values, and callers such as BI
+        // tools read it while building a result set. Dropping it here made getBaseTypeName() and
+        // getBaseType() fail with a NullPointerException after free(); the released-state contract
+        // of this class is "values are gone (null), type still known".
     }
 }

@@ -48,7 +48,11 @@ public class HikariCP {
       ds.setPassword(odpsConfig.getProperty("password"));
       ds.setMaximumPoolSize(5);
       ds.setConnectionTimeout(3000);
-      ds.setAutoCommit(false);
+      // Not ds.setAutoCommit(false): MaxCompute has no transaction to defer, the driver answers
+      // setAutoCommit(false) with SQLFeatureNotSupportedException, and the pool then fails to
+      // start at all. Read-only is a real setting here -- it reaches the service as
+      // odps.sql.read.only -- so a pooled connection that sets it must have it reset on return,
+      // which the pool does for us. See "Connection Pooling" in README.md.
       ds.setReadOnly(false);
 
 
@@ -85,6 +89,11 @@ public class HikariCP {
       while (res.next()) {
         System.out.println(res.getString(1));
       }
+
+      // Returning a handle twice is a no-op for the pool and must not close the physical
+      // connection: the next borrower still needs it.
+      conn.close();
+      conn.close();
 
       ds.close();
 
