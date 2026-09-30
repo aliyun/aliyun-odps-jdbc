@@ -97,9 +97,15 @@ public class OdpsLogger {
     } catch (NoClassDefFoundError e) {
       sl4jLogger = null;
     }
+    if (enableOdpsLogger) {
+      // Suppress the root bridge only when a local JUL destination is available
+      // and we also write to SLF4J. If opening the local file failed, retain the
+      // application's JUL root handlers as a fallback destination.
+      odpsLogger.setUseParentHandlers(sl4jLogger == null || odpsLogger.getHandlers().length == 0);
+    }
   }
 
-  public synchronized void debug(String msg) {
+  public void debug(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.fine(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -108,7 +114,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void info(String msg) {
+  public void info(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.info(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -117,7 +123,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void warn(String msg) {
+  public void warn(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.warning(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -126,7 +132,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void error(String msg) {
+  public void error(String msg) {
     if (enableOdpsLogger) {
       odpsLogger.severe(String.format("[connection-%s] %s", connectionId, msg));
     }
@@ -135,7 +141,7 @@ public class OdpsLogger {
     }
   }
 
-  public synchronized void error(String msg, Throwable e) {
+  public void error(String msg, Throwable e) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);

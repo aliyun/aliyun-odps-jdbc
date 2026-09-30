@@ -82,34 +82,41 @@ public class Utils {
     }
   }
 
+  /** Match JDBC metadata patterns: percent matches any string, underscore one character.
+   * Backslash escapes a wildcard (see DatabaseMetaData.getSearchStringEscape()).
+   * Matching remains case insensitive for MaxCompute identifiers; all other
+   * characters are literals, including regular expression metacharacters.
+   */
   public static boolean matchPattern(String s, String pattern) {
-
-    if (StringUtils.isNullOrEmpty(pattern)) {
+    if (pattern == null) {
       return true;
     }
-
-    pattern = pattern.toLowerCase();
-    s = s.toLowerCase();
-
-    if (pattern.contains("%") || pattern.contains("_")) {
-      // (?<!a)  looks 1 char behind and ensure not equal
-      String
-          wildcard =
-          pattern.replaceAll("(?<!\\\\)%", "\\\\w*").replaceAll("(?<!\\\\)_", "\\\\w");
-
-      // escape / and %
-      wildcard = wildcard.replace("\\%", "%").replace("\\_", "_");
-
-      if (!s.matches(wildcard)) {
-        return false;
-      }
-    } else {
-      if (!s.equals(pattern)) {
-        return false;
+    if (s == null) {
+      return false;
+    }
+    StringBuilder regex = new StringBuilder();
+    boolean escaped = false;
+    for (int i = 0; i < pattern.length(); i++) {
+      char c = pattern.charAt(i);
+      if (escaped) {
+        regex.append(java.util.regex.Pattern.quote(String.valueOf(c)));
+        escaped = false;
+      } else if (c == '\\') {
+        escaped = true;
+      } else if (c == '%') {
+        regex.append(".*");
+      } else if (c == '_') {
+        regex.append('.');
+      } else {
+        regex.append(java.util.regex.Pattern.quote(String.valueOf(c)));
       }
     }
-
-    return true;
+    if (escaped) {
+      regex.append(java.util.regex.Pattern.quote("\\"));
+    }
+    return java.util.regex.Pattern.compile(regex.toString(),
+        java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.UNICODE_CASE
+            | java.util.regex.Pattern.DOTALL).matcher(s).matches();
   }
 
 
