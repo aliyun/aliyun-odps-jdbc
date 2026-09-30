@@ -50,34 +50,53 @@ jobs:
           retention-days: 14
 
   consumer:
-    name: Consumer matrix (JDK ${{ matrix.java }})
+    name: Consumer matrix and parity (JDK 8/11/17/21)
     needs: package
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      # One JVM behaving differently is the finding this job exists for; do not hide the others.
-      fail-fast: false
-      matrix:
-        java: [ '8', '11', '17', '21' ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: packaged-driver
           path: driver
+      # Keep all four homes in one invocation: isolated one-JDK jobs never enter
+      # the runner's cross-JVM parity check, even if their observables differ.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
-      - name: Run the consumer matrix on JDK ${{ matrix.java }}
+          java-version: '8'
+      - name: Remember JDK 8 home
+        run: echo "MATRIX_JAVA_8=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Remember JDK 11 home
+        run: echo "MATRIX_JAVA_11=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Remember JDK 17 home
+        run: echo "MATRIX_JAVA_17=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Remember JDK 21 home
+        run: echo "MATRIX_JAVA_21=$JAVA_HOME" >> "$GITHUB_ENV"
+      - name: Run all consumers and compare their observables
         env:
           MATRIX_RESULTS_DIR: ${{ runner.temp }}/matrix-cells
-        run: bash scripts/jdk-consumer-matrix.sh driver/*.jar
+        run: |
+          bash scripts/jdk-consumer-matrix.sh driver/*.jar \
+            "$MATRIX_JAVA_8" "$MATRIX_JAVA_11" "$MATRIX_JAVA_17" "$MATRIX_JAVA_21"
       - name: Upload cell observables
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: matrix-observables-jdk${{ matrix.java }}
+          name: matrix-observables
           path: ${{ runner.temp }}/matrix-cells
           if-no-files-found: ignore
           retention-days: 14
