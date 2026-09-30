@@ -33,6 +33,8 @@ import java.util.Objects;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.Function;
+import com.aliyun.odps.Odps;
+import com.aliyun.odps.NoSuchObjectException;
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.TableFilter;
@@ -267,8 +269,12 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   @Override
   public String getSearchStringEscape() throws SQLException {
-    log.error(Thread.currentThread().getStackTrace()[1].getMethodName() + " is not supported!!!");
-    throw new SQLFeatureNotSupportedException();
+    // getTables(), getColumns() and getSchemas() all match their pattern arguments through
+    // Utils.matchPattern, which treats a backslash as the escape for the SQL wildcards. A caller
+    // that has to ask for a name holding a literal '%' or '_' can only write that escape once it
+    // can look it up, so this reports the character the driver actually honours instead of
+    // claiming the whole question is unsupported.
+    return "\\";
   }
 
   @Override
@@ -814,7 +820,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           for (Entry<String, List<String>> tableEntry: entry.getValue().entrySet()) {
             LinkedList<String> tables = new LinkedList<>();
             String schemaName = tableEntry.getKey();
-            if (!schemaMatches(schemaPattern, schemaName)) {
+            if (!schemaCriterionMatches(schemaPattern, schemaName)) {
               continue;
             }
             for (String tableName : tableEntry.getValue()) {
@@ -844,7 +850,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         // Iterate through all the available catalog & schemas
         while (schemas.next()) {
           if (catalogMatches(catalog, schemas.getString(COL_NAME_TABLE_CATALOG))
-              && schemaMatches(schemaPattern, schemas.getString(COL_NAME_TABLE_SCHEM))) {
+              && schemaCriterionMatches(schemaPattern, schemas.getString(COL_NAME_TABLE_SCHEM))) {
             // Enable the argument 'extended' so that the returned table objects contains all the
             // information needed by JDBC, like comment and type.
             String schemaCatalog = schemas.getString(COL_NAME_TABLE_CATALOG);
@@ -921,6 +927,36 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
   private boolean schemaMatches(String schemaPattern, String actual) {
     return Utils.matchPattern(actual, schemaPattern);
+  }
+
+  /**
+   * Name a caller may use for the single implicit schema of a two-tier project, when it learned
+   * that name from a driver that answered {@code getSchemas()} with it.
+   */
+  private static final String TWO_TIER_SCHEMA_ALIAS = "default";
+
+  /** Service error code for "project or schema not found" (ODPS-0420111). */
+  private static final String ERROR_CODE_PROJECT_OR_SCHEMA_MISSING = "ODPS-0420111";
+
+  /** Service error code for "table not found" (ODPS-0130131). */
+  private static final String ERROR_CODE_TABLE_MISSING = "ODPS-0130131";
+
+  /**
+   * Whether a caller's schema criterion admits {@code actualSchema}.
+   *
+   * <p>Plain pattern matching, plus one compatibility allowance: in a two-tier project the
+   * implicit schema is published under the project name (that is the value {@link #getTables} and
+   * {@link #getColumns} put in {@code TABLE_SCHEM}), and a caller that was told "default" by an
+   * older driver still matches. Namespace-schema projects expose real schemas and get no such
+   * allowance -- {@code default} is a schema that exists there, not an alias.
+   */
+  private boolean schemaCriterionMatches(String schemaPattern, String actualSchema) {
+    if (Utils.matchPattern(actualSchema, schemaPattern)) {
+      return true;
+    }
+    return !conn.isOdpsNamespaceSchema()
+        && conn.getOdps().getDefaultProject().equalsIgnoreCase(actualSchema)
+        && Utils.matchPattern(TWO_TIER_SCHEMA_ALIAS, schemaPattern);
   }
 
   /**
@@ -1043,10 +1079,15 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
 
     try {
       if (!conn.isOdpsNamespaceSchema()) {
-        if (catalog == null) {
-          rows.add(new String[]{"default", conn.getOdps().getDefaultProject()});
-        } else {
-          rows.add(new String[]{"default", catalog});
+        // A two-tier project exposes one implicit schema under the one catalog getCatalogs()
+        // reports. Three things used to be wrong here at once: any string at all came back as a
+        // schema row (even a project that is not this connection's), a schemaPattern that matches
+        // nothing still returned that row, and the name given for the schema disagreed with the
+        // TABLE_SCHEM that getTables() and getColumns() publish for the very same tables.
+        String projectName = conn.getOdps().getDefaultProject();
+        if (catalogMatches(catalog, projectName)
+            && schemaCriterionMatches(schemaPattern, projectName)) {
+          rows.add(new String[]{projectName, catalog != null ? catalog : projectName});
         }
       } else {
         if (catalog == null) {
@@ -1068,8 +1109,14 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           }
         }
       }
-    } catch (RuntimeException e) {
-      throw new SQLException(e.getMessage(), e);
+    } catch (Exception e) {
+      if (isMissingObject(e)) {
+        // Asking for the schemas of a project that is not there is an unmatched search
+        // criterion, the same way getTables() already answers it -- empty, not an error.
+        log.info("getSchemas: catalog does not exist, returning an empty result set: " + catalog);
+      } else {
+        throw new SQLException(e.getMessage(), e);
+      }
     }
 
     sortRows(rows, new int[]{1, 0});
@@ -1136,6 +1183,67 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     return new OdpsStaticResultSet(getConnection(), meta, rows.iterator());
   }
 
+  /**
+   * Locate the single table {@link #getColumns} describes.
+   *
+   * <p>In the three-tier model a null {@code schemaPattern} means "the schema this connection is
+   * sitting in", the same reading {@link #getTables} uses when it restricts an unrestricted call
+   * to {@code conn.getSchema()}. Without that, {@code getColumns(c, null, t)} and {@code
+   * getTables(c, null, t)} can describe two different tables that share the name {@code t}, and
+   * the caller has no way to notice.
+   */
+  private Table resolveTableForColumns(String catalog, String schemaPattern,
+                                       String tableNamePattern) throws SQLException {
+    Odps odps = conn.getOdps();
+    if (conn.isOdpsNamespaceSchema()) {
+      String project = catalog != null ? catalog : odps.getDefaultProject();
+      String schema = schemaPattern != null ? schemaPattern : conn.getSchema();
+      return odps.tables().get(project, schema, tableNamePattern);
+    }
+    if (StringUtils.isNullOrEmpty(catalog)) {
+      return odps.tables().get(tableNamePattern);
+    }
+    return odps.tables().get(catalog, tableNamePattern);
+  }
+
+  /**
+   * True when the service answered "this object does not exist" (project, schema or table), as
+   * opposed to a failure the caller has to hear about. The SDK reports a missing table as {@link
+   * NoSuchObjectException}, while a missing project or schema reaches us as the underlying
+   * {@link com.aliyun.odps.rest.RestException} carrying the {@code NoSuchObject} error code.
+   */
+  private static boolean isMissingObject(Throwable t) {
+    for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+      if (cur instanceof NoSuchObjectException) {
+        return true;
+      }
+      if (cur instanceof OdpsException
+          && "NoSuchObject".equalsIgnoreCase(((OdpsException) cur).getErrorCode())) {
+        return true;
+      }
+      // A statement the service rejects because the object named in it is absent -- "show
+      // schemas in <project>", for instance -- reaches us as a plain message, not as a typed
+      // exception, so the service error code inside the text is all there is to judge on.
+      String text = cur.getMessage();
+      if (text != null && (text.contains(ERROR_CODE_PROJECT_OR_SCHEMA_MISSING)
+          || text.contains(ERROR_CODE_TABLE_MISSING)
+          || text.contains("Code=NoSuchObject"))) {
+        return true;
+      }
+      if (cur instanceof com.aliyun.odps.rest.RestException) {
+        com.aliyun.odps.rest.ErrorMessage em =
+            ((com.aliyun.odps.rest.RestException) cur).getErrorMessage();
+        if (em != null && "NoSuchObject".equalsIgnoreCase(em.getErrorcode())) {
+          return true;
+        }
+      }
+      if (cur.getCause() == cur) {
+        break;
+      }
+    }
+    return false;
+  }
+
   @Override
   public ResultSet getColumns(
       String catalog,
@@ -1154,24 +1262,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
     if (!tableNamePattern.trim().isEmpty() && !"%".equals(tableNamePattern.trim())
         && !"*".equals(tableNamePattern.trim())) {
       try {
-        Table table;
-        if (conn.isOdpsNamespaceSchema()) {
-          if (catalog == null) {
-            table =
-              conn.getOdps().tables()
-                .get(conn.getOdps().getDefaultProject(), schemaPattern, tableNamePattern);
-          } else {
-            table =
-              conn.getOdps().tables()
-                .get(catalog, schemaPattern, tableNamePattern);
-          }
-        } else {
-          if (StringUtils.isNullOrEmpty(catalog)) {
-            table = conn.getOdps().tables().get(tableNamePattern);
-          } else {
-            table = conn.getOdps().tables().get(catalog, tableNamePattern);
-          }
-        }
+        Table table = resolveTableForColumns(catalog, schemaPattern, tableNamePattern);
         table.reload();
 
         // Read column & partition column information from table schema
@@ -1184,21 +1275,25 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           if (conn.isOdpsNamespaceSchema()) {
             colSchema = table.getSchemaName();
           }
+          if (!Utils.matchPattern(col.getName(), columnNamePattern)) {
+            // JDBC: only the columns whose name matches columnNamePattern are returned.
+            continue;
+          }
           JdbcColumn jdbcCol = new JdbcColumn(col.getName(),
-                                              tableNamePattern,
+                                              table.getName(),
                                               colSchema,
                                               col.getTypeInfo().getOdpsType(),
                                               col.getTypeInfo(),
                                               col.getComment(),
                                               i + 1);
           Object[] rowVals =
-              {catalog, // table catalog (odps project)
+              {table.getProject(), // table catalog (odps project), as getTables() reports it
                jdbcCol.getTableSchema(), // table schema
                jdbcCol.getTableName(), // table name
                jdbcCol.getColumnName(), // column name
                (long) jdbcCol.getType(), // SQL type from java.sql.Types
                jdbcCol.getTypeName(), // Data source dependent type name, actually odps typeInfo name
-               null, // column size
+               jdbcCol.getColumnSize(), // column size, null for the types MaxCompute does not bound
                null, // not used
                (long) jdbcCol.getDecimalDigits(), // the number of fractional digits.
                (long) jdbcCol.getNumPercRaidx(), // Radix (typically either 10 or 2)
@@ -1221,9 +1316,22 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
           rows.add(rowVals);
         }
       } catch (OdpsException e) {
-        throw new SQLException("catalog=" + catalog + ",schemaPattern=" + schemaPattern
-                               + ",tableNamePattern=" + tableNamePattern + ",columnNamePattern"
-                               + columnNamePattern, e);
+        if (isMissingObject(e)) {
+          // The project / schema / table simply is not there. Every other JDBC metadata method
+          // of this driver (getTables, getSchemas, getPrimaryKeys, ...) answers an unmatched
+          // search criterion with an empty result set, and java.sql.DatabaseMetaData documents
+          // these calls as "only those ... matching the given criteria are returned" -- not as
+          // an error. A caller probing an object it is not sure exists gets the same answer as
+          // the table list gives, and a real failure (permission, transport, service error)
+          // still surfaces below.
+          log.info("getColumns: object does not exist, returning an empty result set: catalog="
+                   + catalog + ", schemaPattern=" + schemaPattern + ", tableNamePattern="
+                   + tableNamePattern);
+        } else {
+          throw new SQLException("catalog=" + catalog + ",schemaPattern=" + schemaPattern
+                                 + ",tableNamePattern=" + tableNamePattern + ",columnNamePattern"
+                                 + columnNamePattern, e);
+        }
       }
     }
 
