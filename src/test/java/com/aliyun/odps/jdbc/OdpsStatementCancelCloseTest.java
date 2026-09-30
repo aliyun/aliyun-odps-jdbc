@@ -375,6 +375,32 @@ public class OdpsStatementCancelCloseTest {
   }
 
   @Test
+  public void failedResultCloseStillReleasesStatementResources() throws Exception {
+    givenStatement(ExecuteMode.OFFLINE);
+    SQLExecutor owned = Mockito.mock(SQLExecutor.class);
+    SQLExecutorBuilder builder = Mockito.mock(SQLExecutorBuilder.class);
+    Mockito.when(builder.clone()).thenReturn(builder);
+    Mockito.when(builder.build()).thenReturn(owned);
+    Mockito.when(conn.getExecutorBuilder()).thenReturn(builder);
+    stmt.execute("set jdbc.fetchResult.useTunnel=false;");
+    ResultSet result = Mockito.mock(ResultSet.class);
+    SQLException failure = new SQLException("close failed");
+    Mockito.doThrow(failure).when(result).close();
+    stmt.resultSet = result;
+    AtomicInteger released = new AtomicInteger();
+    stmt.odpsResultSet = countingResultSet(released);
+
+    assertSame(failure, assertThrows(SQLException.class, stmt::close));
+    stmt.close();
+    assertEquals(1, released.get());
+    Mockito.verify(owned).close();
+    Mockito.verify(conn).forgetStatement(stmt);
+    Mockito.verify(result).close();
+    assertNull(stmt.connHandle);
+    assertTrue(stmt.isClosed());
+  }
+
+  @Test
   public void aResultReadRacingWithCloseSurfacesAsSQLException() throws Exception {
     givenStatement(ExecuteMode.OFFLINE);
     stmt.inputProperties = new Properties();

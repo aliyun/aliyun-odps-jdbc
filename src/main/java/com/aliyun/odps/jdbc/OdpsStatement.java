@@ -261,34 +261,35 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     OdpsConnection conn = connHandle;
     SQLExecutor owned = ownsSqlExecutor ? sqlExecutor : null;
 
-    if (resultSet != null) {
-      resultSet.close();
-      resultSet = null;
-    }
-
-    closeOdpsResultSet();
-
-    if (conn != null) {
-      conn.log.info("the statement has been closed");
-    }
-
-    // A pooled connection can outlive every statement made on it, so the connection must not keep
-    // a handle to a statement that is already closed.
-    connHandle.forgetStatement(this);
-
-    connHandle = null;
-    executeInstance = null;
-    if (owned != null) {
-      // An executor rebuilt by processSetClauseExtra() belongs to this statement only, so
-      // closing the statement is the point where its session resources can be released.
-      try {
-        owned.close();
-      } catch (Exception e) {
-        if (conn != null) {
-          conn.log.warn("Failed to close statement level SQLExecutor: " + e.getMessage());
-        }
+    SQLException failure = null;
+    try {
+      if (resultSet != null) {
+        resultSet.close();
       }
-      ownsSqlExecutor = false;
+    } catch (SQLException e) {
+      failure = e;
+    } finally {
+      resultSet = null;
+      closeOdpsResultSet();
+      if (conn != null) {
+        conn.log.info("the statement has been closed");
+        conn.forgetStatement(this);
+      }
+      connHandle = null;
+      executeInstance = null;
+      if (owned != null) {
+        try {
+          owned.close();
+        } catch (Exception e) {
+          if (conn != null) {
+            conn.log.warn("Failed to close statement level SQLExecutor: " + e.getMessage());
+          }
+        }
+        ownsSqlExecutor = false;
+      }
+    }
+    if (failure != null) {
+      throw failure;
     }
   }
 
