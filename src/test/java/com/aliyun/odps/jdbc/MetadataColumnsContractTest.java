@@ -92,12 +92,11 @@ public class MetadataColumnsContractTest {
   private static Odps odps;
   private static String project;
 
-  static boolean threeTierProject() {
-    try {
-      return ServerCapabilities.namespaceSchemaEnabled(TestUtils.getOdps());
-    } catch (Throwable t) {
-      return true; // no test identity: skip loudly rather than fail on a connection we cannot make
-    }
+  static boolean threeTierProject() throws Exception {
+    // Same rule the capability gate in ServerCapabilities states: a discovery failure is not
+    // evidence of a two-tier project. An unreachable or unauthorized service must fail this
+    // condition loudly, otherwise the class looks skipped while nothing was ever measured.
+    return ServerCapabilities.namespaceSchemaEnabled(TestUtils.getOdps());
   }
 
   @BeforeAll
