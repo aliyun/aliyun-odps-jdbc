@@ -45,6 +45,12 @@ public class OdpsResultSetMetaDataTest {
   @BeforeAll
   public static void setUp() throws Exception {
     stmt = TestUtils.getConnection().createStatement();
+    // The types asserted below are the odps2 ones: in legacy mode the service types the integer
+    // literal `25` as BIGINT (measured on pristine master: testGetColumnType expected <4> but was
+    // <-5>, testGetColumnTypeName expected <INT> but was <BIGINT>). The flag belongs to this class
+    // because every case here reads the same result-set metadata; no assertion was changed, and
+    // testGetColumnMeta only prints scale/precision so it cannot be flipped by the flag.
+    stmt.execute("set odps.sql.type.system.odps2=true;");
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
 
