@@ -183,31 +183,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
     connectionId = Long.toString(CONNECTION_ID_GENERATOR.incrementAndGet());
 
-    int readTimeout;
-    try {
-      readTimeout = Integer.parseInt(connRes.getReadTimeout());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("read-timeout is expected to be an integer");
-    }
-
-    int connectTimeout;
-    try {
-      connectTimeout = Integer.parseInt(connRes.getConnectTimeout());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("connect-timeout is expected to be an integer");
-    }
-
-    try {
-      this.tunnelReadTimeout = Integer.parseInt(connRes.getTunnelReadTimeout());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("tunnel-read-timeout is expected to be an integer");
-    }
-
-    try {
-      this.tunnelConnectTimeout = Integer.parseInt(connRes.getTunnelConnectTimeout());
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("tunnel-connect-timeout is expected to be an integer");
-    }
+    int readTimeout = parseIntOption(connRes.getReadTimeout(),
+                                     ConnectionResource.READ_TIMEOUT_URL_KEY,
+                                     ConnectionResource.READ_TIMEOUT_PROP_KEY);
+    int connectTimeout = parseIntOption(connRes.getConnectTimeout(),
+                                        ConnectionResource.CONNECT_TIMEOUT_URL_KEY,
+                                        ConnectionResource.CONNECT_TIMEOUT_PROP_KEY);
+    this.tunnelReadTimeout = parseIntOption(connRes.getTunnelReadTimeout(),
+                                            ConnectionResource.TUNNEL_READ_TIMEOUT_URL_KEY,
+                                            ConnectionResource.TUNNEL_READ_TIMEOUT_PROP_KEY);
+    this.tunnelConnectTimeout = parseIntOption(connRes.getTunnelConnectTimeout(),
+                                               ConnectionResource.TUNNEL_CONNECT_TIMEOUT_URL_KEY,
+                                               ConnectionResource.TUNNEL_CONNECT_TIMEOUT_PROP_KEY);
 
     if (logLevel != null) {
       logLevel = logLevel.toUpperCase();
@@ -383,9 +370,35 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       String msg = "Connect to odps project %s successfully";
       log.info(String.format(msg, odps.getDefaultProject()));
 
-    } catch (OdpsException e) {
+    } catch (OdpsException | ReloadException e) {
+      // ReloadException is what the SDK raises for a project it cannot read: an unreachable
+      // endpoint, a project that does not exist, credentials it will not accept. Reading the
+      // project is part of opening the connection, so it has to fail the same way the
+      // OdpsException variants above already do, or the caller gets a RuntimeException where it
+      // was promised a SQLException.
       log.error("Connect to odps failed:" + e.getMessage());
       throw createSQLException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Reads an integer connection option without letting a mistyped value escape as an unchecked
+   * exception.
+   *
+   * <p>A driver may only report a refused connection through {@link SQLException}. Left to
+   * {@code Integer.parseInt}, {@code readTimeout=abc} would arrive as a
+   * {@link NumberFormatException}, which the consumers that care -- a pool deciding whether to
+   * retry, back off or fail -- do not treat as a connection failure at all, so they keep retrying
+   * a configuration that can never work. Name the option in both accepted spellings, quote the
+   * rejected value, and keep the parse failure as the cause.
+   */
+  private static int parseIntOption(String rawValue, String urlKey, String propertyKey)
+      throws SQLException {
+    try {
+      return Integer.parseInt(rawValue);
+    } catch (NumberFormatException e) {
+      throw new SQLException(
+          ConnectionResource.invalidOptionMessage(rawValue, urlKey, propertyKey, "an integer"), e);
     }
   }
 
