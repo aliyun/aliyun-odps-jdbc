@@ -30,6 +30,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 
 import com.aliyun.odps.jdbc.utils.TestUtils;
 
@@ -175,9 +176,18 @@ public class MetadataAndOptionsTest {
    * Without a schema URL parameter, the short-circuit must NOT activate.
    * Verifies that {@code conn.getSchema()} is null - the precondition for "no
    * short-circuit" - and that the call still works (or fails only with the tolerated
-   * env issue).
+   * env issue). Asking the project for its schemas is a three-tier-model operation, so
+   * the case declares that precondition instead of pretending a two-tier project broke
+   * the driver: with {@code schema} in the URL the sibling cases pass on the very same
+   * project, which is what isolates the capability as the difference.
    */
   @Test
+  @DisabledIf(value = "com.aliyun.odps.jdbc.utils.ServerCapabilities#namespaceSchemaDisabled",
+      disabledReason = "the URL opts this connection into the three-tier model, and without a "
+          + "schema parameter the driver lists the project's schemas, which a two-tier project "
+          + "refuses (ODPS-0110061, measured unchanged after #198). The test project reports "
+          + "odps.schema.model.enabled=false. Enable namespace schemas for it, or run the suite "
+          + "against a project that has them enabled (MAXCOMPUTE_PROJECT).")
   public void testGetTablesPreservesOriginalBehaviorWithoutUrlSchema() throws Exception {
     Map<String, String> props = new HashMap<>();
     props.put("odpsNamespaceSchema", "true");
