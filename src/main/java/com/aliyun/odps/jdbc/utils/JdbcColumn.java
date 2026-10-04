@@ -350,7 +350,32 @@ public class JdbcColumn {
     }
   }
 
-  public int getDecimalDigits() {
-    return 0;
+  /**
+   * JDBC {@code getColumns()} COLUMN_SIZE: the declared precision of the column.
+   *
+   * <p>This is the same {@link #columnPrecision(TypeInfo)} that {@code
+   * OdpsResultSetMetaData#getPrecision} reports for a value read out of the very same column, so
+   * the two metadata views cannot disagree any more. Types whose length MaxCompute does not bound
+   * (STRING, JSON, BINARY, ARRAY, MAP, STRUCT) have no meaningful size and stay null -- exactly
+   * what this driver returned before, so no consumer that tolerated null before sees a new value.
+   *
+   * @return the precision, or null when the type is unbounded
+   */
+  public Integer getColumnSize() throws SQLException {
+    int precision = columnPrecision(typeInfo);
+    return precision == Integer.MAX_VALUE ? null : Integer.valueOf(precision);
+  }
+
+  /**
+   * JDBC {@code getColumns()} DECIMAL_DIGITS: the scale of the column, i.e. the number of
+   * fractional digits.
+   *
+   * <p>Same source of truth as {@code OdpsResultSetMetaData#getScale}
+   * ({@link #columnScale(OdpsType, TypeInfo)}); a {@code DECIMAL(10,2)} column reports 2 in both.
+   *
+   * @return the scale, 0 for the types that have none
+   */
+  public int getDecimalDigits() throws SQLException {
+    return columnScale(type, typeInfo);
   }
 }
