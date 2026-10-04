@@ -8,6 +8,7 @@ import java.sql.Statement;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -57,7 +58,20 @@ public class OdpsStatementCommandApiTest {
     }
   }
 
+  /**
+   * {@code show schemas} is a statement of the three-tier model. On a two-tier project the service
+   * answers ODPS-0110061 however the session is configured -- measured: with
+   * {@code odps.namespace.schema=true} set it fails the same way -- so the case states that
+   * precondition and is skipped with the reason, instead of reporting what looks like a driver
+   * regression. The gate reads the project property, not the error code: the same missing capability
+   * answers ODPS-0130161 for a {@code project.schema.object} name, so keying on whichever statement
+   * failed first would cover only one of them. On a three-tier project the case still runs for real.
+   */
   @Test
+  @DisabledIf(value = "com.aliyun.odps.jdbc.utils.ServerCapabilities#namespaceSchemaDisabled",
+      disabledReason = "show schemas needs the project to run in the three-tier model, and the test "
+          + "project reports odps.schema.model.enabled=false. Enable namespace schemas for it, or "
+          + "run the suite against a project that has them enabled (MAXCOMPUTE_PROJECT).")
   public void showSchemaTest() throws SQLException {
     Statement statement = conn.createStatement();
 
