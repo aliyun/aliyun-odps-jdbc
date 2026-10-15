@@ -277,7 +277,7 @@
           <dependency>
               <groupId>at.yawk.lz4</groupId>
               <artifactId>lz4-java</artifactId>
-              <version>1.11.2</version>
+              <version>1.11.4</version>
           </dependency>
           <dependency>
               <groupId>org.jetbrains.kotlin</groupId>
@@ -360,7 +360,7 @@
     <dependency>
       <groupId>at.yawk.lz4</groupId>
       <artifactId>lz4-java</artifactId>
-      <version>1.11.2</version>
+      <version>1.11.4</version>
     </dependency>
 
     <dependency>
