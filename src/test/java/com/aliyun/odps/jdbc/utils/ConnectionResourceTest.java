@@ -258,6 +258,53 @@ public class ConnectionResourceTest {
     Assertions.assertEquals(2, resource.getLogviewVersion());
   }
 
+  /**
+   * `tunnelConnectTimeout` / `tunnelReadTimeout` are documented as counts of SECONDS (README,
+   * "Tunnel and Network Settings"), and the driver forwards whatever the user wrote straight into
+   * the SDK tunnel configuration: OdpsConnection parses these exact strings with Integer.parseInt
+   * and SQLExecutorImpl / OdpsStatement write them only when the value is >= 0.
+   *
+   * <p>The unit itself is measured, not asserted here: against a TEST-NET blackhole
+   * (192.0.2.1) connect 1 / 3 / 6 returned in 1.09 / 3.09 / 6.09 s, against a silent loopback
+   * listener read 1 / 2 / 4 returned in 1.09 / 2.09 / 4.09 s (JDK 8, SDK 0.58.1-public, one attempt),
+   * and with both options left at -1 the tunnel configuration still reads 180 s / 300 s -- the SDK
+   * defaults, not "no timeout".
+   *
+   * <p>What this pins is the value space between the URL / properties and that parse step: no
+   * rescaling, the -1 sentinel survives, and 0 stays 0. A "unit fix" that multiplied or divided
+   * here would fail this test instead of silently changing every application's timeouts.
+   */
+  @Test
+  public void testTunnelTimeoutOptionsAreNotRescaled() {
+    String urlWithTunnelTimeouts =
+        "jdbc:odps:http://example.com/api?project=test&tunnelConnectTimeout=7&tunnelReadTimeout=30";
+
+    ConnectionResource fromUrl = new ConnectionResource(urlWithTunnelTimeouts, null);
+    Assertions.assertEquals("7", fromUrl.getTunnelConnectTimeout());
+    Assertions.assertEquals("30", fromUrl.getTunnelReadTimeout());
+
+    // Unset: the documented default -1, which the driver keeps out of the SDK configuration so
+    // the SDK defaults (connect 180 s, read 300 s) apply.
+    ConnectionResource unset = new ConnectionResource("jdbc:odps:http://example.com/api?project=test", null);
+    Assertions.assertEquals("-1", unset.getTunnelConnectTimeout());
+    Assertions.assertEquals("-1", unset.getTunnelReadTimeout());
+
+    // 0 is a legal value and reaches the SDK as 0 -- it means "no SDK-imposed bound", not "-1".
+    ConnectionResource zero =
+        new ConnectionResource("jdbc:odps:http://example.com/api?project=test"
+                               + "&tunnelConnectTimeout=0&tunnelReadTimeout=0", null);
+    Assertions.assertEquals("0", zero.getTunnelConnectTimeout());
+    Assertions.assertEquals("0", zero.getTunnelReadTimeout());
+
+    // Property form carries the same numbers, and wins over the URL the way the other options do.
+    Properties info = new Properties();
+    info.put("tunnel_connect_timeout", "3");
+    info.put("tunnel_read_timeout", "12");
+    ConnectionResource fromInfo = new ConnectionResource(urlWithTunnelTimeouts, info);
+    Assertions.assertEquals("3", fromInfo.getTunnelConnectTimeout());
+    Assertions.assertEquals("12", fromInfo.getTunnelReadTimeout());
+  }
+
   @Test
   public void testInvalidTableFormat() {
     String url = "jdbc:odps:http://example.com?project=test&tableList=invalidformat";

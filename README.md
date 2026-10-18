@@ -133,12 +133,28 @@ java.net.URLEncoder#encode(java.lang.String).
 |:-------------------------------:|:-----------------------------------:|:--------:|:-------------:|:--------------------------------------------------------------------------------------|
 |        `tunnelRetryTime`        |         `tunnel_retry_time`         |  False   |       6       | The number of times to retry tunnel operations upon failure                           |
 |       `useInstanceTunnel`       |        `use_instance_tunnel`        |  False   |     true      | Whether to use instance tunnel for reading result sets, not recommend set it to false |
-|       `tunnelReadTimeout`       |        `tunnel_read_timeout`        |  False   |      -1       | Tunnel read timeout in milliseconds, -1 means no timeout                              |
-|     `tunnelConnectTimeout`      |      `tunnel_connect_timeout`       |  False   |      -1       | Tunnel connection timeout in milliseconds, -1 means no timeout                        |
+|       `tunnelReadTimeout`       |        `tunnel_read_timeout`        |  False   |      -1       | Tunnel read timeout, **in seconds**. -1 leaves the Java SDK default (300 s) in place, it does not mean "no timeout" |
+|     `tunnelConnectTimeout`      |      `tunnel_connect_timeout`       |  False   |      -1       | Tunnel connect timeout, **in seconds**. -1 leaves the Java SDK default (180 s) in place, it does not mean "no timeout" |
 | `tunnelDownloadUseSingleReader` | `tunnel_download_use_single_reader` |  False   |    `true`     | Whether to use a single reader for tunnel downloads                                   |
 |     `fetchResultSplitSize`      |      `fetch_result_split_size`      |  False   |     10000     | The size of result splits for fetching                                                |
 |  `fetchResultPreloadSplitNum`   |  `fetch_result_preload_split_num`   |  False   |      `5`      | Number of splits to preload when fetching results                                     |
 |     `fetchResultThreadNum`      |      `fetch_result_thread_num`      |  False   |       5       | Number of threads to use for result fetching                                          |
+
+> **Units, and what `-1` really means.** Both tunnel timeouts count **seconds**, not milliseconds:
+> `tunnelConnectTimeout=3` bounds the attempt at three seconds. The driver copies the number into the
+> Java SDK's tunnel configuration (`setSocketConnectTimeout` / `setSocketTimeout`, javadoc 单位秒,
+> defaults 180 s and 300 s), and both tunnel clients read it as seconds -- the REST one hands it to
+> `RestClient` and `DefaultConnection` multiplies it by 1000 there, the netty upsert one sets
+> `CONNECT_TIMEOUT_MILLIS` to it times 1000. Measured against a TEST-NET blackhole and a silent loopback
+> listener (JDK 8, SDK 0.58.1-public, one attempt): connect `1 / 3 / 6` returned in 1.09 / 3.09 /
+> 6.09 s and read `1 / 2 / 4` in 1.09 / 2.09 / 4.09 s. Read as milliseconds, all six would have
+> returned within ~10 ms, and a `tunnelReadTimeout=60000` written with "one minute" in mind is
+> really 60000 s.
+>
+> `-1` is never handed over: the driver writes the option only when it is `>= 0`, so the documented
+> default keeps the SDK's own 180 s / 300 s instead of removing the timeout. `0` does get written,
+> and it leaves no SDK-imposed bound: with `0` in the configuration neither call returned within the
+> 30 s cap of the measurement, while `1` returned in ~1 s.
 
 #### Security and Connection Settings
 
