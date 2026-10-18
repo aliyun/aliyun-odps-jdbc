@@ -143,14 +143,14 @@ java.net.URLEncoder#encode(java.lang.String).
 > **Units, and what `-1` really means.** Both tunnel timeouts count **seconds**, not milliseconds:
 > `tunnelConnectTimeout=3` bounds the attempt at three seconds. The driver copies the number into the
 > Java SDK's tunnel configuration (`setSocketConnectTimeout` / `setSocketTimeout`, javadoc 单位秒,
-> defaults 180 s and 300 s), and both tunnel clients read it as seconds -- the REST one hands it to
-> `RestClient` and `DefaultConnection` multiplies it by 1000 there, the netty upsert one sets
-> `CONNECT_TIMEOUT_MILLIS` to it times 1000. Measured against a TEST-NET blackhole and a silent loopback
-> listener (JDK 8, SDK 0.58.1-public, one attempt): connect `1 / 3 / 6` returned in 1.09 / 3.09 /
-> 6.09 s and read `1 / 2 / 4` in 1.09 / 2.09 / 4.09 s. Read as milliseconds, all six would have
-> returned within ~10 ms, and a `tunnelReadTimeout=60000` written with "one minute" in mind is
-> really 60000 s.
->
+> defaults 180 s and 300 s), which becomes milliseconds only at the last step -- `DefaultConnection`
+> multiplies the REST client's value by 1000, the netty upsert client sets `CONNECT_TIMEOUT_MILLIS` to
+> it times 1000. The driver applies these two options to the instance-tunnel paths that read query
+> results; other tunnel calls (upload / upsert sessions) keep the SDK defaults. Measured against a
+> TEST-NET blackhole and a silent loopback listener (JDK 8, SDK 0.58.1-public, one attempt): connect
+> `1 / 3 / 6` returned in 1.09 / 3.09 / 6.09 s and read `1 / 2 / 4` in 1.09 / 2.09 / 4.09 s. Read as
+> milliseconds, all six would have returned within ~10 ms, and a `tunnelReadTimeout=60000` written
+> with "one minute" in mind is really 60000 s.
 > `-1` is never handed over: the driver writes the option only when it is `>= 0`, so the documented
 > default keeps the SDK's own 180 s / 300 s instead of removing the timeout. `0` does get written,
 > and it leaves no SDK-imposed bound: with `0` in the configuration neither call returned within the
