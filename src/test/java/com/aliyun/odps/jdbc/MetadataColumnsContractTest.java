@@ -73,6 +73,7 @@ import com.aliyun.odps.jdbc.utils.TestUtils;
 @DisabledIf(value = "com.aliyun.odps.jdbc.MetadataColumnsContractTest#threeTierProject",
     disabledReason = "this class fixes the two-tier shape; the namespace-schema shape is "
         + "MetadataNamespaceContractTest")
+@org.junit.jupiter.api.Tag("live-service")
 public class MetadataColumnsContractTest {
 
   private static final String PREFIX = "jdbc_md_cols_";

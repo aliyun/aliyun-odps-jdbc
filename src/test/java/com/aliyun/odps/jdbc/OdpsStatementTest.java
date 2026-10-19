@@ -42,6 +42,7 @@ import com.aliyun.odps.tunnel.TableTunnel;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.google.common.collect.ImmutableMap;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsStatementTest {
 
   private static Connection conn;

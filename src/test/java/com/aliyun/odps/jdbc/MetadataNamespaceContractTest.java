@@ -72,6 +72,7 @@ import com.aliyun.odps.type.TypeInfoFactory;
 @DisabledIf(value = "com.aliyun.odps.jdbc.utils.ServerCapabilities#namespaceSchemaDisabled",
     disabledReason = "needs the project to run the three-tier model "
         + "(project property odps.schema.model.enabled=true)")
+@org.junit.jupiter.api.Tag("live-service")
 public class MetadataNamespaceContractTest {
 
   private static final String PREFIX = "jdbc_md_ns_";

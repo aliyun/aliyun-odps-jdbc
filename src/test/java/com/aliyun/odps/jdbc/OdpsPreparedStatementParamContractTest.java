@@ -54,6 +54,7 @@ import com.aliyun.odps.jdbc.utils.TestUtils;
  * the assertion is the fixed one, and the comment records what master used to do (measured on
  * origin/master@3311761 against the real service, see the work item record).
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsPreparedStatementParamContractTest {
 
   private static final String TABLE = "jdbc_ps_param_contract";

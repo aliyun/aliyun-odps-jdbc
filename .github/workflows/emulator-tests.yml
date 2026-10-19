@@ -1,0 +1,68 @@
+name: Packaged JDBC against MaxCompute Emulator
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build candidate and run all offline contract tests
+        run: mvn -B -ntp clean package -Pemulator-ci
+      - name: Check out pinned emulator source
+        uses: actions/checkout@v4
+        with:
+          repository: dingxin-tech/maxcompute-emulator
+          ref: 8c920e9eea062bd2145da21bd740a3be90763708
+          path: .ci-emulator
+          persist-credentials: false
+      - name: Build and start isolated emulator
+        run: |
+          docker build --target release -t jdbc-emulator:ci .ci-emulator
+          docker run -d --name jdbc-emulator -p 127.0.0.1:18080:8080 jdbc-emulator:ci --listen 0.0.0.0:8080 --project test_project --max-rows 200000
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:18080/readyz; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:18080/capabilities > target/emulator-capabilities.json
+          git -C .ci-emulator rev-parse HEAD > target/emulator-source.txt
+          docker image inspect jdbc-emulator:ci --format '{{.Id}}' > target/emulator-image.txt
+      - name: Exercise the shaded candidate over SQL and Tunnel
+        env:
+          ALIBABA_CLOUD_ACCESS_KEY_ID: test-ak
+          ALIBABA_CLOUD_ACCESS_KEY_SECRET: test-sk
+          ALIBABA_CLOUD_SECURITY_TOKEN: ''
+          MAXCOMPUTE_ENDPOINT: http://127.0.0.1:18080
+          MAXCOMPUTE_PROJECT: test_project
+        run: |
+          version=$(python3 -c 'import xml.etree.ElementTree as E; print(E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)')
+          jar="target/odps-jdbc-${version}.jar"
+          bash scripts/jdbc-core-smoke.sh "$jar"
+          bash scripts/jdbc-emulator-smoke.sh "$jar" "$MAXCOMPUTE_ENDPOINT"
+          sha256sum "$jar" > target/candidate-sha256.txt
+      - name: Collect emulator diagnostics
+        if: always()
+        run: docker logs jdbc-emulator > target/emulator.log 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-tested-driver
+          path: |
+            target/odps-jdbc-*.jar
+            !target/*-sources.jar
+            !target/*-javadoc.jar
+            target/candidate-sha256.txt
+            target/emulator-*.txt
+            target/emulator-*.json
+            target/emulator.log
+            target/surefire-reports/
+          retention-days: 14
+      - name: Stop emulator
+        if: always()
+        run: docker rm -f jdbc-emulator || true

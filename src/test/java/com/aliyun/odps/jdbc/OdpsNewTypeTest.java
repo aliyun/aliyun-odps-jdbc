@@ -59,9 +59,12 @@ import com.aliyun.odps.type.StructTypeInfo;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsNewTypeTest {
 
+    static Connection connection;
     static Statement stmt;
+    static String extendedTable = "jdbc_test_extended_type_metadata";
     static ResultSet rs;
     static ResultSetMetaData rsmd;
     static String table = "jdbc_test_new_type_test";
@@ -89,10 +92,11 @@ public class OdpsNewTypeTest {
     @BeforeAll
     public static void setUp() throws Exception {
         odps = TestUtils.getOdps();
-        Connection connection = TestUtils.getConnection();
+        connection = TestUtils.getConnection();
         stmt = connection.createStatement();
         stmt.executeUpdate("drop table if exists " + table + ";");
         createTableWithAllNewTypes(odps, table);
+        createExtendedTypeTable();
         uploadData();
     }
 
@@ -104,14 +108,18 @@ public class OdpsNewTypeTest {
         if (stmt != null) {
             stmt.close();
         }
-        // odps.tables().delete(table, true);
+        odps.tables().delete(table, true);
+        odps.tables().delete(extendedTable, true);
+        if (connection != null) connection.close();
     }
 
     @Test
     public void testQuery() throws SQLException {
         String sql = "select * from " + table;
         ResultSet rs = stmt.executeQuery(sql);
+        int rows = 0;
         while (rs.next()) {
+            rows++;
             System.out.println(v1);
             System.out.println(rs.getString(1));
             Assertions.assertEquals(v1, rs.getInt(1));
@@ -201,6 +209,8 @@ public class OdpsNewTypeTest {
                 }
             }
         }
+        Assertions.assertEquals(1, rows, "New-type fixture must return its uploaded row");
+        rs.close();
     }
 
     private static void uploadData() throws Exception {
@@ -304,29 +314,47 @@ public class OdpsNewTypeTest {
                                                                                Arrays.asList(
                                                                                    types))));
 
-        schema.addColumn(new Column("col19", TypeInfoFactory.GEOGRAPHY));
-        schema.addColumn(new Column("col20", TypeInfoFactory.BLOB));
 
         odps.tables().newTableCreator(odps.getDefaultProject(), tableName, schema)
             .withSchemaName("default")
+            .withHints(new HashMap<>(com.google.common.collect.ImmutableMap.of(
+                "odps.sql.type.system.odps2", "true")))
             .ifNotExists()
             .debug()
             .create();
     }
 
+    // Extended types require the append table format. Keep them out of the Tunnel
+    // row fixture: the service Arrow converter does not support GEOGRAPHY uploads.
+    private static void createExtendedTypeTable() throws Exception {
+        odps.tables().delete(extendedTable, true);
+        TableSchema schema = new TableSchema();
+        schema.addColumn(new Column("geo", TypeInfoFactory.GEOGRAPHY));
+        schema.addColumn(new Column("blob_value", TypeInfoFactory.BLOB));
+        odps.tables().newTableCreator(odps.getDefaultProject(), extendedTable, schema)
+            .append2Table()
+            .withHints(new HashMap<>(com.google.common.collect.ImmutableMap.of(
+                "odps.sql.type.system.odps2", "true", "odps.table.append2.enable", "true")))
+            .create();
+    }
+
+    private void assertExtendedMetadata(String name, String type, int jdbcType) throws SQLException {
+        try (ResultSet columns = connection.getMetaData().getColumns(
+            odps.getDefaultProject(), null, extendedTable, name)) {
+            Assertions.assertTrue(columns.next(), "Missing extended-type metadata");
+            Assertions.assertEquals(type, columns.getString("TYPE_NAME"));
+            Assertions.assertEquals(jdbcType, columns.getInt("DATA_TYPE"));
+            Assertions.assertFalse(columns.next());
+        }
+    }
+
     @Test
     public void testBlobType() throws SQLException {
-        String sql = "select `col20` from " + table;
-        boolean execute = stmt.execute(sql);
-        System.out.println(execute);
-        System.out.println(stmt.getResultSet().getMetaData().getColumnTypeName(1));
+        assertExtendedMetadata("blob_value", "BLOB", java.sql.Types.BLOB);
     }
 
     @Test
     public void testGeoType() throws SQLException {
-        String sql = "select `col19` from " + table;
-        boolean execute = stmt.execute(sql);
-        System.out.println(execute);
-        System.out.println(stmt.getResultSet().getMetaData().getColumnTypeName(1));
+        assertExtendedMetadata("geo", "GEOGRAPHY", java.sql.Types.OTHER);
     }
 }

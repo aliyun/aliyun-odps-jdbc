@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import com.aliyun.odps.jdbc.OdpsPreparedStatement;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsJdbcDateTimeTest {
 
     static final String DATETIME_TABLE_NAME = "odps_jdbc_datetime_test";

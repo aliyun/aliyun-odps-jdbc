@@ -36,7 +36,19 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Tests for MaxQA (MaxCompute Query Acceleration) connection support.
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class MaxQAConnectionTest {
+
+  private static String configuredMaxQAQuota() {
+    String quota = System.getenv("MAXCOMPUTE_MAXQA_QUOTA");
+    boolean configured = quota != null && !quota.trim().isEmpty();
+    if (Boolean.getBoolean("maxqa.required")) {
+      Assertions.assertTrue(configured, "MAXCOMPUTE_MAXQA_QUOTA must name a healthy MaxQA quota");
+    }
+    org.junit.jupiter.api.Assumptions.assumeTrue(configured,
+        "Set MAXCOMPUTE_MAXQA_QUOTA to run MaxQA v2 service acceptance");
+    return quota;
+  }
 
   /**
    * Test that connection with default quota does not enable MaxQA.
@@ -62,11 +74,7 @@ public class MaxQAConnectionTest {
    */
   @Test
   public void testExplicitQuotaMayEnableMaxQA() throws Exception {
-    String quotaName = "maxqa_huigui_quota";
-    if (quotaName == null || quotaName.isEmpty()) {
-      // Skip test if no quota name is configured
-      return;
-    }
+    String quotaName = configuredMaxQAQuota();
     
     Connection conn = TestUtils.getConnection(
         ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true", "timezone", 
@@ -89,11 +97,7 @@ public class MaxQAConnectionTest {
    */
   @Test
   public void testQueryExecutionWithMaxQA() throws Exception {
-    String quotaName = "maxqa_huigui_quota";
-    if (quotaName == null || quotaName.isEmpty()) {
-      // Skip test if no quota name is configured
-      return;
-    }
+    String quotaName = configuredMaxQAQuota();
     Connection conn = TestUtils.getConnection(
         ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true"));
     
@@ -139,7 +143,7 @@ public class MaxQAConnectionTest {
 
   @Test
   public void testFallbackInfoEnabledByDefault() throws Exception {
-    String quotaName = "maxqa_huigui_quota";
+    String quotaName = configuredMaxQAQuota();
     Connection conn = TestUtils.getConnection(
         ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true"));
     try {
@@ -158,7 +162,7 @@ public class MaxQAConnectionTest {
 
   @Test
   public void testFallbackInfoWithQuota() throws Exception {
-    String quotaName = "maxqa_huigui_quota";
+    String quotaName = configuredMaxQAQuota();
     String fallbackQuota = "my_offline_quota";
     Connection conn = TestUtils.getConnection(
         ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true",
@@ -178,7 +182,7 @@ public class MaxQAConnectionTest {
 
   @Test
   public void testFallbackInfoDisabled() throws Exception {
-    String quotaName = "maxqa_huigui_quota";
+    String quotaName = configuredMaxQAQuota();
     Connection conn = TestUtils.getConnection(
         ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true",
                         "disableFallback", "true"));
@@ -196,7 +200,7 @@ public class MaxQAConnectionTest {
 
   @Test
   public void testFallbackQueryWithMaxQA() throws Exception {
-    String quotaName = "maxqa_huigui_quota";
+    String quotaName = configuredMaxQAQuota();
     Connection conn = TestUtils.getConnection(
         ImmutableMap.of("quotaName", quotaName, "interactiveMode", "true"));
     try (Statement stmt = conn.createStatement()) {

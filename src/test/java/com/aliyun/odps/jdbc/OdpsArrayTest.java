@@ -148,6 +148,7 @@ public class OdpsArrayTest {
             new OdpsArray((Object[]) null, TypeInfoFactory.getArrayTypeInfo(TypeInfoFactory.STRING)));
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testE2EArrayFunctionality() throws Exception {
         Connection conn = TestUtils.getConnection();
@@ -222,6 +223,7 @@ public class OdpsArrayTest {
         }
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testE2EArrayWithDifferentDataTypes() throws Exception {
         Connection conn = TestUtils.getConnection();
@@ -287,6 +289,7 @@ public class OdpsArrayTest {
         }
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testE2EArrayGetWithIndexAndCount() throws Exception {
         Connection conn = TestUtils.getConnection();
@@ -338,6 +341,7 @@ public class OdpsArrayTest {
         }
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testPreparedStatementSetArray() throws Exception {
         Connection conn = TestUtils.getConnection();
@@ -398,6 +402,7 @@ public class OdpsArrayTest {
         }
     }
 
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testPreparedStatementSetObjectWithArray() throws Exception {
         Connection conn = TestUtils.getConnection();
@@ -466,6 +471,7 @@ public class OdpsArrayTest {
      * {@code legacy_array_get_object=false} -- which is not the default, on purpose -- returns the
      * wrapper instead.
      */
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testSqlArrayGetObjectWhenLegacyDisabled() throws Exception {
         Connection conn = standardMappingConnection();
@@ -510,6 +516,7 @@ public class OdpsArrayTest {
      * {@code java.sql.Array} wrapper it cannot cast. Run on a standard-mapping connection, where
      * the untyped path returns the wrapper.
      */
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testTypedGetObjectHonoursRequestedType() throws Exception {
         Connection conn = standardMappingConnection();
@@ -542,6 +549,7 @@ public class OdpsArrayTest {
      * value to {@code java.util.List}, so flipping it by default would break them; the standard
      * {@code java.sql.Array} mapping is opt-in through {@code legacy_array_get_object=false}.
      */
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testDefaultGetObjectKeepsLegacyRawList() throws Exception {
         Connection conn = TestUtils.getConnection();
@@ -565,6 +573,7 @@ public class OdpsArrayTest {
      * {@code getObject(i, Array.class)} request on an ARRAY column threw the very same
      * ClassCastException as {@code getObject(i)}, which is half of what this fix exists for.
      */
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testLegacyFlagKeepsTypedArrayRequestWorking() throws Exception {
         // Explicitly set, even though true is the default: the point is that naming

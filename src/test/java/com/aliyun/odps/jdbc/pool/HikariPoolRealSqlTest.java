@@ -57,6 +57,7 @@ import org.junit.jupiter.api.condition.DisabledIf;
 @DisabledIf(value = "com.aliyun.odps.jdbc.pool.PoolHarness#noLiveService",
             disabledReason = "needs odps_endpoint / MAXCOMPUTE_PROJECT / ALIBABA_CLOUD_ACCESS_KEY_ID"
             + " / ALIBABA_CLOUD_ACCESS_KEY_SECRET in the environment")
+@org.junit.jupiter.api.Tag("live-service")
 public class HikariPoolRealSqlTest {
 
   private static final String ALIVE_BYPASS_WINDOW = "com.zaxxer.hikari.aliveBypassWindowMs";

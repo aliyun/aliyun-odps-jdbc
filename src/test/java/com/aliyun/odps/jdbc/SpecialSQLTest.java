@@ -10,6 +10,7 @@ import com.aliyun.odps.jdbc.utils.TestUtils;
 /**
  * @author dingxin (zhangdingxin.zdx@alibaba-inc.com)
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class SpecialSQLTest {
 
     @Test

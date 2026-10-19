@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.aliyun.odps</groupId>
   <artifactId>odps-jdbc</artifactId>
-  <version>3.10.14</version>
+  <version>3.10.15</version>
   <name>odps-jdbc</name>
   <description>Aliyun ODPS JDBC driver</description>
   <url>http://odps.aliyun.com</url>
@@ -63,6 +63,7 @@
   </repositories>
 
   <properties>
+    <excludedGroups></excludedGroups>
     <sdk.version>0.58.1-public</sdk.version>
     <junit.version>4.13.1</junit.version>
     <junit5.version>5.10.0</junit5.version>
@@ -137,6 +138,7 @@
         <version>3.2.5</version>
         <configuration>
           <failIfNoTests>true</failIfNoTests>
+          <excludedGroups>${excludedGroups}</excludedGroups>
         </configuration>
       </plugin>
 
@@ -274,6 +276,14 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>emulator-ci</id>
+      <properties>
+        <excludedGroups>live-service</excludedGroups>
+      </properties>
+    </profile>
+  </profiles>
   <dependencyManagement>
       <dependencies>
           <!-- Pin transitive runtime libraries before JDBC shading. -->

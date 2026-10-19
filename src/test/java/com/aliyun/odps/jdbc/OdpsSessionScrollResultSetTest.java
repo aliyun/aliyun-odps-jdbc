@@ -41,6 +41,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.TestMethodOrder;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsSessionScrollResultSetTest {
 
   private static Connection conn;

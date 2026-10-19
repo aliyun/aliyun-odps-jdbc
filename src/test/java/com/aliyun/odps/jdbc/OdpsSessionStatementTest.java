@@ -37,6 +37,7 @@ import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsSessionStatementTest {
 
   private static Connection conn;
@@ -171,7 +172,8 @@ public class OdpsSessionStatementTest {
         Assertions.assertEquals(i, rs.getInt(1));
         i++;
       }
-      Assertions.assertEquals(10000, i);
+      // TestUtils disables the service preview limit; JDBC maxRows is the bound.
+      Assertions.assertEquals(11111, i);
     }
     rs.close();
     stmt.close();
