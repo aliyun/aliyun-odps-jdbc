@@ -22,6 +22,7 @@ import com.aliyun.odps.tunnel.io.TunnelRecordReader;
 import java.sql.Timestamp;
 import java.time.*;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class ServerSideTest {
 
     private static final String DATE_UTC = "2012-01-01";

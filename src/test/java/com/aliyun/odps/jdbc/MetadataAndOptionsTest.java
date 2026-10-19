@@ -48,6 +48,7 @@ import com.aliyun.odps.jdbc.utils.TestUtils;
  * {@link Assumptions} - the call has already gone through our short-circuit logic by the
  * time the SDK fails downstream.
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class MetadataAndOptionsTest {
 
   // ---------- skipCheckIfEpv2 URL parameter ----------

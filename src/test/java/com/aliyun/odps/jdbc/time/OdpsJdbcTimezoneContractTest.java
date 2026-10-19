@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li><b>DATE</b> holds a calendar date: no zone, no clock.</li>
  * </ul>
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsJdbcTimezoneContractTest {
 
   static final String UTC = "UTC";

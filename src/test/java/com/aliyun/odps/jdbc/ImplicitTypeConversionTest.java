@@ -61,6 +61,7 @@ import com.aliyun.odps.type.TypeInfoFactory;
 /**
  * This test will create a table with all the data type of ODPS 2.0 and create
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class ImplicitTypeConversionTest {
 
   private static final String TEST_TABLE = "implicit_type_conversion_test";

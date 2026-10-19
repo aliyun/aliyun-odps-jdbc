@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 /**
  * @author dingxin (zhangdingxin.zdx@alibaba-inc.com)
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class WarningLogTest {
 
     Logger logger = (Logger) LoggerFactory.getLogger("ROOT");

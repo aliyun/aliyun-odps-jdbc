@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import com.aliyun.odps.Odps;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsDatabaseMetaDataTest {
 
   static DatabaseMetaData databaseMetaData;

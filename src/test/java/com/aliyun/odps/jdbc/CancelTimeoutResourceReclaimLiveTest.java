@@ -70,6 +70,7 @@ import static org.junit.jupiter.api.Assertions.fail;
     value = "com.aliyun.odps.jdbc.CancelTimeoutResourceReclaimLiveTest#withoutTestIdentity",
     disabledReason = "needs the component test identity: odps_endpoint / MAXCOMPUTE_PROJECT / "
                      + "ALIBABA_CLOUD_ACCESS_KEY_ID")
+@org.junit.jupiter.api.Tag("live-service")
 public class CancelTimeoutResourceReclaimLiveTest {
 
   private static final String TABLE = "tony_cancel_close_probe";

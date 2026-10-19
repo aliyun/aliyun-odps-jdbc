@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.google.common.collect.ImmutableMap;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsStatementCommandApiTest {
 
   static final String tableName = "commandapi_test";

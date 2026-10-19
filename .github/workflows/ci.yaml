@@ -1,50 +1,12 @@
 name: CI
-
 on:
-  workflow_dispatch: # 支持手动触发
+  workflow_dispatch:
   push:
-    branches: [ "master" ]
-
+    branches: [master]
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
 jobs:
-
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write     # 获取 oidc token 的权限
-    steps:
-      - name: get credentials
-        id: get-credentials
-        uses: aliyun/configure-aliyun-credentials-action@v1.0.7
-        with:
-          role-to-assume: '${{ secrets.ROLE_ARN }}'
-          oidc-provider-arn: '${{ secrets.OIDC_ARN }}'
-          role-session-name: 'github-action-session'
-          role-session-expiration: 1800
-          audience: 'actions.github.com'
-
-      - name: Set up environment
-        run: |
-          echo "ALIBABA_CLOUD_ACCESS_KEY_ID=${{ steps.get-credentials.outputs.aliyun-access-key-id }}" >> $GITHUB_ENV
-          echo "ALIBABA_CLOUD_ACCESS_KEY_SECRET=${{ steps.get-credentials.outputs.aliyun-access-key-secret }}" >> $GITHUB_ENV
-          echo "ALIBABA_CLOUD_SECURITY_TOKEN=${{ steps.get-credentials.outputs.aliyun-security-token }}" >> $GITHUB_ENV
-          echo "odps_endpoint=${{ secrets.ENDPOINT }}" >> $GITHUB_ENV
-          echo "MAXCOMPUTE_PROJECT=go_sdk_regression_testing" >> $GITHUB_ENV
-          echo "TZ=Asia/Shanghai" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 8
-        uses: actions/setup-java@v4
-        with:
-          java-version: '8'
-          distribution: 'adopt'
-
-      - name: Build with Maven (fail at end)
-        run: mvn clean test -fae
-
-      # 发布测试结果到 Actions UI 和 PR
-      - name: Publish Test Report
-        if: (!cancelled())
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: '**/target/surefire-reports/*.xml'
+  jdbc:
+    uses: ./.github/workflows/emulator-tests.yml

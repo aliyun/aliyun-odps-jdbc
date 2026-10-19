@@ -71,12 +71,14 @@ public class OdpsStructTest {
         });
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testE2EStructFunctionality() throws Exception {
         Connection conn = TestUtils.getConnection();
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
+            stmt.execute("set odps.sql.type.system.odps2=true;");
             
             // Drop table if exists
             stmt.executeUpdate("drop table if exists struct_e2e_test_table;");
@@ -135,12 +137,14 @@ public class OdpsStructTest {
         }
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testE2EStructWithComplexTypes() throws Exception {
         Connection conn = TestUtils.getConnection();
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
+            stmt.execute("set odps.sql.type.system.odps2=true;");
             
             // Drop table if exists
             stmt.executeUpdate("drop table if exists struct_complex_test_table;");
@@ -187,12 +191,14 @@ public class OdpsStructTest {
         }
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testE2EStructWithNestedStructs() throws Exception {
         Connection conn = TestUtils.getConnection();
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
+            stmt.execute("set odps.sql.type.system.odps2=true;");
             
             // Drop table if exists
             stmt.executeUpdate("drop table if exists struct_nested_test_table;");
@@ -238,12 +244,14 @@ public class OdpsStructTest {
         }
     }
     
+    @org.junit.jupiter.api.Tag("live-service")
     @Test
     public void testPreparedStatementSetObjectWithStruct() throws Exception {
         Connection conn = TestUtils.getConnection();
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
+            stmt.execute("set odps.sql.type.system.odps2=true;");
 
             // Drop table if exists
             stmt.executeUpdate("drop table if exists ps_struct_test_table;");

@@ -49,6 +49,7 @@ import com.google.common.collect.ImmutableMap;
         + "The test project reports odps.schema.model.enabled=false. Enable namespace schemas "
         + "for it, or run the tests against a project that has them enabled "
         + "(MAXCOMPUTE_PROJECT).")
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsScrollResultSetTest {
 
   private static Connection conn;

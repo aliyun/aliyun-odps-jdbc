@@ -508,3 +508,25 @@ cases), please stick to the latest version before 2.0.
 ## License
 
 licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
+
+### Reproducible CI and live acceptance
+
+`mvn -B -ntp clean package -Pemulator-ci` runs the offline contract suite. Service
+integration tests are tagged `live-service` and remain enabled in the default
+`mvn test` run. The cloud CI additionally runs `scripts/jdbc-core-smoke.sh` and
+`scripts/jdbc-emulator-smoke.sh` against the **shaded candidate jar** and a pinned
+MaxCompute Emulator source revision. It uploads the candidate checksum, emulator
+source/image identity, capabilities and test reports.
+
+The emulator uses synthetic credentials and needs no cloud secrets. Its SQLRT
+coverage is separate from MaxQA v2 service capacity/fallback. For the latter, set
+`MAXCOMPUTE_MAXQA_QUOTA` to a healthy quota; add `-Dmaxqa.required=true` when this is
+a required acceptance gate. Missing optional quota configuration is reported as a
+skipped test, never a successful no-op. Three-tier tests discover the project's
+schema capability before running.
+
+Before publication, `core-tests.yml` requires a successful authenticated
+`jdbc-packaged-live-core` status on the exact release commit, reported by the
+release operator after running the packaged candidate against MaxCompute. Default
+cloud CI and pull requests do not request cloud credentials. Emulator success and
+live SQL acceptance are independent gates.

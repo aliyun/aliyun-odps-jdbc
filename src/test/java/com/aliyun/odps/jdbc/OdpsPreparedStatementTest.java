@@ -53,6 +53,7 @@ import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsPreparedStatementTest {
 
   @Test
@@ -125,6 +126,7 @@ public class OdpsPreparedStatementTest {
     TableTunnel tunnel = new TableTunnel(odps);
     
     Statement stmt = conn.createStatement();
+    stmt.execute("set odps.sql.type.system.odps2=true;");
     stmt.executeUpdate("drop table if exists dual;");
     stmt.executeUpdate("create table if not exists dual(id bigint);");
     TableTunnel.UploadSession upload = tunnel.createUploadSession(

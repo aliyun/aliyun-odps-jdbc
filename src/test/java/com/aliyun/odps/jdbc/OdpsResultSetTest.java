@@ -39,6 +39,7 @@ import com.aliyun.odps.data.RecordWriter;
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.aliyun.odps.tunnel.TableTunnel;
 
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsResultSetTest {
 
   static Statement stmt;

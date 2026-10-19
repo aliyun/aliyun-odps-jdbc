@@ -53,6 +53,7 @@ import com.aliyun.odps.type.TypeInfoFactory;
  * them is a deliberate decision rather than a silent regression. Where that behaviour is a defect
  * the case documents the defect and is marked as such.
  */
+@org.junit.jupiter.api.Tag("live-service")
 public class OdpsComplexTypeContractTest {
 
     private static final String TABLE = "jdbc_complex_contract_test";
