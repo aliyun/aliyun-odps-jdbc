@@ -17,7 +17,9 @@ before publication. The reusable workflow requires all three independent gates:
 Emulator protocol coverage includes scalar/NULL/ARRAY results, typed prepared
 parameters, batch Tunnel writes and reads, STRUCT values, metadata, row limits,
 SQL errors, connection reuse and SQLRT sessions. It also requires all fifteen namespace and scroll contracts
-to execute with zero skips. It does not establish cloud IAM,
+to execute with zero skips. [SQL performance regression](sql-performance.md) additionally
+checks long SQL, concurrent callers and bounded JVM memory, including the default
+full-parser bypass. It does not establish cloud IAM,
 distributed scheduling, MaxQA v2 capacity/fallback or service-specific extended
 value transfer. The default `mvn test` still runs the live service suite;
 `-Pemulator-ci` selects offline contracts for reproducible cloud CI.

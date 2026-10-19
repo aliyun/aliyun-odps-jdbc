@@ -1,5 +1,23 @@
 # 更新日志
 
+## 3.10.15 - 未发布
+
+### 修复
+
+- 升级打包依赖 Jackson 至 `2.21.7`、LZ4 至 `1.11.4`、Zstandard 至 `1.5.7-17`，并在 shading 前固定 Netty `4.1.137.Final`。
+- 连接建立失败时统一返回 `SQLException`，保留原始异常和 MaxQA 路由诊断信息。
+- 修复 Statement、PreparedStatement 和结果集的资源释放、取消及关闭状态行为；上传数据前校验绑定参数是否完整。
+- 修复 catalog/schema 标识、列精度和小数位数、元数据过滤及三层模型 Schema 解析。
+- 上传和下载统一使用配置的 Tunnel endpoint。
+- 将 PreparedStatement 字符串参数检查中的块注释处理改为线性扫描，并修复宽 batch/分区列表正则的栈溢出，保留原有放行和拒绝规则。
+
+### 兼容性与验证
+
+- 最低运行环境保持 Java 8，SDK 保持 `0.58.1-public`。ARRAY 默认仍为 `legacy_array_get_object=true`，可通过 `legacy_array_get_object=false` 使用 `java.sql.Array`。
+- 云端 CI 使用固定版本的 MaxCompute Emulator，验证打包驱动的 SQL、类型参数、Tunnel 传输、复杂类型及全部 15 项 namespace/scroll 契约；发布前强制通过 JDK 8/11/17/21 消费者检查和同一提交的真实核心 SQL 验收。
+- 真实 MaxQA v2 测试通过 `MAXCOMPUTE_MAXQA_QUOTA` 显式指定 quota，`-Dmaxqa.required=true` 在缺少配置时失败。Emulator 验收不代表真实云端 IAM、分布式调度或 MaxQA v2 服务容量已通过验证。
+- 增加打包驱动的长 SQL、并发提交及 256 MiB 堆限制性能回归，并检测默认链路是否意外恢复完整 ANTLR 解析。
+
 ## [3.8.5] - 2025-03-18
 ### 改进
 - **依赖升级**  

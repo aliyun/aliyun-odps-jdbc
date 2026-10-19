@@ -13,19 +13,21 @@ jobs:
         with:
           distribution: temurin
           java-version: '8'
+      - name: Validate the current changelog entry
+        run: python3 scripts/extract-release-notes.py > "$RUNNER_TEMP/release-notes.md"
       - name: Build candidate and run all offline contract tests
         run: mvn -B -ntp clean package -Pemulator-ci
       - name: Check out pinned emulator source
         uses: actions/checkout@v4
         with:
           repository: dingxin-tech/maxcompute-emulator
-          ref: 49791a1120141244902b53309f2aa7b03a6727ea
+          ref: b4f3042cc822eeb828590c515bc583c187536c3d
           path: .ci-emulator
           persist-credentials: false
       - name: Build and start isolated emulator
         run: |
           docker build --target release -t jdbc-emulator:ci .ci-emulator
-          docker run -d --name jdbc-emulator -p 127.0.0.1:18080:8080 jdbc-emulator:ci --listen 0.0.0.0:8080 --project test_project --max-rows 200000 --max-sessions 512
+          docker run -d --name jdbc-emulator --memory=2g --cpus=2 -e GOMEMLIMIT=512MiB -e GOMAXPROCS=2 -p 127.0.0.1:18080:8080 jdbc-emulator:ci --listen 0.0.0.0:8080 --project test_project --max-rows 200000 --max-sessions 4096
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:18080/readyz; then break; fi
             sleep 1
@@ -33,6 +35,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:18080/capabilities > target/emulator-capabilities.json
           git -C .ci-emulator rev-parse HEAD > target/emulator-source.txt
           docker image inspect jdbc-emulator:ci --format '{{.Id}}' > target/emulator-image.txt
+          docker inspect jdbc-emulator --format '{"memory_bytes":{{.HostConfig.Memory}},"nano_cpus":{{.HostConfig.NanoCpus}}}' > target/emulator-runtime.json
       - name: Run all fifteen namespace and scroll contracts
         env:
           ALIBABA_CLOUD_ACCESS_KEY_ID: test-ak
@@ -59,6 +62,10 @@ jobs:
           bash scripts/jdbc-core-smoke.sh "$jar"
           bash scripts/jdbc-emulator-smoke.sh "$jar" "$MAXCOMPUTE_ENDPOINT"
           sha256sum "$jar" > target/candidate-sha256.txt
+      - name: Stress long SQL and concurrent submissions in bounded JVMs
+        run: |
+          version=$(python3 -c 'import xml.etree.ElementTree as E; print(E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)')
+          python3 scripts/jdbc-sql-performance.py "target/odps-jdbc-${version}.jar" --driver-commit "$GITHUB_SHA"
       - name: Collect emulator diagnostics
         if: always()
         run: docker logs jdbc-emulator > target/emulator.log 2>&1 || true
@@ -76,6 +83,7 @@ jobs:
             target/emulator.log
             target/surefire-reports/
             target/offline-reports/
+            target/sql-performance/
           retention-days: 14
       - name: Stop emulator
         if: always()
