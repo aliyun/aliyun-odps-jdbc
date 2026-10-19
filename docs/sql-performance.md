@@ -77,3 +77,22 @@ comma-list matching. Offline regressions include differential short-input checks
 and large accepted/rejected inputs; packaged-driver stress exercises the real
 call sites. A direct full-ANTLR OOM probe is outside the default path and is not
 presented as the cause of the historical incident.
+
+## Recorded reference baseline
+
+[Baseline JSON](performance/sql-submission-baseline.json) records 21/21 passing cases
+on JDK 1.8.0_504, Mac OS X / aarch64, 10 reported processors. The driver artifact is built from
+`3039051dd1dc407944a18e76539419626a5a4cea`; the harness is `45ad8db08b50d4b1afe47fdc2603fa80c43c86d3` with a clean worktree. Emulator source is
+`b4f3042cc822eeb828590c515bc583c187536c3d`, with the resource limits above. The JSON retains the JAR SHA-256 and image ID.
+
+| Workload | Workers | p95 (ms) | Operations/s | Sampled JVM heap peak (MiB) |
+| --- | ---: | ---: | ---: | ---: |
+| Comment-prefixed SQL, about 1 MiB | 8 | 299.5 | 39.9 | 159.2 |
+| Token-heavy prepared SQL, 256 KiB | 8 | 7110.9 | 1.3 | 168.7 |
+| String parameter, about 1 MiB | 8 | 509.6 | 22.3 | 211.8 |
+| String parameter, about 1 MiB | 16 | 979.7 | 19.7 | 214.1 |
+
+All 20 default cases avoided the full parser; the small explicit parser control
+loaded it. These are measured reference values, not CI latency thresholds. The
+release gates still validate the final commit's own cloud artifact and live SQL;
+this reference baseline does not claim byte identity with a later rebuild.
