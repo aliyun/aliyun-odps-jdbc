@@ -68,6 +68,9 @@
     <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>
+    <jackson.version>2.21.7</jackson.version>
+    <lz4.version>1.11.4</lz4.version>
+    <zstd.version>1.5.7-17</zstd.version>
   </properties>
   <build>
     <resources>
@@ -277,7 +280,19 @@
           <dependency>
               <groupId>at.yawk.lz4</groupId>
               <artifactId>lz4-java</artifactId>
-              <version>1.11.2</version>
+              <version>${lz4.version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.github.luben</groupId>
+              <artifactId>zstd-jni</artifactId>
+              <version>${zstd.version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.fasterxml.jackson</groupId>
+              <artifactId>jackson-bom</artifactId>
+              <version>${jackson.version}</version>
+              <type>pom</type>
+              <scope>import</scope>
           </dependency>
           <dependency>
               <groupId>org.jetbrains.kotlin</groupId>
@@ -350,17 +365,14 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.21.5</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.21.5</version>
     </dependency>
     <dependency>
       <groupId>at.yawk.lz4</groupId>
       <artifactId>lz4-java</artifactId>
-      <version>1.11.2</version>
     </dependency>
 
     <dependency>
