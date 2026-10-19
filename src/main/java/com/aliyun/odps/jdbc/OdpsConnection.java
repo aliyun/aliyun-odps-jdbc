@@ -136,6 +136,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int retryTime = -1;
   private int readTimeout = -1;
   private int connectTimeout = -1;
+  private int retryWaitTime = -1;
   private boolean enableCommandApi;
   private boolean useInstanceTunnel;
   private boolean httpsCheck;
@@ -275,6 +276,15 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     if (connectTimeout > 0) {
       this.connectTimeout = connectTimeout;
       odps.getRestClient().setConnectTimeout(this.connectTimeout);
+    }
+
+    // The SDK waits `connectTimeout` seconds between retried GETs unless a retry wait time is
+    // set. Passing this option through lets a connection bound the socket timeout and the
+    // back-off separately; leaving it unset keeps the behaviour existing applications see today.
+    int retryWaitTime = connRes.getRetryWaitTime();
+    if (retryWaitTime > 0) {
+      this.retryWaitTime = retryWaitTime;
+      odps.getRestClient().setRetryWaitTime(this.retryWaitTime);
     }
 
     this.info = info;
@@ -1081,6 +1091,27 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
     this.connectTimeout = connectTimeout;
     odps.getRestClient().setConnectTimeout(this.connectTimeout);
+  }
+
+  /**
+   * @return the seconds this connection waits between retried REST requests, or -1 when the
+   *     option was not given. -1 does not mean "no wait": the SDK then uses the connect timeout
+   *     as the back-off interval, which is what {@code getConnectTimeout()} reports here too.
+   */
+  public int getRetryWaitTime() {
+    if (retryWaitTime == -1) {
+      return odps.getRestClient().getRetryWaitTime();
+    }
+
+    return retryWaitTime;
+  }
+
+  public void setRetryWaitTime(int retryWaitTime) {
+    if (retryWaitTime <= 0) {
+      throw new IllegalArgumentException("retry-wait-time should be positive.");
+    }
+    this.retryWaitTime = retryWaitTime;
+    odps.getRestClient().setRetryWaitTime(this.retryWaitTime);
   }
 
   public int getTunnelReadTimeout() {

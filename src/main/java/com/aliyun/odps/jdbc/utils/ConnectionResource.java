@@ -94,6 +94,7 @@ public class ConnectionResource {
   private static final String TUNNEL_CONNECT_TIMEOUT_URL_KRY = "tunnelConnectTimeout";
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY = "tunnelDownloadUseSingleReader";
   private static final String RETRY_TIME_URL_KEY = "retryTime";
+  private static final String RETRY_WAIT_TIME_URL_KEY = "retryWaitTime";
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
   private static final String QUOTA_NAME_URL_KEY = "quotaName";
   private static final String TUNNEL_QUOTA_NAME_URL_KEY = "tunnelQuotaName";
@@ -168,6 +169,7 @@ public class ConnectionResource {
   private static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY = "tunnel_download_use_single_reader";
   private static final String RETRY_TIME_PROP_KEY = "retry_time";
+  private static final String RETRY_WAIT_TIME_PROP_KEY = "retry_wait_time";
   private static final String SKIP_SQL_REWRITE_PROP_KEY = "skip_sql_rewrite";
   private static final String SKIP_SQL_INJECT_CHECK_PROP_KEY = "skip_sql_inject_check";
   private static final String QUOTA_NAME_PROP_KEY = "quota_name";
@@ -239,6 +241,8 @@ public class ConnectionResource {
   private String tunnelConnectTimeout;
   private boolean tunnelDownloadUseSingleReader = false;
   private int retryTime;
+  // -1: not set, the SDK keeps reusing the connect timeout as the retry back-off interval.
+  private int retryWaitTime = -1;
   private String timeZone;
   private boolean skipCheckIfSelect;
   private long longJobWarningThreshold;
@@ -484,6 +488,10 @@ public class ConnectionResource {
 
     retryTime = Integer.parseInt(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY)
+    );
+
+    retryWaitTime = Integer.parseInt(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_WAIT_TIME_PROP_KEY, RETRY_WAIT_TIME_URL_KEY)
     );
 
     logLevel = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_LEVEL_PROP_KEY, LOG_LEVEL_URL_KEY);
@@ -843,6 +851,10 @@ public class ConnectionResource {
 
   public int getRetryTime() {
     return retryTime;
+  }
+
+  public int getRetryWaitTime() {
+    return retryWaitTime;
   }
 
   public boolean isTunnelDownloadUseSingleReader() {
