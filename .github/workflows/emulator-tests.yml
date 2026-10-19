@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: dingxin-tech/maxcompute-emulator
-          ref: 8c920e9eea062bd2145da21bd740a3be90763708
+          ref: 091e4bf734b42f094537a7a913ba289d3e82840a
           path: .ci-emulator
           persist-credentials: false
       - name: Build and start isolated emulator

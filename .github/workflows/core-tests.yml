@@ -17,6 +17,8 @@ permissions:
   contents: read
   statuses: read
 jobs:
+  jdk-consumers:
+    uses: ./.github/workflows/jdk-consumer-matrix.yml
   emulator:
     uses: ./.github/workflows/emulator-tests.yml
   verified-live-core:

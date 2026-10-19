@@ -1,21 +1,61 @@
 # JDBC release acceptance
 
-Every tag release and manual release runs `core-tests.yml` for the same commit before the publishing job. The `release` job requires `core-tests` success. A failed build, missing credentials, STS/OIDC error, timeout or failed assertion blocks publication; no skipped-test fallback is allowed.
+Every tag and manual release requires `core-tests.yml` success for the same commit
+before publication. The reusable workflow requires all three independent gates:
 
-The gate builds the shaded driver on JDK 8, runs dependency regression tests, and executes `scripts/JdbcCoreSmoke.java` using only that packaged JAR and the JDK. Against the regression project it verifies connection, real `Statement.executeQuery`, numeric/string/NULL results, metadata, prepared parameter binding, result exhaustion and resource closure. Queries use constants; no tables or user data are modified. It is the minimum release gate, not the complete JDBC integration suite.
+1. Build the shaded driver on JDK 8, run the offline contract suite, and exercise
+   the candidate against the fixed MaxCompute Emulator revision. The cloud job
+   needs only synthetic credentials; it uploads test reports, the candidate JAR
+   and checksum, emulator source commit, image ID and capabilities.
+2. Run the packaged-driver consumer matrix on JDK 8/11/17/21 and compare the
+   observable results. A failed matrix blocks publication.
+3. Require authenticated `jdbc-packaged-live-core` commit status for the exact
+   release commit. The latest status must be successful and its creator must be
+   the release operator. Missing, failed or different-commit evidence blocks
+   publication. This requirement applies to both tag and manual releases.
 
-To run the same gate locally, provide approved credentials through the credential broker and set non-secret `MAXCOMPUTE_ENDPOINT` and `MAXCOMPUTE_PROJECT`, then run `bash scripts/jdbc-core-smoke.sh target/odps-jdbc-<version>.jar`. Missing variables exit nonzero. Never put credentials in arguments or checked-in files.
+Emulator protocol coverage includes scalar/NULL/ARRAY results, typed prepared
+parameters, batch Tunnel writes and reads, STRUCT values, metadata, row limits,
+SQL errors, connection reuse and SQLRT sessions. It does not establish cloud IAM,
+distributed scheduling, MaxQA v2 capacity/fallback or service-specific extended
+value transfer. The default `mvn test` still runs the live service suite;
+`-Pemulator-ci` selects offline contracts for reproducible cloud CI.
 
-The existing broader integration CI also propagates Maven test failure. Its test report does not replace the core acceptance gate.
+## Live packaged-driver acceptance
 
-## 3.10.13 historical limitation
+After the final commit is clean, download the candidate JAR from that commit's CI
+artifact. Supply approved credentials through the component test configuration
+and set non-secret `MAXCOMPUTE_ENDPOINT` and `MAXCOMPUTE_PROJECT`, then run:
 
-Version 3.10.13 was published before this mandatory gate was introduced. Its JDK 8 build/dependency tests and downloaded-JAR offline smoke passed, but live SQL acceptance was not completed: GitHub STS failed with `AuthenticationFail.OIDCToken.PublicKeyFingerprintMismatch`. This release must not be described as having passed live core SQL tests. Fix the existing RAM OIDC trust configuration and rerun the gate before the next release. Do not republish the existing immutable Maven version or move its tag.
+```bash
+bash scripts/jdbc-core-smoke.sh /path/to/odps-jdbc-<version>.jar
+```
 
-## Local acceptance route
+This uses only the packaged JAR and the JDK. It verifies connection, real SQL,
+numeric/string/NULL results, metadata, prepared binding, result exhaustion,
+resource closure and ARRAY mapping in default, explicit legacy and standard
+modes, by index/label and explicit List/Array requests. Queries use constants and
+modify no tables. Missing variables, SQL errors, timeouts or assertions fail; never
+report success for a skipped test. Credentials must not enter arguments, records
+or source control. The gate is focused live acceptance, not the entire service
+integration suite.
 
-When OIDC is unavailable, a release operator may run the same packaged-driver live gate locally using the approved component test configuration. After testing the final, clean commit, the operator reports the result as the `jdbc-packaged-live-core` GitHub commit status, including a link to the acceptance record. Never report success for a skipped, failed, timed-out or different-commit test.
+Report the result as `jdbc-packaged-live-core` on the exact tested commit, linking
+the CI artifact/acceptance record and recording the candidate checksum. A manual
+Release can pass the full SHA as `local_core_sha`; it must equal `github.sha`.
+Tag-triggered releases validate `github.sha` directly. Both paths run Emulator
+and the JDK consumer matrix and verify the live status. Neither path obtains
+cloud credentials through OIDC.
 
-Dispatch Release with `local_core_sha` set to that full commit SHA. The alternative core job builds the same commit on JDK 8 and runs all release regression tests, then requires the input to equal `github.sha`, the latest live status to be successful, and its creator to equal the release operator. Missing or failed evidence blocks publication. Default tag-triggered releases continue to execute live SQL through OIDC. Both paths remain required by the publishing job through `needs: core-tests`.
+For optional MaxQA v2 service acceptance, set `MAXCOMPUTE_MAXQA_QUOTA` to a healthy
+quota. Add `-Dmaxqa.required=true` when the capability is mandatory; missing quota
+configuration then fails rather than skips. Three-tier tests discover the project
+schema capability independently.
 
-The packaged-driver gate also checks ARRAY mapping in default, explicit legacy and standard modes, by index and label, with explicit List and Array requests. Local execution may use JDK 17 with the driver's Java 8 bytecode target; the hosted build independently validates compilation and regression tests on JDK 8. This route avoids storing local test credentials in GitHub.
+## Historical limitation
+
+Version 3.10.13 predates the mandatory live gate. Its offline checks passed but
+live SQL acceptance was not completed because OIDC authentication failed. Do not
+describe it as live-validated, republish its immutable Maven version or move its
+tag. The current cloud CI uses Emulator, while publication still requires actual
+MaxCompute SQL evidence for the final candidate.
