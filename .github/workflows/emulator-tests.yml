@@ -21,13 +21,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: dingxin-tech/maxcompute-emulator
-          ref: 42ac7baf42aea586a731f8bb3f495a79933af2dd
+          ref: b4f3042cc822eeb828590c515bc583c187536c3d
           path: .ci-emulator
           persist-credentials: false
       - name: Build and start isolated emulator
         run: |
           docker build --target release -t jdbc-emulator:ci .ci-emulator
-          docker run -d --name jdbc-emulator --memory=2g --cpus=2 -e GOMEMLIMIT=512MiB -e GOMAXPROCS=2 -p 127.0.0.1:18080:8080 jdbc-emulator:ci --listen 0.0.0.0:8080 --project test_project --max-rows 200000 --max-sessions 512
+          docker run -d --name jdbc-emulator --memory=2g --cpus=2 -e GOMEMLIMIT=512MiB -e GOMAXPROCS=2 -p 127.0.0.1:18080:8080 jdbc-emulator:ci --listen 0.0.0.0:8080 --project test_project --max-rows 200000 --max-sessions 4096
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:18080/readyz; then break; fi
             sleep 1

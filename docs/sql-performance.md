@@ -16,7 +16,9 @@ part of the benchmark.
 Build the driver with JDK 8 and start the CI-pinned Emulator on port 18080 (see
 `.github/workflows/emulator-tests.yml` for its source revision and Docker build).
 The Emulator has a 2 GiB memory limit and 2 CPUs, `GOMEMLIMIT=512MiB`,
-`GOMAXPROCS=2`, project `test_project`, 200000 rows and 512 sessions. Then run:
+`GOMAXPROCS=2`, project `test_project`, 200000 rows and 4096 sessions. The session budget accommodates the full
+baseline matrix: remote Tunnel download sessions expire independently of local
+ResultSet closure. It is not a JVM thread/concurrency setting. Then run:
 
 ```bash
 mvn -B -ntp clean package -Pemulator-ci
