@@ -84,14 +84,16 @@ public class ConnectionResource {
   private static final String SETTINGS_URL_KEY = "settings";
   private static final String ODPS_NAMESPACE_SCHEMA_URL_KEY = "odpsNamespaceSchema";
   private static final String SCHEMA_URL_KEY = "schema";
-  private static final String READ_TIMEOUT_URL_KEY = "readTimeout";
-  private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
+  // Public because the driver reports a rejected value by the exact spelling the user typed;
+  // these are the pairs documented in README.md, URL key and property key.
+  public static final String READ_TIMEOUT_URL_KEY = "readTimeout";
+  public static final String CONNECT_TIMEOUT_URL_KEY = "connectTimeout";
   private static final String ENABLE_COMMAND_API_URL_KEY = "enableCommandApi";
   private static final String USE_INSTANCE_TUNNEL_URL_KEY = "useInstanceTunnel";
   private static final String HTTPS_CHECK_URL_KEY = "httpsCheck";
   private static final String LOG_LEVEL_URL_KEY = "logLevel";
-  private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
-  private static final String TUNNEL_CONNECT_TIMEOUT_URL_KRY = "tunnelConnectTimeout";
+  public static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
+  public static final String TUNNEL_CONNECT_TIMEOUT_URL_KEY = "tunnelConnectTimeout";
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY = "tunnelDownloadUseSingleReader";
   private static final String RETRY_TIME_URL_KEY = "retryTime";
   private static final String SKIP_SQL_REWRITE_URL_KEY = "skipSqlRewrite";
@@ -158,14 +160,14 @@ public class ConnectionResource {
   private static final String ACCESS_KEY_PROP_KEY_ALT = "password";
   private static final String ODPS_NAMESPACE_SCHEMA_PROP_KEY = "odps_namespace_schema";
   private static final String SCHEMA_PROP_KEY = "schema";
-  private static final String READ_TIMEOUT_PROP_KEY = "read_timeout";
-  private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
+  public static final String READ_TIMEOUT_PROP_KEY = "read_timeout";
+  public static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
   private static final String ENABLE_COMMAND_API_PROP_KEY = "enable_command_api";
   private static final String USE_INSTANCE_TUNNEL_PROP_KEY = "use_instance_tunnel";
   private static final String HTTPS_CHECK_PROP_KEY = "https_check";
   private static final String LOG_LEVEL_PROP_KEY = "log_level";
-  private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
-  private static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
+  public static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
+  public static final String TUNNEL_CONNECT_TIMEOUT_PROP_KEY = "tunnel_connect_timeout";
   private static final String TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY = "tunnel_download_use_single_reader";
   private static final String RETRY_TIME_PROP_KEY = "retry_time";
   private static final String SKIP_SQL_REWRITE_PROP_KEY = "skip_sql_rewrite";
@@ -308,10 +310,10 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY,
                                                  TUNNEL_ENDPOINT_URL_KEY);
 
-    tunnelRetryTime = Integer.parseInt(
+    tunnelRetryTime = parseIntOption(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY,
-                                                 TUNNEL_RESULT_RETRY_TIME_URL_KEY)
-    );
+                                                 TUNNEL_RESULT_RETRY_TIME_URL_KEY),
+        TUNNEL_RESULT_RETRY_TIME_URL_KEY, TUNNEL_RESULT_RETRY_TIME_PROP_KEY);
 
     logConfFile =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_CONF_FILE_PROP_KEY,
@@ -388,31 +390,31 @@ public class ConnectionResource {
     stsToken =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, STS_TOKEN_PROP_KEY, STS_TOKEN_URL_KEY);
 
-    autoSelectLimit = Long.valueOf(
+    autoSelectLimit = parseLongOption(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", AUTO_SELECT_LIMIT_PROP_KEY,
-                                                 AUTO_SELECT_LIMIT_URL_KEY)
-    );
+                                                 AUTO_SELECT_LIMIT_URL_KEY),
+        AUTO_SELECT_LIMIT_URL_KEY, AUTO_SELECT_LIMIT_PROP_KEY);
 
-    countLimit = Long.valueOf(
+    countLimit = parseLongOption(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY,
-                                                 INSTANCE_TUNNEL_MAX_RECORD_URL_KEY)
-    );
+                                                 INSTANCE_TUNNEL_MAX_RECORD_URL_KEY),
+        INSTANCE_TUNNEL_MAX_RECORD_URL_KEY, INSTANCE_TUNNEL_MAX_RECORD_PROP_KEY);
     if (countLimit <= 0L) {
       countLimit = null;
     }
 
-    sizeLimit = Long.valueOf(
+    sizeLimit = parseLongOption(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY,
-                                                 INSTANCE_TUNNEL_MAX_SIZE_URL_KEY)
-    );
+                                                 INSTANCE_TUNNEL_MAX_SIZE_URL_KEY),
+        INSTANCE_TUNNEL_MAX_SIZE_URL_KEY, INSTANCE_TUNNEL_MAX_SIZE_PROP_KEY);
     if (sizeLimit <= 0L) {
       sizeLimit = null;
     }
 
-    attachTimeout = Long.valueOf(
+    attachTimeout = parseLongOption(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", ATTACH_TIMEOUT_PROP_KEY,
-                                                 ATTACH_TIMEOUT_URL_KEY)
-    );
+                                                 ATTACH_TIMEOUT_URL_KEY),
+        ATTACH_TIMEOUT_URL_KEY, ATTACH_TIMEOUT_PROP_KEY);
     if (attachTimeout <= 0L) {
       attachTimeout = null;
     }
@@ -438,12 +440,12 @@ public class ConnectionResource {
     readTimeout =
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, READ_TIMEOUT_PROP_KEY, READ_TIMEOUT_URL_KEY);
     connectTimeout =
-            tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, CONNECT_TIMEOUT_PROP_KEY, CONNECT_TIMEOUT_URL_KRY);
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, CONNECT_TIMEOUT_PROP_KEY, CONNECT_TIMEOUT_URL_KEY);
 
     tunnelReadTimeout =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, READ_TIMEOUT_DEFAULT_VALUE, TUNNEL_READ_TIMEOUT_PROP_KEY, TUNNEL_READ_TIMEOUT_URL_KEY);
     tunnelConnectTimeout =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, TUNNEL_CONNECT_TIMEOUT_PROP_KEY, TUNNEL_CONNECT_TIMEOUT_URL_KRY);
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, CONNECT_TIMEOUT_DEFAULT_VALUE, TUNNEL_CONNECT_TIMEOUT_PROP_KEY, TUNNEL_CONNECT_TIMEOUT_URL_KEY);
 
     String tunnelDownloadUseSingleReaderStr = tryGetFirstNonNullValueByAltMapAndAltKey(
             maps, "true", TUNNEL_DOWNLOAD_USE_SINGLE_READER_PROP_KEY, TUNNEL_DOWNLOAD_USE_SINGLE_READER_URL_KEY);
@@ -482,9 +484,9 @@ public class ConnectionResource {
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", LEGACY_ARRAY_GET_OBJECT_PROP_KEY,
                                                  LEGACY_ARRAY_GET_OBJECT_URL_KEY));
 
-    retryTime = Integer.parseInt(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY)
-    );
+    retryTime = parseIntOption(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", RETRY_TIME_PROP_KEY, RETRY_TIME_URL_KEY),
+        RETRY_TIME_URL_KEY, RETRY_TIME_PROP_KEY);
 
     logLevel = tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOG_LEVEL_PROP_KEY, LOG_LEVEL_URL_KEY);
 
@@ -507,27 +509,36 @@ public class ConnectionResource {
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TIME_ZONE_URL_KEY,
                                                      TIME_ZONE_URL_KEY);
 
-    fetchResultSplitSize =
-            Long.parseLong(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "10000", FETCH_RESULT_SPLIT_SIZE, FETCH_RESULT_SPLIT_SIZE));
+    fetchResultSplitSize = parseLongOption(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "10000", FETCH_RESULT_SPLIT_SIZE,
+                                                     FETCH_RESULT_SPLIT_SIZE),
+            FETCH_RESULT_SPLIT_SIZE, FETCH_RESULT_SPLIT_SIZE);
 
-    fetchResultPreloadSplitNum =
-            Integer.parseInt(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "5", FETCH_RESULT_PRELOAD_SPLIT_NUM, FETCH_RESULT_PRELOAD_SPLIT_NUM));
+    fetchResultPreloadSplitNum = parseIntOption(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "5", FETCH_RESULT_PRELOAD_SPLIT_NUM,
+                                                     FETCH_RESULT_PRELOAD_SPLIT_NUM),
+            FETCH_RESULT_PRELOAD_SPLIT_NUM, FETCH_RESULT_PRELOAD_SPLIT_NUM);
 
-    fetchResultThreadNum = Integer.parseInt(tryGetFirstNonNullValueByAltMapAndAltKey(maps, "5", FETCH_RESULT_THREAD_NUM, FETCH_RESULT_THREAD_NUM));
+    fetchResultThreadNum = parseIntOption(
+            tryGetFirstNonNullValueByAltMapAndAltKey(maps, "5", FETCH_RESULT_THREAD_NUM,
+                                                     FETCH_RESULT_THREAD_NUM),
+            FETCH_RESULT_THREAD_NUM, FETCH_RESULT_THREAD_NUM);
 
 
-    logviewVersion = Integer.parseInt(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "1", LOGVIEW_VERSION_PROP_KEY, LOGVIEW_VERSION_URL_KEY)
-    );
+    logviewVersion = parseIntOption(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "1", LOGVIEW_VERSION_PROP_KEY,
+                                                 LOGVIEW_VERSION_URL_KEY),
+        LOGVIEW_VERSION_URL_KEY, LOGVIEW_VERSION_PROP_KEY);
 
     skipCheckIfSelect =
         Boolean.parseBoolean(
             tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", SKIP_CHECK_IF_SELECT,
                                                      SKIP_CHECK_IF_SELECT));
 
-    longJobWarningThreshold = Long.parseLong(
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", LONG_JOB_WARNING_THRESHOLD, LONG_JOB_WARNING_THRESHOLD)
-    );
+    longJobWarningThreshold = parseLongOption(
+        tryGetFirstNonNullValueByAltMapAndAltKey(maps, "-1", LONG_JOB_WARNING_THRESHOLD,
+                                                 LONG_JOB_WARNING_THRESHOLD),
+        LONG_JOB_WARNING_THRESHOLD, LONG_JOB_WARNING_THRESHOLD);
 
     // odpsNamespaceSchema in url or prop |  odps.namespace.schema in settings | odpsNamespaceSchema field
     // key not exists                     |      not set                       | null
@@ -749,6 +760,51 @@ public class ConnectionResource {
       }
     }
     return defaultValue;
+  }
+
+  /**
+   * Wording shared by every connection option this class rejects, so a mistyped value always
+   * arrives with the name that was used to set it and the value that came back.
+   *
+   * <p>"For input string: \"abc\"" names neither, and a JDBC caller cannot even tell which of the
+   * ~40 options it got wrong; {@link #parseIntOption} and {@link #parseLongOption} are the places
+   * where the key spelling is still known, so that is where the name gets attached.
+   *
+   * @param value the rejected value, as the caller wrote it
+   * @param urlKey the spelling accepted in the JDBC URL
+   * @param propertyKey the spelling accepted in the {@link java.util.Properties} argument
+   * @param expected what the option accepts, e.g. "an integer"
+   */
+  public static String invalidOptionMessage(String value, String urlKey, String propertyKey,
+                                            String expected) {
+    String named = urlKey.equals(propertyKey)
+                   ? "\"" + urlKey + "\""
+                   : "\"" + urlKey + "\" (property \"" + propertyKey + "\")";
+    return "Invalid value \"" + value + "\" for the connection option " + named
+           + ": expected " + expected;
+  }
+
+  /**
+   * @throws IllegalArgumentException naming the option and the rejected value, with the
+   *         {@link NumberFormatException} kept as the cause
+   */
+  private static int parseIntOption(String rawValue, String urlKey, String propertyKey) {
+    try {
+      return Integer.parseInt(rawValue);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(
+          invalidOptionMessage(rawValue, urlKey, propertyKey, "an integer"), e);
+    }
+  }
+
+  /** @see #parseIntOption(String, String, String) */
+  private static long parseLongOption(String rawValue, String urlKey, String propertyKey) {
+    try {
+      return Long.parseLong(rawValue);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(
+          invalidOptionMessage(rawValue, urlKey, propertyKey, "an integer"), e);
+    }
   }
 
   private void checkValueIsValidBoolean(String key, String value) {

@@ -56,7 +56,41 @@ public class OdpsDriver implements Driver {
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
-    return acceptsURL(url) ? new OdpsConnection(url, info) : null;
+    if (!acceptsURL(url)) {
+      return null;
+    }
+    try {
+      return new OdpsConnection(url, info);
+    } catch (SQLException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      throw connectionFailure(e);
+    }
+  }
+
+  /**
+   * Reports an opening failure as the only exception type a JDBC driver may use for it.
+   *
+   * <p>Building a connection reaches outside this driver: the option parser raises
+   * {@link IllegalArgumentException} / {@link NumberFormatException} for a value it cannot use, and
+   * the SDK raises {@link com.aliyun.odps.ReloadException} when the project cannot be read. Those
+   * are unchecked, and {@link DriverManager} hands them to the caller untouched, so a consumer
+   * that branches on {@link SQLException} -- a pool choosing between retry, back-off and fail-fast,
+   * a BI tool surfacing the reason -- never sees a failure it was asked to handle and can retry a
+   * configuration that will never work. Keep the origin as the cause and its text in the message:
+   * the caller must still be able to tell an unreachable endpoint from a mistyped option.
+   *
+   * <p>{@link Error} is deliberately not converted: out-of-memory and stack overflow are not
+   * connection problems, and dressing them up as one would hide them from the JVM's own handling.
+   */
+  static SQLException connectionFailure(RuntimeException cause) {
+    String reason = cause.getMessage();
+    if (reason == null || reason.isEmpty()) {
+      reason = "no message";
+    }
+    return new SQLException(
+        "Failed to establish JDBC connection: " + cause.getClass().getName() + ": " + reason,
+        cause);
   }
 
   @Override
