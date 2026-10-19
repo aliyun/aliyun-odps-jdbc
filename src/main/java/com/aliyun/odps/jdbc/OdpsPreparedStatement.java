@@ -63,12 +63,14 @@ import com.aliyun.odps.tunnel.TunnelException;
 public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   private final String TABLE_NAME = "((\\w+\\.)?\\w+)";      // "proj.name" or "name"
-  private final String PREP_VALUES = "\\((\\s*\\?\\s*)(,\\s*\\?\\s*)*\\)"; // "(?)" or "(?,?,...)"
+  // Comma-separated repetitions cannot help a later token by backtracking. Possessive matching
+  // keeps long parameter lists off the recursive regex stack without changing the syntax.
+  private final String PREP_VALUES = "\\((\\s*\\?\\s*)(,\\s*\\?\\s*)*+\\)"; // "(?)" or "(?,?,...)"
   private final String SPEC_COLUMN = "(\\([^()]*\\))?"; // "" or "(a,b,c)"
 
   private final String
       SPEC_PARTITION =
-      "\\((\\s*\\w+\\s*=\\s*(\\w+|'\\w+')(\\s*,\\s*\\w+\\s*=\\s*(\\w+|'\\w+')\\s*)*\\s*)\\)";
+      "\\((\\s*\\w+\\s*=\\s*(\\w+|'\\w+')(\\s*,\\s*\\w+\\s*=\\s*(\\w+|'\\w+')\\s*)*+\\s*)\\)";
   // (p1=a) or (p1=a,p2=b,...) or (p1='a') ...
 
 
@@ -86,7 +88,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
 
   private static final String
       SQL_REGEX =
-      "(')|(--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\\b(select|update|and|or|delete|insert|truncate|char|substr|ascii|declare|exec|count|master|into|drop|execute)\\b)";
+      "(')|(--)|(\\b(select|update|and|or|delete|insert|truncate|char|substr|ascii|declare|exec|count|master|into|drop|execute)\\b)";
 
   private static final Pattern SQL_PATTERN = Pattern.compile(SQL_REGEX, Pattern.CASE_INSENSITIVE);
 
@@ -790,6 +792,21 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
   private boolean isIllegal(String str) throws SQLException {
     if (getConnection().isSkipSqlInjectCheck()) {
       return false;
+    }
+    // The old lazy regex recursed once per comment character, overflowing the Java stack even
+    // for a few KB of parameter data. Scan once without retaining or recursively matching text.
+    boolean inComment = false;
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      // Preserve the old (.|[\n\r]) predicate's treatment of Java's other line separators.
+      if (c == '\u0085' || c == '\u2028' || c == '\u2029') {
+        inComment = false;
+      } else if (!inComment && c == '/' && i + 1 < str.length() && str.charAt(i + 1) == '*') {
+        inComment = true;
+        i++;
+      } else if (inComment && c == '*' && i + 1 < str.length() && str.charAt(i + 1) == '/') {
+        return true;
+      }
     }
     Matcher matcher = SQL_PATTERN.matcher(str);
     return matcher.find();

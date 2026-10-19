@@ -38,6 +38,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '8'
+
+      - name: Read version notes from the changelog
+        run: python3 scripts/extract-release-notes.py > "$RUNNER_TEMP/release-notes.md"
       
       - name: Setup gpg
         run: |
@@ -62,7 +65,7 @@ jobs:
       - name: Upload Release
         uses: ncipollo/release-action@v1
         with:
-          bodyFile: RELEASE_NOTES_3.10.15.md
+          bodyFile: ${{ runner.temp }}/release-notes.md
           allowUpdates: false
           omitName: true
           artifacts: 'target/odps-jdbc-*.jar'

@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.10.15 - Unreleased
+
+### Fixes
+
+- Update bundled Jackson to 2.21.7, LZ4 to 1.11.4 and Zstandard to 1.5.7-17; keep Netty pinned to 4.1.137.Final before shading.
+- Return `SQLException` consistently when a connection cannot be established, preserving the original cause and MaxQA routing diagnostics.
+- Correct statement, prepared-statement and result resource cleanup, cancellation and closed-object contracts. Validate prepared parameter bindings before uploading rows.
+- Correct catalog/schema identity, column precision/scale and metadata filtering, including three-tier schema resolution.
+- Use the configured Tunnel endpoint consistently for upload and download.
+- Prevent stack exhaustion in the PreparedStatement string-literal check and wide batch/partition syntax checks; preserve existing acceptance decisions.
+
+### Compatibility and validation
+
+- Java 8 remains the minimum runtime; the SDK stays at `0.58.1-public`. The default ARRAY mapping remains `legacy_array_get_object=true`; applications can opt into `java.sql.Array` with `legacy_array_get_object=false`.
+- Run cloud CI against a fixed MaxCompute Emulator revision, covering packaged-driver SQL, typed parameters, Tunnel transfers, complex types and all fifteen namespace/scroll contracts. Require the JDK 8/11/17/21 consumer matrix and exact-commit live core SQL acceptance before publication.
+- Make the live MaxQA v2 quota explicit through `MAXCOMPUTE_MAXQA_QUOTA`; `-Dmaxqa.required=true` rejects missing quota configuration. Emulator acceptance does not establish cloud IAM, distributed scheduling or MaxQA v2 service capacity.
+- Add packaged-driver performance regression checks for long SQL, concurrent submissions and a 256 MiB heap, including detection of accidental full ANTLR parsing on the default path.
+
 ## 3.10.14 - 2026-09-22
 
 - Add opt-in JDBC ARRAY mapping with `legacy_array_get_object=false`; preserve the default raw List behavior.

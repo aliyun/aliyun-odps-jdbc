@@ -48,9 +48,18 @@ jobs:
           PYCODE
       - name: Build and test original candidate on JDK 8
         run: mvn -B -ntp clean package -Dtest=DependencyCompatibilityTest,MaxQARoutingFailureTest,OdpsArrayTest#testLegacyArrayGetObjectConnectionDefault -DfailIfNoTests=true
+      - name: Read version notes
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if test -f "RELEASE_NOTES_${RELEASE_TAG#v}.md"; then
+            cp "RELEASE_NOTES_${RELEASE_TAG#v}.md" "$RUNNER_TEMP/release-notes.md"
+          else
+            python3 scripts/extract-release-notes.py > "$RUNNER_TEMP/release-notes.md"
+          fi
       - name: Publish GitHub assets without redeploying Maven
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          gh release create "$RELEASE_TAG" target/odps-jdbc-*.jar --verify-tag --title "$RELEASE_TAG" --notes-file "RELEASE_NOTES_${RELEASE_TAG#v}.md" --latest
+          gh release create "$RELEASE_TAG" target/odps-jdbc-*.jar --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md" --latest
