@@ -16,7 +16,7 @@ Java 8 remains the minimum runtime; the SDK stays at `0.58.1-public`. The defaul
 
 ## Validation
 
-The cloud CI runs offline contracts plus the shaded candidate against a fixed MaxCompute Emulator source commit. Protocol acceptance covers scalar/NULL results, typed prepared literals, batch Tunnel write/read, ARRAY/STRUCT values, metadata, row limits, error propagation, connection reuse and SQLRT sessions. The JDK 8/11/17/21 consumer matrix remains a separate gate.
+The cloud CI runs offline contracts plus the shaded candidate against a fixed MaxCompute Emulator source commit. Protocol acceptance covers scalar/NULL results, typed prepared literals, batch Tunnel write/read, ARRAY/STRUCT values, metadata, row limits, error propagation, connection reuse and SQLRT sessions, plus fifteen namespace/scroll contracts with zero skips. The JDK 8/11/17/21 consumer matrix remains a separate gate.
 
 A release also requires authenticated live core SQL acceptance for the exact candidate commit. Emulator acceptance does not establish cloud IAM, distributed scheduling, MaxQA v2 capacity/fallback or service-specific BLOB/GEOGRAPHY transfer support. The live service suite remains available without the `emulator-ci` profile; quota-specific tests require `MAXCOMPUTE_MAXQA_QUOTA`, with `-Dmaxqa.required=true` to reject a missing quota.
 

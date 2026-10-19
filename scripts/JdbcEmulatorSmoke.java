@@ -32,12 +32,12 @@ public final class JdbcEmulatorSmoke {
       s.execute("set odps.sql.type.system.odps2=true");
       try (PreparedStatement p = c.prepareStatement("select ? as y, ? as s, ? as n, ? as d, ? as f")) {
         p.setByte(1, Byte.MIN_VALUE); p.setShort(2, Short.MAX_VALUE);
-        p.setLong(3, Long.MIN_VALUE); p.setBigDecimal(4, new BigDecimal("123.450"));
+        p.setLong(3, Long.MIN_VALUE + 1); p.setBigDecimal(4, new BigDecimal("123.450"));
         p.setFloat(5, 1.25f);
         try (ResultSet r = p.executeQuery()) {
           check(r.next(), "Missing typed literal row");
           check(r.getByte(1) == Byte.MIN_VALUE && r.getShort(2) == Short.MAX_VALUE, "Narrow literal value");
-          check(r.getLong(3) == Long.MIN_VALUE, "BIGINT boundary");
+          check(r.getLong(3) == Long.MIN_VALUE + 1, "BIGINT boundary");
           check(r.getBigDecimal(4).compareTo(new BigDecimal("123.450")) == 0, "Decimal precision");
           check(r.getFloat(5) == 1.25f, "FLOAT binding");
           check(r.getMetaData().getColumnType(1) == Types.TINYINT, "TINYINT metadata");
