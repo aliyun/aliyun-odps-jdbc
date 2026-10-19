@@ -1,0 +1,155 @@
+name: Recover an unstarted release
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing immutable release tag
+        required: true
+        type: string
+      release_sha:
+        description: Exact commit that passed packaged-driver live SQL
+        required: true
+        type: string
+      acceptance_run:
+        description: Successful JDBC release acceptance run for this commit
+        required: true
+        type: string
+      stalled_run:
+        description: Cancelled original Release run whose upload never started
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: jdbc-release-${{ inputs.release_tag }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Verify immutable candidate, acceptance and unstarted publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          ACCEPTANCE_RUN: ${{ inputs.acceptance_run }}
+          STALLED_RUN: ${{ inputs.stalled_run }}
+          RELEASE_ACTOR: ${{ github.actor }}
+        run: |
+          python3 - <<'PYCODE'
+          import json, os, re, subprocess, urllib.error, urllib.request
+          import xml.etree.ElementTree as E
+          tag, sha = os.environ["RELEASE_TAG"], os.environ["RELEASE_SHA"]
+          gate_id, stalled_id = os.environ["ACCEPTANCE_RUN"], os.environ["STALLED_RUN"]
+          assert re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag)
+          assert re.fullmatch(r"[0-9a-f]{40}", sha)
+          assert gate_id.isdigit() and stalled_id.isdigit()
+          assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == sha
+          ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+          pom = E.parse("pom.xml").getroot()
+          assert pom.findtext("m:groupId", namespaces=ns) == "com.aliyun.odps"
+          assert pom.findtext("m:artifactId", namespaces=ns) == "odps-jdbc"
+          assert tag == "v" + pom.findtext("m:version", namespaces=ns)
+          repo = os.environ["GITHUB_REPOSITORY"]
+          def api(path, missing=False, paginate=False):
+              args = ["gh", "api", "repos/" + repo + "/" + path]
+              if paginate:
+                  args += ["--paginate", "--slurp"]
+              p = subprocess.run(args, text=True, capture_output=True)
+              data = json.loads(p.stdout)
+              if missing and p.returncode and data.get("status") == "404":
+                  return None
+              assert p.returncode == 0, p.stderr
+              return data
+          gate = api("actions/runs/" + gate_id)
+          assert gate["path"] == ".github/workflows/core-tests.yml"
+          assert gate["status"] == "completed" and gate["conclusion"] == "success"
+          assert gate["head_sha"] == sha and gate["actor"]["login"] == os.environ["RELEASE_ACTOR"]
+          prior = api("actions/runs/" + stalled_id)
+          assert prior["path"] == ".github/workflows/release.yml"
+          assert prior["status"] == "completed" and prior["conclusion"] == "cancelled"
+          assert prior["head_sha"] == sha and prior["head_branch"] == tag
+          jobs = api("actions/runs/" + stalled_id + "/jobs?filter=all&per_page=100")
+          assert jobs["total_count"] == len(jobs["jobs"]), "Inspect all publication attempts"
+          releases = [j for j in jobs["jobs"] if j["name"] == "release"]
+          assert releases and all(j["status"] == "completed" for j in releases)
+          for job in releases:
+              assert job["runner_id"] == 0 and not job["runner_name"], "Original runner was allocated"
+              assert not job["steps"], "Only jobs that never acquired a runner can be recovered"
+          statuses = [s for page in api("commits/" + sha + "/statuses?per_page=100", paginate=True) for s in page]
+          claim_context = "jdbc-publication-started-" + tag
+          assert not any(s["context"] == claim_context for s in statuses), "A recovery publication was already claimed; inspect staging before manual recovery"
+          live = next(s for s in statuses if s["context"] == "jdbc-packaged-live-core")
+          assert live["state"] == "success"
+          assert live["creator"]["login"] == os.environ["RELEASE_ACTOR"]
+          assert api("releases/tags/" + tag, missing=True) is None, "GitHub release already exists"
+          url = "https://repo.maven.apache.org/maven2/com/aliyun/odps/odps-jdbc/" + tag[1:] + "/odps-jdbc-" + tag[1:] + ".pom"
+          try:
+              urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=30)
+          except urllib.error.HTTPError as error:
+              assert error.code == 404, error.code
+          else:
+              raise AssertionError("Maven version already exists; do not deploy it again")
+          print("Verified unchanged candidate and successful gates; original upload never started")
+          PYCODE
+      - name: Claim this version before any upload
+        id: claim
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$RELEASE_SHA" \
+            -f state=pending -f context="jdbc-publication-started-$RELEASE_TAG" \
+            -f description="Publication claimed; inspect staging before any retry" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --jq '{id,state,context}'
+      - name: Read version notes from the changelog
+        run: python3 scripts/extract-release-notes.py > "$RUNNER_TEMP/release-notes.md"
+      - name: Setup gpg
+        run: |
+          mkdir -p ~/.gnupg
+          echo use-agent >> ~/.gnupg/gpg.conf
+          echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+          echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+      - name: Release Maven package
+        uses: samuelmeuli/action-maven-publish@v1
+        with:
+          gpg_private_key: ${{ secrets.gpg_private_key }}
+          gpg_passphrase: ${{ secrets.gpg_passphrase }}
+          nexus_username: ${{ secrets.nexus_token_username }}
+          nexus_password: ${{ secrets.nexus_token_password }}
+          server_id: ossrh
+          maven_args: -DskipTests -Dmaven.deploy.timeout=600
+      - name: Build GitHub release assets
+        run: mvn -B -ntp clean package -DskipTests
+      - name: Publish GitHub assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release create "$RELEASE_TAG" target/odps-jdbc-*.jar --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md" --latest
+      - name: Record publication workflow outcome
+        if: ${{ always() && steps.claim.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          PUBLICATION_STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$RELEASE_SHA" \
+            -f state="$PUBLICATION_STATE" -f context="jdbc-publication-started-$RELEASE_TAG" \
+            -f description="Publication attempted; immutable version must not be redeployed" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --jq '{id,state,context}'
