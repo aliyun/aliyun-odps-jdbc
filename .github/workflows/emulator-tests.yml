@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p target/offline-reports
           cp target/surefire-reports/TEST-*.xml target/offline-reports/
-          mvn -B -ntp test -Dlogback.configurationFile=src/test/resources/ci-logging.xml '-Dtest=MetadataNamespaceContractTest,OdpsScrollResultSetTest,MetadataAndOptionsTest#testGetTablesShortCircuitsToConnectionSchema,OdpsStatementCommandApiTest#showSchemaTest'
+          mvn -B -ntp test -Dlogback.configurationFile=scripts/ci-logging.xml '-Dtest=MetadataNamespaceContractTest,OdpsScrollResultSetTest,MetadataAndOptionsTest#testGetTablesShortCircuitsToConnectionSchema,OdpsStatementCommandApiTest#showSchemaTest'
           python3 scripts/verify-emulator-reports.py
       - name: Exercise the shaded candidate over SQL and Tunnel
         env:
