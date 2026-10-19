@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: write
       actions: read
-      statuses: read
+      statuses: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,9 +63,11 @@ jobs:
           assert pom.findtext("m:artifactId", namespaces=ns) == "odps-jdbc"
           assert tag == "v" + pom.findtext("m:version", namespaces=ns)
           repo = os.environ["GITHUB_REPOSITORY"]
-          def api(path, missing=False):
-              p = subprocess.run(["gh", "api", "repos/" + repo + "/" + path],
-                                 text=True, capture_output=True)
+          def api(path, missing=False, paginate=False):
+              args = ["gh", "api", "repos/" + repo + "/" + path]
+              if paginate:
+                  args += ["--paginate", "--slurp"]
+              p = subprocess.run(args, text=True, capture_output=True)
               data = json.loads(p.stdout)
               if missing and p.returncode and data.get("status") == "404":
                   return None
@@ -84,8 +86,11 @@ jobs:
           releases = [j for j in jobs["jobs"] if j["name"] == "release"]
           assert releases and all(j["status"] == "completed" for j in releases)
           for job in releases:
+              assert job["runner_id"] == 0 and not job["runner_name"], "Original runner was allocated"
               assert not job["steps"], "Only jobs that never acquired a runner can be recovered"
-          statuses = api("commits/" + sha + "/statuses?per_page=100")
+          statuses = [s for page in api("commits/" + sha + "/statuses?per_page=100", paginate=True) for s in page]
+          claim_context = "jdbc-publication-started-" + tag
+          assert not any(s["context"] == claim_context for s in statuses), "A recovery publication was already claimed; inspect staging before manual recovery"
           live = next(s for s in statuses if s["context"] == "jdbc-packaged-live-core")
           assert live["state"] == "success"
           assert live["creator"]["login"] == os.environ["RELEASE_ACTOR"]
@@ -99,6 +104,18 @@ jobs:
               raise AssertionError("Maven version already exists; do not deploy it again")
           print("Verified unchanged candidate and successful gates; original upload never started")
           PYCODE
+      - name: Claim this version before any upload
+        id: claim
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$RELEASE_SHA" \
+            -f state=pending -f context="jdbc-publication-started-$RELEASE_TAG" \
+            -f description="Publication claimed; inspect staging before any retry" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --jq '{id,state,context}'
       - name: Read version notes from the changelog
         run: python3 scripts/extract-release-notes.py > "$RUNNER_TEMP/release-notes.md"
       - name: Setup gpg
@@ -123,3 +140,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: gh release create "$RELEASE_TAG" target/odps-jdbc-*.jar --verify-tag --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md" --latest
+      - name: Record publication workflow outcome
+        if: ${{ always() && steps.claim.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          PUBLICATION_STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$RELEASE_SHA" \
+            -f state="$PUBLICATION_STATE" -f context="jdbc-publication-started-$RELEASE_TAG" \
+            -f description="Publication attempted; immutable version must not be redeployed" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --jq '{id,state,context}'

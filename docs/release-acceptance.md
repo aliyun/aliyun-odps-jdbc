@@ -55,6 +55,22 @@ quota. Add `-Dmaxqa.required=true` when the capability is mandatory; missing quo
 configuration then fails rather than skips. Three-tier tests discover the project
 schema capability independently.
 
+## Recovering a release that never started
+
+`release-queued-recovery.yml` uses Ubuntu 24.04 when a tag release cannot obtain
+a runner. Cancel the original run first. Supply its run ID, the unchanged tag
+and commit, and a successful `core-tests.yml` run for that exact commit. The
+workflow verifies every original publication attempt has no runner and no steps,
+the operator's authenticated live SQL status, and absence of the published version.
+It does not replace the Emulator, performance or JDK acceptance gates.
+
+Before uploading, it records a persistent `jdbc-publication-started-<tag>` commit
+status under a per-tag concurrency lock. Any existing claim, including failed or
+pending attempts, prevents an automatic repeat. If recovery fails after claiming,
+inspect staging and the run before any manual recovery; do not redeploy Maven or
+move the immutable tag. A Maven-success/GitHub-failure case uses the existing
+GitHub-only recovery workflow.
+
 ## Historical limitation
 
 Version 3.10.13 predates the mandatory live gate. Its offline checks passed but
