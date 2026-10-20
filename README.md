@@ -1,3 +1,5 @@
+> **3.9.7 compatibility release:** Adds configurable typed MaxQA direct CSV results. Read the [release notes and path limits](RELEASE_NOTES_3.9.7.md) before upgrading.
+
 > **3.9.6 compatibility release:** Includes MaxQA server-side Fallback, result-set thread-leak fixes, coordinated download-iterator shutdown and INSERT affected-row counts. Read the [release notes and limitations](RELEASE_NOTES_3.9.6.md) before upgrading.
 
 # ODPS JDBC
