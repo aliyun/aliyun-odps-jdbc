@@ -6,7 +6,7 @@ name: Java CI with Maven
 on:
   push:
   pull_request:
-    branches: [ master ]
+    branches: [ master, "codex/jdbc-395-maxqa-fallback" ]
 
 jobs:
   build:
@@ -19,4 +19,4 @@ jobs:
         java-version: '8'
         distribution: 'adopt'
     - name: Build with Maven
-      run: mvn -U -B package --file pom.xml -DskipTests
+      run: mvn -U -B package --file pom.xml -Dtest=TypedResultOptionTest -DfailIfNoTests=true

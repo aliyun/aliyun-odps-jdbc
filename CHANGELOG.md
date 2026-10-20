@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `enableTypedResult` / `enable_typed_result` to control schema-based MaxQA direct CSV results. The default remains true; false returns string values and STRING metadata on that path. Tunnel results are unchanged.
+
 ## [3.9.6]
 Based on 3.9.4, includes MaxQA server-side Fallback, Statement/ResultSet lifecycle fixes, actual-task INSERT affected-row counts, and coordinated download-iterator shutdown (reader release, queued-task cancellation, consumer wakeup and empty results).
 

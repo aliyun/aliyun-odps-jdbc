@@ -88,6 +88,7 @@ public class ConnectionResource {
   private static final String CONNECT_TIMEOUT_URL_KRY = "connectTimeout";
   private static final String ENABLE_COMMAND_API_URL_KEY = "enableCommandApi";
   private static final String USE_INSTANCE_TUNNEL_URL_KEY = "useInstanceTunnel";
+  private static final String ENABLE_TYPED_RESULT_URL_KEY = "enableTypedResult";
   private static final String HTTPS_CHECK_URL_KEY = "httpsCheck";
   private static final String LOG_LEVEL_URL_KEY = "logLevel";
   private static final String TUNNEL_READ_TIMEOUT_URL_KEY = "tunnelReadTimeout";
@@ -158,6 +159,7 @@ public class ConnectionResource {
   private static final String CONNECT_TIMEOUT_PROP_KEY = "connect_timeout";
   private static final String ENABLE_COMMAND_API_PROP_KEY = "enable_command_api";
   private static final String USE_INSTANCE_TUNNEL_PROP_KEY = "use_instance_tunnel";
+  public static final String ENABLE_TYPED_RESULT_PROP_KEY = "enable_typed_result";
   private static final String HTTPS_CHECK_PROP_KEY = "https_check";
   private static final String LOG_LEVEL_PROP_KEY = "log_level";
   private static final String TUNNEL_READ_TIMEOUT_PROP_KEY = "tunnel_read_timeout";
@@ -199,6 +201,7 @@ public class ConnectionResource {
   private boolean autoLimitFallback = false;
   private boolean enableCommandApi = false;
   private boolean useInstanceTunnel = true;
+  private boolean enableTypedResult = true;
   private boolean httpsCheck = false;
   private boolean skipSqlRewrite = false;
   private boolean skipSqlInjectCheck = false;
@@ -280,6 +283,11 @@ public class ConnectionResource {
     useInstanceTunnel = Boolean.parseBoolean(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "true", USE_INSTANCE_TUNNEL_PROP_KEY,
             USE_INSTANCE_TUNNEL_URL_KEY));
+
+    String typedResult = tryGetFirstNonNullValueByAltMapAndAltKey(
+        maps, "true", ENABLE_TYPED_RESULT_PROP_KEY, ENABLE_TYPED_RESULT_URL_KEY);
+    checkValueIsValidBoolean(ENABLE_TYPED_RESULT_URL_KEY, typedResult);
+    enableTypedResult = Boolean.parseBoolean(typedResult);
 
     charset =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, CHARSET_DEFAULT_VALUE, CHARSET_PROP_KEY,
@@ -767,6 +775,10 @@ public class ConnectionResource {
 
   public boolean isUseInstanceTunnel() {
     return useInstanceTunnel;
+  }
+
+  public boolean isEnableTypedResult() {
+    return enableTypedResult;
   }
 
   public boolean isHttpsCheck() {
