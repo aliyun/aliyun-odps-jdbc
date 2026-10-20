@@ -1,25 +1,24 @@
-name: JDBC core SQL acceptance
-
+name: JDBC 3.9 release acceptance
 on:
-  push:
-    branches: [master, "codex/jdbc-395-maxqa-fallback"]
   workflow_dispatch:
+    inputs:
+      local_core_sha:
+        description: Exact commit with authenticated packaged-driver live SQL acceptance
+        required: true
+        type: string
   workflow_call:
     inputs:
-      local_core_runner:
-        description: Ephemeral runner label for explicitly authorized local live SQL acceptance
+      local_core_sha:
+        description: Exact commit with authenticated packaged-driver live SQL acceptance
         required: false
         type: string
         default: ''
-
 permissions:
   contents: read
-  id-token: write
-
+  statuses: read
 jobs:
-  core:
-    if: ${{ !inputs.local_core_runner }}
-    runs-on: ubuntu-latest
+  packaged-regressions:
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -27,48 +26,33 @@ jobs:
         with:
           distribution: temurin
           java-version: '8'
-      - name: Build candidate and run dependency regression tests
+      - name: Build candidate and run compatibility regressions
         run: mvn -B -ntp clean package -Dtest=TypedResultOptionTest,MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,InstanceDataIteratorCloseTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
-      - name: Obtain regression project credentials
-        id: credentials
-        uses: aliyun/configure-aliyun-credentials-action@v1.0.7
+      - uses: actions/upload-artifact@v4
         with:
-          role-to-assume: ${{ secrets.ROLE_ARN }}
-          oidc-provider-arn: ${{ secrets.OIDC_ARN }}
-          role-session-name: jdbc-core-acceptance
-          role-session-expiration: 1800
-          audience: actions.github.com
-      - name: Test packaged driver against MaxCompute
-        timeout-minutes: 10
-        env:
-          ALIBABA_CLOUD_ACCESS_KEY_ID: ${{ steps.credentials.outputs.aliyun-access-key-id }}
-          ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${{ steps.credentials.outputs.aliyun-access-key-secret }}
-          ALIBABA_CLOUD_SECURITY_TOKEN: ${{ steps.credentials.outputs.aliyun-security-token }}
-          MAXCOMPUTE_ENDPOINT: ${{ secrets.ENDPOINT }}
-          MAXCOMPUTE_PROJECT: go_sdk_regression_testing
-        run: |
-          version=$(python3 -c 'import xml.etree.ElementTree as E; print(E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)')
-          bash scripts/jdbc-core-smoke.sh "target/odps-jdbc-${version}-jar-with-dependencies.jar"
-
-  local-core:
-    if: ${{ inputs.local_core_runner != '' }}
-    runs-on: [self-hosted, "${{ inputs.local_core_runner }}"]
-    timeout-minutes: 20
+          name: jdbc-39-candidate
+          path: target/odps-jdbc-*-jar-with-dependencies.jar
+          if-no-files-found: error
+  verified-live-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Build candidate and run regression tests
-        shell: bash
+      - name: Require authenticated live SQL acceptance for this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.local_core_sha || github.sha }}
+          RELEASE_ACTOR: ${{ github.actor }}
         run: |
-          export JAVA_HOME="${JDBC_RELEASE_JAVA_HOME:?}"
-          export PATH="$JAVA_HOME/bin:$PATH"
-          mvn -B -ntp clean package -Dtest=TypedResultOptionTest,MaxQAFallbackBackportTest,ResultSetLifecycleTest,UpdateCountTaskNameTest,InstanceDataIteratorCloseTest,SettingParserTest,UtilsTest -DfailIfNoTests=true
-      - name: Test packaged driver against MaxCompute using approved local broker
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          export JAVA_HOME="${JDBC_RELEASE_JAVA_HOME:?}"
-          export PATH="$JAVA_HOME/bin:$PATH"
-          version=$(python3 -c 'import xml.etree.ElementTree as E; print(E.parse("pom.xml").getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)')
-          "${JDBC_RELEASE_BROKER:?}" run --confirm-write "${JDBC_RELEASE_CREDENTIAL_PROFILE:?}" -- bash scripts/jdbc-core-smoke.sh "target/odps-jdbc-${version}-jar-with-dependencies.jar"
+          test "$EXPECTED_SHA" = "$GITHUB_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/statuses" --paginate > "$RUNNER_TEMP/live-status.json"
+          python3 - <<'PYCODE'
+          import json, os
+          statuses = json.load(open(os.environ["RUNNER_TEMP"] + "/live-status.json"))
+          matching = [s for s in statuses if s["context"] == "jdbc-packaged-live-core"]
+          assert matching, "No live SQL acceptance status for this commit"
+          latest = matching[0]
+          assert latest["state"] == "success", "Live SQL acceptance is not successful"
+          assert latest["creator"]["login"] == os.environ["RELEASE_ACTOR"], "Acceptance must be reported by the release operator"
+          print("Verified packaged-driver live SQL acceptance for " + os.environ["EXPECTED_SHA"])
+          PYCODE
