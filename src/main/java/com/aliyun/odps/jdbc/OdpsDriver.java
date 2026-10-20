@@ -103,7 +103,15 @@ public class OdpsDriver implements Driver {
     logviewProp.required = false;
     logviewProp.description = "logview host";
 
-    return new DriverPropertyInfo[]{accessIdProp, accessKeyProp, projectProp, charsetProp};
+    DriverPropertyInfo typedResultProp = new DriverPropertyInfo(
+        ConnectionResource.ENABLE_TYPED_RESULT_PROP_KEY,
+        Boolean.toString(connRes.isEnableTypedResult()));
+    typedResultProp.required = false;
+    typedResultProp.choices = new String[]{"true", "false"};
+    typedResultProp.description = "Use schema-based types for MaxQA direct CSV results";
+
+    return new DriverPropertyInfo[]{accessIdProp, accessKeyProp, projectProp, charsetProp,
+                                    typedResultProp};
   }
 
   @Override

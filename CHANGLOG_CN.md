@@ -1,5 +1,9 @@
 # 更新日志
 
+## 未发布
+
+- 新增 `enableTypedResult` / `enable_typed_result`，默认 true；关闭后 MaxQA 直接 CSV 结果的值与元数据均为 STRING，Tunnel 结果保持原类型。
+
 ## [3.8.5] - 2025-03-18
 ### 改进
 - **依赖升级**  
