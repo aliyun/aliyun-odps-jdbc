@@ -103,6 +103,7 @@ java.net.URLEncoder#encode(java.lang.String).
 |        `stsToken`         |         `sts_token`          |  False   |                         | The Alibaba Cloud STS token                                                                                                                         |
 |       `logConfFile`       |       `log_conf_file`        |  False   |                         | The configuration path for SLF4J                                                                                                                    |
 |         `charset`         |          `charset`           |  False   |          UTF-8          | The charset of the inputs and outputs                                                                                                               |
+| `enableTypedResult` | `enable_typed_result` | False | true | Parse MaxQA direct CSV results using their schema; false returns all columns as strings. Tunnel results are unchanged. |
 |     `executeProject`      |    `execute_project_name`    |  False   |                         | For MCQA, the name of the MaxCompute project in which actually execute the queries                                                                  |
 |     `alwaysFallback`      |      `always_fallback`       |  False   |          false          | For MCQA, fall back to regular mode if any exception happened                                                                                       |
 | `instanceTunnelMaxRecord` | `instance_tunnel_max_record` |  False   |     -1 (unlimited)      | For MCQA, max number of records within a result set, enableLimit option should set to false                                                         |
@@ -212,6 +213,30 @@ java.net.URLEncoder#encode(java.lang.String).
 |    URL key    | Description                                              |
 |:-------------:|:---------------------------------------------------------|
 | `odps_config` | Path to an external ODPS configuration file to load from |
+
+### Typed MaxQA results
+
+`enableTypedResult` defaults to `true`, preserving schema-based Java types. To return
+all columns of a MaxQA direct CSV result as strings, set it to `false` together with
+`useInstanceTunnel=false`:
+
+```text
+jdbc:odps:https://service.<region>.maxcompute.aliyun.com/api?project=<project>&interactiveMode=MaxQA&quotaName=<quota>&useInstanceTunnel=false&enableTypedResult=false
+```
+
+The corresponding `Properties` or `odps_config` key is `enable_typed_result`:
+
+```java
+properties.setProperty("enable_typed_result", "false");
+```
+
+Only `true` and `false` are accepted, without regard to case. Existing configuration
+precedence applies: an `odps_config` file is used exclusively; otherwise `Properties`
+override URL options. With typed results disabled, direct CSV values and column
+metadata use STRING, including numeric and date/time columns. Null markers such as
+`\N` are returned as raw CSV text in this mode. This option does not
+change Tunnel result types. The SDK may switch to Tunnel when a direct result is
+truncated, so disabling typed results does not guarantee strings on that path.
 
 ## Example
 

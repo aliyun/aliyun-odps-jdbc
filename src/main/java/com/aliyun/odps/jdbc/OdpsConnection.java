@@ -138,6 +138,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
   private int connectTimeout = -1;
   private boolean enableCommandApi;
   private boolean useInstanceTunnel;
+  private boolean enableTypedResult = true;
   private boolean httpsCheck;
   private boolean skipSqlCheck;
   private boolean skipSqlInjectCheck;
@@ -291,6 +292,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.skipSqlInjectCheck = connRes.isSkipSqlInjectCheck();
     this.tunnelDownloadUseSingleReader = connRes.isTunnelDownloadUseSingleReader();
     this.useInstanceTunnel = connRes.isUseInstanceTunnel();
+    this.enableTypedResult = connRes.isEnableTypedResult();
     this.verbose = connRes.isVerbose();
     this.async = connRes.isAsync();
     this.readOnly = connRes.isReadOnly();
@@ -487,6 +489,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       .tunnelReadTimeout(tunnelReadTimeout)
       .enableOdpsNamespaceSchema(odpsNamespaceSchema)
       .useInstanceTunnel(useInstanceTunnel)
+      .setEnableTypedResult(enableTypedResult)
       .logviewVersion(logviewVersion)
       .setSkipCheckIfSelect(skipCheckIfSelect);
 
