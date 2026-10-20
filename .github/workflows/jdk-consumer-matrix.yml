@@ -33,7 +33,7 @@ jobs:
           distribution: temurin
           java-version: '8'
       - name: Build one packaged driver for every cell
-        run: mvn -B -ntp clean package -DskipTests
+        run: mvn -B -ntp clean package -Dtest=TypedResultOptionTest -DfailIfNoTests=true
       - name: Locate the packaged driver
         id: jar
         run: |
