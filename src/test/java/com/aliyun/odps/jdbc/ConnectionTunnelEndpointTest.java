@@ -208,6 +208,102 @@ public class ConnectionTunnelEndpointTest {
   }
 
   @Test
+  public void uploadSessionConsumesConnectionTunnelTimeouts() throws Exception {
+    try (OdpsConnection connection =
+        connection("&tunnelConnectTimeout=7&tunnelReadTimeout=30", new Properties())) {
+      com.aliyun.odps.tunnel.TableTunnel.UploadSession session = uploadSession(connection);
+      assertEquals(7, session.getConfig().getSocketConnectTimeout());
+      assertEquals(30, session.getConfig().getSocketTimeout());
+      // The SDK derives the session's REST client from that configuration, so these two reads are
+      // the consumption proof, not just a copy of what was written.
+      com.aliyun.odps.rest.RestClient client =
+          (com.aliyun.odps.rest.RestClient) read(session, "tunnelServiceClient");
+      assertEquals(7, client.getConnectTimeout(), "upload session connect timeout");
+      assertEquals(30, client.getReadTimeout(), "upload session read timeout");
+    }
+  }
+
+  @Test
+  public void upsertSessionConsumesConnectionTunnelTimeouts() throws Exception {
+    try (OdpsConnection connection =
+        connection("&tunnelConnectTimeout=7&tunnelReadTimeout=30", new Properties())) {
+      com.aliyun.odps.tunnel.impl.UpsertSessionImpl session = upsertSession(connection);
+      // Seconds in, milliseconds out at the netty layer (README states the conversion point).
+      assertEquals(7000L, session.getConnectTimeout(), "upsert session connect timeout");
+      assertEquals(30000L, session.getReadTimeout(), "upsert session read timeout");
+    }
+  }
+
+  @Test
+  public void unsetTunnelTimeoutsKeepSdkDefaultsOnWriteSessions() throws Exception {
+    assertEquals(180, com.aliyun.odps.commons.GeneralConfiguration.DEFAULT_SOCKET_CONNECT_TIMEOUT);
+    assertEquals(300, com.aliyun.odps.commons.GeneralConfiguration.DEFAULT_SOCKET_TIMEOUT);
+    for (String options : new String[] {"", "&tunnelConnectTimeout=-1&tunnelReadTimeout=-1"}) {
+      try (OdpsConnection connection = connection(options, new Properties())) {
+        com.aliyun.odps.tunnel.TableTunnel.UploadSession upload = uploadSession(connection);
+        assertEquals(180, upload.getConfig().getSocketConnectTimeout(), "upload " + options);
+        assertEquals(300, upload.getConfig().getSocketTimeout(), "upload " + options);
+        com.aliyun.odps.tunnel.impl.UpsertSessionImpl upsert = upsertSession(connection);
+        assertEquals(180000L, upsert.getConnectTimeout(), "upsert " + options);
+        assertEquals(300000L, upsert.getReadTimeout(), "upsert " + options);
+      }
+    }
+  }
+
+  @Test
+  public void tunnelTimeoutsAreGatedPerOptionAndStayLocalToTheConnection() throws Exception {
+    try (OdpsConnection connection = connection("&tunnelReadTimeout=30", new Properties())) {
+      com.aliyun.odps.tunnel.TableTunnel.UploadSession upload = uploadSession(connection);
+      assertEquals(180, upload.getConfig().getSocketConnectTimeout(), "unset option is not written");
+      assertEquals(30, upload.getConfig().getSocketTimeout());
+    }
+    // 0 is a configured value: it is handed over, it does not fall back to the SDK default.
+    try (OdpsConnection connection =
+        connection("&tunnelConnectTimeout=0&tunnelReadTimeout=0", new Properties())) {
+      com.aliyun.odps.tunnel.TableTunnel.UploadSession upload = uploadSession(connection);
+      assertEquals(0, upload.getConfig().getSocketConnectTimeout());
+      assertEquals(0, upload.getConfig().getSocketTimeout());
+      com.aliyun.odps.tunnel.impl.UpsertSessionImpl upsert = upsertSession(connection);
+      assertEquals(0L, upsert.getConnectTimeout());
+      assertEquals(0L, upsert.getReadTimeout());
+    }
+    // A later connection without the options must not inherit the previous client's values.
+    try (OdpsConnection connection = connection("", new Properties())) {
+      com.aliyun.odps.tunnel.TableTunnel.UploadSession upload = uploadSession(connection);
+      assertEquals(180, upload.getConfig().getSocketConnectTimeout());
+      assertEquals(300, upload.getConfig().getSocketTimeout());
+    }
+  }
+
+  private com.aliyun.odps.tunnel.TableTunnel.UploadSession uploadSession(OdpsConnection connection)
+      throws Exception {
+    BasicTableUploader uploader = new BasicTableUploader("endpoint_fixture", null, "fixture_table",
+        null, Collections.singletonList("n"), connection);
+    return (com.aliyun.odps.tunnel.TableTunnel.UploadSession) read(uploader, "uploadSession");
+  }
+
+  private com.aliyun.odps.tunnel.impl.UpsertSessionImpl upsertSession(OdpsConnection connection)
+      throws Exception {
+    AcidTableUploader uploader = new AcidTableUploader("endpoint_fixture", null, "fixture_table",
+        null, Collections.singletonList("n"), connection);
+    return (com.aliyun.odps.tunnel.impl.UpsertSessionImpl) read(uploader, "upsertSession");
+  }
+
+  /** Reads a driver- or SDK-private field, walking up the class hierarchy. */
+  private static Object read(Object target, String name) throws Exception {
+    for (Class<?> c = target.getClass(); c != null; c = c.getSuperclass()) {
+      try {
+        Field field = c.getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(target);
+      } catch (NoSuchFieldException expected) {
+        // declared by a supertype
+      }
+    }
+    throw new NoSuchFieldException(name + " on " + target.getClass().getName());
+  }
+
+  @Test
   public void httpsEndpointWorksForDownloadsUploadsAndUpsertsWithHttpService() throws Exception {
     Endpoint secure = new Endpoint(true);
     try {
