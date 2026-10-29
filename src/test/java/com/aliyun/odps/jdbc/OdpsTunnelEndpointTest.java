@@ -74,8 +74,19 @@ public class OdpsTunnelEndpointTest {
     verifyParallelDownload(false, true, true);
   }
 
+  @Test
+  public void asyncGetResultSetReusesAnExistingDownload() throws Exception {
+    verifyParallelDownload(false, true, false, true);
+    verifyParallelDownload(false, true, true, true);
+  }
+
   private void verifyParallelDownload(boolean propertyOverride, boolean async, boolean prepared)
       throws Exception {
+    verifyParallelDownload(propertyOverride, async, prepared, false);
+  }
+
+  private void verifyParallelDownload(boolean propertyOverride, boolean async, boolean prepared,
+                                      boolean alreadyDownloaded) throws Exception {
     String downloadEndpoint = endpoint(downloadServer);
     String url = "jdbc:odps:" + endpoint(routingServer)
         + "?project=tunnel_fixture&timezone=UTC&odpsNamespaceSchema=false"
@@ -103,10 +114,13 @@ public class OdpsTunnelEndpointTest {
       when(statement.executeInstance.getProject()).thenReturn("tunnel_fixture");
       when(statement.executeInstance.getId()).thenReturn("fixture-instance");
       statement.inputProperties = new Properties();
-      if (!async) {
+      if (!async || alreadyDownloaded) {
         statement.setResultSetInternal();
       }
       try (ResultSet rows = statement.getResultSet()) {
+        if (async) {
+          assertSame(rows, statement.getResultSet());
+        }
         assertEquals("value", rows.getMetaData().getColumnName(1));
         assertFalse(rows.next());
       }

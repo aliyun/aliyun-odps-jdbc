@@ -3,6 +3,7 @@
 ## [3.10.17] - 2026-10-29
 
 - 修复离线查询并行读取结果时未使用 `tunnelEndpoint` 的问题，包括开启 `autoSelectLimit` 的查询。显式指定地址后，同步和异步 Statement、PreparedStatement 均使用该地址下载结果，避免再次走自动路由。
+- 异步获取结果时复用已有下载会话，避免重复调用 `getResultSet()` 或获取 `executeQuery()` 已准备的结果时重复下载、遗留下载线程。
 
 ## [3.10.16] - 2026-10-20
 

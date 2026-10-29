@@ -3,6 +3,7 @@
 ## [3.10.17] - 2026-10-29
 
 - Honor `tunnelEndpoint` when downloading offline query results in parallel, including queries with `autoSelectLimit` enabled. An explicitly configured endpoint now bypasses automatic Tunnel routing for synchronous and asynchronous statements and prepared statements.
+- Reuse an existing asynchronous result download instead of creating another session on repeated `getResultSet()` calls or discarding a result already prepared by `executeQuery()`.
 
 ## [3.10.16] - 2026-10-20
 
