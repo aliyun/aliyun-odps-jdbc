@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -314,9 +315,13 @@ public class ConnectionResource {
     logview =
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, LOGVIEW_HOST_PROP_KEY,
                                                  LOGVIEW_URL_KEY);
-    tunnelEndpoint =
-        tryGetFirstNonNullValueByAltMapAndAltKey(maps, null, TUNNEL_ENDPOINT_PROP_KEY,
-                                                 TUNNEL_ENDPOINT_URL_KEY);
+    tunnelEndpoint = resolveTunnelEndpoint(maps);
+    if (paramsInURL.get(ODPS_CONF_URL_KEY) != null && tunnelEndpoint == null
+        && resolveTunnelEndpoint(Arrays.<Map>asList(info, paramsInURL)) != null) {
+      throw new IllegalArgumentException(
+          "odps_config is exclusive: configure tunnel_endpoint in that file;"
+          + " the URL or Properties Tunnel endpoint would otherwise be ignored");
+    }
 
     tunnelRetryTime = parseIntOption(
         tryGetFirstNonNullValueByAltMapAndAltKey(maps, "6", TUNNEL_RESULT_RETRY_TIME_PROP_KEY,
@@ -768,6 +773,23 @@ public class ConnectionResource {
       }
     }
     return defaultValue;
+  }
+
+  @SuppressWarnings("rawtypes")
+  private static String resolveTunnelEndpoint(List<Map> maps) {
+    for (Map map : maps) {
+      if (map == null) {
+        continue;
+      }
+      for (String key : new String[] {TUNNEL_ENDPOINT_PROP_KEY, TUNNEL_ENDPOINT_URL_KEY}) {
+        String value = TunnelEndpoint.normalize(map instanceof Properties
+            ? ((Properties) map).getProperty(key) : (String) map.get(key));
+        if (value != null) {
+          return value;
+        }
+      }
+    }
+    return null;
   }
 
   /**

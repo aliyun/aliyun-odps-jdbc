@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.10.18] - 2026-10-29
+
+- Apply the connection Tunnel endpoint to every client created from the connection, including transactional table Upsert sessions. Keep Upsert transport on the Tunnel endpoint's HTTP/HTTPS protocol and release its resources after commit.
+- Ignore blank Tunnel endpoint properties so they cannot mask a URL endpoint. Reject invalid endpoint URLs and configurations that would silently discard an explicit endpoint because `odps_config` is exclusive. Log the effective connection endpoint at startup.
+
 ## [3.10.17] - 2026-10-29
 
 - Honor `tunnelEndpoint` when downloading offline query results in parallel, including queries with `autoSelectLimit` enabled. An explicitly configured endpoint now bypasses automatic Tunnel routing for synchronous and asynchronous statements and prepared statements.

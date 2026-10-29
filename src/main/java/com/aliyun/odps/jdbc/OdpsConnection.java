@@ -239,6 +239,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     log.debug("debug mode on");
     odps = new Odps(account);
     odps.setEndpoint(endpoint);
+    odps.setTunnelEndpoint(tunnelEndpoint);
     odps.setDefaultProject(project);
     odps.setCurrentSchema(schema);
     odps.setUserAgent("odps-jdbc-" + version);
@@ -269,6 +270,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     this.charset = charset;
     this.logviewHost = logviewHost;
     this.tunnelEndpoint = tunnelEndpoint;
+    log.info("tunnel endpoint=" + (tunnelEndpoint == null ? "automatic" : tunnelEndpoint));
     this.sqlTaskProperties.putAll(connRes.getSettings());
 
     this.tunnelRetryTime = connRes.getTunnelRetryTime();

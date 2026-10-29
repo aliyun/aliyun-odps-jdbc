@@ -105,8 +105,7 @@ public class OdpsTunnelEndpointTest {
       assertFalse(connection.enableLimit());
       assertNull(connection.getSizeLimit());
       assertEquals(downloadEndpoint, connection.getTunnelEndpoint());
-      // The executor owns a cloned Odps. The parallel iterator receives this original object.
-      assertNull(connection.getOdps().getTunnelEndpoint());
+      assertEquals(downloadEndpoint, connection.getOdps().getTunnelEndpoint());
       SQLExecutor executor = mock(SQLExecutor.class);
       when(executor.getExecuteMode()).thenReturn(ExecuteMode.OFFLINE);
       statement.sqlExecutor = executor;
@@ -125,7 +124,7 @@ public class OdpsTunnelEndpointTest {
         assertFalse(rows.next());
       }
       verify(statement.executeInstance).waitForSuccess();
-      assertNull(connection.getOdps().getTunnelEndpoint(), "Do not mutate the shared Odps");
+      assertEquals(downloadEndpoint, connection.getOdps().getTunnelEndpoint());
     }
     assertEquals(previousDownloads + 1, downloadRequests.get());
     assertEquals(0, routingRequests.get(), "The configured endpoint must bypass automatic routing");

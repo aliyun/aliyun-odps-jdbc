@@ -53,7 +53,13 @@ public class AcidTableUploader extends DataUploader {
 
   public void commit() throws TunnelException, IOException {
     if (upsertSession != null) {
-      upsertSession.commit(false);
+      TableTunnel.UpsertSession session = upsertSession;
+      upsertSession = null;
+      try {
+        session.commit(false);
+      } finally {
+        session.close();
+      }
     }
   }
 }
