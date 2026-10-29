@@ -1,10 +1,15 @@
 # 更新日志
 
-## 未发布
+## [3.10.17] - 2026-10-29
+
+- 修复离线查询并行读取结果时未使用 `tunnelEndpoint` 的问题，包括开启 `autoSelectLimit` 的查询。显式指定地址后，同步和异步 Statement、PreparedStatement 均使用该地址下载结果，避免再次走自动路由。
+- 异步获取结果时复用已有下载会话，避免重复调用 `getResultSet()` 或获取 `executeQuery()` 已准备的结果时重复下载、遗留下载线程。
+
+## [3.10.16] - 2026-10-20
 
 - 新增 `enableTypedResult` / `enable_typed_result`，默认 true；关闭后 MaxQA 直接 CSV 结果的值与元数据均为 STRING，Tunnel 结果保持原类型。
 
-## 3.10.15 - 未发布
+## 3.10.15 - 2026-10-19
 
 ### 修复
 
@@ -12,7 +17,7 @@
 - 连接建立失败时统一返回 `SQLException`，保留原始异常和 MaxQA 路由诊断信息。
 - 修复 Statement、PreparedStatement 和结果集的资源释放、取消及关闭状态行为；上传数据前校验绑定参数是否完整。
 - 修复 catalog/schema 标识、列精度和小数位数、元数据过滤及三层模型 Schema 解析。
-- 上传和下载统一使用配置的 Tunnel endpoint。
+- 普通表上传使用配置的 Tunnel endpoint。
 - 将 PreparedStatement 字符串参数检查中的块注释处理改为线性扫描，并修复宽 batch/分区列表正则的栈溢出，保留原有放行和拒绝规则。
 
 ### 兼容性与验证

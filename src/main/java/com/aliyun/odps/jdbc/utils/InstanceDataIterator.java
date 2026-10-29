@@ -67,9 +67,16 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
   public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount,
       long splitSize, int preloadSplitNum, int threadNum, String tunnelQuotaName)
       throws OdpsException {
+    this(odps, instance, offset, readCount, splitSize, preloadSplitNum, threadNum,
+         tunnelQuotaName, null);
+  }
+
+  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount,
+      long splitSize, int preloadSplitNum, int threadNum, String tunnelQuotaName,
+      String tunnelEndpoint) throws OdpsException {
     final InstanceTunnel.DownloadSession session;
     try {
-      session = createInstanceTunnel(odps, tunnelQuotaName)
+      session = createInstanceTunnel(odps, tunnelQuotaName, tunnelEndpoint)
           .createDownloadSession(instance.getProject(), instance.getId(), false);
     } catch (TunnelException e) {
       if (e.getErrorCode().equals(SQLExecutorConstants.sessionNotSelectException)
@@ -147,7 +154,15 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
 
   static InstanceTunnel createInstanceTunnel(Odps odps, String tunnelQuotaName) {
+    return createInstanceTunnel(odps, tunnelQuotaName, null);
+  }
+
+  static InstanceTunnel createInstanceTunnel(Odps odps, String tunnelQuotaName,
+                                             String tunnelEndpoint) {
     InstanceTunnel tunnel = new InstanceTunnel(odps);
+    if (!StringUtils.isNullOrEmpty(tunnelEndpoint)) {
+      tunnel.setEndpoint(tunnelEndpoint);
+    }
     if (!StringUtils.isNullOrEmpty(tunnelQuotaName)) {
       ((com.aliyun.odps.tunnel.Configuration) tunnel.getConfig()).setQuotaName(tunnelQuotaName);
     }

@@ -1075,13 +1075,15 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           + connHandle.getFetchResultPreloadSplitNum() + " split in memory" + ").");
       executeInstance.waitForSuccess();
       Instance instance = executeInstance;
+      // SQLExecutor configures a cloned Odps; this reader needs the connection endpoint explicitly.
       InstanceDataIterator
           instanceDataIterator =
           new InstanceDataIterator(connHandle.getOdps(), instance, 0, resultCountLimit,
                                    connHandle.getFetchResultSplitSize(),
                                    connHandle.getFetchResultPreloadSplitNum(),
                                    connHandle.getFetchResultThreadNum(),
-                                   connHandle.getTunnelQuotaName());
+                                   connHandle.getTunnelQuotaName(),
+                                   connHandle.getTunnelEndpoint());
       odpsResultSet = new com.aliyun.odps.data.ResultSet(
           instanceDataIterator,
           instanceDataIterator.getSchema(),

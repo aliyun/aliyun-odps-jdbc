@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.10.17] - 2026-10-29
+
+- Honor `tunnelEndpoint` when downloading offline query results in parallel, including queries with `autoSelectLimit` enabled. An explicitly configured endpoint now bypasses automatic Tunnel routing for synchronous and asynchronous statements and prepared statements.
+- Reuse an existing asynchronous result download instead of creating another session on repeated `getResultSet()` calls or discarding a result already prepared by `executeQuery()`.
+
 ## [3.10.16] - 2026-10-20
 
 - Add `enableTypedResult` / `enable_typed_result` to control schema-based MaxQA direct CSV results. The default remains true; false returns string values and STRING metadata on that path. Tunnel results are unchanged, including automatic Tunnel fallback for truncated direct results. Untyped direct CSV returns the null marker as text. Invalid boolean values fail connection configuration.
@@ -12,7 +17,7 @@
 - Return `SQLException` consistently when a connection cannot be established, preserving the original cause and MaxQA routing diagnostics.
 - Correct statement, prepared-statement and result resource cleanup, cancellation and closed-object contracts. Validate prepared parameter bindings before uploading rows.
 - Correct catalog/schema identity, column precision/scale and metadata filtering, including three-tier schema resolution.
-- Use the configured Tunnel endpoint consistently for upload and download.
+- Honor the configured Tunnel endpoint for ordinary table uploads.
 - Prevent stack exhaustion in the PreparedStatement string-literal check and wide batch/partition syntax checks; preserve existing acceptance decisions.
 
 ### Compatibility and validation

@@ -106,7 +106,9 @@ public class OdpsAsyncPreparedStatement extends OdpsPreparedStatement {
     SQLExecutor executor = this.sqlExecutor;
     try {
       long startTime = System.currentTimeMillis();
-      setResultSetInternal();
+      if (odpsResultSet == null && resultSet == null) {
+        setResultSetInternal();
+      }
       connHandle.log.info("Get result set, cost time: " + (System.currentTimeMillis() - startTime) + "ms");
       List<String> exeLog = executor.getExecutionLog();
       if (!exeLog.isEmpty()) {
