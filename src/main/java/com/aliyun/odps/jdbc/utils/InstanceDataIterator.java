@@ -74,9 +74,18 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
   public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount,
       long splitSize, int preloadSplitNum, int threadNum, String tunnelQuotaName,
       String tunnelEndpoint) throws OdpsException {
+    this(odps, instance, offset, readCount, splitSize, preloadSplitNum, threadNum,
+         tunnelQuotaName, tunnelEndpoint, -1, -1);
+  }
+
+  public InstanceDataIterator(Odps odps, Instance instance, long offset, Long readCount,
+      long splitSize, int preloadSplitNum, int threadNum, String tunnelQuotaName,
+      String tunnelEndpoint, int tunnelConnectTimeout, int tunnelReadTimeout)
+      throws OdpsException {
     final InstanceTunnel.DownloadSession session;
     try {
-      session = createInstanceTunnel(odps, tunnelQuotaName, tunnelEndpoint)
+      session = createInstanceTunnel(odps, tunnelQuotaName, tunnelEndpoint, tunnelConnectTimeout,
+                                     tunnelReadTimeout)
           .createDownloadSession(instance.getProject(), instance.getId(), false);
     } catch (TunnelException e) {
       if (e.getErrorCode().equals(SQLExecutorConstants.sessionNotSelectException)
@@ -159,10 +168,17 @@ public class InstanceDataIterator implements Iterator<Record>, AutoCloseable {
 
   static InstanceTunnel createInstanceTunnel(Odps odps, String tunnelQuotaName,
                                              String tunnelEndpoint) {
+    return createInstanceTunnel(odps, tunnelQuotaName, tunnelEndpoint, -1, -1);
+  }
+
+  static InstanceTunnel createInstanceTunnel(Odps odps, String tunnelQuotaName,
+                                             String tunnelEndpoint, int tunnelConnectTimeout,
+                                             int tunnelReadTimeout) {
     InstanceTunnel tunnel = new InstanceTunnel(odps);
     if (!StringUtils.isNullOrEmpty(tunnelEndpoint)) {
       tunnel.setEndpoint(tunnelEndpoint);
     }
+    TunnelTimeouts.apply(tunnel.getConfig(), tunnelConnectTimeout, tunnelReadTimeout);
     if (!StringUtils.isNullOrEmpty(tunnelQuotaName)) {
       ((com.aliyun.odps.tunnel.Configuration) tunnel.getConfig()).setQuotaName(tunnelQuotaName);
     }

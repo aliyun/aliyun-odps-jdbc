@@ -43,6 +43,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.InstanceDataIterator;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.SettingParser;
+import com.aliyun.odps.jdbc.utils.TunnelTimeouts;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.SQLExecutor;
@@ -678,12 +679,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
               connHandle.log.info("using tunnel endpoint: " + te);
               tunnel.setEndpoint(te);
             }
-            if (connHandle.getTunnelConnectTimeout() >= 0) {
-              tunnel.getConfig().setSocketConnectTimeout(connHandle.getTunnelConnectTimeout());
-            }
-            if (connHandle.getTunnelReadTimeout() >= 0) {
-              tunnel.getConfig().setSocketTimeout(connHandle.getTunnelReadTimeout());
-            }
+            TunnelTimeouts.apply(tunnel.getConfig(), connHandle.getTunnelConnectTimeout(),
+                                 connHandle.getTunnelReadTimeout());
             if (!StringUtils.isNullOrEmpty(connHandle.getTunnelQuotaName())) {
               ((com.aliyun.odps.tunnel.Configuration) tunnel.getConfig()).setQuotaName(
                   connHandle.getTunnelQuotaName());
@@ -1083,7 +1080,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                    connHandle.getFetchResultPreloadSplitNum(),
                                    connHandle.getFetchResultThreadNum(),
                                    connHandle.getTunnelQuotaName(),
-                                   connHandle.getTunnelEndpoint());
+                                   connHandle.getTunnelEndpoint(),
+                                   connHandle.getTunnelConnectTimeout(),
+                                   connHandle.getTunnelReadTimeout());
       odpsResultSet = new com.aliyun.odps.data.ResultSet(
           instanceDataIterator,
           instanceDataIterator.getSchema(),
