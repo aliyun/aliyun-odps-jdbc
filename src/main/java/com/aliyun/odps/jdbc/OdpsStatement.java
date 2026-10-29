@@ -1080,7 +1080,9 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
                                    connHandle.getFetchResultPreloadSplitNum(),
                                    connHandle.getFetchResultThreadNum(),
                                    connHandle.getTunnelQuotaName(),
-                                   connHandle.getTunnelEndpoint());
+                                   connHandle.getTunnelEndpoint(),
+                                   connHandle.getTunnelConnectTimeout(),
+                                   connHandle.getTunnelReadTimeout());
       odpsResultSet = new com.aliyun.odps.data.ResultSet(
           instanceDataIterator,
           instanceDataIterator.getSchema(),
