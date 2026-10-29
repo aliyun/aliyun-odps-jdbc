@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.aliyun.odps.Column;
 import com.aliyun.odps.OdpsException;
+import com.aliyun.odps.Odps;
 import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.TableSchema;
@@ -48,7 +49,15 @@ public abstract class DataUploader {
     this.specificColumns = specificColumns;
     this.conn = conn;
 
-    tunnel = new TableTunnel(conn.getOdps());
+    Odps uploadOdps = conn.getOdps().clone();
+    String tunnelEndpoint = conn.getTunnelEndpoint();
+    if (!StringUtils.isNullOrEmpty(tunnelEndpoint)) {
+      // SDK 0.58.1 also derives the Upsert Netty TLS/proxy setup from this endpoint.
+      // This Odps is private to the uploader; metadata still uses the connection's service client.
+      uploadOdps.setEndpoint(tunnelEndpoint);
+      uploadOdps.setTunnelEndpoint(tunnelEndpoint);
+    }
+    tunnel = new TableTunnel(uploadOdps);
     Table table = conn.getOdps().tables().get(projectName, schemaName, tableName);
     if (partitionSpec != null && !table.hasPartition(this.partitionSpec)) {
       table.createPartition(this.partitionSpec);

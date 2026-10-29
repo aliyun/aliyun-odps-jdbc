@@ -49,6 +49,37 @@ public class ConnectionResourceTest {
   }
 
   @Test
+  public void tunnelEndpointWithoutAutoSelectLimitPreservesOrdinaryQueryDefaults() {
+    ConnectionResource resource = new ConnectionResource(
+        "jdbc:odps:https://service.example.invalid/api?project=fixture"
+        + "&settings={\"odps.sql.mapper.split.size\":\"64\"}"
+        + "&tunnelEndpoint=https://tunnel.example.invalid", null);
+    Assertions.assertEquals("https://tunnel.example.invalid", resource.getTunnelEndpoint());
+    Assertions.assertEquals("64", resource.getSettings().get("odps.sql.mapper.split.size"));
+    Assertions.assertEquals(Long.valueOf(-1), resource.getAutoSelectLimit());
+    Assertions.assertTrue(resource.isEnableLimit());
+    Assertions.assertEquals(com.aliyun.odps.sqa.ExecuteMode.OFFLINE, resource.isInteractiveMode());
+  }
+
+  @Test
+  public void inheritedTunnelEndpointPropertyAndBlankAliasesRespectPrecedence() {
+    Properties defaults = new Properties();
+    defaults.setProperty("tunnel_endpoint", "  https://inherited.example.invalid  ");
+    Properties properties = new Properties(defaults);
+    String url = "jdbc:odps:https://service.example.invalid/api?project=fixture"
+        + "&tunnelEndpoint=https://url.example.invalid";
+    Assertions.assertEquals("https://inherited.example.invalid",
+        new ConnectionResource(url, properties).getTunnelEndpoint());
+    properties.setProperty("tunnel_endpoint", " ");
+    properties.setProperty("tunnelEndpoint", "https://alias.example.invalid");
+    Assertions.assertEquals("https://alias.example.invalid",
+        new ConnectionResource(url, properties).getTunnelEndpoint());
+    properties.setProperty("tunnelEndpoint", " ");
+    Assertions.assertEquals("https://url.example.invalid",
+        new ConnectionResource(url, properties).getTunnelEndpoint());
+  }
+
+  @Test
   public void connectionURLFullTest() {
 
     ConnectionResource

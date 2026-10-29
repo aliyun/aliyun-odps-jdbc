@@ -214,6 +214,21 @@ java.net.URLEncoder#encode(java.lang.String).
 |:-------------:|:---------------------------------------------------------|
 | `odps_config` | Path to an external ODPS configuration file to load from |
 
+### Tunnel endpoint
+
+The connection option `tunnelEndpoint` (`tunnel_endpoint` in `Properties`) applies
+to ordinary, parallel and scrollable result downloads, MCQA/MaxQA Tunnel results,
+and table uploads including transactional Upsert. Read retries keep the same
+endpoint. An explicit endpoint failure is reported without switching to automatic
+Tunnel routing; omitting the option preserves automatic routing.
+
+Nonblank `Properties` values take precedence over URL values; blank values are
+ignored. An `odps_config` file is exclusive, so configure `tunnel_endpoint` inside
+that file. If the file omits it while the URL or `Properties` supplies an explicit
+endpoint, connection creation fails with a configuration error. Endpoints must be
+absolute HTTP(S) base URLs without user information, query parameters or fragments.
+The effective connection endpoint is recorded in the connection log.
+
 ### Typed MaxQA results
 
 `enableTypedResult` defaults to `true`, preserving schema-based Java types. To return
