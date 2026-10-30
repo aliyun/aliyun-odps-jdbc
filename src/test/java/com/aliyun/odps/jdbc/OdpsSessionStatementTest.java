@@ -172,7 +172,17 @@ public class OdpsSessionStatementTest {
         Assertions.assertEquals(i, rs.getInt(1));
         i++;
       }
-      // TestUtils disables the service preview limit; JDBC maxRows is the bound.
+      // The 11111 below depends on a test-side flag, not on the service default:
+      // TestUtils.getConnection() puts enableLimit=false into every test URL
+      // (utils/TestUtils.java:119), which turns off the instance tunnel preview limit for the
+      // session result download (OdpsStatement#setResultSetInternal -> SQLExecutor#getResultSet
+      // (offset, count, size, limitEnabled) -> InstanceTunnel#createDirectDownloadSession).
+      // Measured 2026-10-30 against one real project, same session URL and same SQL, varying only
+      // that flag: maxRows=11111 -> 11111 rows with enableLimit=false, 10000 rows when it is left
+      // at the driver default; maxRows=5000 -> 5000 rows either way. Prefixing the statement with
+      // `set odps.sql.select.auto.limit=-1` changed neither number, so the SQL-level auto limit is
+      // not what this case exercises. JDBC maxRows is the bound while the flag stays off; if
+      // TestUtils stops setting it, this case will read 10000 again.
       Assertions.assertEquals(11111, i);
     }
     rs.close();
