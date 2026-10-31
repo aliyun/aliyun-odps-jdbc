@@ -28,6 +28,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 
 public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
 
@@ -374,7 +375,7 @@ public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
                               count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException | IOException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
     }
   }
 }

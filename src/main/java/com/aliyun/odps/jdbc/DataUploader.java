@@ -13,6 +13,7 @@ import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.ArrayRecord;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import com.aliyun.odps.tunnel.TableTunnel;
@@ -102,7 +103,7 @@ public abstract class DataUploader {
     try {
       upload(batchedRows, batchedSize, updateCounts);
     } catch (Exception e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
     }
 
     return updateCounts;
