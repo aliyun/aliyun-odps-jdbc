@@ -29,6 +29,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -178,9 +179,9 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
       conn.log.warn(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
     } catch (TunnelException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
     }
   }
 

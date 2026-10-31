@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.aliyun.odps.data.Record;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 
 public class OdpsSessionForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -111,11 +112,12 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
       return true;
     } catch (IllegalStateException e) {
       // The statement (or its connection) was closed underneath this read.
-      throw new SQLException("The result set has been closed", e);
+      throw new SQLException("The result set has been closed", SqlStates.OBJECT_NOT_IN_STATE, 0, e);
     } catch (RuntimeException e) {
       // A failed split reaches us as an unchecked download failure; a JDBC caller can only act
       // on SQLException, so translate it and keep the original as the cause.
-      throw new SQLException("Failed to read the next record: " + e.getMessage(), e);
+      throw SqlStates.sqlException("Failed to read the next record: " + e.getMessage(), e,
+                                   SqlStates.COMMUNICATION_LINK_FAILURE);
     }
   }
 

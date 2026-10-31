@@ -66,7 +66,7 @@ public class Utils {
       i.waitForSuccess();
       return i.getTaskResults().get("AnonymousSQLTask");
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e);
     }
   }
 

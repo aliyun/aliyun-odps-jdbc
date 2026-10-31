@@ -57,6 +57,7 @@ import com.aliyun.odps.data.SimpleStruct;
 import com.aliyun.odps.data.Varchar;
 import com.aliyun.odps.jdbc.data.OdpsStruct;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.sqa.commandapi.utils.SqlParserUtil;
 import com.aliyun.odps.tunnel.TunnelException;
 
@@ -413,7 +414,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       try {
         uploader.commit();
       } catch (TunnelException | IOException e) {
-        throw new SQLException(e.getMessage(), e);
+        throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
       }
     }
     super.close();
