@@ -214,6 +214,23 @@ java.net.URLEncoder#encode(java.lang.String).
 |:-------------:|:---------------------------------------------------------|
 | `odps_config` | Path to an external ODPS configuration file to load from |
 
+### Request metadata
+
+Set these optional values when opening a connection. The driver passes them through the SDK
+for HTTP requests made by that connection.
+
+| Connection property | URL parameter | Request metadata |
+| --- | --- | --- |
+| `mc_user_agent_suffix` | `mcUserAgentSuffix` | Appends to the JDBC User-Agent |
+| `mc_call_context` | `mcCallContext` | Original text for the SDK to encode as `x-odps-call-context` |
+| `traceparent` | `traceparent` | `traceparent` header |
+| `tracestate` | `tracestate` | `tracestate` header |
+
+Connection properties take precedence over URL parameters. An empty value clears the field.
+When either trace property is supplied, both trace values come from the properties. Encode URL
+parameter values as UTF-8. Connections use their own metadata and ignore the SDK environment
+defaults for these fields. Set new values by opening a new connection.
+
 ### Tunnel endpoint
 
 The connection option `tunnelEndpoint` (`tunnel_endpoint` in `Properties`) applies
