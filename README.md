@@ -93,7 +93,7 @@ java.net.URLEncoder#encode(java.lang.String).
 |    `accessKey`     |     `access_key`     |   True   |                | Your Alibaba Cloud access key secret                                                 |
 | `interactiveMode`  |  `interactive_mode`  |  False   |     false      | Enable MCQA (interactive mode: maxqa/mcqa/offline, or true/false for simple boolean) |
 |     `logview`      |    `logview_host`    |  False   | Provided by MC | The endpoint of MaxCompute Logview                                                   |
-|  `tunnelEndpoint`  |  `tunnel_endpoint`   |  False   | Provided by MC | The endpoint of the MaxCompute Tunnel service                                        |
+|  `tunnelEndpoint`  |  `tunnel_endpoint`   |  False   | Provided by MC | The endpoint of the MaxCompute Tunnel service. Supplying it skips that routing request as well -- see [Connection validation](#connection-validation). |
 | `enableOdpsLogger` | `enable_odps_logger` |  False   |     false      | Enable MaxCompute JDBC logger                                                        |
 
 #### Advanced
@@ -133,7 +133,7 @@ java.net.URLEncoder#encode(java.lang.String).
 |             URL key             |            Property Key             | Required | Default value | Description                                                                           |
 |:-------------------------------:|:-----------------------------------:|:--------:|:-------------:|:--------------------------------------------------------------------------------------|
 |        `tunnelRetryTime`        |         `tunnel_retry_time`         |  False   |       6       | The number of times to retry tunnel operations upon failure                           |
-|       `useInstanceTunnel`       |        `use_instance_tunnel`        |  False   |     true      | Whether to use instance tunnel for reading result sets, not recommend set it to false |
+|       `useInstanceTunnel`       |        `use_instance_tunnel`        |  False   |     true      | Whether to use instance tunnel for reading result sets, not recommend set it to false. Turning it off also removes the Tunnel routing request `getConnection()` would otherwise make -- see [Connection validation](#connection-validation). |
 |       `tunnelReadTimeout`       |        `tunnel_read_timeout`        |  False   |      -1       | Tunnel read timeout, **in seconds**. -1 leaves the Java SDK default (300 s) in place, it does not mean "no timeout" |
 |     `tunnelConnectTimeout`      |      `tunnel_connect_timeout`       |  False   |      -1       | Tunnel connect timeout, **in seconds**. -1 leaves the Java SDK default (180 s) in place, it does not mean "no timeout" |
 | `tunnelDownloadUseSingleReader` | `tunnel_download_use_single_reader` |  False   |    `true`     | Whether to use a single reader for tunnel downloads                                   |
@@ -186,7 +186,7 @@ java.net.URLEncoder#encode(java.lang.String).
 | `odpsNamespaceSchema` | `odps_namespace_schema` |  False   | Judge by project settings | Whether to use ODPS namespace schema feature (true/false). Left unset, the driver takes the answer from the project itself (project property `odps.schema.model.enabled`); **an explicit `true`/`false` overrides that answer** rather than hinting at it -- `true` puts a two-tier project into namespace mode, `false` hides the schemas of a three-tier one. Enable it explicitly on three-tier projects only: on a two-tier project the connection still opens and ordinary statements still run, but the metadata calls that need the schema layer are rejected by the service with `ODPS-0110061 ... Invalid database operations on two-tier model` -- that is `getSchemas()`, and `getTables(..)` called with a `null` schema criterion and no `schema` parameter (see the next row). |
 |       `schema`        |        `schema`         |  False   |          default          | Default schema to use for connection (used with namespace schema mode). It also **switches namespace mode on** when `odpsNamespaceSchema` is left unset (set both and the explicit value wins; `schema` together with `odpsNamespaceSchema=false` is refused when the connection is opened). In namespace mode it narrows the work: `getTables(..)` with a `null` schema criterion is restricted to this schema instead of walking one by one through every schema of the project -- which is also how to keep `getTables(..)` usable on a two-tier project that was forced into namespace mode. The no-argument `getSchemas()` is not narrowed by it -- it asks the service to list the project's schemas, so that is the call to expect to fail on a two-tier project. |
 | `useProjectTimeZone`  | `use_project_time_zone` |  False   |           false           | Use project time zone instead of client time zone                      |
-|      `timeZone`       |       `timezone`        |  False   |        JVM default        | Explicit time zone setting for the connection                          |
+|      `timeZone`       |       `timezone`        |  False   |        JVM default        | Explicit time zone setting for the connection. Setting it also tells the driver not to read the project's `odps.sql.timezone` -- see [Connection validation](#connection-validation). |
 
 #### Logging and Debugging
 
@@ -213,6 +213,31 @@ java.net.URLEncoder#encode(java.lang.String).
 |    URL key    | Description                                              |
 |:-------------:|:---------------------------------------------------------|
 | `odps_config` | Path to an external ODPS configuration file to load from |
+
+### Connection validation
+
+`getConnection()` runs no dedicated check that the endpoint, the project and the credentials are
+correct. What can reject them is the requests it happens to make while opening: a read of the
+project property `odps.schema.model.enabled`, a read of `odps.sql.timezone`, and -- unless a
+Tunnel endpoint is already known -- one request to find one.
+
+- Setting `timeZone` skips the timezone read; giving `odpsNamespaceSchema` an explicit value
+  skips the other property read; supplying `tunnelEndpoint` or setting `useInstanceTunnel=false`
+  skips the routing request.
+- A **failed** read of `odps.schema.model.enabled` is caught and reported as a two-tier project,
+  so a three-tier project whose read failed is used as a two-tier one; the metadata calls that
+  need the schema layer are what fail later, with `ODPS-0110061 ...` (see `odpsNamespaceSchema`).
+- `Connection.isValid()` does not contact the service either: it reports only whether the handle
+  is closed, so a pool's `testOnBorrow` / `testWhileIdle` cannot cover this either.
+
+With `timeZone` set and either Tunnel silencer set -- documented options, none of them unusual --
+`getConnection()` therefore answers success against an unreachable endpoint, a project that does
+not exist and an access key the service turns away (measured against a closed loopback port and
+against stubs replying 404 and 403: 0.24 s to 8.2 s, 0 or 1 request), and the first statement then
+fails with a `SQLException` whose message names the endpoint.
+
+If connecting is supposed to mean "this configuration is usable", run one cheap statement
+(`SELECT 1`) right after `getConnection()` and treat its failure as a configuration error.
 
 ### Tunnel endpoint
 
