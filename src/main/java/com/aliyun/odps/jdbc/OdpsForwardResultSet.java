@@ -161,7 +161,11 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       } catch (IOException e) {
         conn.log.info("read from a bad file, retry=" + retry);
         if (++retry == READER_REOPEN_TIME_MAX) {
-          throw new SQLException("to much retries because: " + e.getMessage());
+          // Reviewed on PR #221: this branch used to drop the cause and any classification,
+          // while its sibling rebuildReader() reports both. Five exhausted read attempts on a
+          // connection that was streaming is a link failure, and the reader's exception is the
+          // evidence -- the message text itself is unchanged.
+          throw SqlStates.transportFailure("to much retries because: " + e.getMessage(), e);
         }
         rebuildReader();
       }
@@ -179,9 +183,9 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
       conn.log.warn(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
-      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
+      throw SqlStates.transportFailure(e.getMessage(), e);
     } catch (TunnelException e) {
-      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
+      throw SqlStates.transportFailure(e.getMessage(), e);
     }
   }
 

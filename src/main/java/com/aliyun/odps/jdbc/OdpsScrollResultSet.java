@@ -375,7 +375,7 @@ public class OdpsScrollResultSet extends OdpsResultSet implements ResultSet {
                               count, totalKBytes, (float) totalKBytes / duration * 1000));
       reader.close();
     } catch (TunnelException | IOException e) {
-      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
+      throw SqlStates.transportFailure(e.getMessage(), e);
     }
   }
 }

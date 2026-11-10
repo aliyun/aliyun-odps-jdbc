@@ -103,7 +103,7 @@ public abstract class DataUploader {
     try {
       upload(batchedRows, batchedSize, updateCounts);
     } catch (Exception e) {
-      throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
+      throw SqlStates.transportFailure(e.getMessage(), e);
     }
 
     return updateCounts;

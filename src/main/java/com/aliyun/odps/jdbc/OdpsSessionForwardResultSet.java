@@ -116,8 +116,7 @@ public class OdpsSessionForwardResultSet extends OdpsResultSet implements Result
     } catch (RuntimeException e) {
       // A failed split reaches us as an unchecked download failure; a JDBC caller can only act
       // on SQLException, so translate it and keep the original as the cause.
-      throw SqlStates.sqlException("Failed to read the next record: " + e.getMessage(), e,
-                                   SqlStates.COMMUNICATION_LINK_FAILURE);
+      throw SqlStates.transportFailure("Failed to read the next record: " + e.getMessage(), e);
     }
   }
 

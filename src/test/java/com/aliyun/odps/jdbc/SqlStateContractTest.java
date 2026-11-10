@@ -276,18 +276,22 @@ class SqlStateContractTest {
   @Test
   @DisplayName("a read failure while streaming a result is a link failure")
   void streamingReadFailureIsLinkFailure() {
-    SQLException built = SqlStates.sqlException("Failed to read the next record",
-                                                new IOException("connection reset"),
-                                                SqlStates.COMMUNICATION_LINK_FAILURE);
+    SQLException built = SqlStates.transportFailure("Failed to read the next record",
+                                                    new IOException("connection reset"));
     assertEquals(SqlStates.COMMUNICATION_LINK_FAILURE, built.getSQLState(), "stream read");
     assertEquals(0, built.getErrorCode(), "stream read");
 
     // ...unless the service did answer underneath the IOException, which outranks the fallback.
-    SQLException answered = SqlStates.sqlException(
+    SQLException answered = SqlStates.transportFailure(
         "Failed to read the next record",
         new IOException("stream failed",
-                        new OdpsException("ODPS-0130131:Table not found - table `t` gone")),
-        SqlStates.COMMUNICATION_LINK_FAILURE);
+                        new OdpsException("ODPS-0130131:Table not found - table `t` gone")));
+    // A non-transport failure on the same path must not borrow the link state.
+    SQLException local = SqlStates.transportFailure(
+        "1 records are going to be uploaded", new SQLException("can not transform String to Int"));
+    assertNull(local.getSQLState(), "no transport evidence, so no 08S01");
+    assertEquals(0, local.getErrorCode(), "no service code either");
+    assertEquals(local.getCause().getClass(), SQLException.class, "cause kept");
     assertEquals(SqlStates.TABLE_NOT_FOUND, answered.getSQLState(), "service answer outranks");
     assertEquals(130131, answered.getErrorCode(), "service answer outranks");
   }

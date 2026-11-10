@@ -282,7 +282,10 @@ is reported as `130071`. Two rules keep both fields honest:
 - A `SQLState` is only reported where the driver has evidence for it. A failure it cannot classify
   -- a `NullPointerException`, or an error code family it has not observed -- keeps
   `getSQLState() == null` rather than answering the generic `HY000`. A fabricated state teaches
-  callers to branch on a value that means nothing.
+  callers to branch on a value that means nothing. `08S01` in particular is reserved for a failure
+  whose chain actually contains an I/O failure: a value the driver refuses on the upload path is a
+  data error, not a broken connection, and telling a pool otherwise makes it retry or discard a
+  connection that is fine.
 - Nothing that used to work changes. Exception type, message text and the cause chain are as
   before; these two fields were empty on every service failure before, and `0`/`null` still mean
   "no information".

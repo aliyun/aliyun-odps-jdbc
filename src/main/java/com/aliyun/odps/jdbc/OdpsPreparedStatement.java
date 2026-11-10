@@ -414,7 +414,7 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       try {
         uploader.commit();
       } catch (TunnelException | IOException e) {
-        throw SqlStates.sqlException(e.getMessage(), e, SqlStates.COMMUNICATION_LINK_FAILURE);
+        throw SqlStates.transportFailure(e.getMessage(), e);
       }
     }
     super.close();

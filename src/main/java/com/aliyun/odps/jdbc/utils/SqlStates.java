@@ -65,9 +65,11 @@ import java.util.regex.Pattern;
  * element, e.g. {@code NoSuchObject}, {@code Unauthorized}, {@code NoPermission}), the numeric
  * {@code ODPS-<digits>} in any message on that chain (the SQL compiler, metadata and MaxQA session
  * families), and the typed {@link NoSuchObjectException}. Transport failures ({@code IOException}
- * and friends) carry no service identity at all, so they are classified by the call site that caught
- * them: an opening failure that never reached a service is {@code 08001}, a failure while streaming
- * a result is {@code 08S01}.
+ * and friends) carry no service identity at all. They are classified by where the driver was
+ * standing when it failed, and only within that: an opening failure that never reached a service is
+ * {@code 08001}; {@code 08S01} is reserved for a failure on a path that had a connection and lost
+ * it, and it is applied only when the chain really does contain an I/O failure -- a call site that
+ * catches broadly must not turn a rejected value into a broken connection.
  */
 public final class SqlStates {
 
@@ -165,18 +167,36 @@ public final class SqlStates {
    * identifies the failure itself.
    */
   public static SQLException sqlException(String message, Throwable cause) {
-    return sqlException(message, cause, null);
+    Evidence evidence = collect(cause);
+    return build(message, evidence.classify(), evidence.serviceCode, cause);
   }
 
-  /** Report a failure, with the state this call site knows it has to be if nothing else does. */
-  public static SQLException sqlException(String message, Throwable cause,
-                                          String stateWithoutEvidence) {
+  /**
+   * Report a failure on a path where the driver was talking to the service and stopped being able
+   * to -- upload, commit, fetch.
+   *
+   * <p>The communication-link state is applied only when the chain actually carries transport
+   * evidence (an {@code IOException} or one of its subclasses). A call site catching broadly must
+   * not hand {@code 08S01} to a failure that has nothing to do with the connection: a rejected
+   * value, a null argument, an internal check -- those keep {@code getSQLState()} empty, because
+   * telling a caller "the connection broke" when it did not is worse than saying nothing. It is
+   * what makes a pool retry, or discard, a perfectly healthy connection.
+   */
+  public static SQLException transportFailure(String message, Throwable cause) {
     Evidence evidence = collect(cause);
     String state = evidence.classify();
-    if (state == null) {
-      state = stateWithoutEvidence;
+    if (state == null && hasTransportEvidence(evidence)) {
+      state = COMMUNICATION_LINK_FAILURE;
     }
     return build(message, state, evidence.serviceCode, cause);
+  }
+
+  /**
+   * @return true when some throwable on the chain is an I/O failure, which is the only evidence a
+   *     "connection in use broke" state can rest on
+   */
+  public static boolean hasTransportEvidence(Throwable failure) {
+    return hasTransportEvidence(collect(failure));
   }
 
   /**
@@ -212,6 +232,7 @@ public final class SqlStates {
     private String text;
     private boolean reachedService;
     private boolean missingObjectTyped;
+    private boolean transportFailure;
 
     private String classify() {
       if (serviceCode != 0) {
@@ -271,6 +292,10 @@ public final class SqlStates {
     }
   }
 
+  private static boolean hasTransportEvidence(Evidence evidence) {
+    return evidence.transportFailure;
+  }
+
   private static Evidence collect(Throwable failure) {
     Evidence evidence = new Evidence();
     Throwable current = failure;
@@ -285,6 +310,9 @@ public final class SqlStates {
       }
       if (current instanceof NoSuchObjectException) {
         evidence.missingObjectTyped = true;
+      }
+      if (current instanceof java.io.IOException) {
+        evidence.transportFailure = true;
       }
       if (current instanceof RestException) {
         ErrorMessage errorMessage = ((RestException) current).getErrorMessage();
