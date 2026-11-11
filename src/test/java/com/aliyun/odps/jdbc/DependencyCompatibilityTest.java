@@ -13,6 +13,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.luben.zstd.Zstd;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.github.luben.zstd.ZstdDictCompress;
 import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
@@ -30,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
 import org.junit.jupiter.api.Test;
+import org.xerial.snappy.Snappy;
 
 /** Offline compatibility checks for the libraries embedded by the JDBC shade build. */
 public class DependencyCompatibilityTest {
@@ -119,6 +124,52 @@ public class DependencyCompatibilityTest {
       }
     }
     assertArrayEquals(input, decoded.toByteArray());
+  }
+
+  @Test
+  void snappyTypedArrayRoundTripsMatchTunnelCodecUsage() throws IOException {
+    // The Tunnel codecs call the typed-array helpers; keep them working on the bundled copy.
+    char[] chars = "MaxCompute JDBC snappy regression 查询".toCharArray();
+    assertArrayEquals(chars, Snappy.uncompressCharArray(Snappy.compress(chars)));
+    int[] ints = {0, -1, 42, Integer.MAX_VALUE, Integer.MIN_VALUE};
+    assertArrayEquals(ints, Snappy.uncompressIntArray(Snappy.compress(ints)));
+    long[] longs = {0L, -1L, Long.MAX_VALUE, Long.MIN_VALUE};
+    assertArrayEquals(longs, Snappy.uncompressLongArray(Snappy.compress(longs)));
+    byte[] payload = Snappy.compress("tunnel-frame".getBytes(StandardCharsets.UTF_8));
+    assertArrayEquals("tunnel-frame".getBytes(StandardCharsets.UTF_8), Snappy.uncompress(payload));
+  }
+
+  @Test
+  void snappyRejectsTruncatedFramesBeforeNativeCopy() throws IOException {
+    // CVE-2026-108106: a declared uncompressed length must not drive an unbounded allocation.
+    byte[] payload = Snappy.compress("tunnel-frame".getBytes(StandardCharsets.UTF_8));
+    assertFalse(Snappy.isValidCompressedBuffer(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}));
+    assertThrows(IOException.class,
+        () -> Snappy.uncompressedLength(new byte[] {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff}));
+    assertThrows(IOException.class, () -> Snappy.uncompress(new byte[] {payload[0]}));
+  }
+
+  @Test
+  void snappyArrayCopyRejectsOutOfRangeArguments() throws IOException {
+    // CVE-2026-116590: snappy-java before 1.1.10.9 copied without validating the destination,
+    // so these calls wrote past the target array instead of failing.
+    byte[] payload = Snappy.compress("tunnel-frame".getBytes(StandardCharsets.UTF_8));
+    assertThrows(IllegalArgumentException.class,
+        () -> Snappy.arrayCopy(payload, 0, payload.length, new byte[1], 0));
+    assertThrows(IllegalArgumentException.class,
+        () -> Snappy.arrayCopy(payload, -1, payload.length, new byte[64], 0));
+  }
+
+  @Test
+  void guavaCacheAndImmutableCollectionsUsedBySdkResolve() {
+    // Core uses CacheBuilder for the Tunnel endpoint cache and ImmutableList/Map/Lists in
+    // metadata paths; pin the surface the bundled guava copy has to keep providing.
+    Cache<String, String> cache = CacheBuilder.newBuilder().maximumSize(8).build();
+    cache.put("tunnel-endpoint", "http://dt.example.invalid");
+    assertEquals("http://dt.example.invalid", cache.getIfPresent("tunnel-endpoint"));
+    assertEquals(ImmutableMap.of("name", "value"),
+        ImmutableMap.copyOf(java.util.Collections.singletonMap("name", "value")));
+    assertEquals(2, Lists.asList("a", new String[] {"b"}).size());
   }
 
   @Test
