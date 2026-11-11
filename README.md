@@ -253,6 +253,77 @@ metadata use STRING, including numeric and date/time columns. Null markers such 
 change Tunnel result types. The SDK may switch to Tunnel when a direct result is
 truncated, so disabling typed results does not guarantee strings on that path.
 
+### Error identity: `SQLState` and `ErrorCode`
+
+Every `SQLException` the driver raises for a failure it can identify carries a standard
+`SQLState` and, when the service sent one, the MaxCompute error code in `getErrorCode()`.
+Applications and frameworks (connection pools, BI and ETL tools) can branch on those two
+fields instead of matching text out of the message.
+
+|   `SQLState`   |                Meaning                |           Typical service evidence           |
+|:--------------:|---------------------------------------|----------------------------------------------|
+| `08001`        | Could not establish a connection      | Unreachable endpoint, refused option value    |
+| `08003`        | Connection already closed             | `setAutoCommit` after `close()`               |
+| `08004`        | The service refused the attempt       | Answered, but not with a nameable condition   |
+| `08S01`        | A connection in use failed            | Transport failure while uploading, fetching or closing |
+| `28000`        | The credentials are not accepted      | `ODPS-0410042` invalid signature, bad token   |
+| `3D000`        | The project does not exist            | `ODPS-0420111` project not found              |
+| `3F000`        | The schema is not usable here         | `ODPS-0110061` on a two-tier project          |
+| `42000`        | The statement was rejected            | `ODPS-0130071`, `ODPS-0130161` compile errors |
+| `42501`        | Not permitted for this object         | `ODPS-0130013`, Tunnel `NoPermission`         |
+| `42S02`        | The table does not exist              | `ODPS-0130131` table not found                |
+| `55000`        | The object is closed                  | `execute()` after `Statement.close()`         |
+| `0A000`        | Not supported                         | `ODPS-185xxxx` session limits                 |
+| `HYT00`        | The query timed out                   | `ODPS-186xxxx` session timeout                |
+
+`getErrorCode()` is the numeric part of the MaxCompute code that the service sent: `ODPS-0130071`
+is reported as `130071`. Two rules keep both fields honest:
+
+- A `SQLState` is only reported where the driver has evidence for it. A failure it cannot classify
+  -- a `NullPointerException`, or an error code family it has not observed -- keeps
+  `getSQLState() == null` rather than answering the generic `HY000`. A fabricated state teaches
+  callers to branch on a value that means nothing. `08S01` in particular is reserved for a failure
+  whose chain actually contains an I/O failure: a value the driver refuses on the upload path is a
+  data error, not a broken connection, and telling a pool otherwise makes it retry or discard a
+  connection that is fine.
+- Nothing that used to work changes. Exception type, message text and the cause chain are as
+  before; these two fields were empty on every service failure before, and `0`/`null` still mean
+  "no information".
+- A state describes the failure, not its consequence. `08S01` means the communication broke while
+  a connection was in use; it does **not** say the operation had no effect. Losing the response to
+  a commit is indistinguishable from losing the commit itself, so a caller that replays on
+  `08S01` must either know the operation is idempotent or check the outcome (counting rows,
+  reading back the partition, asking the service) before replaying. Non-idempotent writes replayed
+  on this state can duplicate data.
+
+```java
+try {
+  statement.execute(sql);
+} catch (SQLException e) {
+  switch (String.valueOf(e.getSQLState())) {
+    case "42S02":            // the table is gone: recreate it or point elsewhere
+    case "3D000":            // the project is gone: this is not retryable
+      reconfigure();
+      break;
+    case "08001":            // never got a connection, so the statement did not run
+      retryWithBackoff();
+      break;
+    case "08S01":            // lost it mid-flight: did the write take effect? unknown
+      // A communication failure says nothing about the outcome. The response to a commit can be
+      // lost after the commit succeeded, and `OdpsPreparedStatement.close()` reports exactly that
+      // through this state. Replay only an idempotent operation, or verify the outcome first.
+      if (idempotent(sql)) {
+        retryWithBackoff();
+      } else {
+        checkThenMaybeReplay(sql, e);
+      }
+      break;
+    default:                 // null, or a condition the driver could not name
+      report(e.getMessage(), e.getErrorCode(), e);
+  }
+}
+```
+
 ## Example
 
 ### JDBC Client Sample Code

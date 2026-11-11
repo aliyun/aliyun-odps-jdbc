@@ -41,6 +41,7 @@ import com.aliyun.odps.TableFilter;
 import com.aliyun.odps.account.AliyunAccount;
 import com.aliyun.odps.jdbc.utils.JdbcColumn;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.type.TypeInfo;
 import com.aliyun.odps.type.TypeInfoFactory;
@@ -886,7 +887,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
       log.error("getTables failed: catalog=" + catalog
                 + ", schemaPattern=" + schemaPattern
                 + ", tableNamePattern=" + tableNamePattern, e);
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e);
     }
 
     long end = System.currentTimeMillis();
@@ -1115,7 +1116,7 @@ public class OdpsDatabaseMetaData extends WrapperAdapter implements DatabaseMeta
         // criterion, the same way getTables() already answers it -- empty, not an error.
         log.info("getSchemas: catalog does not exist, returning an empty result set: " + catalog);
       } else {
-        throw new SQLException(e.getMessage(), e);
+        throw SqlStates.sqlException(e.getMessage(), e);
       }
     }
 

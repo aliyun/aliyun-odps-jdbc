@@ -43,6 +43,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.jdbc.utils.InstanceDataIterator;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
 import com.aliyun.odps.jdbc.utils.SettingParser;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.SQLExecutor;
@@ -93,7 +94,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
   // "this method is called on a closed Statement" on nearly every method except
   // close()/isClosed(); the SQL standard has no dedicated code for that state, and
   // class 55 "object not in state of system" is its established meaning.
-  public static final String SQLSTATE_OBJECT_CLOSED = "55000";
+  public static final String SQLSTATE_OBJECT_CLOSED = SqlStates.OBJECT_NOT_IN_STATE;
   protected static ResultSet EMPTY_RESULT_SET = null;
 
   static {
@@ -182,7 +183,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
           sqlExecutor.cancel();
           conn.log.info("submit cancel to the running query, instance not published yet");
         } catch (OdpsException e) {
-          throw new SQLException(e.getMessage(), e);
+          throw SqlStates.sqlException(e.getMessage(), e);
         }
         isCancelled = true;
         return;
@@ -201,7 +202,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     try {
       cancelRunningQuery(instance, conn);
     } catch (OdpsException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e);
     }
 
     isCancelled = true;
@@ -322,7 +323,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       try {
         processSetClauseExtra(properties);
       } catch (OdpsException e) {
-        throw new SQLException(e.getMessage(), e);
+        throw SqlStates.sqlException(e.getMessage(), e);
       }
     }
     // otherwise those properties is just for this query
@@ -355,7 +356,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       try {
         processSetClauseExtra(properties);
       } catch (OdpsException e) {
-        throw new SQLException(e.getMessage(), e);
+        throw SqlStates.sqlException(e.getMessage(), e);
       }
     }
 
@@ -415,7 +416,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
       try {
         processSetClauseExtra(properties);
       } catch (OdpsException e) {
-        throw new SQLException(e.getMessage(), e);
+        throw SqlStates.sqlException(e.getMessage(), e);
       }
     }
     // otherwise those properties is just for this query
@@ -473,7 +474,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         }
       }
     } catch (IOException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.sqlException(e.getMessage(), e);
     } finally {
       try {
         reader.close();
@@ -995,7 +996,7 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
     OdpsConnection conn = connHandle;
     executing = false;
     if (conn == null) {
-      throw new SQLException("The statement has been closed");
+      throw new SQLException("The statement has been closed", SqlStates.OBJECT_NOT_IN_STATE);
     }
     try {
       if (instance != null) {
@@ -1005,8 +1006,8 @@ public class OdpsStatement extends WrapperAdapter implements Statement {
         sqlExecutor.cancel();
       }
     } catch (OdpsException e) {
-      throw new SQLException("Failed to cancel the query submitted by this statement: "
-                             + e.getMessage(), e);
+      throw SqlStates.sqlException("Failed to cancel the query submitted by this statement: "
+                                   + e.getMessage(), e);
     } finally {
       isCancelled = true;
     }

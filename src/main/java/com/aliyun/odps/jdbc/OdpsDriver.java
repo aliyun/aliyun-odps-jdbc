@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.jdbc.utils.Utils;
 
 public class OdpsDriver implements Driver {
@@ -88,7 +89,7 @@ public class OdpsDriver implements Driver {
     if (reason == null || reason.isEmpty()) {
       reason = "no message";
     }
-    return new SQLException(
+    return SqlStates.connectFailure(
         "Failed to establish JDBC connection: " + cause.getClass().getName() + ": " + reason,
         cause);
   }
