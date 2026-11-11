@@ -265,7 +265,7 @@ fields instead of matching text out of the message.
 | `08001`        | Could not establish a connection      | Unreachable endpoint, refused option value    |
 | `08003`        | Connection already closed             | `setAutoCommit` after `close()`               |
 | `08004`        | The service refused the attempt       | Answered, but not with a nameable condition   |
-| `08S01`        | A connection in use failed            | Transport failure while uploading or fetching |
+| `08S01`        | A connection in use failed            | Transport failure while uploading, fetching or closing |
 | `28000`        | The credentials are not accepted      | `ODPS-0410042` invalid signature, bad token   |
 | `3D000`        | The project does not exist            | `ODPS-0420111` project not found              |
 | `3F000`        | The schema is not usable here         | `ODPS-0110061` on a two-tier project          |
@@ -289,6 +289,12 @@ is reported as `130071`. Two rules keep both fields honest:
 - Nothing that used to work changes. Exception type, message text and the cause chain are as
   before; these two fields were empty on every service failure before, and `0`/`null` still mean
   "no information".
+- A state describes the failure, not its consequence. `08S01` means the communication broke while
+  a connection was in use; it does **not** say the operation had no effect. Losing the response to
+  a commit is indistinguishable from losing the commit itself, so a caller that replays on
+  `08S01` must either know the operation is idempotent or check the outcome (counting rows,
+  reading back the partition, asking the service) before replaying. Non-idempotent writes replayed
+  on this state can duplicate data.
 
 ```java
 try {
@@ -299,9 +305,18 @@ try {
     case "3D000":            // the project is gone: this is not retryable
       reconfigure();
       break;
-    case "08001":            // never got a connection: back off and retry
-    case "08S01":            // lost it mid-flight: retry is safe
+    case "08001":            // never got a connection, so the statement did not run
       retryWithBackoff();
+      break;
+    case "08S01":            // lost it mid-flight: did the write take effect? unknown
+      // A communication failure says nothing about the outcome. The response to a commit can be
+      // lost after the commit succeeded, and `OdpsPreparedStatement.close()` reports exactly that
+      // through this state. Replay only an idempotent operation, or verify the outcome first.
+      if (idempotent(sql)) {
+        retryWithBackoff();
+      } else {
+        checkThenMaybeReplay(sql, e);
+      }
       break;
     default:                 // null, or a condition the driver could not name
       report(e.getMessage(), e.getErrorCode(), e);

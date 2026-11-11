@@ -221,6 +221,75 @@ class CallSiteSqlStateContractTest {
     statement.close();
   }
 
+  // ---------------------------------------------------------------------------------------------
+  // 3. Closing a streamed result: the same mapping, and the close contract untouched.
+  // ---------------------------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("a close failure on the streamed reader reports the link state with its cause")
+  void closeFailureOnReaderKeepsMessageCauseAndState() throws Exception {
+    IOException closeFailure = new IOException("reset on close");
+    OdpsForwardResultSet resultSet = streamedResultSetWithOneRow(closeFailure);
+
+    SQLException failure = assertThrows(SQLException.class, resultSet::close);
+
+    // Message and cause are the shape the driver already had; only the state was missing.
+    assertEquals("reset on close", failure.getMessage(), "message must stay the reader's own text");
+    assertSame(closeFailure, failure.getCause(), "cause must be the very IOException the reader threw");
+    assertEquals(SqlStates.COMMUNICATION_LINK_FAILURE, failure.getSQLState(),
+                 "a lost connection while closing is a link failure, was " + failure.getSQLState());
+    assertEquals(0, failure.getErrorCode(), "the service never answered, so no vendor code");
+  }
+
+  @Test
+  @DisplayName("close stays silent when nothing was opened and stays idempotent after a report")
+  void closeContractIsUnchanged() throws Exception {
+    // A result set whose reader never opened has nothing to close: still silent.
+    OdpsStatement statement = (OdpsStatement) connection.createStatement();
+    statement.inputProperties = new Properties();
+    InstanceTunnel.DownloadSession emptySession = mock(InstanceTunnel.DownloadSession.class);
+    when(emptySession.getRecordCount()).thenReturn(0L);
+    OdpsForwardResultSet neverOpened = new OdpsForwardResultSet(statement, intMeta(), emptySession);
+    neverOpened.close();
+    neverOpened.close();
+    assertTrue(neverOpened.isClosed(), "closed either way");
+
+    // And after a close that reported a failure, the object is closed: a second close() is a
+    // no-op, not a second report. That ordering is pre-existing behaviour and must stay.
+    IOException closeFailure = new IOException("reset on close");
+    OdpsForwardResultSet resultSet = streamedResultSetWithOneRow(closeFailure);
+    assertThrows(SQLException.class, resultSet::close);
+    resultSet.close();
+    assertTrue(resultSet.isClosed(), "the failed close still leaves it closed");
+    statement.close();
+  }
+
+  /** Reads one row through the real next(), so the driver really holds a reader to close. */
+  private static OdpsForwardResultSet streamedResultSetWithOneRow(IOException closeFailure)
+      throws Exception {
+    OdpsStatement statement = (OdpsStatement) connection.createStatement();
+    statement.inputProperties = new Properties();
+
+    TableSchema schema = new TableSchema();
+    schema.addColumn(new Column("n_int", TypeInfoFactory.INT));
+    TunnelRecordReader reader = mock(TunnelRecordReader.class);
+    when(reader.read(nullable(Record.class))).thenReturn(new ArrayRecord(schema));
+    org.mockito.Mockito.doThrow(closeFailure).when(reader).close();
+
+    InstanceTunnel.DownloadSession session = mock(InstanceTunnel.DownloadSession.class);
+    when(session.getRecordCount()).thenReturn(1L);
+    when(session.openRecordReader(anyLong(), anyLong(), anyBoolean())).thenReturn(reader);
+
+    OdpsForwardResultSet resultSet = new OdpsForwardResultSet(statement, intMeta(), session);
+    assertTrue(resultSet.next(), "a row came through, so the driver really has a reader to close");
+    return resultSet;
+  }
+
+  private static OdpsResultSetMetaData intMeta() {
+    return new OdpsResultSetMetaData(Collections.singletonList("n_int"),
+                                     Collections.singletonList(TypeInfoFactory.INT));
+  }
+
   /** Walks the cause chain, so a wrapper cannot hide the origin. */
   private static void assertInstanceOfCause(SQLException failure, Class<?> expected) {
     assertNotNull(failure.getCause(), "cause dropped: " + failure);

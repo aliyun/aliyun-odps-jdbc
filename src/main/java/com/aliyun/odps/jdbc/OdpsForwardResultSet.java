@@ -112,7 +112,10 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         reader.close();
       }
     } catch (IOException e) {
-      throw new SQLException(e.getMessage(), e);
+      // Reviewed on PR #221: this was the last streaming exit that reported a bare SQLException
+      // while its siblings reported a state. Same mapping as the read paths -- the message and the
+      // cause stay exactly as they were, and only an actual I/O failure produces 08S01.
+      throw SqlStates.transportFailure(e.getMessage(), e);
     }
     conn.log.info("the result set has been closed");
   }
