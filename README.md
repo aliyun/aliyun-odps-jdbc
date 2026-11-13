@@ -224,20 +224,36 @@ Tunnel endpoint is already known -- one request to find one.
 - Setting `timeZone` skips the timezone read; giving `odpsNamespaceSchema` an explicit value
   skips the other property read; supplying `tunnelEndpoint` or setting `useInstanceTunnel=false`
   skips the routing request.
-- A **failed** read of `odps.schema.model.enabled` is caught and reported as a two-tier project,
-  so a three-tier project whose read failed is used as a two-tier one; the metadata calls that
-  need the schema layer are what fail later, with `ODPS-0110061 ...` (see `odpsNamespaceSchema`).
-- `Connection.isValid()` does not contact the service either: it reports only whether the handle
-  is closed, so a pool's `testOnBorrow` / `testWhileIdle` cannot cover this either.
+- A **failed** read of `odps.schema.model.enabled` is caught and the driver continues as if the
+  project were two-tier, so a three-tier project whose read failed keeps working with two-tier
+  semantics and its schema layer stays invisible. In that mode `getSchemas()` answers from the
+  project name alone: `OdpsDatabaseMetaData.getSchemas` adds one synthesized row without asking the
+  service (measured against a closed port and against a stub replying 403: one row either way, and
+  no request from the metadata call). Nothing alerts you. Rejecting a call with
+  `ODPS-0110061 ... Invalid database operations on two-tier model` is the **different** case --
+  forcing namespace mode *on* for a two-tier project -- and it is documented on `odpsNamespaceSchema`.
+- `Connection.isValid()` does not contact the service either: after checking its timeout argument
+  it reports whether the handle is closed. That limit reaches pool validation only where the pool
+  validates *through* `isValid()`. Measured with HikariCP against a closed loopback port in this
+  option shape: a pool with no `connectionTestQuery` (so it validates through `isValid()`) handed
+  out a connection in 0.19 s, while the same pool configured with `connectionTestQuery=SELECT 1`
+  could not come up at all (0.37 s, `ConnectException`) -- a validation query does reach the
+  service, so configure one if you want borrowed connections to mean something.
 
 With `timeZone` set and either Tunnel silencer set -- documented options, none of them unusual --
 `getConnection()` therefore answers success against an unreachable endpoint, a project that does
 not exist and an access key the service turns away (measured against a closed loopback port and
-against stubs replying 404 and 403: 0.24 s to 8.2 s, 0 or 1 request), and the first statement then
-fails with a `SQLException` whose message names the endpoint.
+against stubs replying 404 and 403: 0.24 s to 8.2 s, 0 or 1 request). The first statement is where
+it surfaces: a `SQLException`, whose message names the endpoint when the endpoint itself is
+unreachable.
 
 If connecting is supposed to mean "this configuration is usable", run one cheap statement
-(`SELECT 1`) right after `getConnection()` and treat its failure as a configuration error.
+(`SELECT 1`) right after `getConnection()`. A failure there says the statement could not run; it
+does not by itself identify the cause. An unreachable endpoint and a service that turns the request
+away both arrive as the same shape (`SQLException` with `errorCode=0` and `SQLState` null, both
+measured), so read the message rather than assuming the configuration is wrong -- a service or
+network problem at that moment, or an account that is not allowed to run the query, fails the same
+way and needs its own diagnosis.
 
 ### Tunnel endpoint
 
