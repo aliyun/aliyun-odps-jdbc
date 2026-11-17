@@ -13,6 +13,7 @@ import com.aliyun.odps.PartitionSpec;
 import com.aliyun.odps.Table;
 import com.aliyun.odps.TableSchema;
 import com.aliyun.odps.data.ArrayRecord;
+import com.aliyun.odps.jdbc.utils.TunnelTimeouts;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.AbstractToOdpsTransformer;
 import com.aliyun.odps.jdbc.utils.transformer.to.odps.ToOdpsTransformerFactory;
 import com.aliyun.odps.tunnel.TableTunnel;
@@ -58,6 +59,10 @@ public abstract class DataUploader {
       uploadOdps.setTunnelEndpoint(tunnelEndpoint);
     }
     tunnel = new TableTunnel(uploadOdps);
+    // The connection's Tunnel timeouts belong to the write sessions too, with the same gate
+    // the result-download path uses: unset keeps the SDK default, 0 is handed over on purpose.
+    TunnelTimeouts.apply(tunnel.getConfig(), conn.getTunnelConnectTimeout(),
+                         conn.getTunnelReadTimeout());
     Table table = conn.getOdps().tables().get(projectName, schemaName, tableName);
     if (partitionSpec != null && !table.hasPartition(this.partitionSpec)) {
       table.createPartition(this.partitionSpec);
