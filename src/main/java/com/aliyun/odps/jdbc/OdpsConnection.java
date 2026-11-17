@@ -238,6 +238,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     }
     log.debug("debug mode on");
     odps = new Odps(account);
+    connRes.applyRequestMetadata(odps.options());
     odps.setEndpoint(endpoint);
     odps.setTunnelEndpoint(tunnelEndpoint);
     odps.setDefaultProject(project);

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.aliyun.odps.OdpsOptions;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
 import com.aliyun.odps.utils.GsonObjectBuilder;
@@ -105,6 +106,10 @@ public class ConnectionResource {
   private static final String LEGACY_ARRAY_GET_OBJECT_URL_KEY = "legacyArrayGetObject";
   private static final String LOGVIEW_VERSION_URL_KEY = "logviewVersion";
   private static final String TIME_ZONE_URL_KEY = "timezone";
+  private static final String USER_AGENT_SUFFIX_URL_KEY = "mcUserAgentSuffix";
+  private static final String CALL_CONTEXT_URL_KEY = "mcCallContext";
+  private static final String TRACEPARENT_KEY = "traceparent";
+  private static final String TRACESTATE_KEY = "tracestate";
 
   private static final String FETCH_RESULT_SPLIT_SIZE = "fetchResultSplitSize";
   private static final String FETCH_RESULT_PRELOAD_SPLIT_NUM = "fetchResultPreloadSplitNum";
@@ -182,12 +187,18 @@ public class ConnectionResource {
   private static final String ASYNC_PROP_KEY = "async";
   private static final String READ_ONLY_PROP_KEY = "readOnly";
   private static final String SKIP_CHECK_IF_EPV2_PROP_KEY = "skip_check_if_epv2";
+  private static final String USER_AGENT_SUFFIX_PROP_KEY = "mc_user_agent_suffix";
+  private static final String CALL_CONTEXT_PROP_KEY = "mc_call_context";
 
   private String endpoint;
   private String accessId;
   private String accessKey;
   private String project;
   private String executeProject;
+  private String userAgentSuffix;
+  private String callContext;
+  private String traceparent;
+  private String tracestate;
   private String charset;
   private String logview;
   private String tunnelEndpoint;
@@ -264,6 +275,18 @@ public class ConnectionResource {
 
   @SuppressWarnings("rawtypes")
   void init(Properties info, Map<String, String> paramsInURL) {
+    Properties connectionProperties = info == null ? new Properties() : info;
+    userAgentSuffix = connectionProperties.getProperty(USER_AGENT_SUFFIX_PROP_KEY,
+        paramsInURL.get(USER_AGENT_SUFFIX_URL_KEY));
+    callContext = connectionProperties.getProperty(CALL_CONTEXT_PROP_KEY,
+        paramsInURL.get(CALL_CONTEXT_URL_KEY));
+    traceparent = connectionProperties.getProperty(TRACEPARENT_KEY);
+    tracestate = connectionProperties.getProperty(TRACESTATE_KEY);
+    if (traceparent == null && tracestate == null) {
+      traceparent = paramsInURL.get(TRACEPARENT_KEY);
+      tracestate = paramsInURL.get(TRACESTATE_KEY);
+    }
+
     List<Map> maps = new ArrayList<Map>();
     if (paramsInURL.get(ODPS_CONF_URL_KEY) != null) {
       try {
@@ -635,14 +658,38 @@ public class ConnectionResource {
       for (String pair : pairs) {
         int pos = pair.indexOf("=");
         if (pos > 0) {
-          paramsInURL.put(URLDecoder.decode(pair.substring(0, pos)),
-                          URLDecoder.decode(pair.substring(pos + 1)));
+          String key = URLDecoder.decode(pair.substring(0, pos));
+          paramsInURL.put(key, decodeParamValue(key, pair.substring(pos + 1)));
         } else {
           paramsInURL.put(URLDecoder.decode(pair), null);
         }
       }
     }
     return paramsInURL;
+  }
+
+  @SuppressWarnings("deprecation")
+  private static String decodeParamValue(String key, String value) {
+    switch (key) {
+      case USER_AGENT_SUFFIX_URL_KEY:
+      case CALL_CONTEXT_URL_KEY:
+      case TRACEPARENT_KEY:
+      case TRACESTATE_KEY:
+        try {
+          return URLDecoder.decode(value, CHARSET_DEFAULT_VALUE);
+        } catch (UnsupportedEncodingException e) {
+          throw new AssertionError(e);
+        }
+      default:
+        return URLDecoder.decode(value);
+    }
+  }
+
+  /** Applies the connection's metadata, including clearing any SDK environment defaults. */
+  public void applyRequestMetadata(OdpsOptions options) {
+    options.setUserAgentSuffix(userAgentSuffix);
+    options.setCallContextJson(callContext);
+    options.setTraceContext(traceparent, tracestate);
   }
 
   public String getEndpoint() {
