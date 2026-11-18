@@ -146,8 +146,9 @@ java.net.URLEncoder#encode(java.lang.String).
 > Java SDK's tunnel configuration (`setSocketConnectTimeout` / `setSocketTimeout`, javadoc 单位秒,
 > defaults 180 s and 300 s), which becomes milliseconds only at the last step -- `DefaultConnection`
 > multiplies the REST client's value by 1000, the netty upsert client sets `CONNECT_TIMEOUT_MILLIS` to
-> it times 1000. The driver applies these two options to the instance-tunnel paths that read query
-> results; other tunnel calls (upload / upsert sessions) keep the SDK defaults. Measured against a
+> it times 1000. Every tunnel client the driver builds from the connection consumes them: the
+> instance-tunnel paths that read query results (direct download and the parallel offline reader),
+> and the write sessions (table upload and transactional upsert). Measured against a
 > TEST-NET blackhole and a silent loopback listener (JDK 8, SDK 0.58.1-public, one attempt): connect
 > `1 / 3 / 6` returned in 1.09 / 3.09 / 6.09 s and read `1 / 2 / 4` in 1.09 / 2.09 / 4.09 s. Read as
 > milliseconds, all six would have returned within ~10 ms, and a `tunnelReadTimeout=60000` written
