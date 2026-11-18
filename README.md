@@ -250,9 +250,11 @@ unreachable.
 
 If connecting is supposed to mean "this configuration is usable", run one cheap statement
 (`SELECT 1`) right after `getConnection()`. A failure there says the statement could not run; it
-does not by itself identify the cause. An unreachable endpoint and a service that turns the request
-away both arrive as the same shape (`SQLException` with `errorCode=0` and `SQLState` null, both
-measured), so read the message rather than assuming the configuration is wrong -- a service or
+does not by itself identify the cause. On 3.10.18 an unreachable endpoint and a service that turns
+the request away arrive in the same shape -- measured there as a `SQLException` with
+`getErrorCode()` equal to `0` and `getSQLState()` equal to `null`. That pairing is a property of
+the build the section was written against, not a contract the driver undertakes to keep, so key
+off the message and do not treat a failure here as proof the configuration is wrong: a service or
 network problem at that moment, or an account that is not allowed to run the query, fails the same
 way and needs its own diagnosis.
 
