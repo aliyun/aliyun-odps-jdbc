@@ -129,6 +129,8 @@ public class DependencyCompatibilityTest {
   @Test
   void snappyTypedArrayRoundTripsMatchTunnelCodecUsage() throws IOException {
     // The Tunnel codecs call the typed-array helpers; keep them working on the bundled copy.
+    // This is API compatibility coverage: well-formed round-trips say nothing about whether a
+    // malformed-offset fix is present, so they are not counted as security regression tests.
     char[] chars = "MaxCompute JDBC snappy regression 查询".toCharArray();
     assertArrayEquals(chars, Snappy.uncompressCharArray(Snappy.compress(chars)));
     int[] ints = {0, -1, 42, Integer.MAX_VALUE, Integer.MIN_VALUE};
@@ -141,12 +143,66 @@ public class DependencyCompatibilityTest {
 
   @Test
   void snappyRejectsTruncatedFramesBeforeNativeCopy() throws IOException {
-    // CVE-2026-108106: a declared uncompressed length must not drive an unbounded allocation.
+    // Compatibility coverage for the Tunnel decode entry points, not a regression test for
+    // CVE-2026-108106: these truncated inputs already threw on 1.1.10.7 too, so they prove the
+    // pinned copy still rejects malformed frames, but not that the declared-length cap is there.
+    // See snappyRejectsDisproportionateDeclaredLengthBeforeAllocation for the cap itself.
     byte[] payload = Snappy.compress("tunnel-frame".getBytes(StandardCharsets.UTF_8));
     assertFalse(Snappy.isValidCompressedBuffer(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}));
     assertThrows(IOException.class,
         () -> Snappy.uncompressedLength(new byte[] {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff}));
     assertThrows(IOException.class, () -> Snappy.uncompress(new byte[] {payload[0]}));
+  }
+
+  @Test
+  void snappyRejectsDisproportionateDeclaredLengthBeforeAllocation() throws IOException {
+    // CVE-2026-108106: decompression sized its output from the uncompressed length declared in
+    // the first bytes of the input, before validating anything. 1.1.10.9 onwards
+    // Snappy.uncompressedLength rejects a declared length larger than 64/3 of the compressed
+    // input, which is the densest expansion a valid Snappy stream of that size can produce.
+    // Rewriting only the header varint of a real frame isolates that guard: 1.1.10.7 returns the
+    // inflated number here, which is the allocation a remote writer could drive.
+    byte[] body = new byte[600];
+    for (int i = 0; i < body.length; i++) {
+      body[i] = (byte) ('a' + (i % 26));
+    }
+    byte[] compressed = Snappy.compress(body);
+    int cap = compressed.length * 64 / 3;
+
+    byte[] overCap = withDeclaredLength(compressed, cap + 1000);
+    assertThrows(IOException.class, () -> Snappy.uncompressedLength(overCap),
+        "A declared length no stream of this size can expand to must be rejected before allocating");
+    assertThrows(IOException.class, () -> Snappy.uncompress(overCap));
+    assertThrows(IOException.class, () -> Snappy.uncompressCharArray(overCap));
+
+    byte[] negative = withDeclaredLength(compressed, -1);
+    assertThrows(IOException.class, () -> Snappy.uncompressedLength(negative),
+        "A negative declared length must not be handed back as a length");
+
+    // The same rewrite has to stay accepted inside the cap, or the pin would reject real traffic:
+    // 400 < cap, and the untouched frame still reports its true 600-byte length.
+    assertEquals(400, Snappy.uncompressedLength(withDeclaredLength(compressed, 400)));
+    assertEquals(body.length, Snappy.uncompressedLength(compressed));
+  }
+
+  /** Replace the leading varint of a Snappy block with a different declared uncompressed length. */
+  private static byte[] withDeclaredLength(byte[] block, int declared) {
+    java.io.ByteArrayOutputStream header = new java.io.ByteArrayOutputStream();
+    int remaining = declared;
+    while ((remaining & ~0x7F) != 0) {
+      header.write((remaining & 0x7F) | 0x80);
+      remaining >>>= 7;
+    }
+    header.write(remaining);
+    byte[] head = header.toByteArray();
+    int originalHeaderBytes = 1;
+    while (originalHeaderBytes < block.length && (block[originalHeaderBytes - 1] & 0x80) != 0) {
+      originalHeaderBytes++;
+    }
+    byte[] out = new byte[head.length + block.length - originalHeaderBytes];
+    System.arraycopy(head, 0, out, 0, head.length);
+    System.arraycopy(block, originalHeaderBytes, out, head.length, block.length - originalHeaderBytes);
+    return out;
   }
 
   @Test
