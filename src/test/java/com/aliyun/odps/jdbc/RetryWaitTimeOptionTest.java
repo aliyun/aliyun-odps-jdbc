@@ -43,6 +43,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * URL is read, with a message that names the option -- the same contract the other numeric
  * options gained when the driver started reporting every refused connection properly.
  *
+ * <p>These cases stop at {@code ConnectionResource} by design: what the value does once it reaches
+ * the REST client is {@link RetryWaitTimePropagationTest}'s job, and a parser test cannot tell a
+ * propagated option from a dropped one.
+ *
  * <p>Offline on purpose. Reading an option needs no service, and a case that needs one cannot say
  * whether a timeout was honoured without waiting for the very delay it is trying to measure. The
  * measured delay before and after this option is in the release notes and the PR description.
