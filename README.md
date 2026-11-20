@@ -174,12 +174,51 @@ java.net.URLEncoder#encode(java.lang.String).
 
 #### Timeouts and Networking
 
-|     URL key      |   Property Key    | Required | Default value | Description                                                         |
-|:----------------:|:-----------------:|:--------:|:-------------:|:--------------------------------------------------------------------|
-|  `readTimeout`   |  `read_timeout`   |  False   |      -1       | Read timeout in milliseconds, -1 means no timeout                   |
-| `connectTimeout` | `connect_timeout` |  False   |      -1       | Connect timeout in milliseconds, -1 means no timeout                |
-|   `retryTime`    |   `retry_time`    |  False   |      -1       | Number of retry attempts for failed operations, -1 means no retries |
+|     URL key      |   Property Key    | Required | Default value | Description |
+|:----------------:|:-----------------:|:--------:|:-------------:|:------------|
+|  `readTimeout`   |  `read_timeout`   |  False   |      -1       | Read timeout for REST requests, **in seconds**. -1 leaves the Java SDK default (120 s) in place; it does not mean "no timeout" |
+| `connectTimeout` | `connect_timeout` |  False   |      -1       | Connect timeout for REST requests, **in seconds**. -1 leaves the Java SDK default (10 s) in place; it does not mean "no timeout". While `retryWaitTime` is unset this value is also the wait between retried requests -- see the note below |
+|   `retryTime`    |   `retry_time`    |  False   |      -1       | Number of times the SDK retries a failed GET or HEAD request. -1 leaves the Java SDK default (4) in place; it does not mean "no retries" |
+|  `retryWaitTime` |  `retry_wait_time` |  False  |      -1       | Seconds to wait between those retries. Unset, the SDK reuses `connectTimeout` as the interval; set it (a small positive number, e.g. `1`) to bound the socket timeout and the retry wait independently. A URL value that is not positive is ignored (see the note below); `setRetryWaitTime` refuses it |
 
+> **Units, and why `connectTimeout` alone can be slow.** These timeouts are handed to the Java SDK's
+> REST client, which counts them in **seconds** -- `connectTimeout=3` means three seconds, not three
+> milliseconds. Read as milliseconds they make a connection look like it hangs: `connectTimeout=2000`,
+> written with 2 s in mind, is 2000 s of socket timeout *and* 2000 s between each retry.
+>
+> The wait is paid on open, not only on a query. `getConnection()` reads the project settings before
+> it returns, and a read that cannot reach the endpoint is retried `retryTime` times, each retry
+> waiting the retry interval. Two such reads happen by default (the three-tier schema flag and the
+> project timezone), so against a port that **refuses** the connection the elapsed time is almost
+> all back-off sleep and lands near `2 x retryTime x connectTimeout` seconds; pinning either
+> `odpsNamespaceSchema` or `timezone` in the URL leaves one read, pinning both leaves none.
+> Measured against a port nothing was listening on (JDK 8, driver 3.10.18, SDK 0.58.1-public), two
+> rounds each: `retryTime=2&connectTimeout=4` took 16.2 s and `retryTime=2&connectTimeout=1` took
+> 4.2 s, while `retryTime=2&connectTimeout=4&retryWaitTime=1` took 4.2 s -- with the option set the
+> wait follows `retryWaitTime` and `connectTimeout` only bounds the socket. Leaving both options
+> unset is not safer: the SDK's own 10 s default made the same unreachable endpoint cost 20.2 s at
+> `retryTime=1`.
+>
+> **That arithmetic is a refused-connection measurement, not a connect deadline.** An endpoint that
+> accepts and then stays silent pays the socket timeout on every attempt too, and the same options
+> were measured 3x to 9x slower there (two rounds each, same toolchain):
+> `retryTime=2&connectTimeout=1&readTimeout=2&retryWaitTime=1` took 12.30 s against a silent
+> listener and 4.20 s against a refused one; `retryTime=1&connectTimeout=1&readTimeout=5&retryWaitTime=1`
+> took 20.30 s and 2.19 s. `retryWaitTime` shrinks the sleep between attempts, not the wait inside
+> an attempt -- what bounds total time on a slow endpoint is `connectTimeout` and `readTimeout`.
+>
+> A value that is not positive behaves differently on the two paths, on purpose. The URL is applied
+> by the constructor only when positive, so `retryWaitTime=0` or `retryWaitTime=-5` leaves the SDK's
+> own `-1` ("not set", interval follows `connectTimeout`) in place -- it does not mean "wait zero",
+> and it cannot be used to turn retrying off. The public setters (`setRetryWaitTime`,
+> `setConnectTimeout`, `setReadTimeout`) refuse anything not positive with an
+> `IllegalArgumentException`. A value that is not a number is refused while the URL is parsed,
+> before anything is attempted, and the message names the option.
+>
+> What eventually surfaces on a failed open is a `SQLException`; as of driver 3.10.18 it carries no
+> SQLState and no vendor code, which still lets a pool react to it by exception type (see the
+> tunnel timeouts above, which count seconds the same way).
+>
 #### Schema and Catalog Settings
 
 |        URL key        |      Property Key       | Required |       Default value       | Description                                                            |
