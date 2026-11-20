@@ -1,0 +1,34 @@
+{
+  "jar": "odps-jdbc-3.10.18.jar (Maven Central release)",
+  "jar_bytes": 55965968,
+  "jar_sha256": "7e7d56f79e7d15d9d5e0f54fbc87dcb7eab8070551c2e5d1c5cb88326d071dd8",
+  "entries": 24685,
+  "classes": 19130,
+  "duplicate_entry_names": 0,
+  "expect": {
+    "com.google.guava:guava": {
+      "expected": "33.4.8-jre",
+      "in_jar_pom_properties": "33.4.8-jre",
+      "match": true
+    },
+    "io.netty:netty-codec-http": {
+      "expected": "4.1.137.Final",
+      "in_jar_pom_properties": "4.1.137.Final",
+      "match": true
+    }
+  },
+  "bytecheck": {
+    "org.xerial.snappy:snappy-java": {
+      "1.1.10.7": {
+        "shipped_classes_in_coord": 40,
+        "mismatch": 0,
+        "exact": true
+      },
+      "1.1.10.12": {
+        "shipped_classes_in_coord": 40,
+        "mismatch": 40,
+        "exact": false
+      }
+    }
+  }
+}

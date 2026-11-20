@@ -1,0 +1,2261 @@
+{
+  "observed_at": "2026-11-11T02:11:20.170260+00:00",
+  "source": "https://api.osv.dev/v1/querybatch",
+  "complete": true,
+  "packages": [
+    {
+      "name": "at.yawk.lz4:lz4-java",
+      "version": "1.11.4",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "ch.qos.logback:logback-classic",
+      "version": "1.3.16",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "ch.qos.logback:logback-core",
+      "version": "1.3.16",
+      "scopes": [
+        "test"
+      ],
+      "advisories": [
+        "GHSA-jhq6-gfmj-v8fx",
+        "GHSA-p47f-322f-whfh",
+        "GHSA-qqpg-mvqg-649v"
+      ]
+    },
+    {
+      "name": "com.fasterxml.jackson.core:jackson-annotations",
+      "version": "2.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.fasterxml.jackson.core:jackson-core",
+      "version": "2.21.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.fasterxml.jackson.core:jackson-databind",
+      "version": "2.21.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.github.luben:zstd-jni",
+      "version": "1.5.7-17",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.code.findbugs:jsr305",
+      "version": "3.0.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.code.gson:gson",
+      "version": "2.13.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.errorprone:error_prone_annotations",
+      "version": "2.36.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.flatbuffers:flatbuffers-java",
+      "version": "24.3.25",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.guava:failureaccess",
+      "version": "1.0.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.guava:guava",
+      "version": "33.4.8-jre",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": [
+        "GHSA-xxph-c9ww-hj94"
+      ]
+    },
+    {
+      "name": "com.google.guava:listenablefuture",
+      "version": "9999.0-empty-to-avoid-conflict-with-guava",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.j2objc:j2objc-annotations",
+      "version": "3.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.google.protobuf:protobuf-java",
+      "version": "3.25.5",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.ibm.icu:icu4j",
+      "version": "71.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.squareup.okhttp3:okhttp",
+      "version": "4.12.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.squareup.okio:okio",
+      "version": "3.6.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.squareup.okio:okio-jvm",
+      "version": "3.6.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "com.zaxxer:HikariCP",
+      "version": "4.0.3",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "commons-codec:commons-codec",
+      "version": "1.18.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "commons-io:commons-io",
+      "version": "2.20.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "commons-logging:commons-logging",
+      "version": "1.2",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.github.cdimascio:java-dotenv",
+      "version": "5.2.2",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-all",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-buffer",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-dns",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-haproxy",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-http",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-http2",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-memcache",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-mqtt",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-redis",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-smtp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-socks",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-stomp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-codec-xml",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-common",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-handler",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-handler-proxy",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-handler-ssl-ocsp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver-dns",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver-dns-classes-macos",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-resolver-dns-native-macos",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "runtime"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-classes-epoll",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-classes-kqueue",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-native-epoll",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "runtime"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-native-kqueue",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "runtime"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-native-unix-common",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-rxtx",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-sctp",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "io.netty:netty-transport-udt",
+      "version": "4.1.137.Final",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "javax.activation:activation",
+      "version": "1.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "javax.mail:mail",
+      "version": "1.4.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "net.bytebuddy:byte-buddy",
+      "version": "1.12.9",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "net.bytebuddy:byte-buddy-agent",
+      "version": "1.12.9",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "net.sourceforge.javacsv:javacsv",
+      "version": "2.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.abego.treelayout:org.abego.treelayout.core",
+      "version": "1.0.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:ST4",
+      "version": "4.3.4",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:antlr-runtime",
+      "version": "3.5.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:antlr4",
+      "version": "4.11.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.antlr:antlr4-runtime",
+      "version": "4.11.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-compression",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-format",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-memory-core",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-memory-netty",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-memory-netty-buffer-patch",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.arrow:arrow-vector",
+      "version": "17.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.commons:commons-compress",
+      "version": "1.28.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apache.commons:commons-lang3",
+      "version": "3.18.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.apiguardian:apiguardian-api",
+      "version": "1.1.2",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.aspectj:aspectjrt",
+      "version": "1.9.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.glassfish:javax.json",
+      "version": "1.1.4",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib-common",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+      "version": "1.8.21",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jetbrains:annotations",
+      "version": "13.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.jspecify:jspecify",
+      "version": "1.0.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter-api",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter-engine",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.jupiter:junit-jupiter-params",
+      "version": "5.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.platform:junit-platform-commons",
+      "version": "1.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.junit.platform:junit-platform-engine",
+      "version": "1.10.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.locationtech.jts:jts-core",
+      "version": "1.19.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.mockito:mockito-core",
+      "version": "4.5.1",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.mockito:mockito-junit-jupiter",
+      "version": "4.5.1",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.objenesis:objenesis",
+      "version": "3.2",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.opentest4j:opentest4j",
+      "version": "1.3.0",
+      "scopes": [
+        "test"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.slf4j:slf4j-api",
+      "version": "2.0.17",
+      "scopes": [
+        "provided"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "org.xerial.snappy:snappy-java",
+      "version": "1.1.10.7",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": [
+        "GHSA-gwq9-9ffj-mvrv",
+        "GHSA-q233-g92q-qxp6",
+        "GHSA-xqrx-qh46-34m7"
+      ]
+    },
+    {
+      "name": "org.yaml:snakeyaml",
+      "version": "2.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "stax:stax",
+      "version": "1.2.0",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "stax:stax-api",
+      "version": "1.0.1",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    },
+    {
+      "name": "xpp3:xpp3",
+      "version": "1.1.3.3",
+      "scopes": [
+        "compile"
+      ],
+      "advisories": []
+    }
+  ],
+  "advisories": {
+    "GHSA-gwq9-9ffj-mvrv": {
+      "id": "GHSA-gwq9-9ffj-mvrv",
+      "summary": "snappy-java: Heap buffer overflow in Snappy.uncompress*Array typed-array methods",
+      "details": "### Impact\n`Snappy.uncompressCharArray`, `uncompressShortArray`, `uncompressIntArray`, `uncompressLongArray`, `uncompressFloatArray` and `uncompressDoubleArray` sized the result array by dividing the declared uncompressed byte length by the element size, but native code wrote the full byte length. If the declared length is not a multiple of the element size, up to 7 bytes are written past the end of the Java array, corrupting the heap.\n\n### Patches\nFixed in 1.1.10.9 ([#739](https://github.com/xerial/snappy-java/pull/739)). These methods now reject uncompressed lengths that are not a multiple of the element size with `SnappyIOException`.\n\n### Workarounds\nCheck that `Snappy.uncompressedLength(input)` is a multiple of the element size before calling these methods.",
+      "aliases": [
+        "CVE-2026-93451"
+      ],
+      "modified": "2026-10-27T15:47:24.498155855Z",
+      "published": "2026-10-27T15:33:42Z",
+      "database_specific": {
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-10-27T15:33:42Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-193",
+          "CWE-787"
+        ],
+        "severity": "HIGH"
+      },
+      "references": [
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/security/advisories/GHSA-gwq9-9ffj-mvrv"
+        },
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-93451"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/issues/729"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/pull/739"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/commit/943c6043a292568575e8347af4507d015e802c75"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/xerial/snappy-java"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/blob/v1.1.10.8/src/main/java/org/xerial/snappy/Snappy.java#L802"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/releases/tag/v1.1.10.9"
+        },
+        {
+          "type": "WEB",
+          "url": "https://www.vulncheck.com/advisories/snappy-java-through-1.1.10.8-buffer-overflow-via-typed-uncompress-methods"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "org.xerial.snappy:snappy-java",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.xerial.snappy/snappy-java"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.1.10.9"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "1.0.1-rc1",
+            "1.0.1-rc2",
+            "1.0.1-rc3",
+            "1.0.1-rc4",
+            "1.0.3",
+            "1.0.3-rc1",
+            "1.0.3-rc2",
+            "1.0.3-rc3",
+            "1.0.3-rc4",
+            "1.0.3.1",
+            "1.0.3.2",
+            "1.0.3.3",
+            "1.0.4",
+            "1.0.4.1",
+            "1.0.5",
+            "1.0.5-M1",
+            "1.0.5-M2",
+            "1.0.5-M3",
+            "1.0.5-M4",
+            "1.0.5.1",
+            "1.0.5.2",
+            "1.0.5.3",
+            "1.0.5.4",
+            "1.1.0",
+            "1.1.0-M1",
+            "1.1.0-M2",
+            "1.1.0-M3",
+            "1.1.0-M4",
+            "1.1.0.1",
+            "1.1.1",
+            "1.1.1-M1",
+            "1.1.1-M2",
+            "1.1.1-M3",
+            "1.1.1-M4",
+            "1.1.1.1",
+            "1.1.1.2",
+            "1.1.1.3",
+            "1.1.1.4",
+            "1.1.1.5",
+            "1.1.1.6",
+            "1.1.1.7",
+            "1.1.10.0",
+            "1.1.10.1",
+            "1.1.10.2",
+            "1.1.10.3",
+            "1.1.10.4",
+            "1.1.10.5",
+            "1.1.10.6",
+            "1.1.10.7",
+            "1.1.10.8",
+            "1.1.2",
+            "1.1.2-M1",
+            "1.1.2-RC1",
+            "1.1.2-RC2",
+            "1.1.2-RC3",
+            "1.1.2.1",
+            "1.1.2.2",
+            "1.1.2.3",
+            "1.1.2.4",
+            "1.1.2.5",
+            "1.1.2.6",
+            "1.1.3-M1",
+            "1.1.3-M2",
+            "1.1.4",
+            "1.1.4-M1",
+            "1.1.4-M2",
+            "1.1.4-M3",
+            "1.1.7",
+            "1.1.7.1",
+            "1.1.7.2",
+            "1.1.7.3",
+            "1.1.7.4",
+            "1.1.7.5",
+            "1.1.7.6",
+            "1.1.7.7",
+            "1.1.7.8",
+            "1.1.8",
+            "1.1.8.1",
+            "1.1.8.2",
+            "1.1.8.3",
+            "1.1.8.4",
+            "1.1.9.0",
+            "1.1.9.1"
+          ],
+          "database_specific": {
+            "last_known_affected_version_range": "<= 1.1.10.8",
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/10/GHSA-gwq9-9ffj-mvrv/GHSA-gwq9-9ffj-mvrv.json"
+          }
+        }
+      ],
+      "schema_version": "1.9.2",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        }
+      ]
+    },
+    "GHSA-jhq6-gfmj-v8fx": {
+      "id": "GHSA-jhq6-gfmj-v8fx",
+      "summary": "Logback vulnerable to Object Injection through HardenedObjectInputStream modules",
+      "details": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback logback-core (HardenedObjectInputStream (logback-core) modules) allows Object Injection, albeit heavily restricted.\n\nMore precisely, an attacker able to influence serialized data sent to SimpleSocketServer or SimpleSSLSocketServer can instantiate Proxy objects.\n\n\nAlthough deserialization is heavily restricted by HardenedObjectInputStream and no practical way to achieve remote code execution or significant privilege  escalation has been identified, this issue constitutes a bypass of the  intended security restrictions.\n\n\n\nThis issue affects logback: through 1.5.33 inclusive.",
+      "aliases": [
+        "CVE-2026-10532"
+      ],
+      "modified": "2026-09-10T03:50:50.074688321Z",
+      "published": "2026-06-01T15:30:40Z",
+      "database_specific": {
+        "github_reviewed_at": "2026-07-08T20:26:32Z",
+        "nvd_published_at": "2026-06-01T13:16:30Z",
+        "cwe_ids": [
+          "CWE-502"
+        ],
+        "severity": "LOW",
+        "github_reviewed": true
+      },
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10532"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/qos-ch/logback"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/qos-ch/logback/releases/tag/v_1.5.34"
+        },
+        {
+          "type": "WEB",
+          "url": "https://logback.qos.ch/news.html#1.5.34"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "ch.qos.logback:logback-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/ch.qos.logback/logback-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.5.34"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "0.2.5",
+            "0.3",
+            "0.5",
+            "0.6",
+            "0.7",
+            "0.7.1",
+            "0.8",
+            "0.8.1",
+            "0.9",
+            "0.9.1",
+            "0.9.10",
+            "0.9.11",
+            "0.9.12",
+            "0.9.13",
+            "0.9.14",
+            "0.9.15",
+            "0.9.16",
+            "0.9.17",
+            "0.9.18",
+            "0.9.19",
+            "0.9.2",
+            "0.9.20",
+            "0.9.21",
+            "0.9.22",
+            "0.9.23",
+            "0.9.24",
+            "0.9.25",
+            "0.9.26",
+            "0.9.27",
+            "0.9.28",
+            "0.9.29",
+            "0.9.3",
+            "0.9.30",
+            "0.9.4",
+            "0.9.5",
+            "0.9.6",
+            "0.9.7",
+            "0.9.8",
+            "0.9.9",
+            "1.0.0",
+            "1.0.1",
+            "1.0.10",
+            "1.0.11",
+            "1.0.12",
+            "1.0.13",
+            "1.0.2",
+            "1.0.3",
+            "1.0.4",
+            "1.0.5",
+            "1.0.6",
+            "1.0.7",
+            "1.0.8",
+            "1.0.9",
+            "1.1.0",
+            "1.1.1",
+            "1.1.10",
+            "1.1.11",
+            "1.1.2",
+            "1.1.3",
+            "1.1.4",
+            "1.1.5",
+            "1.1.6",
+            "1.1.7",
+            "1.1.8",
+            "1.1.9",
+            "1.2.0",
+            "1.2.1",
+            "1.2.10",
+            "1.2.11",
+            "1.2.12",
+            "1.2.13",
+            "1.2.2",
+            "1.2.3",
+            "1.2.4",
+            "1.2.4-groovyless",
+            "1.2.5",
+            "1.2.6",
+            "1.2.7",
+            "1.2.8",
+            "1.2.9",
+            "1.3.0",
+            "1.3.0-alpha0",
+            "1.3.0-alpha1",
+            "1.3.0-alpha10",
+            "1.3.0-alpha11",
+            "1.3.0-alpha12",
+            "1.3.0-alpha13",
+            "1.3.0-alpha14",
+            "1.3.0-alpha15",
+            "1.3.0-alpha16",
+            "1.3.0-alpha2",
+            "1.3.0-alpha3",
+            "1.3.0-alpha4",
+            "1.3.0-alpha5",
+            "1.3.0-alpha6",
+            "1.3.0-alpha7",
+            "1.3.0-alpha8",
+            "1.3.0-alpha9",
+            "1.3.0-beta0",
+            "1.3.1",
+            "1.3.10",
+            "1.3.11",
+            "1.3.12",
+            "1.3.13",
+            "1.3.14",
+            "1.3.15",
+            "1.3.16",
+            "1.3.2",
+            "1.3.3",
+            "1.3.4",
+            "1.3.5",
+            "1.3.6",
+            "1.3.7",
+            "1.3.8",
+            "1.3.9",
+            "1.4.0",
+            "1.4.1",
+            "1.4.10",
+            "1.4.11",
+            "1.4.12",
+            "1.4.13",
+            "1.4.14",
+            "1.4.2",
+            "1.4.3",
+            "1.4.4",
+            "1.4.5",
+            "1.4.6",
+            "1.4.7",
+            "1.4.8",
+            "1.4.9",
+            "1.5.0",
+            "1.5.1",
+            "1.5.10",
+            "1.5.11",
+            "1.5.12",
+            "1.5.13",
+            "1.5.14",
+            "1.5.15",
+            "1.5.16",
+            "1.5.17",
+            "1.5.18",
+            "1.5.19",
+            "1.5.2",
+            "1.5.20",
+            "1.5.21",
+            "1.5.22",
+            "1.5.23",
+            "1.5.24",
+            "1.5.25",
+            "1.5.26",
+            "1.5.27",
+            "1.5.28",
+            "1.5.29",
+            "1.5.3",
+            "1.5.30",
+            "1.5.31",
+            "1.5.32",
+            "1.5.33",
+            "1.5.4",
+            "1.5.5",
+            "1.5.6",
+            "1.5.7",
+            "1.5.8",
+            "1.5.9"
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/06/GHSA-jhq6-gfmj-v8fx/GHSA-jhq6-gfmj-v8fx.json"
+          }
+        }
+      ],
+      "schema_version": "1.9.0",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:L/VI:L/VA:N/SC:L/SI:L/SA:N/E:P/RE:M/U:Green"
+        }
+      ]
+    },
+    "GHSA-p47f-322f-whfh": {
+      "id": "GHSA-p47f-322f-whfh",
+      "summary": "QOS.CH Sarl logback logback-core has a deserialization of untrusted data vulnerability",
+      "details": "Deserialization of untrusted data vulnerability in QOS.CH Sarl logback logback-core (HardenedObjectInputStream (logback-core) modules) allows Object Injection albeit heavily restricted.\n\nMore precisely, an attacker able to influence serialized data sent to SimpleSocketServer or SimpleSSLSocketServer can instantiate objects from classes in the java.lang and java.util packages that are not explicitly blocked.\n\nAlthough deserialization is heavily restricted by HardenedObjectInputStream and no practical way to achieve remote code execution or significant privilege escalation has been identified, this issue constitutes a bypass of the intended security restrictions.\n\nThis issue affects logback: through 1.5.32 inclusive.",
+      "aliases": [
+        "CVE-2026-9828"
+      ],
+      "modified": "2026-09-10T03:50:47.152421417Z",
+      "published": "2026-05-28T15:39:50Z",
+      "database_specific": {
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-07-02T13:55:30Z",
+        "nvd_published_at": "2026-05-28T14:16:27Z",
+        "cwe_ids": [
+          "CWE-502"
+        ],
+        "severity": "LOW"
+      },
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9828"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/qos-ch/logback"
+        },
+        {
+          "type": "WEB",
+          "url": "https://logback.qos.ch/news.html#1.5.33"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "ch.qos.logback:logback-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/ch.qos.logback/logback-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.5.33"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "0.2.5",
+            "0.3",
+            "0.5",
+            "0.6",
+            "0.7",
+            "0.7.1",
+            "0.8",
+            "0.8.1",
+            "0.9",
+            "0.9.1",
+            "0.9.10",
+            "0.9.11",
+            "0.9.12",
+            "0.9.13",
+            "0.9.14",
+            "0.9.15",
+            "0.9.16",
+            "0.9.17",
+            "0.9.18",
+            "0.9.19",
+            "0.9.2",
+            "0.9.20",
+            "0.9.21",
+            "0.9.22",
+            "0.9.23",
+            "0.9.24",
+            "0.9.25",
+            "0.9.26",
+            "0.9.27",
+            "0.9.28",
+            "0.9.29",
+            "0.9.3",
+            "0.9.30",
+            "0.9.4",
+            "0.9.5",
+            "0.9.6",
+            "0.9.7",
+            "0.9.8",
+            "0.9.9",
+            "1.0.0",
+            "1.0.1",
+            "1.0.10",
+            "1.0.11",
+            "1.0.12",
+            "1.0.13",
+            "1.0.2",
+            "1.0.3",
+            "1.0.4",
+            "1.0.5",
+            "1.0.6",
+            "1.0.7",
+            "1.0.8",
+            "1.0.9",
+            "1.1.0",
+            "1.1.1",
+            "1.1.10",
+            "1.1.11",
+            "1.1.2",
+            "1.1.3",
+            "1.1.4",
+            "1.1.5",
+            "1.1.6",
+            "1.1.7",
+            "1.1.8",
+            "1.1.9",
+            "1.2.0",
+            "1.2.1",
+            "1.2.10",
+            "1.2.11",
+            "1.2.12",
+            "1.2.13",
+            "1.2.2",
+            "1.2.3",
+            "1.2.4",
+            "1.2.4-groovyless",
+            "1.2.5",
+            "1.2.6",
+            "1.2.7",
+            "1.2.8",
+            "1.2.9",
+            "1.3.0",
+            "1.3.0-alpha0",
+            "1.3.0-alpha1",
+            "1.3.0-alpha10",
+            "1.3.0-alpha11",
+            "1.3.0-alpha12",
+            "1.3.0-alpha13",
+            "1.3.0-alpha14",
+            "1.3.0-alpha15",
+            "1.3.0-alpha16",
+            "1.3.0-alpha2",
+            "1.3.0-alpha3",
+            "1.3.0-alpha4",
+            "1.3.0-alpha5",
+            "1.3.0-alpha6",
+            "1.3.0-alpha7",
+            "1.3.0-alpha8",
+            "1.3.0-alpha9",
+            "1.3.0-beta0",
+            "1.3.1",
+            "1.3.10",
+            "1.3.11",
+            "1.3.12",
+            "1.3.13",
+            "1.3.14",
+            "1.3.15",
+            "1.3.16",
+            "1.3.2",
+            "1.3.3",
+            "1.3.4",
+            "1.3.5",
+            "1.3.6",
+            "1.3.7",
+            "1.3.8",
+            "1.3.9",
+            "1.4.0",
+            "1.4.1",
+            "1.4.10",
+            "1.4.11",
+            "1.4.12",
+            "1.4.13",
+            "1.4.14",
+            "1.4.2",
+            "1.4.3",
+            "1.4.4",
+            "1.4.5",
+            "1.4.6",
+            "1.4.7",
+            "1.4.8",
+            "1.4.9",
+            "1.5.0",
+            "1.5.1",
+            "1.5.10",
+            "1.5.11",
+            "1.5.12",
+            "1.5.13",
+            "1.5.14",
+            "1.5.15",
+            "1.5.16",
+            "1.5.17",
+            "1.5.18",
+            "1.5.19",
+            "1.5.2",
+            "1.5.20",
+            "1.5.21",
+            "1.5.22",
+            "1.5.23",
+            "1.5.24",
+            "1.5.25",
+            "1.5.26",
+            "1.5.27",
+            "1.5.28",
+            "1.5.29",
+            "1.5.3",
+            "1.5.30",
+            "1.5.31",
+            "1.5.32",
+            "1.5.4",
+            "1.5.5",
+            "1.5.6",
+            "1.5.7",
+            "1.5.8",
+            "1.5.9"
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/05/GHSA-p47f-322f-whfh/GHSA-p47f-322f-whfh.json",
+            "last_known_affected_version_range": "<= 1.5.32"
+          }
+        }
+      ],
+      "schema_version": "1.9.0",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:L/AC:H/AT:P/PR:N/UI:N/VC:L/VI:L/VA:N/SC:L/SI:L/SA:N/E:P/RE:L/U:Green"
+        }
+      ]
+    },
+    "GHSA-q233-g92q-qxp6": {
+      "id": "GHSA-q233-g92q-qxp6",
+      "summary": "snappy-java: Unbounded memory allocation from attacker-declared uncompressed lengtha",
+      "details": "### Impact\nSeveral decompression paths in snappy-java allocate an output buffer sized by the uncompressed length declared in the first bytes of the compressed data, before decompressing or validating it. A few bytes of crafted input can therefore force an allocation of up to 2 GB, causing `OutOfMemoryError` (denial of service), or a `NegativeArraySizeException` for declared lengths of 2^31 or more.\n\nAffected entry points include `Snappy.uncompress(byte[])`, `Snappy.uncompressString`, the `Snappy.uncompress*Array` methods, `SnappyInputStream`, and `SnappyFramedInputStream`. The `maxChunkSize` limit added for CVE-2023-43642 bounds only the compressed chunk length, so it does not prevent this.\n\n### Patches\nFixed in 1.1.10.9 (#739). `Snappy.uncompressedLength()` now rejects negative declared lengths, and lengths larger than any valid Snappy stream of the given size can produce. The densest Snappy element expands 3 bytes to 64, so the limit is 64/3 of the compressed size. Allocations are therefore proportional to the input actually received.\n\n### Workarounds\nBefore decompressing untrusted data, check that `Snappy.uncompressedLength(input)` is within an application-specific limit.",
+      "aliases": [
+        "CVE-2026-108106"
+      ],
+      "modified": "2026-10-27T15:47:24.815707184Z",
+      "published": "2026-10-27T15:33:22Z",
+      "database_specific": {
+        "github_reviewed_at": "2026-10-27T15:33:22Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-770",
+          "CWE-789"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true
+      },
+      "references": [
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/security/advisories/GHSA-q233-g92q-qxp6"
+        },
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-108106"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/pull/739"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/commit/943c6043a292568575e8347af4507d015e802c75"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/xerial/snappy-java"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/blob/v1.1.10.8/src/main/java/org/xerial/snappy/Snappy.java#L517"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/releases/tag/v1.1.10.9"
+        },
+        {
+          "type": "WEB",
+          "url": "https://www.vulncheck.com/advisories/xerial-snappy-java-before-1.1.10.9-unbounded-memory-allocation-denial-of-service"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "org.xerial.snappy:snappy-java",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.xerial.snappy/snappy-java"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.1.10.9"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "1.0.1-rc1",
+            "1.0.1-rc2",
+            "1.0.1-rc3",
+            "1.0.1-rc4",
+            "1.0.3",
+            "1.0.3-rc1",
+            "1.0.3-rc2",
+            "1.0.3-rc3",
+            "1.0.3-rc4",
+            "1.0.3.1",
+            "1.0.3.2",
+            "1.0.3.3",
+            "1.0.4",
+            "1.0.4.1",
+            "1.0.5",
+            "1.0.5-M1",
+            "1.0.5-M2",
+            "1.0.5-M3",
+            "1.0.5-M4",
+            "1.0.5.1",
+            "1.0.5.2",
+            "1.0.5.3",
+            "1.0.5.4",
+            "1.1.0",
+            "1.1.0-M1",
+            "1.1.0-M2",
+            "1.1.0-M3",
+            "1.1.0-M4",
+            "1.1.0.1",
+            "1.1.1",
+            "1.1.1-M1",
+            "1.1.1-M2",
+            "1.1.1-M3",
+            "1.1.1-M4",
+            "1.1.1.1",
+            "1.1.1.2",
+            "1.1.1.3",
+            "1.1.1.4",
+            "1.1.1.5",
+            "1.1.1.6",
+            "1.1.1.7",
+            "1.1.10.0",
+            "1.1.10.1",
+            "1.1.10.2",
+            "1.1.10.3",
+            "1.1.10.4",
+            "1.1.10.5",
+            "1.1.10.6",
+            "1.1.10.7",
+            "1.1.10.8",
+            "1.1.2",
+            "1.1.2-M1",
+            "1.1.2-RC1",
+            "1.1.2-RC2",
+            "1.1.2-RC3",
+            "1.1.2.1",
+            "1.1.2.2",
+            "1.1.2.3",
+            "1.1.2.4",
+            "1.1.2.5",
+            "1.1.2.6",
+            "1.1.3-M1",
+            "1.1.3-M2",
+            "1.1.4",
+            "1.1.4-M1",
+            "1.1.4-M2",
+            "1.1.4-M3",
+            "1.1.7",
+            "1.1.7.1",
+            "1.1.7.2",
+            "1.1.7.3",
+            "1.1.7.4",
+            "1.1.7.5",
+            "1.1.7.6",
+            "1.1.7.7",
+            "1.1.7.8",
+            "1.1.8",
+            "1.1.8.1",
+            "1.1.8.2",
+            "1.1.8.3",
+            "1.1.8.4",
+            "1.1.9.0",
+            "1.1.9.1"
+          ],
+          "database_specific": {
+            "last_known_affected_version_range": "<= 1.1.10.8",
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/10/GHSA-q233-g92q-qxp6/GHSA-q233-g92q-qxp6.json"
+          }
+        }
+      ],
+      "schema_version": "1.9.2",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        }
+      ]
+    },
+    "GHSA-qqpg-mvqg-649v": {
+      "id": "GHSA-qqpg-mvqg-649v",
+      "summary": "Logback allows an attacker to instantiate classes already present on the class path",
+      "details": "ACE vulnerability in configuration file processing  by QOS.CH logback-core up to and including version 1.5.24 in Java applications, allows an attacker to instantiate classes already present on the class path by compromising an existing logback configuration file.\n\nThe instantiation of a potentially malicious Java class requires that said class is present on the user's class-path. In addition, the attacker must  have write access to a configuration file. However, after successful instantiation, the instance is very likely to be discarded with no further ado.",
+      "aliases": [
+        "CVE-2026-1225"
+      ],
+      "modified": "2026-09-10T03:50:33.725359105Z",
+      "published": "2026-01-22T12:31:22Z",
+      "database_specific": {
+        "severity": "LOW",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-01-22T18:06:44Z",
+        "nvd_published_at": "2026-01-22T10:16:07Z",
+        "cwe_ids": [
+          "CWE-20"
+        ]
+      },
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-1225"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/qos-ch/logback/issues/997"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/qos-ch/logback/commit/1f97ae1844b1be8486e4e9cade98d7123d3eded5"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/qos-ch/logback"
+        },
+        {
+          "type": "WEB",
+          "url": "https://logback.qos.ch/news.html#1.5.25"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "ch.qos.logback:logback-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/ch.qos.logback/logback-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.5.25"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "0.2.5",
+            "0.3",
+            "0.5",
+            "0.6",
+            "0.7",
+            "0.7.1",
+            "0.8",
+            "0.8.1",
+            "0.9",
+            "0.9.1",
+            "0.9.10",
+            "0.9.11",
+            "0.9.12",
+            "0.9.13",
+            "0.9.14",
+            "0.9.15",
+            "0.9.16",
+            "0.9.17",
+            "0.9.18",
+            "0.9.19",
+            "0.9.2",
+            "0.9.20",
+            "0.9.21",
+            "0.9.22",
+            "0.9.23",
+            "0.9.24",
+            "0.9.25",
+            "0.9.26",
+            "0.9.27",
+            "0.9.28",
+            "0.9.29",
+            "0.9.3",
+            "0.9.30",
+            "0.9.4",
+            "0.9.5",
+            "0.9.6",
+            "0.9.7",
+            "0.9.8",
+            "0.9.9",
+            "1.0.0",
+            "1.0.1",
+            "1.0.10",
+            "1.0.11",
+            "1.0.12",
+            "1.0.13",
+            "1.0.2",
+            "1.0.3",
+            "1.0.4",
+            "1.0.5",
+            "1.0.6",
+            "1.0.7",
+            "1.0.8",
+            "1.0.9",
+            "1.1.0",
+            "1.1.1",
+            "1.1.10",
+            "1.1.11",
+            "1.1.2",
+            "1.1.3",
+            "1.1.4",
+            "1.1.5",
+            "1.1.6",
+            "1.1.7",
+            "1.1.8",
+            "1.1.9",
+            "1.2.0",
+            "1.2.1",
+            "1.2.10",
+            "1.2.11",
+            "1.2.12",
+            "1.2.13",
+            "1.2.2",
+            "1.2.3",
+            "1.2.4",
+            "1.2.4-groovyless",
+            "1.2.5",
+            "1.2.6",
+            "1.2.7",
+            "1.2.8",
+            "1.2.9",
+            "1.3.0",
+            "1.3.0-alpha0",
+            "1.3.0-alpha1",
+            "1.3.0-alpha10",
+            "1.3.0-alpha11",
+            "1.3.0-alpha12",
+            "1.3.0-alpha13",
+            "1.3.0-alpha14",
+            "1.3.0-alpha15",
+            "1.3.0-alpha16",
+            "1.3.0-alpha2",
+            "1.3.0-alpha3",
+            "1.3.0-alpha4",
+            "1.3.0-alpha5",
+            "1.3.0-alpha6",
+            "1.3.0-alpha7",
+            "1.3.0-alpha8",
+            "1.3.0-alpha9",
+            "1.3.0-beta0",
+            "1.3.1",
+            "1.3.10",
+            "1.3.11",
+            "1.3.12",
+            "1.3.13",
+            "1.3.14",
+            "1.3.15",
+            "1.3.16",
+            "1.3.2",
+            "1.3.3",
+            "1.3.4",
+            "1.3.5",
+            "1.3.6",
+            "1.3.7",
+            "1.3.8",
+            "1.3.9",
+            "1.4.0",
+            "1.4.1",
+            "1.4.10",
+            "1.4.11",
+            "1.4.12",
+            "1.4.13",
+            "1.4.14",
+            "1.4.2",
+            "1.4.3",
+            "1.4.4",
+            "1.4.5",
+            "1.4.6",
+            "1.4.7",
+            "1.4.8",
+            "1.4.9",
+            "1.5.0",
+            "1.5.1",
+            "1.5.10",
+            "1.5.11",
+            "1.5.12",
+            "1.5.13",
+            "1.5.14",
+            "1.5.15",
+            "1.5.16",
+            "1.5.17",
+            "1.5.18",
+            "1.5.19",
+            "1.5.2",
+            "1.5.20",
+            "1.5.21",
+            "1.5.22",
+            "1.5.23",
+            "1.5.24",
+            "1.5.3",
+            "1.5.4",
+            "1.5.5",
+            "1.5.6",
+            "1.5.7",
+            "1.5.8",
+            "1.5.9"
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/01/GHSA-qqpg-mvqg-649v/GHSA-qqpg-mvqg-649v.json"
+          }
+        }
+      ],
+      "schema_version": "1.9.0",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:L/AC:H/AT:P/PR:H/UI:N/VC:L/VI:L/VA:L/SC:L/SI:L/SA:L"
+        }
+      ]
+    },
+    "GHSA-xqrx-qh46-34m7": {
+      "id": "GHSA-xqrx-qh46-34m7",
+      "summary": "snappy-java: JVM crash from unchecked ranges in Snappy.arrayCopy and SnappyOutputStream.rawWrite",
+      "details": "### Impact\n`Snappy.arrayCopy(Object src, int offset, int byteLength, Object dest, int destOffset)` called a native `memcpy` without validating the ranges. A negative or oversized `byteLength` or offset read or wrote outside the arrays and crashed the JVM. `SnappyOutputStream.rawWrite` and `SnappyInputStream.rawRead`, and therefore the typed-array `write`/`read` methods, pass caller-supplied ranges to this method.\n\n### Patches\nFixed in 1.1.10.9 (#741). `Snappy.arrayCopy` checks both ranges before copying. The stream `read`/`write` methods validate offsets and lengths, and reject typed-array ranges whose byte size overflows `int`.\n\n### Workarounds\nValidate offsets and lengths before calling these methods.",
+      "aliases": [
+        "CVE-2026-116590"
+      ],
+      "modified": "2026-10-27T15:47:25.122359555Z",
+      "published": "2026-10-27T15:33:30Z",
+      "database_specific": {
+        "nvd_published_at": "2026-10-26T22:16:55Z",
+        "cwe_ids": [
+          "CWE-129",
+          "CWE-787"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-10-27T15:33:30Z"
+      },
+      "references": [
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/security/advisories/GHSA-xqrx-qh46-34m7"
+        },
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-116590"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/pull/741"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/commit/2d7ca71c087a98f1219fb2d51909f3891c3ce77b"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/xerial/snappy-java"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/xerial/snappy-java/releases/tag/v1.1.10.9"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "org.xerial.snappy:snappy-java",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.xerial.snappy/snappy-java"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "fixed": "1.1.10.9"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "1.0.1-rc1",
+            "1.0.1-rc2",
+            "1.0.1-rc3",
+            "1.0.1-rc4",
+            "1.0.3",
+            "1.0.3-rc1",
+            "1.0.3-rc2",
+            "1.0.3-rc3",
+            "1.0.3-rc4",
+            "1.0.3.1",
+            "1.0.3.2",
+            "1.0.3.3",
+            "1.0.4",
+            "1.0.4.1",
+            "1.0.5",
+            "1.0.5-M1",
+            "1.0.5-M2",
+            "1.0.5-M3",
+            "1.0.5-M4",
+            "1.0.5.1",
+            "1.0.5.2",
+            "1.0.5.3",
+            "1.0.5.4",
+            "1.1.0",
+            "1.1.0-M1",
+            "1.1.0-M2",
+            "1.1.0-M3",
+            "1.1.0-M4",
+            "1.1.0.1",
+            "1.1.1",
+            "1.1.1-M1",
+            "1.1.1-M2",
+            "1.1.1-M3",
+            "1.1.1-M4",
+            "1.1.1.1",
+            "1.1.1.2",
+            "1.1.1.3",
+            "1.1.1.4",
+            "1.1.1.5",
+            "1.1.1.6",
+            "1.1.1.7",
+            "1.1.10.0",
+            "1.1.10.1",
+            "1.1.10.2",
+            "1.1.10.3",
+            "1.1.10.4",
+            "1.1.10.5",
+            "1.1.10.6",
+            "1.1.10.7",
+            "1.1.10.8",
+            "1.1.2",
+            "1.1.2-M1",
+            "1.1.2-RC1",
+            "1.1.2-RC2",
+            "1.1.2-RC3",
+            "1.1.2.1",
+            "1.1.2.2",
+            "1.1.2.3",
+            "1.1.2.4",
+            "1.1.2.5",
+            "1.1.2.6",
+            "1.1.3-M1",
+            "1.1.3-M2",
+            "1.1.4",
+            "1.1.4-M1",
+            "1.1.4-M2",
+            "1.1.4-M3",
+            "1.1.7",
+            "1.1.7.1",
+            "1.1.7.2",
+            "1.1.7.3",
+            "1.1.7.4",
+            "1.1.7.5",
+            "1.1.7.6",
+            "1.1.7.7",
+            "1.1.7.8",
+            "1.1.8",
+            "1.1.8.1",
+            "1.1.8.2",
+            "1.1.8.3",
+            "1.1.8.4",
+            "1.1.9.0",
+            "1.1.9.1"
+          ],
+          "database_specific": {
+            "last_known_affected_version_range": "<= 1.1.10.8",
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/10/GHSA-xqrx-qh46-34m7/GHSA-xqrx-qh46-34m7.json"
+          }
+        }
+      ],
+      "schema_version": "1.9.2",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        }
+      ]
+    },
+    "GHSA-xxph-c9ww-hj94": {
+      "id": "GHSA-xxph-c9ww-hj94",
+      "summary": "Google Guava: CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization triggers uncontrolled memory allocation",
+      "details": "# CompactHashMap/CompactHashSet/MapMakerInternalMap native deserialization triggers uncontrolled memory allocation\n\n## Summary\n\n`CompactHashMap`, `CompactHashSet`, and `MapMakerInternalMap` implement `readObject(ObjectInputStream)` by reading an attacker-controlled `elementCount` or `initialCapacity` from the stream. On the very first insertion during or after deserialization (for the `CompactHash*` collections, inside `allocArrays()`) or immediately during deserialization (for `MapMakerInternalMap`), the implementation eagerly allocates arrays sized to that full, unvalidated value (up to `CompactHashing.MAX_SIZE` = 2^30-1, ~1.07 billion, for example) before the rest of the stream's actual content has been consumed. A 72-byte malicious serialized stream containing a single tiny element can force a multi-gigabyte allocation and crash a JVM with `OutOfMemoryError`, dynamically confirmed against the current release.\n\n## Details\n\n`CompactHashMap.readObject()` (`guava/src/com/google/common/collect/CompactHashMap.java`):\n\n```java\nprivate void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {\n  stream.defaultReadObject();\n  int elementCount = stream.readInt();\n  if (elementCount < 0) {\n    throw new InvalidObjectException(\"Invalid size: \" + elementCount);\n  }\n  init(elementCount);\n  for (int i = 0; i < elementCount; i++) {\n    K key = (K) stream.readObject();\n    V value = (V) stream.readObject();\n    put(key, value);\n  }\n}\n```\n\n`elementCount` is only checked for being non-negative; there is no upper bound and no relationship enforced between the declared count and how much data actually follows in the stream. `init(elementCount)` (line 251) just stores the value (clamped to `[1, CompactHashing.MAX_SIZE]`, i.e. up to 2^30-1):\n\n```java\nvoid init(int expectedSize) {\n  Preconditions.checkArgument(expectedSize >= 0, \"Expected size must be >= 0\");\n  this.metadata = Ints.constrainToRange(expectedSize, 1, CompactHashing.MAX_SIZE);\n}\n```\n\nThe real allocation is deferred to `allocArrays()`, which fires lazily on the *first* `put()` call \u2014 i.e. after only one key/value pair has actually been read off the wire:\n\n```java\nint allocArrays() {\n  ...\n  int expectedSize = metadata;\n  int buckets = CompactHashing.tableSize(expectedSize);\n  this.table = CompactHashing.createTable(buckets);\n  setHashTableMask(buckets - 1);\n  this.entries = new int[expectedSize];\n  this.keys = new Object[expectedSize];\n  this.values = new Object[expectedSize];\n  return expectedSize;\n}\n```\n\nWith `expectedSize` near `CompactHashing.MAX_SIZE` (2^30-1), this single call allocates a hash `table` plus three `expectedSize`-length arrays \u2014 multiple gigabytes \u2014 triggered by a stream that has, at that point, only supplied one small real element. `CompactHashSet.readObject()`/`allocArrays()` have the identical shape. `CompactLinkedHashMap`/`CompactLinkedHashSet` extend these classes and inherit the same unguarded path.\n\nThe problem with `MapMakerInternalMap` is similar, with [a size read from the serialized data and stored in a `MapMaker` instance](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2848-L2851) for [later user during deserialization](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2897), when [the `MapMaker` is passed back to `MapMakerInternalMap`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMaker.java#L287) and [segments are allocated](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L173-L200) by [calling `newSegment`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1143), whose implementations ([example](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L443)) create `Segment` instances ([example](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2019)) that [allocate arrays of the requested capacity](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1234) through [the `newTable`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1262) helper.\n\nThis is the same amplification shape as the already-fixed **CVE-2018-10237** (`AtomicDoubleArray`/`CompoundOrdering`: attacker declares a large size, library eagerly allocates before validating against actual stream content). That fix rewrote `AtomicDoubleArray.readObject()` to grow an `ImmutableLongArray.Builder` incrementally per element actually read, rather than pre-allocating from the declared size \u2014 Guava's own `HashBiMap.readObject()` documents the same defensive principle explicitly in a comment: `init(16); // resist hostile attempts to allocate gratuitous heap`. `CompactHashMap`/`CompactHashSet` do not follow either of these two patterns already present elsewhere in the same codebase.\n\n**Reachability**: All classes are top-level, `implements ... Serializable`, and require no special classpath setup beyond Guava being present (near-ubiquitous on JVM backends). A native Java deserialization attacker names the class directly in a hand-crafted stream \u2014 no particular Guava factory method needs to have been used by the victim application, exactly as with the precedent CVE.\n\n## PoC\n\nFull source and run instructions in the attached `poc-guava-compacthash-dos.zip` (Maven project, `guava:33.7.1-jre` \u2014 the current latest release \u2014 as the only dependency). The PoC:\n\n1. Uses reflection only to legitimately obtain a `CompactHashSet` instance (it is package-private; a real attacker does not need this step, since they craft the serialized bytes directly rather than calling Guava's own serialization code).\n2. Serializes one set with 1 element and one with 2 elements, diffs the two byte streams to locate the exact offset of the `elementCount` field (byte-precise, not guessed).\n3. Patches that one 4-byte field in the 1-element stream from `1` to `0x3FFFFFFF` (`CompactHashing.MAX_SIZE`), leaving the rest of the 72-byte stream (one real `\"A\"` element) untouched.\n4. Feeds the resulting 72-byte malicious stream into a plain `new ObjectInputStream(...).readObject()` call against the real, unmodified `guava-33.7.1-jre.jar`.\n\nActual run output:\n\n```\n### -Xmx8g (generous heap) ###\nLocated size field at offset 63, value=1 (expected 1)\nMalicious stream size: 72 bytes\nDeclared elementCount: 1073741823 (~1.07 billion)\nReal payload: 1 tiny string element (\"A\")\n=== RESULT ===\nException: java.lang.OutOfMemoryError: Java heap space\nTime to allocate+fail: 4013 ms\nHeap used before: 3 MB\nHeap used after (at failure point): 4103 MB\nJVM max heap (-Xmx): 8192 MB\n\n### -Xmx128m (ordinary service-sized heap) ###\nLocated size field at offset 63, value=1 (expected 1)\nMalicious stream size: 72 bytes\nDeclared elementCount: 1073741823 (~1.07 billion)\nReal payload: 1 tiny string element (\"A\")\n=== RESULT ===\nException: java.lang.OutOfMemoryError: Java heap space\nTime to allocate+fail: 24 ms\nHeap used before: 4 MB\nHeap used after (at failure point): 2 MB\nJVM max heap (-Xmx): 128 MB\n```\n\nA 72-byte input forces ~4.1 GB of real allocation before failing on an 8 GB heap, and crashes a 128 MB heap in 24 ms \u2014 over 50,000x amplification between input size and forced allocation.\n\nTo reproduce: `mvn -q compile dependency:build-classpath -Dmdep.outputFile=cp.txt && java -Xmx128m -cp \"target/classes:$(cat cp.txt)\" poc.Poc`\n\n## Impact\n\nUncontrolled resource consumption (CWE-770 / CWE-400) via native Java deserialization: any application that runs `ObjectInputStream.readObject()` on data reachable by an attacker, and has Guava on its classpath (true for a large fraction of the JVM ecosystem), can be crashed with a single ~72-byte payload, regardless of what type the application itself expected to deserialize.\n\n## Severity\n\nCVSS 3.1: `AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H` \u2014 identical vector to CVE-2018-10237, the precedent this is a sibling of. Recomputed with the full formula: exploitability = 8.22\u00d70.85\u00d70.44\u00d70.85\u00d70.85 = 2.221; ISS = 1-(1\u00d71\u00d70.44) = 0.56; impact = 6.42\u00d70.56 = 3.595; base = roundup(5.816) = **5.9 (Medium)**.\n\n## Affected\n\n`com.google.guava:guava`, all editions (`-jre`/`-android`) \u2014 confirmed on the current latest release, 33.7.1-jre. `CompactHashMap`/`CompactHashSet`/`CompactLinkedHashMap`/`CompactLinkedHashSet` have had this same `readObject`/`allocArrays` shape for a long time (probably since they were added in Guava 23.6), and similarly for `MapMakerInternalMap` (which was introduced in Guava 4.0); not tested against older individual releases.\n\n## Suggested fix\n\nApply the same defense already used elsewhere in this codebase: either clamp the initial `init()` capacity to a small constant regardless of the declared `elementCount` (as `HashBiMap.readObject()` already does \u2014 `init(16); // resist hostile attempts to allocate gratuitous heap`) and grow incrementally as elements are actually read, or grow the backing arrays incrementally per iteration of the deserialization loop (as the fixed `AtomicDoubleArray.readObject()` does via `ImmutableLongArray.Builder`) instead of eagerly sizing to the full attacker-declared count on first insert.",
+      "aliases": [
+        "CVE-2026-102554"
+      ],
+      "modified": "2026-10-27T14:45:04.803511466Z",
+      "published": "2026-10-27T14:27:53Z",
+      "database_specific": {
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-10-27T14:27:53Z",
+        "nvd_published_at": "2026-10-09T16:17:20Z",
+        "cwe_ids": [
+          "CWE-400",
+          "CWE-502",
+          "CWE-770"
+        ]
+      },
+      "references": [
+        {
+          "type": "WEB",
+          "url": "https://github.com/google/guava/security/advisories/GHSA-xxph-c9ww-hj94"
+        },
+        {
+          "type": "ADVISORY",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-102554"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/google/guava/commit/b931fe9d6d5cf00bc55714ad3308d086f71850fe"
+        },
+        {
+          "type": "PACKAGE",
+          "url": "https://github.com/google/guava"
+        },
+        {
+          "type": "WEB",
+          "url": "https://github.com/google/guava/releases/tag/v33.7.2"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "name": "com.google.guava:guava",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/com.google.guava/guava"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "4.0"
+                },
+                {
+                  "fixed": "33.7.2"
+                }
+              ]
+            }
+          ],
+          "versions": [
+            "10.0",
+            "10.0-rc1",
+            "10.0-rc2",
+            "10.0-rc3",
+            "10.0.1",
+            "11.0",
+            "11.0-rc1",
+            "11.0.1",
+            "11.0.2",
+            "12.0",
+            "12.0-rc1",
+            "12.0-rc2",
+            "12.0.1",
+            "13.0",
+            "13.0-rc1",
+            "13.0-rc2",
+            "13.0.1",
+            "14.0",
+            "14.0-rc1",
+            "14.0-rc2",
+            "14.0-rc3",
+            "14.0.1",
+            "15.0",
+            "15.0-rc1",
+            "16.0",
+            "16.0-rc1",
+            "16.0.1",
+            "17.0",
+            "17.0-rc1",
+            "17.0-rc2",
+            "18.0",
+            "18.0-rc1",
+            "18.0-rc2",
+            "19.0",
+            "19.0-rc1",
+            "19.0-rc2",
+            "19.0-rc3",
+            "20.0",
+            "20.0-rc1",
+            "21.0",
+            "21.0-rc1",
+            "21.0-rc2",
+            "22.0",
+            "22.0-android",
+            "22.0-rc1",
+            "22.0-rc1-android",
+            "23.0",
+            "23.0-android",
+            "23.0-rc1",
+            "23.0-rc1-android",
+            "23.1-android",
+            "23.1-jre",
+            "23.2-android",
+            "23.2-jre",
+            "23.3-android",
+            "23.3-jre",
+            "23.4-android",
+            "23.4-jre",
+            "23.5-android",
+            "23.5-jre",
+            "23.6-android",
+            "23.6-jre",
+            "23.6.1-android",
+            "23.6.1-jre",
+            "24.0-android",
+            "24.0-jre",
+            "24.1-android",
+            "24.1-jre",
+            "24.1.1-android",
+            "24.1.1-jre",
+            "25.0-android",
+            "25.0-jre",
+            "25.1-android",
+            "25.1-jre",
+            "26.0-android",
+            "26.0-jre",
+            "27.0-android",
+            "27.0-jre",
+            "27.0.1-android",
+            "27.0.1-jre",
+            "27.1-android",
+            "27.1-jre",
+            "28.0-android",
+            "28.0-jre",
+            "28.1-android",
+            "28.1-jre",
+            "28.2-android",
+            "28.2-jre",
+            "29.0-android",
+            "29.0-jre",
+            "30.0-android",
+            "30.0-jre",
+            "30.1-android",
+            "30.1-jre",
+            "30.1.1-android",
+            "30.1.1-jre",
+            "31.0-android",
+            "31.0-jre",
+            "31.0.1-android",
+            "31.0.1-jre",
+            "31.1-android",
+            "31.1-jre",
+            "32.0.0-android",
+            "32.0.0-jre",
+            "32.0.1-android",
+            "32.0.1-jre",
+            "32.1.0-android",
+            "32.1.0-jre",
+            "32.1.1-android",
+            "32.1.1-jre",
+            "32.1.2-android",
+            "32.1.2-jre",
+            "32.1.3-android",
+            "32.1.3-jre",
+            "33.0.0-android",
+            "33.0.0-jre",
+            "33.1.0-android",
+            "33.1.0-jre",
+            "33.2.0-android",
+            "33.2.0-jre",
+            "33.2.1-android",
+            "33.2.1-jre",
+            "33.3.0-android",
+            "33.3.0-jre",
+            "33.3.1-android",
+            "33.3.1-jre",
+            "33.4.0-android",
+            "33.4.0-jre",
+            "33.4.1-android",
+            "33.4.1-jre",
+            "33.4.2-android",
+            "33.4.2-jre",
+            "33.4.3-android",
+            "33.4.3-jre",
+            "33.4.4-android",
+            "33.4.4-jre",
+            "33.4.5-android",
+            "33.4.5-jre",
+            "33.4.6-android",
+            "33.4.6-jre",
+            "33.4.7-android",
+            "33.4.7-jre",
+            "33.4.8-android",
+            "33.4.8-jre",
+            "33.5.0-android",
+            "33.5.0-jre",
+            "33.6.0-android",
+            "33.6.0-jre",
+            "33.7.0-android",
+            "33.7.0-jre",
+            "33.7.1-android",
+            "33.7.1-jre"
+          ],
+          "database_specific": {
+            "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2026/10/GHSA-xxph-c9ww-hj94/GHSA-xxph-c9ww-hj94.json",
+            "last_known_affected_version_range": "<= 33.7.1"
+          }
+        }
+      ],
+      "schema_version": "1.9.2",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        },
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"
+        }
+      ]
+    }
+  }
+}

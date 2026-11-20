@@ -1,0 +1,39 @@
+{
+  "jar": "target/odps-jdbc-3.10.18.jar (local build of this candidate)",
+  "jar_bytes": 56115051,
+  "jar_sha256": "5a88b00407ded13466ebb013ef746f627a678d60e561b68fb930876aaf133883",
+  "entries": 24691,
+  "classes": 19136,
+  "duplicate_entry_names": 0,
+  "expect": {
+    "com.google.guava:guava": {
+      "expected": "33.7.2-jre",
+      "in_jar_pom_properties": "33.7.2-jre",
+      "match": true
+    },
+    "io.netty:netty-codec-http": {
+      "expected": "4.1.137.Final",
+      "in_jar_pom_properties": "4.1.137.Final",
+      "match": true
+    },
+    "com.aliyun.odps:odps-jdbc": {
+      "expected": "3.10.18",
+      "in_jar_pom_properties": "3.10.18",
+      "match": true
+    }
+  },
+  "bytecheck": {
+    "org.xerial.snappy:snappy-java": {
+      "1.1.10.7": {
+        "shipped_classes_in_coord": 40,
+        "mismatch": 40,
+        "exact": false
+      },
+      "1.1.10.12": {
+        "shipped_classes_in_coord": 40,
+        "mismatch": 0,
+        "exact": true
+      }
+    }
+  }
+}

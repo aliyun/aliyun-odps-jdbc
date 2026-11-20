@@ -72,6 +72,8 @@
     <jackson.version>2.21.7</jackson.version>
     <lz4.version>1.11.4</lz4.version>
     <zstd.version>1.5.7-17</zstd.version>
+    <snappy.version>1.1.10.12</snappy.version>
+    <guava.version>33.7.2-jre</guava.version>
   </properties>
   <build>
     <resources>
@@ -296,6 +298,16 @@
               <groupId>com.github.luben</groupId>
               <artifactId>zstd-jni</artifactId>
               <version>${zstd.version}</version>
+          </dependency>
+          <dependency>
+              <groupId>org.xerial.snappy</groupId>
+              <artifactId>snappy-java</artifactId>
+              <version>${snappy.version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.google.guava</groupId>
+              <artifactId>guava</artifactId>
+              <version>${guava.version}</version>
           </dependency>
           <dependency>
               <groupId>com.fasterxml.jackson</groupId>
