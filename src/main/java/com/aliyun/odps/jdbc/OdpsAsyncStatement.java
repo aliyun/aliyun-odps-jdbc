@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import com.aliyun.odps.OdpsException;
 import com.aliyun.odps.jdbc.utils.SettingParser;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.sqa.SQLExecutor;
 import com.aliyun.odps.utils.StringUtils;
 
@@ -44,7 +45,7 @@ public class OdpsAsyncStatement extends OdpsStatement {
       try {
         processSetClauseExtra(properties);
       } catch (OdpsException e) {
-        throw new SQLException(e.getMessage(), e);
+        throw SqlStates.sqlException(e.getMessage(), e);
       }
     }
     // otherwise those properties is just for this query
