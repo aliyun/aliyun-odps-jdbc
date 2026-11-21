@@ -264,9 +264,9 @@ fields instead of matching text out of the message.
 |   `SQLState`   |                Meaning                |           Typical service evidence           |
 |:--------------:|---------------------------------------|----------------------------------------------|
 | `08001`        | Could not establish a connection      | Unreachable endpoint, refused option value    |
-| `08003`        | Connection already closed             | `setAutoCommit` after `close()`               |
+| `08003`        | Connection already closed             | `createStatement` / `getMetaData` after `close()` |
 | `08004`        | The service refused the attempt       | Answered, but not with a nameable condition   |
-| `08S01`        | A connection in use failed            | Transport failure while uploading, fetching or closing |
+| `08S01`        | A connection in use failed            | An `IOException` in the cause chain while fetching, closing or transferring |
 | `28000`        | The credentials are not accepted      | `ODPS-0410042` invalid signature, bad token   |
 | `3D000`        | The project does not exist            | `ODPS-0420111` project not found              |
 | `3F000`        | The schema is not usable here         | `ODPS-0110061` on a two-tier project          |
@@ -296,6 +296,17 @@ is reported as `130071`. Two rules keep both fields honest:
   `08S01` must either know the operation is idempotent or check the outcome (counting rows,
   reading back the partition, asking the service) before replaying. Non-idempotent writes replayed
   on this state can duplicate data.
+
+Two limits this mapping deliberately does not paper over, both measured against a live service:
+
+- Setting up a Tunnel session can fail without any transport evidence. When the SDK reports
+  `ErrorCode=Local Error, ErrorMessage=Failed to create upload session with tunnel endpoint ...`,
+  the driver receives a tunnel exception carrying neither an `IOException` nor an HTTP status, so
+  the failure is reported with an empty `SQLState` and vendor code 0. Inventing `08S01` there would
+  mean matching on message wording, and the underlying loss of the cause belongs to the SDK.
+- `prepareStatement(String)` and `setAutoCommit(true)` do not check the connection's closed state
+  today, so they neither throw nor produce `08003`; `08003` appears on the entry points that do
+  check. Both gaps predate this change and are tracked separately rather than folded into it.
 
 ```java
 try {
