@@ -60,3 +60,18 @@
 ## 5. 本轮没有做的事
 
 没有跑真实服务端的压缩链路（驱动不设置压缩算法，走 SDK 默认协商），没有跑发布/打 tag，没有对漏洞副本做崩溃性负向实验；对 SDK 自身 POM 的管理版本不作改动——直接使用 `odps-sdk-core` 的消费者仍需 SDK 侧另行修复与发布。
+
+## 6. 11-24 对本文件第 4 节的更正
+
+第 4 节表格里"guava 最新仍是 33.7.2-jre / 33.7.2-android，无修复版可去"这句是错的，错因是取数用的过滤只匹配 `33.6*` / `33.7*`。11-24 现查重取（`curl repo1.maven.org/maven2/com/google/guava/guava/maven-metadata.xml` ⇒ `<latest>33.8.0-jre</latest>`、`<lastUpdated>20261102180748`；`api.github.com/repos/google/guava/releases/tags/v33.8.0` ⇒ published_at 2026-11-02T18:08:43Z；同一公告 updated_at 2026-11-02T18:07:19Z）：**33.8.0-jre 自 2026-11-02 起就在 Central，且落在 `<= 33.7.2-jre` 之外**。
+
+按 33.8.0-jre 跑的一次性对照（`mvn -B -ntp clean package -Pemulator-ci -Dmaven.javadoc.skip=true -Dguava.version=33.8.0-jre`）：
+
+| 档位 | 结果 |
+| --- | --- |
+| JDK 8 | BUILD SUCCESS，`Tests run: 186, Failures: 0`，50.473 s |
+| JDK 21 | BUILD SUCCESS，`Tests run: 186, Failures: 0`，46.463 s |
+
+制品面：条目 24,692 → 24,702；重定位 guava 条目 1,982 → 1,990；`shaded/com/google/common/collect/HashBiMap$FloodedTables.class` 出现（该公告的修复类）；重定位的 `ImmutableList.class` / `CacheBuilder.class` 类文件主版本仍 52；`META-INF/versions/` 条目 43 → 45（新增 `versions/9/OSGI-INF/MANIFEST.MF`）。snappy 清单不受影响（70 条全等 1.1.10.12）。工装用法补一条：发行 JAR 里 `META-INF/maven/org.xerial.snappy/**` 命中 0，所以 snappy 没有自报版本可断言，`--expect` 对它必然失败——它的版本只能由 `--inventory` 的字节清单给出（我 11-24 一次调用误用就是这个形状）。
+
+结论更正：这一格"可闭合"，但选号是否跨 minor 属维护者决定，本轮不把版本改动塞进他已 LGTM 的 head。
