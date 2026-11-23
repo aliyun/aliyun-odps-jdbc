@@ -215,6 +215,17 @@ java.net.URLEncoder#encode(java.lang.String).
 > `IllegalArgumentException`. A value that is not a number is refused while the URL is parsed,
 > before anything is attempted, and the message names the option.
 >
+> **Scope: these configure this connection's client, not every client the SDK can make.**
+> They are applied to the `RestClient` of the `Odps` object this connection holds. The SDK's `Odps`
+> copy constructor builds a *fresh* `RestClient` and carries over endpoint, headers, proxy and
+> ignore-certs only -- none of these four transport options. The driver clones in two places:
+> attaching a statement to a different execute project (`executeProject`), and creating an
+> upload/upsert session. Requests made through those clients use the SDK defaults until set there
+> separately, so do not read `retryWaitTime` (or the timeouts above) as a process-wide setting;
+> widening propagation to cloned clients is separate work. `RetryWaitTimePropagationTest` pins this
+> boundary so a future SDK that starts forwarding the values fails a test instead of silently
+> changing what this table means.
+>
 > What eventually surfaces on a failed open is a `SQLException`; as of driver 3.10.18 it carries no
 > SQLState and no vendor code, which still lets a pool react to it by exception type (see the
 > tunnel timeouts above, which count seconds the same way).

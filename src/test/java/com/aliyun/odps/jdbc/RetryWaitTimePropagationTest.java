@@ -43,6 +43,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * the {@code setRetryWaitTime(...)} call in {@code OdpsConnection}'s constructor and the cases
  * below fail -- the parser tests alone do not notice.
  *
+ *
+ * <p>Scope, pinned by {@link #transportOptionsAreNotCarriedIntoSdkClones()}: the value lands on
+ * this connection's own {@link RestClient}. The SDK's {@code Odps} copy constructor builds a fresh
+ * client, so a clone does not inherit the transport options -- and the driver clones in two places
+ * (attaching a statement to a different execute project, and creating an upload/upsert session).
+ *
  * <p>Offline and deterministic on purpose. Every URL pins {@code timezone} and
  * {@code odpsNamespaceSchema} (plus the two modes that would otherwise ask the service), so
  * {@code connect()} returns without reading the project, and the endpoint is a port nothing
@@ -147,6 +153,31 @@ class RetryWaitTimePropagationTest {
       conn.setRetryWaitTime(5);
       assertEquals(5, restClientOf(conn).getRetryWaitTime());
       assertEquals(5, conn.getRetryWaitTime());
+    }
+  }
+
+  @Test
+  void transportOptionsAreNotCarriedIntoSdkClones() throws SQLException {
+    // Pins the documented scope rather than a desired behaviour: the SDK's Odps(Odps) copy
+    // constructor creates a new RestClient and forwards endpoint, headers, proxy and ignore-certs
+    // only -- none of the four transport knobs. If a future SDK starts forwarding them this case
+    // fails, and that is the signal to revisit the README note and this comment, not a regression.
+    try (OdpsConnection conn = open("&connectTimeout=2000&readTimeout=30&retryTime=2&retryWaitTime=7")) {
+      RestClient primary = restClientOf(conn);
+      assertEquals(2000, primary.getConnectTimeout());
+      assertEquals(30, primary.getReadTimeout());
+      assertEquals(2, primary.getRetryTimes());
+      assertEquals(7, primary.getRetryWaitTime());
+
+      RestClient clone = conn.getOdps().clone().getRestClient();
+      assertEquals(RestClient.DEFAULT_CONNECT_TIMEOUT, clone.getConnectTimeout());
+      assertEquals(RestClient.DEFAULT_READ_TIMEOUT, clone.getReadTimeout());
+      assertEquals(RestClient.DEFAULT_CONNECT_RETRYTIMES, clone.getRetryTimes());
+      assertEquals(-1, clone.getRetryWaitTime());
+
+      // What the clone does inherit, so the contrast above is about transport settings only.
+      assertEquals(primary.isIgnoreCerts(), clone.isIgnoreCerts());
+      assertEquals(conn.getOdps().getEndpoint(), clone.getEndpoint());
     }
   }
 
