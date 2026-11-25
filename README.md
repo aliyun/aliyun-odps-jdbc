@@ -250,13 +250,15 @@ unreachable.
 
 If connecting is supposed to mean "this configuration is usable", run one cheap statement
 (`SELECT 1`) right after `getConnection()`. A failure there says the statement could not run; it
-does not by itself identify the cause. On 3.10.18 an unreachable endpoint and a service that turns
-the request away arrive in the same shape -- measured there as a `SQLException` with
-`getErrorCode()` equal to `0` and `getSQLState()` equal to `null`. That pairing is a property of
-the build the section was written against, not a contract the driver undertakes to keep, so key
-off the message and do not treat a failure here as proof the configuration is wrong: a service or
-network problem at that moment, or an account that is not allowed to run the query, fails the same
-way and needs its own diagnosis.
+does not by itself identify the cause. On the released 3.10.18 (published 2026-10-29) an unreachable
+endpoint and a service that turns the request away arrive in the same shape -- measured there as a
+`SQLException` with `getErrorCode()` equal to `0` and `getSQLState()` equal to `null`. That pairing
+is a property of that release, not a contract: driver builds carrying the error-identity work
+report an identifiable state instead (`08001` for an endpoint that cannot be reached, `28000` for
+credentials the service will not accept), as [Error identity](#error-identity-sqlstate-and-errorcode)
+documents. Either way read the message and do not treat a failure here as proof the configuration is
+wrong: a service or network problem at that moment, or an account that is not allowed to run the
+query, fails the same way and needs its own diagnosis.
 
 ### Tunnel endpoint
 
