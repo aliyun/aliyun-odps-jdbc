@@ -55,6 +55,7 @@ import com.aliyun.odps.jdbc.data.OdpsArray;
 import com.aliyun.odps.jdbc.data.OdpsStruct;
 import com.aliyun.odps.jdbc.utils.ConnectionResource;
 import com.aliyun.odps.jdbc.utils.OdpsLogger;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 import com.aliyun.odps.jdbc.utils.Utils;
 import com.aliyun.odps.sqa.ExecuteMode;
 import com.aliyun.odps.sqa.FallbackPolicy;
@@ -381,7 +382,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       // OdpsException variants above already do, or the caller gets a RuntimeException where it
       // was promised a SQLException.
       log.error("Connect to odps failed:" + e.getMessage());
-      throw createSQLException(e.getMessage(), e);
+      // Opening is the one place the driver can say "there is no connection" with confidence:
+      // if the chain carries no service answer, this URL did not get one.
+      throw createConnectSQLException(e.getMessage(), e);
     }
   }
 
@@ -402,7 +405,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       return Integer.parseInt(rawValue);
     } catch (NumberFormatException e) {
       throw new SQLException(
-          ConnectionResource.invalidOptionMessage(rawValue, urlKey, propertyKey, "an integer"), e);
+          ConnectionResource.invalidOptionMessage(rawValue, urlKey, propertyKey, "an integer"),
+          SqlStates.UNABLE_TO_CONNECT, 0, e);
     }
   }
 
@@ -436,8 +440,18 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
     return createSQLException(message, cause, maxQARoutingCheckFailure);
   }
 
+  /** The same report for a failure that happened while the connection was being opened. */
+  SQLException createConnectSQLException(String message, Exception cause) {
+    return createSQLException(message, cause, maxQARoutingCheckFailure, true);
+  }
+
   static SQLException createSQLException(String message, Exception cause,
                                         Exception maxQARoutingCheckFailure) {
+    return createSQLException(message, cause, maxQARoutingCheckFailure, false);
+  }
+
+  static SQLException createSQLException(String message, Exception cause,
+                                        Exception maxQARoutingCheckFailure, boolean opening) {
     String combinedMessage = message;
     if (maxQARoutingCheckFailure != null
         && !StringUtils.isNullOrEmpty(maxQARoutingCheckFailure.getMessage())) {
@@ -448,7 +462,9 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
                         : message + "\n" + routingFailure;
     }
 
-    SQLException sqlException = new SQLException(combinedMessage, cause);
+    SQLException sqlException = opening
+                                ? SqlStates.connectFailure(combinedMessage, cause)
+                                : SqlStates.sqlException(combinedMessage, cause);
     if (maxQARoutingCheckFailure != null && maxQARoutingCheckFailure != cause) {
       sqlException.addSuppressed(maxQARoutingCheckFailure);
     }
@@ -978,7 +994,8 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   private void checkClosed() throws SQLException {
     if (isClosed) {
-      throw new SQLException("the connection has already been closed");
+      throw new SQLException("the connection has already been closed",
+                             SqlStates.CONNECTION_NOT_IN_USE);
     }
   }
 

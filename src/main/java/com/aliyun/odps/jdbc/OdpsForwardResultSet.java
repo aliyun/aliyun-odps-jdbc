@@ -29,6 +29,7 @@ import com.aliyun.odps.data.Record;
 import com.aliyun.odps.tunnel.InstanceTunnel.DownloadSession;
 import com.aliyun.odps.tunnel.TunnelException;
 import com.aliyun.odps.tunnel.io.TunnelRecordReader;
+import com.aliyun.odps.jdbc.utils.SqlStates;
 
 public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
 
@@ -111,7 +112,10 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
         reader.close();
       }
     } catch (IOException e) {
-      throw new SQLException(e.getMessage(), e);
+      // Reviewed on PR #221: this was the last streaming exit that reported a bare SQLException
+      // while its siblings reported a state. Same mapping as the read paths -- the message and the
+      // cause stay exactly as they were, and only an actual I/O failure produces 08S01.
+      throw SqlStates.transportFailure(e.getMessage(), e);
     }
     conn.log.info("the result set has been closed");
   }
@@ -160,7 +164,11 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       } catch (IOException e) {
         conn.log.info("read from a bad file, retry=" + retry);
         if (++retry == READER_REOPEN_TIME_MAX) {
-          throw new SQLException("to much retries because: " + e.getMessage());
+          // Reviewed on PR #221: this branch used to drop the cause and any classification,
+          // while its sibling rebuildReader() reports both. Five exhausted read attempts on a
+          // connection that was streaming is a link failure, and the reader's exception is the
+          // evidence -- the message text itself is unchanged.
+          throw SqlStates.transportFailure("to much retries because: " + e.getMessage(), e);
         }
         rebuildReader();
       }
@@ -178,9 +186,9 @@ public class OdpsForwardResultSet extends OdpsResultSet implements ResultSet {
       reader = sessionHandle.openRecordReader(fetchedRows, count, true);
       conn.log.warn(String.format("open read record, start=%d, cnt=%d", fetchedRows, count));
     } catch (IOException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.transportFailure(e.getMessage(), e);
     } catch (TunnelException e) {
-      throw new SQLException(e.getMessage(), e);
+      throw SqlStates.transportFailure(e.getMessage(), e);
     }
   }
 
