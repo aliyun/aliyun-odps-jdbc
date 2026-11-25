@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.aliyun.odps.OdpsException;
@@ -135,6 +136,18 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
   private int parametersNum;
 
   private DataUploader uploader;
+
+  /**
+   * Whether this statement's upload has already been handed to {@link DataUploader#commit()}.
+   *
+   * <p>A commit that throws does not mean the upload did not happen; it means the driver never
+   * learned whether it did. So the attempt is claimed before the call rather than recorded after
+   * it, which is the only ordering that still holds when the call is the one that throws, and no
+   * later path may make it again: a second commit of an upload whose outcome is unknown is a
+   * question the driver should not be asking the service by accident, on a path the application
+   * never chose.
+   */
+  private final AtomicBoolean commitAttempted = new AtomicBoolean();
 
   /**
    * The parameters for the prepared sql (index=>parameter). The parameter is stored as Java objects
@@ -410,14 +423,32 @@ public class OdpsPreparedStatement extends AbstractOdpsPreparedStatement {
       return;
     }
 
-    if (uploader != null) {
+    SQLException commitFailure = null;
+    if (uploader != null && commitAttempted.compareAndSet(false, true)) {
       try {
         uploader.commit();
       } catch (TunnelException | IOException e) {
-        throw SqlStates.transportFailure(e.getMessage(), e);
+        commitFailure = SqlStates.transportFailure(e.getMessage(), e);
       }
     }
-    super.close();
+
+    // Closing is what marks the statement closed and takes its handle out of the connection's live
+    // list -- the list OdpsConnection.close() walks to clean up after an application that closed
+    // nothing. It used to sit below a commit that could throw, so a failed commit left the
+    // statement open and tracked, and that walk found an upload whose outcome nobody knew and
+    // committed it a second time. Committing is what can fail here; being closed is not optional,
+    // so the commit failure is kept and reported after the statement is actually closed.
+    try {
+      super.close();
+    } catch (SQLException closeFailure) {
+      if (commitFailure == null) {
+        throw closeFailure;
+      }
+      commitFailure.addSuppressed(closeFailure);
+    }
+    if (commitFailure != null) {
+      throw commitFailure;
+    }
   }
 
   /**
