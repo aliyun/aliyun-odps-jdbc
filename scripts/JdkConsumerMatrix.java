@@ -307,6 +307,8 @@ public final class JdkConsumerMatrix {
       }
     });
     emit("slf4j_on_consumer_classpath", slf4jOutcome);
+    check("slf4j_api_outside_driver_jar",
+        slf4jOutcome.startsWith("java.lang.ClassNotFoundException:"), slf4jOutcome);
     if (arrowOutcome.indexOf("org.slf4j") >= 0 && slf4jOutcome.indexOf("org.slf4j") >= 0) {
       System.out.println("FINDING Arrow needs slf4j-api on the application classpath. "
           + "Maven resolves it for consumers.");
