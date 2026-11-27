@@ -529,6 +529,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public OdpsPreparedStatement prepareStatement(String sql) throws SQLException {
+    checkClosed();
     OdpsPreparedStatement stmt;
     if (async) {
       stmt = new OdpsAsyncPreparedStatement(this, sql);
@@ -632,6 +633,7 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
 
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
+    checkClosed();
     if (!autoCommit) {
       log.error(Thread.currentThread().getStackTrace()[1].getMethodName()
                 + " to false is not supported!!!");
