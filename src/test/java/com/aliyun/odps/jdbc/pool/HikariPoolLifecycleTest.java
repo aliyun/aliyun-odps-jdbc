@@ -21,13 +21,23 @@ package com.aliyun.odps.jdbc.pool;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.aliyun.odps.jdbc.DataUploader;
 import com.aliyun.odps.jdbc.OdpsConnection;
+import com.aliyun.odps.jdbc.OdpsPreparedStatement;
+import com.aliyun.odps.tunnel.TunnelException;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
@@ -72,6 +82,7 @@ public class HikariPoolLifecycleTest {
 
   private String poolName;
   private HikariDataSource pool;
+  private final List<Connection> borrowedHandles = new ArrayList<>();
 
   @BeforeEach
   public void pinPoolTiming() {
@@ -82,6 +93,17 @@ public class HikariPoolLifecycleTest {
   @AfterEach
   public void closePool() {
     System.clearProperty(ALIVE_BYPASS_WINDOW);
+    for (Connection handle : borrowedHandles) {
+      try {
+        if (!handle.isClosed()) {
+          handle.close();
+        }
+      } catch (SQLException ignored) {
+        // A handle whose physical connection is already gone cannot be returned cleanly; giving the
+        // pool its shutdown back is all this is for.
+      }
+    }
+    borrowedHandles.clear();
     if (pool != null && !pool.isClosed()) {
       pool.close();
     }
@@ -416,5 +438,343 @@ public class HikariPoolLifecycleTest {
     assertThrows(SQLFeatureNotSupportedException.class, () -> c.prepareStatement("select 1",
                                                                                  Statement.RETURN_GENERATED_KEYS));
     c.close();
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // commit-on-close that failed, and the cleanup that follows it
+  // ---------------------------------------------------------------------------------------------
+
+  /**
+   * An uploader whose first {@code commit()} fails with a transport error and whose later ones
+   * succeed, counting every attempt.
+   *
+   * <p>The count is the observable that matters. A prepared statement commits on close, so a close
+   * that fails after the commit attempt has been made leaves behind an upload whose outcome the
+   * driver never learned. Whether the service would take a second one is a question about Tunnel and
+   * about {@code BasicTableUploader}/{@code AcidTableUploader}; it is not something a pooled
+   * connection should get to discover by accident. The fixtures here only pin that the driver never
+   * asks the question: they prove the commit is not re-attempted, not that a re-attempt would be
+   * harmful on the service side.
+   *
+   * <p>Offline by construction. A null partition spec plus an explicit column list keeps the
+   * {@link DataUploader} constructor from resolving anything from the service, which is the shape
+   * {@code CallSiteSqlStateContractTest} already relies on.
+   */
+  private static class FirstCommitFailsUploader extends DataUploader {
+    private final AtomicInteger commitAttempts = new AtomicInteger();
+    private final IOException failure = new IOException(
+        "the tunnel endpoint dropped the connection before the commit was acknowledged");
+
+    FirstCommitFailsUploader(OdpsConnection conn) throws Exception {
+      super(PoolHarness.PROJECT, null, "commit_on_close_table", null,
+            Collections.singletonList("n_int"), conn);
+    }
+
+    @Override
+    protected void setUpSession() {
+    }
+
+    @Override
+    protected void upload(List<Object[]> batchedRows, int batchedSize, int[] updateCounts) {
+    }
+
+    @Override
+    public void commit() throws TunnelException, IOException {
+      if (commitAttempts.incrementAndGet() == 1) {
+        throw failure;
+      }
+    }
+  }
+
+  /** An uploader whose commit goes through: the positive control for the counts below. */
+  private static class CountingUploader extends DataUploader {
+    private final AtomicInteger commitAttempts = new AtomicInteger();
+
+    CountingUploader(OdpsConnection conn) throws Exception {
+      super(PoolHarness.PROJECT, null, "commit_on_close_table", null,
+            Collections.singletonList("n_int"), conn);
+    }
+
+    @Override
+    protected void setUpSession() {
+    }
+
+    @Override
+    protected void upload(List<Object[]> batchedRows, int batchedSize, int[] updateCounts) {
+    }
+
+    @Override
+    public void commit() throws TunnelException, IOException {
+      commitAttempts.incrementAndGet();
+    }
+  }
+
+  /**
+   * Put an uploader on a statement that never reached {@code parse()}.
+   *
+   * <p>Private field, written reflectively on purpose, in the same spirit as
+   * {@link PoolHarness#trackedStatementCount}: the uploader is resolved while the insert executes,
+   * and everything under test lives in the close path, so a real Tunnel session would add service
+   * calls and prove nothing.
+   */
+  private static void installUploader(OdpsPreparedStatement statement, DataUploader uploader)
+      throws Exception {
+    Field field = OdpsPreparedStatement.class.getDeclaredField("uploader");
+    field.setAccessible(true);
+    field.set(statement, uploader);
+  }
+
+  /**
+   * A physical driver connection borrowed from a live pool, ready to be retired.
+   *
+   * <p>Statements below are made on the physical connection instead of on the pool proxy for one
+   * reason: HikariCP closes the statements it handed out when the handle comes back, on whichever
+   * thread the pool chooses, so the cleanup being asserted would race the assertion. The walk under
+   * test is the driver's own {@code OdpsConnection.close()}, which is exactly what a pool runs when
+   * it discards a connection that reported 08S01.
+   */
+  private OdpsConnection borrowPhysicalConnection() throws Exception {
+    openPool();
+    Connection handle = pool.getConnection();
+    borrowedHandles.add(handle);
+    return PoolHarness.physical(handle);
+  }
+
+  @Test
+  @DisplayName("a failed commit-on-close keeps its cause, and retiring the connection does not commit again")
+  public void failedCommitOnCloseIsNotResubmittedByPoolRetirement() throws Exception {
+    OdpsConnection physical = borrowPhysicalConnection();
+    FirstCommitFailsUploader uploader = new FirstCommitFailsUploader(physical);
+    OdpsPreparedStatement statement =
+        physical.prepareStatement("insert into commit_on_close_table values (?)");
+    installUploader(statement, uploader);
+
+    SQLException reported = assertThrows(SQLException.class, statement::close);
+    assertEquals("08S01", reported.getSQLState(),
+                 "a commit that never got through is a broken link, and that is the state that "
+                 + "tells the pool this physical connection cannot be reused");
+    assertSame(uploader.failure, reported.getCause(),
+               "the caller still gets the original failure as the cause");
+    assertEquals(1, uploader.commitAttempts.get(), "close() attempted the commit exactly once");
+    // Checked here, before any later cleanup has had a chance to fix it up: the application holds a
+    // failure from close(), and the statement it called close() on has to be closed already and
+    // gone from the connection's list. Leaving it open is what handed the unknown commit to the pool.
+    assertTrue(statement.isClosed(),
+               "a close() that reported a failure still leaves the statement closed");
+    assertEquals(0, PoolHarness.trackedStatementCount(physical),
+                 "and it drops the handle, which is the invariant OdpsConnection.close() reads");
+
+    // Now the consequence of that SQLState: the pool throws the connection away, and throwing it
+    // away walks the statements the application left open. On the unfixed driver the close() above
+    // left this statement open *and* still tracked, so that walk commits the same unknown outcome
+    // a second time -- and the second failure escapes the walk, so the pool cannot even finish
+    // discarding the connection.
+    physical.close();
+
+    assertEquals(1, uploader.commitAttempts.get(),
+                 "no cleanup path may re-attempt a commit whose outcome the driver never learned");
+    assertTrue(physical.isClosed(), "the retired connection reaches the closed state");
+  }
+
+  @Test
+  @DisplayName("closing the same statement twice after a failed commit attempts the commit once")
+  public void secondExplicitCloseAfterFailedCommitDoesNotResubmit() throws Exception {
+    OdpsConnection physical = borrowPhysicalConnection();
+    FirstCommitFailsUploader uploader = new FirstCommitFailsUploader(physical);
+    OdpsPreparedStatement statement =
+        physical.prepareStatement("insert into commit_on_close_table values (?)");
+    installUploader(statement, uploader);
+
+    assertThrows(SQLException.class, statement::close);
+    assertEquals(1, uploader.commitAttempts.get());
+    assertTrue(statement.isClosed(), "the close() that failed still closed the statement");
+
+    // A caller that closes again, or a layer that closes a handle the application already closed,
+    // must get the JDBC answer for a closed statement: nothing happens.
+    statement.close();
+
+    assertEquals(1, uploader.commitAttempts.get(),
+                 "a commit with an unknown outcome is not attempted twice by closing twice");
+    physical.close();
+    assertEquals(1, uploader.commitAttempts.get(),
+                 "and the connection walk does not add an attempt either");
+  }
+
+  @Test
+  @DisplayName("a successful commit-on-close commits once, closes the statement and drops the handle")
+  public void successfulCommitOnCloseCommitsExactlyOnce() throws Exception {
+    OdpsConnection physical = borrowPhysicalConnection();
+    CountingUploader uploader = new CountingUploader(physical);
+    OdpsPreparedStatement statement =
+        physical.prepareStatement("insert into commit_on_close_table values (?)");
+    installUploader(statement, uploader);
+
+    statement.close();
+
+    assertEquals(1, uploader.commitAttempts.get(), "commit-on-close is what the statement is for");
+    assertTrue(statement.isClosed(), "the success path already got this part right");
+    assertEquals(0, PoolHarness.trackedStatementCount(physical));
+
+    physical.close();
+    assertEquals(1, uploader.commitAttempts.get(),
+                 "a committed upload stays committed when the connection is retired");
+  }
+
+  @Test
+  @DisplayName("the implicit path -- the application never closed the statement -- also commits once")
+  public void implicitCloseByTheConnectionIsNotReplayedOnARetriedClose() throws Exception {
+    OdpsConnection physical = borrowPhysicalConnection();
+    FirstCommitFailsUploader uploader = new FirstCommitFailsUploader(physical);
+    OdpsPreparedStatement statement =
+        physical.prepareStatement("insert into commit_on_close_table values (?)");
+    installUploader(statement, uploader);
+
+    // Deliberately separate from the explicit test: here nobody calls close() on the statement, so
+    // the connection's own walk is the first party to attempt the commit. Reporting that failure to
+    // the caller is existing behaviour and stays; what may not happen is the driver losing the
+    // statement on the way out, because then every later cleanup attempt finds it again.
+    assertThrows(SQLException.class, physical::close,
+                 "the caller learns that the upload did not get through");
+    assertEquals(1, uploader.commitAttempts.get(), "the walk attempted the commit once");
+    assertTrue(statement.isClosed(),
+               "the walk leaves the statement closed even though its commit failed");
+    assertEquals(0, PoolHarness.trackedStatementCount(physical));
+
+    physical.close();
+    assertEquals(1, uploader.commitAttempts.get(),
+                 "a caller retrying the close it was told had failed must not commit a second time");
+    assertTrue(physical.isClosed(),
+               "and the retry can actually finish closing the connection");
+  }
+
+  /**
+   * An uploader whose commit parks until the test lets it return, so a second close() can be made
+   * to arrive while the first commit is still outstanding.
+   */
+  private static class InFlightCommitUploader extends DataUploader {
+    private final AtomicInteger commitAttempts = new AtomicInteger();
+    private final CountDownLatch commitInFlight = new CountDownLatch(1);
+    private final CountDownLatch commitMayReturn = new CountDownLatch(1);
+    private final IOException failure =
+        new IOException("the tunnel endpoint dropped the connection before the commit was acknowledged");
+
+    InFlightCommitUploader(OdpsConnection conn) throws Exception {
+      super(PoolHarness.PROJECT, null, "commit_on_close_table", null,
+            Collections.singletonList("n_int"), conn);
+    }
+
+    @Override
+    protected void setUpSession() {
+    }
+
+    @Override
+    protected void upload(List<Object[]> batchedRows, int batchedSize, int[] updateCounts) {
+    }
+
+    @Override
+    public void commit() throws TunnelException, IOException {
+      commitAttempts.incrementAndGet();
+      commitInFlight.countDown();
+      try {
+        commitMayReturn.await(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      throw failure;
+    }
+  }
+
+  /**
+   * @return true when {@code condition} held inside the budget, instead of a bare sleep standing in for
+   *     the ordering the test actually depends on
+   */
+  private static boolean waitUntil(Probe condition, long budgetMillis) throws Exception {
+    long deadline = System.currentTimeMillis() + budgetMillis;
+    while (System.currentTimeMillis() < deadline) {
+      if (condition.holds()) {
+        return true;
+      }
+      try {
+        Thread.sleep(20L);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return false;
+      }
+    }
+    return condition.holds();
+  }
+
+  /** A condition that may itself fail: a broken read has to surface as an error, not as a timeout. */
+  @FunctionalInterface
+  private interface Probe {
+    boolean holds() throws Exception;
+  }
+
+  @Test
+  @DisplayName("a connection retired while the commit is in flight does not add a second attempt")
+  public void closeRacingAnInFlightCommitCommitsOnce() throws Exception {
+    OdpsConnection physical = borrowPhysicalConnection();
+    InFlightCommitUploader uploader = new InFlightCommitUploader(physical);
+    OdpsPreparedStatement statement =
+        physical.prepareStatement("insert into commit_on_close_table values (?)");
+    installUploader(statement, uploader);
+
+    // The application closes the statement. Its commit is the call that fails, and it stays in
+    // flight for the length of this test.
+    final SQLException[] fromApplication = new SQLException[1];
+    final CountDownLatch applicationReturned = new CountDownLatch(1);
+    Thread application = new Thread(() -> {
+      try {
+        statement.close();
+      } catch (SQLException e) {
+        fromApplication[0] = e;
+      } finally {
+        applicationReturned.countDown();
+      }
+    }, "odps-commit-in-flight");
+    application.start();
+
+    assertTrue(await(uploader.commitInFlight, 5_000L), "the application never reached the commit");
+
+    // Now the pool's own thread arrives, which is the part of this the class comment insists on: a
+    // pool closes a connection from a thread the application does not control, at a moment the
+    // application did not choose. The statement is open at this instant by construction, because
+    // the driver marks it closed only after the commit returns.
+    final CountDownLatch poolReturned = new CountDownLatch(1);
+    Thread retirement = new Thread(() -> {
+      try {
+        physical.close();
+      } catch (SQLException ignored) {
+        // What the pool does with a failure here is HikariCP's business; the claim is about the
+        // number of commits, which is counted below.
+      } finally {
+        poolReturned.countDown();
+      }
+    }, "odps-pool-retirement");
+    retirement.start();
+
+    // Wait until the second close() has demonstrably reached the statement -- either by finishing
+    // the close (the guarded driver never touches the commit again) or by entering a second commit
+    // (the unguarded one does) -- and only then let the first commit fail.
+    boolean reachedTheStatement = waitUntil(
+        () -> statement.isClosed() || uploader.commitAttempts.get() > 1, 5_000L);
+    uploader.commitMayReturn.countDown();
+    assertTrue(await(applicationReturned, 5_000L), "the application thread never came back");
+    assertTrue(await(poolReturned, 5_000L), "the pool thread never came back");
+    assertTrue(reachedTheStatement,
+               "the retiring connection never reached the still-open statement: the interleaving "
+               + "this test is about did not happen");
+
+    assertEquals(1, uploader.commitAttempts.get(),
+                 "while a commit is in flight, no other thread may start one for the same upload");
+    assertNotNull(fromApplication[0], "the application still learns that its commit failed");
+    assertEquals("08S01", fromApplication[0].getSQLState(),
+                 "and it learns it as the link failure that makes the pool retire the connection");
+    assertSame(uploader.failure, fromApplication[0].getCause());
+    assertTrue(statement.isClosed(), "the statement ends up closed either way");
+  }
+
+  private static boolean await(CountDownLatch latch, long millis) throws InterruptedException {
+    return latch.await(millis, TimeUnit.MILLISECONDS);
   }
 }
