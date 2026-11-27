@@ -226,9 +226,14 @@ java.net.URLEncoder#encode(java.lang.String).
 > boundary so a future SDK that starts forwarding the values fails a test instead of silently
 > changing what this table means.
 >
-> What eventually surfaces on a failed open is a `SQLException`; as of driver 3.10.18 it carries no
-> SQLState and no vendor code, which still lets a pool react to it by exception type (see the
-> tunnel timeouts above, which count seconds the same way).
+> What eventually surfaces on a failed open is a `SQLException`, so a pool can react to it by
+> exception type. Whether that exception also carries a `SQLState` and a vendor code depends on the
+> build: the published `v3.10.18` artifact sets neither (measured on a failed open against a dead
+> port: `sqlState=null`, `errorCode=0`), while current `master` classifies the same failure as
+> `08001` and fills `getErrorCode()` only when the service sent a code -- see the section
+> "Error identity: `SQLState` and `ErrorCode`" below for what each state means and for the failures
+> where the driver has no evidence and leaves the state empty. (The tunnel timeouts above count
+> seconds the same way.)
 >
 #### Schema and Catalog Settings
 
