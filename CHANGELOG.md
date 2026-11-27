@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.10.19] - 2026-11-27
+
+### Security
+
+- Update bundled Jackson to 2.21.9, Netty to 4.1.138.Final, Zstandard JNI to 1.6.0-1, LZ4 to 1.12.1, Guava to 33.8.0-jre, and Snappy to 1.1.10.12.
+- Replace test-scope Logback with the Java 8-compatible SLF4J JUL provider.
+
+### Fixes
+
+- Apply the configured Tunnel connect and read timeouts to table uploads and transactional Upsert sessions.
+- Report JDBC SQLState and MaxCompute vendor error codes when the underlying failure identifies them.
+- Close prepared statements after upload commit failures and prevent connection cleanup from attempting the same commit again.
+- Resolve the SLF4J API transitively for Maven consumers using transactional Upsert and Arrow. Manual classpaths need to include the API for those operations.
+
 ## [3.10.18] - 2026-10-29
 
 - Apply the connection Tunnel endpoint to every client created from the connection, including transactional table Upsert sessions. Keep Upsert transport on the Tunnel endpoint's HTTP/HTTPS protocol and release its resources after commit.

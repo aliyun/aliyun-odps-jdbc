@@ -17,6 +17,10 @@ Generally, there are two ways to use ODPS JDBC driver in your project.
   from [release page](https://github.com/aliyun/aliyun-odps-jdbc/releases).
 * Checkout the [CHANGELOG](https://github.com/aliyun/aliyun-odps-jdbc/blob/master/CHANGELOG.md).
 
+For a manual installation, add `org.slf4j:slf4j-api` to the classpath when using primary-key
+transactional table Upsert, Arrow, or SLF4J logging. Maven resolves the API transitively.
+Choose an SLF4J provider in the application if you want the log messages.
+
 2.The second is to rely on maven to resolve the dependencies for you:
 
 ```xml
@@ -504,8 +508,7 @@ The driver is compiled for Java 8 and is consumed inside JVMs chosen by the appl
 resource-close probes on several JVMs at once and fails when a JVM behaves differently; the
 `JDK consumer matrix` workflow does the same for JDK 8, 11, 17 and 21 on every pull request. See
 [docs/jdk-consumer-matrix.md](docs/jdk-consumer-matrix.md) for how to run it locally, what the
-cells prove, what they do not, and the consumer-facing findings recorded so far (including the
-`slf4j-api` requirement for Arrow code paths inside the shaded jar).
+cells prove, what they do not, and the consumer-facing findings recorded so far.
 
 ### Data Type Mapping
 

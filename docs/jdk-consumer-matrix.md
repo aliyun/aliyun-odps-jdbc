@@ -96,6 +96,8 @@ them if they ever become JVM-specific.
    gets `NoClassDefFoundError: org/slf4j/LoggerFactory`. Keeping `slf4j-api` on the classpath
    avoids it; the driver's default instance-tunnel read path does not initialize Arrow, which is
    why this does not show up in ordinary query use.
+   *Update in 3.10.19: Maven consumers get `slf4j-api` transitively. For manual installations,
+   Arrow and primary-key transactional Upsert require the API on the application classpath.*
 
 ## The gate fails on purpose
 
