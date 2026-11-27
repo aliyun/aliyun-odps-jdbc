@@ -5,16 +5,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import com.aliyun.odps.jdbc.utils.TestUtils;
 import com.google.common.collect.ImmutableMap;
@@ -25,18 +24,33 @@ import com.google.common.collect.ImmutableMap;
 @org.junit.jupiter.api.Tag("live-service")
 public class WarningLogTest {
 
-    Logger logger = (Logger) LoggerFactory.getLogger("ROOT");
-    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    private final Logger logger = Logger.getLogger(OdpsConnection.class.getName());
+    private final List<String> warnings = new CopyOnWriteArrayList<>();
+    private final Handler handler = new Handler() {
+        @Override
+        public void publish(LogRecord record) {
+            if (record.getLevel() == Level.WARNING) {
+                warnings.add(record.getMessage());
+            }
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() {
+        }
+    };
 
     @BeforeEach
     public void setUp() {
-        listAppender.start();
-        logger.addAppender(listAppender);
+        logger.addHandler(handler);
     }
 
     @AfterEach
     public void tearDown() {
-        logger.detachAppender(listAppender);
+        logger.removeHandler(handler);
     }
 
     @Test
@@ -53,10 +67,8 @@ public class WarningLogTest {
                 // do nothing
             }
         }
-        Assertions.assertTrue(listAppender.list.stream().filter(event -> event.getLevel() == Level.WARN)
-                              .anyMatch(event -> event.getFormattedMessage()
-                                  .contains(
-                                      "The length of sql is too long, it may cause performance issues.")));
+        Assertions.assertTrue(warnings.stream().anyMatch(message ->
+            message.contains("The length of sql is too long, it may cause performance issues.")));
     }
 
     @Test
@@ -70,10 +82,8 @@ public class WarningLogTest {
                 // do nothing
             }
         }
-        Assertions.assertTrue(listAppender.list.stream().filter(event -> event.getLevel() == Level.WARN)
-                              .anyMatch(event -> event.getFormattedMessage()
-                                  .contains(
-                                      "SQL execution time exceeds long job warning threshold.")));
+        Assertions.assertTrue(warnings.stream().anyMatch(message ->
+            message.contains("SQL execution time exceeds long job warning threshold.")));
     }
 
 }
