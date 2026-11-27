@@ -69,11 +69,12 @@
     <junit5.version>5.10.0</junit5.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jdk.version>1.8</jdk.version>
-    <jackson.version>2.21.7</jackson.version>
-    <lz4.version>1.11.4</lz4.version>
-    <zstd.version>1.5.7-17</zstd.version>
+    <jackson.version>2.21.9</jackson.version>
+    <lz4.version>1.12.1</lz4.version>
+    <zstd.version>1.6.0-1</zstd.version>
     <snappy.version>1.1.10.12</snappy.version>
-    <guava.version>33.7.2-jre</guava.version>
+    <guava.version>33.8.0-jre</guava.version>
+    <slf4j.version>2.0.17</slf4j.version>
   </properties>
   <build>
     <resources>
@@ -326,7 +327,7 @@
           <dependency>
               <groupId>io.netty</groupId>
               <artifactId>netty-bom</artifactId>
-              <version>4.1.137.Final</version>
+              <version>4.1.138.Final</version>
               <type>pom</type>
               <scope>import</scope>
           </dependency>
@@ -426,7 +427,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.17</version>
+      <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -445,17 +446,11 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Keep the test logger Java 8 compatible without adding a provider to the driver JAR. -->
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>test</scope>
-      <version>1.3.16</version>
-    </dependency>
-
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-core</artifactId>
-      <version>1.3.16</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
 
