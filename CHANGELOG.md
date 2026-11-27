@@ -12,6 +12,7 @@
 - Apply the configured Tunnel connect and read timeouts to table uploads and transactional Upsert sessions.
 - Report JDBC SQLState and MaxCompute vendor error codes when the underlying failure identifies them.
 - Close prepared statements after upload commit failures and prevent connection cleanup from attempting the same commit again.
+- Resolve the SLF4J API transitively for Maven consumers using transactional Upsert and Arrow. Manual classpaths need to include the API for those operations.
 
 ## [3.10.18] - 2026-10-29
 

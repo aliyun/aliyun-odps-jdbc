@@ -292,8 +292,7 @@ public final class JdkConsumerMatrix {
     emit("required_classes_link_failures", unloadable.toString());
     check("required_classes_all_link", unloadable.isEmpty(), unloadable);
 
-    // Static initializers: relocated Arrow logs through org.slf4j, which the pom keeps in
-    // provided scope on purpose, so a bare consumer classpath may not have it.
+    // The single-JAR cell observes whether the application has supplied SLF4J for Arrow.
     emit("init_sdk_odps", value(new Probe() {
       public Object call() throws Exception { Class.forName("com.aliyun.odps.Odps"); return "OK"; }
     }));
@@ -309,10 +308,8 @@ public final class JdkConsumerMatrix {
     });
     emit("slf4j_on_consumer_classpath", slf4jOutcome);
     if (arrowOutcome.indexOf("org.slf4j") >= 0 && slf4jOutcome.indexOf("org.slf4j") >= 0) {
-      System.out.println("FINDING relocated Arrow classes need org.slf4j, which the build keeps "
-          + "in provided scope: a consumer that runs the packaged jar alone hits this the first "
-          + "time an Arrow code path is initialized. Same on every JVM, so it is reported as a "
-          + "finding rather than a JVM-specific failure.");
+      System.out.println("FINDING Arrow needs slf4j-api on the application classpath. "
+          + "Maven resolves it for consumers.");
     }
   }
 

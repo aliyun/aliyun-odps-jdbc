@@ -169,6 +169,11 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <artifactSet>
+                <excludes>
+                  <exclude>org.slf4j:slf4j-api</exclude>
+                </excludes>
+              </artifactSet>
               <relocations>
                 <relocation>
                   <pattern>org.antlr</pattern>
@@ -422,13 +427,11 @@
       <version>3.25.5</version>
     </dependency>
 
-    <!-- SLF4J API - must be provided scope to avoid being shaded into the fat jar -->
-    <!-- This prevents version conflicts with the application's SLF4J dependency -->
+    <!-- Publish the logging API as a consumer dependency. The application selects its provider. -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
-      <scope>provided</scope>
     </dependency>
 
     <!-- for test -->

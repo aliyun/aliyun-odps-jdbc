@@ -44,6 +44,31 @@ jobs:
           test "$size" -gt 1000000 || { echo "unexpectedly small driver jar: $size bytes" >&2; exit 1; }
           echo "path=$jar" >> "$GITHUB_OUTPUT"
           echo "packaged $jar ($size bytes)"
+      - name: Verify the published logging dependency
+        env:
+          DRIVER_JAR: ${{ steps.jar.outputs.path }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from xml.etree import ElementTree
+          from zipfile import ZipFile
+
+          namespace = {"m": "http://maven.apache.org/POM/4.0.0"}
+          pom = ElementTree.parse("dependency-reduced-pom.xml")
+          apis = [
+              dependency
+              for dependency in pom.findall("m:dependencies/m:dependency", namespace)
+              if dependency.findtext("m:groupId", namespaces=namespace) == "org.slf4j"
+              and dependency.findtext("m:artifactId", namespaces=namespace) == "slf4j-api"
+          ]
+          assert len(apis) == 1, "The consumer POM must retain slf4j-api"
+          assert apis[0].findtext("m:scope", "compile", namespace) in ("compile", "runtime")
+          assert apis[0].findtext("m:optional", "false", namespace) == "false"
+          with ZipFile(os.environ["DRIVER_JAR"]) as jar:
+              assert not any(name.startswith("org/slf4j/") for name in jar.namelist()), (
+                  "The packaged driver must use the application's SLF4J API"
+              )
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: packaged-driver
