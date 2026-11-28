@@ -423,9 +423,6 @@ public class OdpsConnection extends WrapperAdapter implements Connection {
       builder.maxQAConnInfo(maxQAQuota);
       builder.enableMaxQA(true);
       this.interactiveMode = ExecuteMode.INTERACTIVE_V2;
-      log.info(String.format(
-        "Attach success, instanceId:%s, attach and get tunnel endpoint time",
-        executor.getInstance().getId()));
     }
     long startTime = System.currentTimeMillis();
     this.executorBuilder = builder;
