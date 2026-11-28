@@ -239,30 +239,41 @@ Tunnel endpoint is already known -- one request to find one.
   forcing namespace mode *on* for a two-tier project -- and it is documented on `odpsNamespaceSchema`.
 - `Connection.isValid()` does not contact the service either: after checking its timeout argument
   it reports whether the handle is closed. That limit reaches pool validation only where the pool
-  validates *through* `isValid()`. Measured with HikariCP against a closed loopback port in this
-  option shape: a pool with no `connectionTestQuery` (so it validates through `isValid()`) handed
-  out a connection in 0.19 s, while the same pool configured with `connectionTestQuery=SELECT 1`
-  could not come up at all (0.37 s, `ConnectException`) -- a validation query does reach the
-  service, so configure one if you want borrowed connections to mean something.
+  validates *through* `isValid()`. Measured on 3.10.18 with HikariCP against a closed loopback
+  port in this option shape: a pool with no `connectionTestQuery` (so it validates through
+  `isValid()`) handed out a connection in 0.19 s, while the same pool configured with
+  `connectionTestQuery=SELECT 1` could not come up at all (0.37 s, `ConnectException`) -- a
+  validation query does reach the service, so configure one if you want borrowed
+  connections to mean something.
 
 With `timeZone` set and either Tunnel silencer set -- documented options, none of them unusual --
 `getConnection()` therefore answers success against an unreachable endpoint, a project that does
 not exist and an access key the service turns away (measured against a closed loopback port and
-against stubs replying 404 and 403: 0.24 s to 8.2 s, 0 or 1 request). The first statement is where
+against stubs replying 404 and 403: 0.2 s to 8.2 s, 0 or 1 request; re-measured on 3.10.19 on
+2026-11-28 at 0.20-0.21 s and 8.20 s for those two shapes). The first statement is where
 it surfaces: a `SQLException`, whose message names the endpoint when the endpoint itself is
 unreachable.
 
 If connecting is supposed to mean "this configuration is usable", run one cheap statement
 (`SELECT 1`) right after `getConnection()`. A failure there says the statement could not run; it
-does not by itself identify the cause. On the released 3.10.18 (published 2026-10-29) an unreachable
-endpoint and a service that turns the request away arrive in the same shape -- measured there as a
-`SQLException` with `getErrorCode()` equal to `0` and `getSQLState()` equal to `null`. That pairing
-is a property of that release, not a contract: driver builds carrying the error-identity work
-report an identifiable state instead (`08001` for an endpoint that cannot be reached, `28000` for
-credentials the service will not accept), as [Error identity](#error-identity-sqlstate-and-errorcode)
-documents. Either way read the message and do not treat a failure here as proof the configuration is
-wrong: a service or network problem at that moment, or an account that is not allowed to run the
-query, fails the same way and needs its own diagnosis.
+does not by itself identify the cause, and its `SQLState` depends on what the failing call could
+prove, not on the option shape. Measured against a closed loopback port on 3.10.18 (released
+2026-10-29) and again on 3.10.19 (released 2026-11-27), a refused endpoint arrives on this path as
+a `SQLException` with `getErrorCode()` `0` and `getSQLState()` `null`: the error-identity work
+fills a state only where the failure carries service evidence, and the `08001` fallback lives in
+the connection-opening helper (`SqlStates.connectFailure`), so it appears when `getConnection()`
+itself fails -- 16.1 s and `08001` on 3.10.19 for a URL that keeps the project read, at
+`retryTime=2` -- and not in
+a statement run on a handle the driver already handed you. Where the service answers with a
+nameable condition, both paths report that state instead: against stubs on 3.10.19 a
+`404 NoSuchObject` came back as `42S02` and a `403 AccessDenied` as `42501`, at connect in about
+0.3 s and on the first statement in about 0.2 s, both still with `getErrorCode()` `0` because
+neither answer carried a numeric `ODPS-` code. So read the message, and see
+[Error identity](#error-identity-sqlstate-and-errorcode) for which states exist and what each one
+rests on -- in particular `28000` marks credential evidence the driver recognizes, not every
+rejection. Do not treat a failure here as proof the configuration is wrong either: a service or
+network problem at that moment, or an account that is not allowed to run the query, fails the same
+way and needs its own diagnosis.
 
 ### Tunnel endpoint
 
